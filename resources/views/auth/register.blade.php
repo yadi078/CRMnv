@@ -14,7 +14,10 @@
                     <h1 class="text-2xl lg:text-3xl font-bold text-amarillo mb-2 text-center lg:text-left">INVERTIR EN VALOR</h1>
                     <h2 class="text-2xl lg:text-3xl font-bold text-amarillo mb-4 text-center lg:text-left">¡ATRAE VALOR!</h2>
                     <p class="text-lg text-white mb-8">¿Ya tienes una Cuenta?</p>
-                    <a href="{{ route('login') }}" class="inline-block border-2 border-white text-white px-8 py-3 rounded-xl hover:bg-white hover:text-[#000836] transition-all duration-200 font-semibold">
+                    <a href="{{ route('login') }}" class="inline-block border-2 border-white text-white px-8 py-3 rounded-xl hover:bg-white hover:text-[#000836] transition-all duration-200 font-semibold inline-flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                        </svg>
                         Iniciar Sesión
                     </a>
                 </div>
@@ -122,8 +125,11 @@
                     <div class="pt-4">
                         <button 
                             type="submit"
-                            class="w-full bg-[#000099] text-white font-bold py-3.5 px-4 rounded-xl hover:bg-[#003366] focus:outline-none focus:ring-2 focus:ring-[#000099] focus:ring-offset-2 transition-all duration-200 uppercase tracking-wider shadow-md hover:shadow-lg"
+                            class="w-full bg-[#000099] text-white font-bold py-3.5 px-4 rounded-xl hover:bg-[#003366] focus:outline-none focus:ring-2 focus:ring-[#000099] focus:ring-offset-2 transition-all duration-200 uppercase tracking-wider shadow-md hover:shadow-lg inline-flex items-center justify-center"
                         >
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM3 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 019.374 21c-2.331 0-4.512-.645-6.374-1.766z" />
+                            </svg>
                             Registrarse
                         </button>
                     </div>

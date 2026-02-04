@@ -107,7 +107,11 @@
                         <h3 class="font-semibold text-yellow-800">Aprobaciones Pendientes</h3>
                         <p class="text-sm text-yellow-700">Tienes {{ $empresasPendientes }} empresa(s) esperando aprobación</p>
                     </div>
-                    <a href="{{ route('approvals.companies') }}" class="bg-amarillo text-azul-fuerte px-4 py-2 rounded-md font-semibold hover:bg-yellow-400 transition">
+                    <a href="{{ route('approvals.companies') }}" class="bg-amarillo text-azul-fuerte px-4 py-2 rounded-md font-semibold hover:bg-yellow-400 transition inline-flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
                         Revisar
                     </a>
                 </div>
@@ -123,7 +127,11 @@
                         <h3 class="font-semibold text-red-800">Seguimientos Vencidos</h3>
                         <p class="text-sm text-red-700">Tienes {{ $seguimientosVencidos }} seguimiento(s) vencido(s)</p>
                     </div>
-                    <a href="{{ route('follow-ups.index', ['completado' => 0]) }}" class="bg-red-500 text-white px-4 py-2 rounded-md font-semibold hover:bg-red-600 transition">
+                    <a href="{{ route('follow-ups.index', ['completado' => 0]) }}" class="bg-red-500 text-white px-4 py-2 rounded-md font-semibold hover:bg-red-600 transition inline-flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
                         Ver Seguimientos
                     </a>
                 </div>
@@ -135,7 +143,12 @@
                 <div class="bg-white rounded-lg shadow-md p-6">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-lg font-semibold text-azul-fuerte">Últimas Empresas</h3>
-                        <a href="{{ route('companies.index') }}" class="text-azul-bright hover:text-azul-fuerte text-sm font-medium">Ver todas</a>
+                        <a href="{{ route('companies.index') }}" class="text-azul-bright hover:text-azul-fuerte text-sm font-medium inline-flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                            </svg>
+                            Ver todas
+                        </a>
                     </div>
                     <div class="space-y-3">
                         @forelse($ultimasEmpresas as $empresa)
@@ -163,7 +176,12 @@
                 <div class="bg-white rounded-lg shadow-md p-6">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-lg font-semibold text-azul-fuerte">Próximos Seguimientos</h3>
-                        <a href="{{ route('follow-ups.index') }}" class="text-azul-bright hover:text-azul-fuerte text-sm font-medium">Ver todos</a>
+                        <a href="{{ route('follow-ups.index') }}" class="text-azul-bright hover:text-azul-fuerte text-sm font-medium inline-flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                            </svg>
+                            Ver todos
+                        </a>
                     </div>
                     <div class="space-y-3">
                         @forelse($proximosSeguimientos as $seguimiento)

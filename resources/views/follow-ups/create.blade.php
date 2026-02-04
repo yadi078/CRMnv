@@ -70,8 +70,16 @@
                     </div>
 
                     <div class="flex items-center justify-end mt-6 space-x-4">
-                        <a href="{{ route('follow-ups.index') }}" class="text-gray-600 hover:text-gray-800">Cancelar</a>
-                        <x-primary-button class="bg-amarillo text-azul-fuerte hover:bg-yellow-400">
+                        <a href="{{ route('follow-ups.index') }}" class="text-gray-600 hover:text-gray-800 inline-flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                            Cancelar
+                        </a>
+                        <x-primary-button class="bg-amarillo text-azul-fuerte hover:bg-yellow-400 inline-flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
                             Guardar
                         </x-primary-button>
                     </div>

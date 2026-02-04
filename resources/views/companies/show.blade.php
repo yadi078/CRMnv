@@ -6,11 +6,17 @@
             </h2>
             <div class="flex space-x-2">
                 @can('companies.edit')
-                <a href="{{ route('companies.edit', $company) }}" class="bg-amarillo text-azul-fuerte px-4 py-2 rounded-md font-semibold hover:bg-yellow-400 transition">
+                <a href="{{ route('companies.edit', $company) }}" class="bg-amarillo text-azul-fuerte px-4 py-2 rounded-md font-semibold hover:bg-yellow-400 transition inline-flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                    </svg>
                     Editar
                 </a>
                 @endcan
-                <a href="{{ route('companies.index') }}" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-md font-semibold hover:bg-gray-300 transition">
+                <a href="{{ route('companies.index') }}" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-md font-semibold hover:bg-gray-300 transition inline-flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+                    </svg>
                     Volver
                 </a>
             </div>
@@ -64,7 +70,10 @@
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-lg font-semibold text-azul-fuerte">Contactos</h3>
                     @can('contacts.create')
-                    <a href="{{ route('contacts.create', ['company_id' => $company->id]) }}" class="bg-azul-bright text-white px-4 py-2 rounded-md font-semibold hover:bg-azul-fuerte transition">
+                    <a href="{{ route('contacts.create', ['company_id' => $company->id]) }}" class="bg-azul-bright text-white px-4 py-2 rounded-md font-semibold hover:bg-azul-fuerte transition inline-flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
                         Nuevo Contacto
                     </a>
                     @endcan
@@ -82,7 +91,11 @@
                                 <p class="text-sm text-gray-500">{{ $contact->celular }}</p>
                                 @endif
                             </div>
-                            <a href="{{ route('contacts.show', $contact) }}" class="text-azul-bright hover:text-azul-fuerte">
+                            <a href="{{ route('contacts.show', $contact) }}" class="text-azul-bright hover:text-azul-fuerte inline-flex items-center">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
                                 Ver
                             </a>
                         </div>
@@ -98,7 +111,10 @@
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-lg font-semibold text-azul-fuerte">Seguimientos</h3>
                     @can('follow-ups.create')
-                    <a href="{{ route('follow-ups.create', ['company_id' => $company->id]) }}" class="bg-azul text-white px-4 py-2 rounded-md font-semibold hover:bg-azul-fuerte transition">
+                    <a href="{{ route('follow-ups.create', ['company_id' => $company->id]) }}" class="bg-azul text-white px-4 py-2 rounded-md font-semibold hover:bg-azul-fuerte transition inline-flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
                         Nuevo Seguimiento
                     </a>
                     @endcan

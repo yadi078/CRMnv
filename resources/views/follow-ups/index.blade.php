@@ -5,7 +5,10 @@
                 Seguimientos
             </h2>
             @can('follow-ups.create')
-            <a href="{{ route('follow-ups.create') }}" class="bg-amarillo text-azul-fuerte px-4 py-2 rounded-md font-semibold hover:bg-yellow-400 transition">
+            <a href="{{ route('follow-ups.create') }}" class="bg-amarillo text-azul-fuerte px-4 py-2 rounded-md font-semibold hover:bg-yellow-400 transition inline-flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
                 Nuevo Seguimiento
             </a>
             @endcan
@@ -28,7 +31,12 @@
                         <option value="reunión" {{ request('tipo_accion') === 'reunión' ? 'selected' : '' }}>Reunión</option>
                         <option value="cierre" {{ request('tipo_accion') === 'cierre' ? 'selected' : '' }}>Cierre</option>
                     </select>
-                    <button type="submit" class="bg-azul-fuerte text-white px-4 py-2 rounded-md hover:bg-azul transition">Filtrar</button>
+                    <button type="submit" class="bg-azul-fuerte text-white px-4 py-2 rounded-md hover:bg-azul transition inline-flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z" />
+                        </svg>
+                        Filtrar
+                    </button>
                 </form>
 
                 <!-- Lista -->
@@ -62,11 +70,22 @@
                                 @endif
                             </div>
                             <div class="flex space-x-2">
-                                <a href="{{ route('follow-ups.show', $followUp) }}" class="text-azul-bright hover:text-azul-fuerte">Ver</a>
+                                <a href="{{ route('follow-ups.show', $followUp) }}" class="text-azul-bright hover:text-azul-fuerte inline-flex items-center">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                    Ver
+                                </a>
                                 @if(!$followUp->completado)
                                 <form method="POST" action="{{ route('follow-ups.complete', $followUp) }}" class="inline">
                                     @csrf
-                                    <button type="submit" class="text-green-600 hover:text-green-800">Completar</button>
+                                    <button type="submit" class="text-green-600 hover:text-green-800 inline-flex items-center">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                        Completar
+                                    </button>
                                 </form>
                                 @endif
                             </div>
