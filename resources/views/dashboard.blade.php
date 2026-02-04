@@ -11,7 +11,7 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
             <!-- Estadísticas Generales -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-azul-fuerte">
+                <a href="{{ route('companies.index') }}" class="bg-white rounded-lg shadow-md p-6 border-l-4 border-azul-fuerte hover:shadow-lg transition-shadow cursor-pointer">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm font-medium text-gris">Total Empresas</p>
@@ -23,9 +23,9 @@
                             </svg>
                         </div>
                     </div>
-                </div>
+                </a>
 
-                <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-azul-bright">
+                <a href="{{ route('contacts.index') }}" class="bg-white rounded-lg shadow-md p-6 border-l-4 border-azul-bright hover:shadow-lg transition-shadow cursor-pointer">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm font-medium text-gris">Total Contactos</p>
@@ -37,9 +37,9 @@
                             </svg>
                         </div>
                     </div>
-                </div>
+                </a>
 
-                <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-azul">
+                <a href="{{ route('follow-ups.index') }}" class="bg-white rounded-lg shadow-md p-6 border-l-4 border-azul hover:shadow-lg transition-shadow cursor-pointer">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm font-medium text-gris">Seguimientos</p>
@@ -51,9 +51,9 @@
                             </svg>
                         </div>
                     </div>
-                </div>
+                </a>
 
-                <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-amarillo">
+                <a href="{{ route('follow-ups.index', ['completado' => 0]) }}" class="bg-white rounded-lg shadow-md p-6 border-l-4 border-amarillo hover:shadow-lg transition-shadow cursor-pointer">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm font-medium text-gris">Pendientes</p>
@@ -65,36 +65,36 @@
                             </svg>
                         </div>
                     </div>
-                </div>
+                </a>
             </div>
 
             <!-- Sistema de Semáforo -->
             <div class="bg-white rounded-lg shadow-md p-6">
                 <h3 class="text-lg font-semibold text-azul-fuerte mb-4">Sistema de Semáforo - Estado de Prospectos</h3>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="text-center p-6 rounded-lg bg-green-50 border-2 border-green-500">
+                    <a href="{{ route('companies.index', ['status_color' => 'verde']) }}" class="text-center p-6 rounded-lg bg-green-50 border-2 border-green-500 hover:bg-green-100 hover:shadow-md transition-all cursor-pointer">
                         <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-green-500 flex items-center justify-center">
                             <span class="text-white text-2xl font-bold">{{ $empresasVerde }}</span>
                         </div>
                         <h4 class="font-semibold text-green-700 mb-2">Verde</h4>
                         <p class="text-sm text-gray-600">Actividad reciente<br>(Últimos 7 días)</p>
-                    </div>
+                    </a>
 
-                    <div class="text-center p-6 rounded-lg bg-yellow-50 border-2 border-yellow-500">
+                    <a href="{{ route('companies.index', ['status_color' => 'amarillo']) }}" class="text-center p-6 rounded-lg bg-yellow-50 border-2 border-yellow-500 hover:bg-yellow-100 hover:shadow-md transition-all cursor-pointer">
                         <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-yellow-500 flex items-center justify-center">
                             <span class="text-white text-2xl font-bold">{{ $empresasAmarillo }}</span>
                         </div>
                         <h4 class="font-semibold text-yellow-700 mb-2">Amarillo</h4>
                         <p class="text-sm text-gray-600">Actividad moderada<br>(7-30 días)</p>
-                    </div>
+                    </a>
 
-                    <div class="text-center p-6 rounded-lg bg-red-50 border-2 border-red-500">
+                    <a href="{{ route('companies.index', ['status_color' => 'rojo']) }}" class="text-center p-6 rounded-lg bg-red-50 border-2 border-red-500 hover:bg-red-100 hover:shadow-md transition-all cursor-pointer">
                         <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-red-500 flex items-center justify-center">
                             <span class="text-white text-2xl font-bold">{{ $empresasRojo }}</span>
                         </div>
                         <h4 class="font-semibold text-red-700 mb-2">Rojo</h4>
                         <p class="text-sm text-gray-600">Sin actividad<br>(Más de 30 días)</p>
-                    </div>
+                    </a>
                 </div>
             </div>
 
@@ -167,7 +167,7 @@
                     </div>
                     <div class="space-y-3">
                         @forelse($proximosSeguimientos as $seguimiento)
-                        <div class="p-3 bg-gray-50 rounded-lg">
+                        <a href="{{ route('follow-ups.show', $seguimiento) }}" class="block p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
                             <div class="flex items-center justify-between mb-2">
                                 <span class="px-2 py-1 text-xs font-semibold rounded @if($seguimiento->tipo_accion === 'llamada') bg-blue-100 text-blue-800 @elseif($seguimiento->tipo_accion === 'reunión') bg-purple-100 text-purple-800 @else bg-green-100 text-green-800 @endif">
                                     {{ ucfirst($seguimiento->tipo_accion) }}
@@ -184,7 +184,7 @@
                             @if($seguimiento->bitacora_notas)
                             <p class="text-xs text-gray-500 mt-1">{{ Str::limit($seguimiento->bitacora_notas, 50) }}</p>
                             @endif
-                        </div>
+                        </a>
                         @empty
                         <p class="text-gray-500 text-center py-4">No hay seguimientos programados</p>
                         @endforelse
