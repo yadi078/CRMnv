@@ -1,17 +1,23 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex justify-between items-center">
-            <h2 class="font-semibold text-xl text-azul-fuerte leading-tight">
-                Dashboard - INVERTIR EN VALOR ¡ATRAE VALOR!
-            </h2>
+        <div class="view-header">
+            <div class="view-header__icon">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+            </div>
+            <div>
+                <h2 class="view-header__title">INVERTIR EN VALOR ¡ATRAE VALOR!</h2>
+                <p class="view-header__subtitle">Panel principal</p>
+            </div>
         </div>
     </x-slot>
 
-    <div class="py-12">
+    <div class="py-8 sm:py-10">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
             <!-- Estadísticas Generales -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <a href="{{ route('companies.index') }}" class="bg-white rounded-lg shadow-md p-6 border-l-4 border-azul-fuerte hover:shadow-lg transition-shadow cursor-pointer">
+                <a href="{{ route('companies.index') }}" class="view-card p-6 transition-shadow cursor-pointer">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm font-medium text-gris">Total Empresas</p>
@@ -25,7 +31,7 @@
                     </div>
                 </a>
 
-                <a href="{{ route('contacts.index') }}" class="bg-white rounded-lg shadow-md p-6 border-l-4 border-azul-bright hover:shadow-lg transition-shadow cursor-pointer">
+                <a href="{{ route('contacts.index') }}" class="view-card p-6 transition-shadow cursor-pointer">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm font-medium text-gris">Total Contactos</p>
@@ -39,7 +45,7 @@
                     </div>
                 </a>
 
-                <a href="{{ route('follow-ups.index') }}" class="bg-white rounded-lg shadow-md p-6 border-l-4 border-azul hover:shadow-lg transition-shadow cursor-pointer">
+                <a href="{{ route('follow-ups.index') }}" class="view-card p-6 transition-shadow cursor-pointer">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm font-medium text-gris">Seguimientos</p>
@@ -53,14 +59,14 @@
                     </div>
                 </a>
 
-                <a href="{{ route('follow-ups.index', ['completado' => 0]) }}" class="bg-white rounded-lg shadow-md p-6 border-l-4 border-amarillo hover:shadow-lg transition-shadow cursor-pointer">
+                <a href="{{ route('follow-ups.index', ['completado' => 0]) }}" class="view-card p-6 transition-shadow cursor-pointer">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm font-medium text-gris">Pendientes</p>
-                            <p class="text-3xl font-bold text-amarillo">{{ $seguimientosPendientes }}</p>
+                            <p class="text-3xl font-bold text-azul-fuerte">{{ $seguimientosPendientes }}</p>
                         </div>
-                        <div class="bg-amarillo bg-opacity-10 p-3 rounded-full">
-                            <svg class="w-8 h-8 text-amarillo" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="bg-azul-fuerte bg-opacity-10 p-3 rounded-full">
+                            <svg class="w-8 h-8 text-azul-fuerte" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </div>
@@ -69,7 +75,7 @@
             </div>
 
             <!-- Sistema de Semáforo -->
-            <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="view-card p-6">
                 <h3 class="text-lg font-semibold text-azul-fuerte mb-4">Sistema de Semáforo - Estado de Prospectos</h3>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <a href="{{ route('companies.index', ['status_color' => 'verde']) }}" class="text-center p-6 rounded-lg bg-green-50 border-2 border-green-500 hover:bg-green-100 hover:shadow-md transition-all cursor-pointer">
@@ -140,7 +146,7 @@
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <!-- Últimas Empresas -->
-                <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="view-card p-6">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-lg font-semibold text-azul-fuerte">Últimas Empresas</h3>
                         <a href="{{ route('companies.index') }}" class="text-azul-bright hover:text-azul-fuerte text-sm font-medium inline-flex items-center">
@@ -173,7 +179,7 @@
                 </div>
 
                 <!-- Próximos Seguimientos -->
-                <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="view-card p-6">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-lg font-semibold text-azul-fuerte">Próximos Seguimientos</h3>
                         <a href="{{ route('follow-ups.index') }}" class="text-azul-bright hover:text-azul-fuerte text-sm font-medium inline-flex items-center">

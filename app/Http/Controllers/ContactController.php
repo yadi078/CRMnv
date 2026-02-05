@@ -43,6 +43,9 @@ class ContactController extends Controller
         $contacts = $query->latest()->paginate(15);
         $companies = Company::aprobados()->orderBy('nombre_comercial')->get();
 
+        if (!auth()->user()->esAdmin()) {
+            return view('user.contacts.index', compact('contacts', 'companies'));
+        }
         return view('contacts.index', compact('contacts', 'companies'));
     }
 
@@ -56,6 +59,9 @@ class ContactController extends Controller
         $companyId = $request->company_id;
         $companies = Company::aprobados()->orderBy('nombre_comercial')->get();
 
+        if (!auth()->user()->esAdmin()) {
+            return view('user.contacts.create', compact('companies', 'companyId'));
+        }
         return view('contacts.create', compact('companies', 'companyId'));
     }
 
@@ -101,6 +107,9 @@ class ContactController extends Controller
 
         $contact->load(['company', 'followUps', 'creator']);
 
+        if (!auth()->user()->esAdmin()) {
+            return view('user.contacts.show', compact('contact'));
+        }
         return view('contacts.show', compact('contact'));
     }
 
@@ -113,6 +122,9 @@ class ContactController extends Controller
 
         $companies = Company::aprobados()->orderBy('nombre_comercial')->get();
 
+        if (!auth()->user()->esAdmin()) {
+            return view('user.contacts.edit', compact('contact', 'companies'));
+        }
         return view('contacts.edit', compact('contact', 'companies'));
     }
 
@@ -136,10 +148,14 @@ class ContactController extends Controller
             'notas' => 'nullable|string',
         ]);
 
-        $contact->update($validated);
-
-        return redirect()->route('contacts.show', $contact)
-            ->with('success', 'Contacto actualizado exitosamente.');
+        try {
+            $contact->update($validated);
+            return redirect()->route('contacts.show', $contact)
+                ->with('success', 'Contacto actualizado exitosamente.');
+        } catch (\Exception $e) {
+            return back()->withInput()
+                ->with('error', 'Error al actualizar el contacto. Por favor, intente nuevamente.');
+        }
     }
 
     /**
@@ -149,10 +165,13 @@ class ContactController extends Controller
     {
         $this->authorize('delete', $contact);
 
-        $contact->delete();
-
-        return redirect()->route('contacts.index')
-            ->with('success', 'Contacto eliminado exitosamente.');
+        try {
+            $contact->delete();
+            return redirect()->route('contacts.index')
+                ->with('success', 'Contacto eliminado exitosamente.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Error al eliminar el contacto. Por favor, intente nuevamente.');
+        }
     }
 
     /**
@@ -160,7 +179,7 @@ class ContactController extends Controller
      */
     public function generatePdf(Contact $contact)
     {
-        $this->authorize('generate-pdf', $contact);
+        $this->authorize('generatePdf', $contact);
 
         $contact->load(['company']);
 

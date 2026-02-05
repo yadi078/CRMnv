@@ -40,17 +40,23 @@ class CompanyController extends Controller
             $query->porColor($request->status_color);
         }
 
-        if ($request->filled('approval_status')) {
+        $user = auth()->user();
+        $isAdmin = $user->esAdmin();
+        if ($isAdmin && $request->filled('approval_status')) {
             $query->where('approval_status', $request->approval_status);
         }
 
-        // Si es usuario normal, solo ver aprobados
-        if (!auth()->user()->can('companies.approve')) {
+        if (!$isAdmin) {
             $query->aprobados();
         }
 
         $companies = $query->latest()->paginate(15);
 
+        // Usuario normal (rol usuario o no admin): vista limitada operativa
+        if (!$isAdmin) {
+            $misPendientes = Company::where('created_by', $user->id)->pendientes()->count();
+            return view('user.companies.index', compact('companies', 'misPendientes'));
+        }
         return view('companies.index', compact('companies'));
     }
 
@@ -61,6 +67,9 @@ class CompanyController extends Controller
     {
         $this->authorize('create', Company::class);
 
+        if (!auth()->user()->esAdmin()) {
+            return view('user.companies.create');
+        }
         return view('companies.create');
     }
 
@@ -116,6 +125,9 @@ class CompanyController extends Controller
 
         $company->load(['contacts', 'followUps.asignado', 'creator', 'approver']);
 
+        if (!auth()->user()->esAdmin()) {
+            return view('user.companies.show', compact('company'));
+        }
         return view('companies.show', compact('company'));
     }
 
@@ -126,6 +138,9 @@ class CompanyController extends Controller
     {
         $this->authorize('update', $company);
 
+        if (!auth()->user()->esAdmin()) {
+            return view('user.companies.edit', compact('company'));
+        }
         return view('companies.edit', compact('company'));
     }
 

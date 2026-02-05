@@ -11,7 +11,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Alias para usar en rutas; debe ejecutarse DESPUÉS de auth para que el usuario exista
+        $middleware->alias([
+            'ensure.role' => \App\Http\Middleware\EnsureUserHasRole::class,
+            'admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

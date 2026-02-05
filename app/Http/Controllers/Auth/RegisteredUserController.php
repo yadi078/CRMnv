@@ -41,10 +41,13 @@ class RegisteredUserController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
+        // Asignar rol "usuario" para que tenga permisos (companies.view, contacts.view, etc.)
+        $user->assignRole('usuario');
+
         event(new Registered($user));
 
         Auth::login($user);
 
-        return redirect(route('dashboard', absolute: false));
+        return redirect(route('user.dashboard', absolute: false));
     }
 }

@@ -1,20 +1,28 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex justify-between items-center">
-            <h2 class="font-semibold text-xl text-azul-fuerte leading-tight">
-                Seguimiento - {{ ucfirst($followUp->tipo_accion) }}
-            </h2>
-            <div class="flex space-x-2">
+        <div class="flex justify-between items-center flex-wrap gap-4">
+            <div class="view-header">
+                <div class="view-header__icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="view-header__title">Seguimiento - {{ ucfirst($followUp->tipo_accion) }}</h2>
+                    <p class="view-header__subtitle">Detalle del seguimiento</p>
+                </div>
+            </div>
+            <div class="btn-icon-text gap-2">
                 @can('follow-ups.edit')
-                <a href="{{ route('follow-ups.edit', $followUp) }}" class="bg-amarillo text-azul-fuerte px-4 py-2 rounded-md font-semibold hover:bg-yellow-400 transition inline-flex items-center">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                <a href="{{ route('follow-ups.edit', $followUp) }}" class="btn-amber-app">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
                     Editar
                 </a>
                 @endcan
-                <a href="{{ route('follow-ups.index') }}" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-md font-semibold hover:bg-gray-300 transition inline-flex items-center">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <a href="{{ route('follow-ups.index') }}" class="btn-icon-text px-4 py-2 rounded-xl border border-gray-300 bg-white text-gray-700 font-medium hover:bg-gray-50">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
                     </svg>
                     Volver
@@ -23,9 +31,9 @@
         </div>
     </x-slot>
 
-    <div class="py-12">
+    <div class="py-8 sm:py-10">
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white rounded-lg shadow-md p-6 space-y-6">
+            <div class="view-card p-6 space-y-6">
                 <!-- Información Principal -->
                 <div>
                     <h3 class="text-lg font-semibold text-azul-fuerte mb-4">Información del Seguimiento</h3>
@@ -94,12 +102,12 @@
                 <div class="flex justify-end">
                     <form method="POST" action="{{ route('follow-ups.complete', $followUp) }}">
                         @csrf
-                        <x-primary-button class="bg-green-600 hover:bg-green-700 inline-flex items-center">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <button type="submit" class="btn-icon-text bg-green-600 text-white px-4 py-2 rounded-xl font-semibold hover:bg-green-700 shadow-lg">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                             </svg>
                             Marcar como Completado
-                        </x-primary-button>
+                        </button>
                     </form>
                 </div>
                 @endif

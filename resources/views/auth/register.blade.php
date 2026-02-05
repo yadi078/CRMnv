@@ -9,10 +9,10 @@
                 
                 <div class="relative z-10">
                     <div class="mb-6 flex justify-center">
-                        <img src="{{ asset('img/logo.png') }}" alt="Logo" class="h-28 lg:h-32 w-auto object-contain">
+                        <img src="{{ asset('img/logo.png') }}" alt="Logo" class="h-36 lg:h-44 w-auto object-contain">
                     </div>
-                    <h1 class="text-2xl lg:text-3xl font-bold text-amarillo mb-2 text-center lg:text-left">INVERTIR EN VALOR</h1>
-                    <h2 class="text-2xl lg:text-3xl font-bold text-amarillo mb-4 text-center lg:text-left">¡ATRAE VALOR!</h2>
+                    <h1 class="text-2xl lg:text-3xl font-bold text-amarillo mb-2 text-center w-full">INVERTIR EN VALOR</h1>
+                    <h2 class="text-2xl lg:text-3xl font-bold text-amarillo mb-4 text-center w-full">¡ATRAE VALOR!</h2>
                     <p class="text-lg text-white mb-8">¿Ya tienes una Cuenta?</p>
                     <a href="{{ route('login') }}" class="inline-block border-2 border-white text-white px-8 py-3 rounded-xl hover:bg-white hover:text-[#000836] transition-all duration-200 font-semibold inline-flex items-center">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -127,7 +127,7 @@
                             type="submit"
                             class="w-full bg-[#000099] text-white font-bold py-3.5 px-4 rounded-xl hover:bg-[#003366] focus:outline-none focus:ring-2 focus:ring-[#000099] focus:ring-offset-2 transition-all duration-200 uppercase tracking-wider shadow-md hover:shadow-lg inline-flex items-center justify-center"
                         >
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-7 h-7 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM3 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 019.374 21c-2.331 0-4.512-.645-6.374-1.766z" />
                             </svg>
                             Registrarse

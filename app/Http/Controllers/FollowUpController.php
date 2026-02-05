@@ -34,6 +34,9 @@ class FollowUpController extends Controller
 
         $followUps = $query->latest('fecha_alarma')->paginate(15);
 
+        if (!auth()->user()->esAdmin()) {
+            return view('user.follow-ups.index', compact('followUps'));
+        }
         return view('follow-ups.index', compact('followUps'));
     }
 
@@ -50,6 +53,9 @@ class FollowUpController extends Controller
         $companies = Company::aprobados()->orderBy('nombre_comercial')->get();
         $contacts = Contact::with('company')->orderBy('nombre_completo')->get();
 
+        if (!auth()->user()->esAdmin()) {
+            return view('user.follow-ups.create', compact('companies', 'contacts', 'companyId', 'contactId'));
+        }
         return view('follow-ups.create', compact('companies', 'contacts', 'companyId', 'contactId'));
     }
 
@@ -102,6 +108,9 @@ class FollowUpController extends Controller
 
         $followUp->load(['company', 'contact', 'asignado', 'creator']);
 
+        if (!auth()->user()->esAdmin()) {
+            return view('user.follow-ups.show', compact('followUp'));
+        }
         return view('follow-ups.show', compact('followUp'));
     }
 
@@ -115,6 +124,9 @@ class FollowUpController extends Controller
         $companies = Company::aprobados()->orderBy('nombre_comercial')->get();
         $contacts = Contact::with('company')->orderBy('nombre_completo')->get();
 
+        if (!auth()->user()->esAdmin()) {
+            return view('user.follow-ups.edit', compact('followUp', 'companies', 'contacts'));
+        }
         return view('follow-ups.edit', compact('followUp', 'companies', 'contacts'));
     }
 
@@ -134,10 +146,14 @@ class FollowUpController extends Controller
             'asignado_a' => 'nullable|exists:users,id',
         ]);
 
-        $followUp->update($validated);
-
-        return redirect()->route('follow-ups.show', $followUp)
-            ->with('success', 'Seguimiento actualizado exitosamente.');
+        try {
+            $followUp->update($validated);
+            return redirect()->route('follow-ups.show', $followUp)
+                ->with('success', 'Seguimiento actualizado exitosamente.');
+        } catch (\Exception $e) {
+            return back()->withInput()
+                ->with('error', 'Error al actualizar el seguimiento. Por favor, intente nuevamente.');
+        }
     }
 
     /**
@@ -147,10 +163,13 @@ class FollowUpController extends Controller
     {
         $this->authorize('delete', $followUp);
 
-        $followUp->delete();
-
-        return redirect()->route('follow-ups.index')
-            ->with('success', 'Seguimiento eliminado exitosamente.');
+        try {
+            $followUp->delete();
+            return redirect()->route('follow-ups.index')
+                ->with('success', 'Seguimiento eliminado exitosamente.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Error al eliminar el seguimiento. Por favor, intente nuevamente.');
+        }
     }
 
     /**

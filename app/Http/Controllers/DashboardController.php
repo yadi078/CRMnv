@@ -22,6 +22,9 @@ class DashboardController extends Controller
     public function index()
     {
         $user = auth()->user();
+        if (!$user) {
+            return redirect()->route('login');
+        }
 
         // Estadísticas generales
         $totalEmpresas = Company::count();
@@ -45,11 +48,12 @@ class DashboardController extends Controller
             ->where('fecha_alarma', '<', now())
             ->count();
 
-        // Últimas empresas creadas
-        $ultimasEmpresas = Company::with('creator')
-            ->latest()
-            ->limit(5)
-            ->get();
+        // Últimas empresas creadas (solo aprobadas para usuarios sin permiso de aprobación)
+        $ultimasEmpresasQuery = Company::with('creator')->latest()->limit(5);
+        if (!$user->can('companies.approve')) {
+            $ultimasEmpresasQuery->aprobados();
+        }
+        $ultimasEmpresas = $ultimasEmpresasQuery->get();
 
         // Próximos seguimientos
         $proximosSeguimientos = FollowUp::with(['company', 'contact', 'asignado'])

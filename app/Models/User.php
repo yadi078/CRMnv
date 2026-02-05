@@ -78,11 +78,12 @@ class User extends Authenticatable
     }
 
     /**
-     * Verifica si el usuario es administrador
+     * Verifica si el usuario es administrador.
+     * Acepta los nombres de rol 'admin' y 'administrador' por compatibilidad.
      */
     public function esAdmin(): bool
     {
-        return $this->hasRole('admin');
+        return $this->hasRole(['admin', 'administrador']);
     }
 
     /**
