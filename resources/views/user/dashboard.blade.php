@@ -1,18 +1,18 @@
 <x-app-user-layout>
     <x-slot name="header">
-        <div class="flex items-center justify-between gap-4 flex-wrap">
-            <div class="flex items-center gap-3">
-                <div class="w-11 h-11 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        <div class="flex justify-between items-center flex-wrap gap-4">
+            <div class="view-header">
+                <div class="view-header__icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                     </svg>
                 </div>
                 <div>
-                    <h2 class="text-xl font-bold text-white">Bienvenido, {{ Auth::user()->name }}</h2>
-                    <p class="text-sm text-white/80 mt-0.5">Tablero principal — Vista general al ingresar</p>
+                    <h2 class="view-header__title">Bienvenido, {{ Auth::user()->name }}</h2>
+                    <p class="view-header__subtitle">Panel principal — Vista general</p>
                 </div>
             </div>
-            <a href="{{ route('companies.create') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-gray-900 bg-amber-400 hover:bg-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-[#1e293b] transition-all shadow-sm flex-shrink-0">
+            <a href="{{ route('companies.create') }}" class="btn-amber-app">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" />
                 </svg>
@@ -21,13 +21,13 @@
         </div>
     </x-slot>
 
-    <div class="py-6 sm:py-8 bg-gray-50/80">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
-            {{-- Resumen de Actividad: 3 cajas como en la imagen --}}
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <h3 class="text-lg font-semibold text-gray-800 mb-4">Resumen de Actividad</h3>
+    <div class="space-y-8">
+        <div class="max-w-7xl mx-auto space-y-6">
+            {{-- Resumen de Actividad --}}
+            <div class="view-card">
+                <h3 class="text-lg font-semibold text-[#1F2937] mb-4">Resumen de Actividad</h3>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <a href="{{ route('follow-ups.index', ['completado' => 0]) }}" class="flex items-center gap-4 p-5 rounded-xl bg-white border border-gray-200 shadow-sm hover:shadow-md hover:border-amber-200 transition-all no-underline">
+                    <a href="{{ route('follow-ups.index', ['completado' => 0]) }}" class="flex items-center gap-4 p-5 rounded-[var(--radius-panel)] bg-fondo border border-[#E2E8F0] hover:border-[#003366]/20 transition-all no-underline">
                         <div class="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
                             <svg class="w-7 h-7 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -41,9 +41,9 @@
                             </p>
                         </div>
                     </a>
-                    <div class="flex items-center gap-4 p-5 rounded-xl bg-white border border-gray-200 shadow-sm">
-                        <div class="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                            <svg class="w-7 h-7 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="flex items-center gap-4 p-5 rounded-[var(--radius-panel)] bg-fondo border border-[#E2E8F0]">
+                        <div class="w-14 h-14 rounded-full metric-card__icon-wrap flex items-center justify-center flex-shrink-0">
+                            <svg class="w-7 h-7 text-[#003366]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                             </svg>
                         </div>
@@ -55,7 +55,7 @@
                             </p>
                         </div>
                     </div>
-                    <a href="{{ route('companies.index') }}" class="flex items-center gap-4 p-5 rounded-xl bg-white border-l-4 border-l-red-500 border border-gray-200 shadow-sm hover:shadow-md hover:border-red-200 transition-all no-underline">
+                    <a href="{{ route('companies.index') }}" class="flex items-center gap-4 p-5 rounded-[var(--radius-panel)] bg-fondo border-l-4 border-l-[#B91C1C] border border-[#E2E8F0] hover:border-[#B91C1C]/30 transition-all no-underline">
                         <div class="w-14 h-14 rounded-full bg-red-500 flex items-center justify-center flex-shrink-0">
                             <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -71,8 +71,8 @@
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {{-- Mis Empresas --}}
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Mis Empresas</h3>
+                <div class="view-card">
+                    <h3 class="text-lg font-semibold text-[#1F2937] mb-4">Mis Empresas</h3>
                     <form method="GET" action="{{ route('user.dashboard') }}" class="mb-4">
                         <div class="relative">
                             <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">

@@ -23,17 +23,16 @@
         </div>
     </x-slot>
 
-    <div class="py-8 sm:py-10">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="view-card p-6">
+    <div>
+            <div class="view-card">
                 <!-- Filtros -->
                 <form method="GET" action="{{ route('follow-ups.index') }}" class="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <select name="completado" class="rounded-xl border-gray-300 shadow-sm focus:border-amarillo focus:ring-2 focus:ring-amber-400/20 py-2">
+                    <select name="completado" class="rounded-xl border-[#E2E8F0] bg-white shadow-sm focus:border-[#003366] focus:ring-2 focus:ring-[#003366]/10 py-2.5 px-3 text-[#1F2937]">
                         <option value="">Todos</option>
                         <option value="0" {{ request('completado') === '0' ? 'selected' : '' }}>Pendientes</option>
                         <option value="1" {{ request('completado') === '1' ? 'selected' : '' }}>Completados</option>
                     </select>
-                    <select name="tipo_accion" class="rounded-xl border-gray-300 shadow-sm focus:border-amarillo focus:ring-2 focus:ring-amber-400/20 py-2">
+                    <select name="tipo_accion" class="rounded-xl border-[#E2E8F0] bg-white shadow-sm focus:border-[#003366] focus:ring-2 focus:ring-[#003366]/10 py-2.5 px-3 text-[#1F2937]">
                         <option value="">Todos los tipos</option>
                         <option value="llamada" {{ request('tipo_accion') === 'llamada' ? 'selected' : '' }}>Llamada</option>
                         <option value="reunión" {{ request('tipo_accion') === 'reunión' ? 'selected' : '' }}>Reunión</option>
@@ -48,39 +47,39 @@
                 </form>
 
                 <!-- Lista -->
-                <div class="space-y-4">
+                <div class="space-y-3">
                     @forelse($followUps as $followUp)
-                    <div class="p-4 bg-gray-50 rounded-lg border-l-4 @if($followUp->completado) border-green-500 @elseif($followUp->estaVencido()) border-red-500 @else border-yellow-500 @endif">
+                    <div class="p-4 rounded-xl bg-fondo border-l-4 @if($followUp->completado) border-l-[#15803D] @elseif($followUp->estaVencido()) border-l-[#B91C1C] @else border-l-[#B45309] @endif">
                         <div class="flex justify-between items-start">
                             <div class="flex-1">
-                                <div class="flex items-center space-x-3 mb-2">
-                                    <span class="px-2 py-1 text-xs font-semibold rounded @if($followUp->tipo_accion === 'llamada') bg-blue-100 text-blue-800 @elseif($followUp->tipo_accion === 'reunión') bg-purple-100 text-purple-800 @else bg-green-100 text-green-800 @endif">
+                                <div class="flex items-center gap-2 mb-2 flex-wrap">
+                                    <span class="px-2.5 py-1 text-xs font-medium rounded-lg bg-[rgba(0,51,102,0.08)] text-[#003366]">
                                         {{ ucfirst($followUp->tipo_accion) }}
                                     </span>
                                     @if($followUp->completado)
-                                    <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">Completado</span>
+                                    <span class="text-xs font-medium text-[#15803D] bg-[#F0FDF4] px-2.5 py-1 rounded-lg">Completado</span>
                                     @elseif($followUp->estaVencido())
-                                    <span class="text-xs text-red-600 bg-red-100 px-2 py-1 rounded">Vencido</span>
+                                    <span class="text-xs font-medium text-[#B91C1C] bg-[#FEF2F2] px-2.5 py-1 rounded-lg">Vencido</span>
                                     @else
-                                    <span class="text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded">Pendiente</span>
+                                    <span class="text-xs font-medium text-[#B45309] bg-[#FFFBEB] px-2.5 py-1 rounded-lg">Pendiente</span>
                                     @endif
                                 </div>
-                                <p class="text-sm font-medium text-gray-900">
+                                <p class="text-sm font-medium text-[#1F2937]">
                                     @if($followUp->company)
-                                        Empresa: <a href="{{ route('companies.show', $followUp->company) }}" class="text-azul-bright hover:text-azul-fuerte">{{ $followUp->company->nombre_comercial }}</a>
+                                        Empresa: <a href="{{ route('companies.show', $followUp->company) }}" class="text-[#003366] hover:text-[#000836]">{{ $followUp->company->nombre_comercial }}</a>
                                     @elseif($followUp->contact)
-                                        Contacto: <a href="{{ route('contacts.show', $followUp->contact) }}" class="text-azul-bright hover:text-azul-fuerte">{{ $followUp->contact->nombre_completo }}</a>
+                                        Contacto: <a href="{{ route('contacts.show', $followUp->contact) }}" class="text-[#003366] hover:text-[#000836]">{{ $followUp->contact->nombre_completo }}</a>
                                     @else
-                                        <span class="text-gray-500">Sin empresa/contacto asignado</span>
+                                        <span class="text-[#6B7280]">Sin empresa/contacto asignado</span>
                                     @endif
                                 </p>
-                                <p class="text-sm text-gray-500 mt-1">Fecha: {{ $followUp->fecha_alarma->format('d/m/Y H:i') }}</p>
+                                <p class="text-sm text-[#6B7280] mt-1">Fecha: {{ $followUp->fecha_alarma->format('d/m/Y H:i') }}</p>
                                 @if($followUp->bitacora_notas)
-                                <p class="text-sm text-gray-700 mt-2">{{ Str::limit($followUp->bitacora_notas, 100) }}</p>
+                                <p class="text-sm text-[#1F2937] mt-2">{{ Str::limit($followUp->bitacora_notas, 100) }}</p>
                                 @endif
                             </div>
-                            <div class="flex space-x-2">
-                                <a href="{{ route('follow-ups.show', $followUp) }}" class="text-azul-bright hover:text-azul-fuerte btn-icon-text">
+                            <div class="flex gap-2">
+                                <a href="{{ route('follow-ups.show', $followUp) }}" class="text-[#003366] hover:text-[#000836] btn-icon-text">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
@@ -90,7 +89,7 @@
                                 @if(!$followUp->completado)
                                 <form method="POST" action="{{ route('follow-ups.complete', $followUp) }}" class="inline">
                                     @csrf
-                                    <button type="submit" class="text-green-600 hover:text-green-800 btn-icon-text">
+                                    <button type="submit" class="text-[#15803D] hover:text-[#166534] btn-icon-text">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                                         </svg>
@@ -102,15 +101,14 @@
                         </div>
                     </div>
                     @empty
-                    <p class="text-gray-500 text-center py-8">No se encontraron seguimientos</p>
+                    <p class="text-[#6B7280] text-center py-8">No se encontraron seguimientos</p>
                     @endforelse
                 </div>
 
                 <!-- Paginación -->
-                <div class="mt-4">
+                <div class="mt-6 pt-4 border-t border-[#E2E8F0]">
                     {{ $followUps->links() }}
                 </div>
             </div>
-        </div>
     </div>
 </x-app-layout>

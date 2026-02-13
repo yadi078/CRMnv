@@ -3,50 +3,90 @@
 @tailwind utilities;
 
 /* ==========================================================================
-   SidebarNav - Navegación vertical estilo smart-home / dashboard
-   Paleta azul rey, ícono activo con wave y glow. Sin frameworks externos.
+   CRM Enterprise SaaS - Sistema de diseño corporativo
+   Fondo azulado suave (profundidad visual), cards blancas para contraste
    ========================================================================== */
 
 :root {
-  /* Azul rey: gradiente del sidebar */
-  --sidebar-bg-start: #0A1A3F;
-  --sidebar-bg-end: #102A6B;
-  /* Ícono activo: círculo y wave */
-  --sidebar-active: #E6B800;
-  --sidebar-active-glow: rgba(230, 184, 0, 0.5);
-  /* Íconos inactivos */
-  --sidebar-icon: rgba(255, 255, 255, 0.9);
-  --sidebar-icon-hover: #ffffff;
-  /* Dimensiones */
+  --color-primary: #003366;
+  --color-primary-deep: #000836;
+  --color-accent: #FFE600;
+  --color-bg: #F4F7FB;
+  --color-bg-top: #F8FAFC;
+  --color-bg-bottom: #EEF2F7;
+  --color-card: #FFFFFF;
+  --color-border: #E2E8F0;
+  --color-border-card: #E8ECF2;
+  --color-text: #1F2937;
+  --color-text-sec: #6B7280;
   --sidebar-width: 80px;
+  --sidebar-width-expanded: 260px;
   --sidebar-icon-size: 44px;
-  --sidebar-wave-width: 20px;
-  /* Animación */
-  --sidebar-duration: 250ms;
+  --sidebar-duration: 220ms;
+  --sidebar-bg: #000836;
+  --sidebar-bg-top: #0a0f2e;
+  --sidebar-active: #FFE600;
+  --sidebar-active-text: #000836;
+  --sidebar-active-glow: rgba(255, 230, 0, 0.35);
+  --radius-card: 20px;
+  --radius-panel: 16px;
 }
 
-/* Contenedor fijo izquierdo, altura completa, gradiente, bordes redondeados a la izquierda */
+/* --------------------------------------------------------------------------
+   Tipografía: Inter, jerarquía clara
+   -------------------------------------------------------------------------- */
+body {
+  font-family: 'Inter', sans-serif;
+  color: var(--color-text);
+  background: linear-gradient(180deg, var(--color-bg-top) 0%, var(--color-bg) 40%, var(--color-bg-bottom) 100%);
+  min-height: 100vh;
+}
+
+/* --------------------------------------------------------------------------
+   LAYOUT: Sidebar flotante + área principal
+   -------------------------------------------------------------------------- */
+.sidebar-layout {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  background: linear-gradient(180deg, var(--color-bg-top) 0%, var(--color-bg) 40%, var(--color-bg-bottom) 100%);
+}
+
+/* --------------------------------------------------------------------------
+   SIDEBAR - Premium, profunda, tecnológica (#000836, activo #000099)
+   -------------------------------------------------------------------------- */
 .sidebar-nav {
   position: fixed;
-  left: 0;
-  top: 0;
-  bottom: 0;
+  left: 16px;
+  top: 16px;
+  bottom: 16px;
   width: var(--sidebar-width);
-  background: linear-gradient(180deg, var(--sidebar-bg-start) 0%, var(--sidebar-bg-end) 100%);
-  border-radius: 0 24px 24px 0;
+  background: linear-gradient(165deg, var(--sidebar-bg-top) 0%, var(--sidebar-bg) 45%, #00051a 100%);
+  border-radius: 20px;
   z-index: 40;
   overflow: visible;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 1rem 0;
+  padding: 1.25rem 0;
   box-sizing: border-box;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+    0 4px 24px rgba(0, 0, 0, 0.4),
+    0 24px 48px rgba(0, 8, 54, 0.35);
+  transition: box-shadow var(--sidebar-duration) ease;
 }
 
-/* Logo de la empresa: parte superior del sidebar, centrado */
+.sidebar-nav:hover {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.06) inset,
+    0 8px 32px rgba(0, 0, 0, 0.45),
+    0 28px 56px rgba(0, 8, 54, 0.4);
+}
+
 .sidebar-nav__brand {
   flex-shrink: 0;
-  padding: 0.5rem 0 1rem;
+  padding: 0.5rem 0 1.25rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -59,87 +99,168 @@
   border-radius: 50%;
   overflow: hidden;
   transition: transform var(--sidebar-duration) ease, box-shadow var(--sidebar-duration) ease;
+  box-shadow: 0 0 0 5px var(--color-accent);
 }
 
 .sidebar-nav__brand-link:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 16px rgba(255, 255, 255, 0.2);
+  transform: scale(1.04);
+  box-shadow: 0 0 0 5px var(--color-accent), 0 0 24px rgba(255, 230, 0, 0.2);
 }
 
 .sidebar-nav__brand-link:focus-visible {
-  outline: 2px solid var(--sidebar-active);
+  outline: 2px solid rgba(255, 255, 255, 0.4);
   outline-offset: 3px;
 }
 
 .sidebar-nav__brand-img {
   width: 56px;
   height: 56px;
-  object-fit: contain;
+  object-fit: cover;
   display: block;
+  border-radius: 50%;
 }
 
-/* Lista de íconos: flex columna, espaciado uniforme, centrado en el espacio restante */
+/* Bienvenido + nombre debajo del logo */
+.sidebar-nav__welcome {
+  flex-shrink: 0;
+  width: 100%;
+  text-align: center;
+  padding: 0 0.5rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 0.75rem;
+}
+
+.sidebar-nav__welcome-text {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0 0 0.2rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sidebar-nav__welcome-name {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #fff;
+  margin: 0;
+  word-break: break-word;
+}
+
 .sidebar-nav__list {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1.5rem;
+  gap: 0.5rem;
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 0 0.5rem;
   width: 100%;
+}
+
+/* Pie del nav: Cerrar sesión */
+.sidebar-nav__footer {
+  flex-shrink: 0;
+  width: 100%;
+  padding: 1rem 0.5rem 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sidebar-nav__logout {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.85);
+  background: transparent;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.sidebar-nav__logout:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.sidebar-nav__logout svg {
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .sidebar-nav__item {
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
 }
 
-/* Enlace: área de toque accesible, transición suave */
 .sidebar-nav__link {
   display: flex;
   align-items: center;
   justify-content: center;
   width: var(--sidebar-icon-size);
   height: var(--sidebar-icon-size);
-  border-radius: 50%;
-  color: var(--sidebar-icon);
+  border-radius: 14px;
+  color: rgba(255, 255, 255, 0.78);
   text-decoration: none;
-  transition: color var(--sidebar-duration) ease,
-              transform var(--sidebar-duration) ease,
-              box-shadow var(--sidebar-duration) ease;
+  transition: color var(--sidebar-duration) ease, background var(--sidebar-duration) ease,
+    box-shadow var(--sidebar-duration) ease, transform var(--sidebar-duration) ease;
   outline: none;
+  position: relative;
+}
+
+.sidebar-nav__link::before {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 0;
+  border-radius: 4px 0 0 4px;
+  background: var(--sidebar-active);
+  transition: height var(--sidebar-duration) ease;
 }
 
 .sidebar-nav__link:hover {
-  color: var(--sidebar-icon-hover);
-  transform: scale(1.08);
+  color: rgba(255, 255, 255, 0.98);
+  background: rgba(255, 255, 255, 0.07);
+  transform: translateX(2px);
+}
+
+.sidebar-nav__link:hover::before {
+  height: 0;
 }
 
 .sidebar-nav__link:focus-visible {
-  outline: 2px solid var(--sidebar-active);
-  outline-offset: 3px;
+  outline: 2px solid rgba(255, 255, 255, 0.35);
+  outline-offset: 2px;
 }
 
-/* Estado activo: círculo azul rey brillante + glow */
+/* Activo: amarillo/dorado como en diseño C&CE CRM */
 .sidebar-nav__link--active {
-  color: #fff;
+  color: var(--sidebar-active-text);
   background: var(--sidebar-active);
-  box-shadow: 0 0 20px var(--sidebar-active-glow),
-              0 0 40px var(--sidebar-active-glow);
-  transform: scale(1.05);
+  box-shadow: 0 4px 16px var(--sidebar-active-glow);
+}
+
+.sidebar-nav__link--active::before {
+  height: 28px;
 }
 
 .sidebar-nav__link--active:hover {
-  transform: scale(1.08);
-  box-shadow: 0 0 24px var(--sidebar-active-glow),
-              0 0 48px var(--sidebar-active-glow);
+  color: var(--sidebar-active-text);
+  background: #f0d900;
+  box-shadow: 0 6px 20px var(--sidebar-active-glow);
+  transform: translateX(0);
 }
 
-/* Wrapper del ícono: posicionamiento para la wave */
 .sidebar-nav__icon-wrap {
   position: relative;
   display: flex;
@@ -147,85 +268,82 @@
   justify-content: center;
   width: 100%;
   height: 100%;
-  border-radius: 50%;
-  transition: background var(--sidebar-duration) ease,
-              box-shadow var(--sidebar-duration) ease;
+  border-radius: inherit;
 }
 
-/* Wave / blob que sale del ícono activo hacia el contenido */
 .sidebar-nav__wave {
   display: none;
-  position: absolute;
-  left: 100%;
-  top: 50%;
-  transform: translateY(-50%);
-  width: var(--sidebar-wave-width);
-  height: 120%;
-  min-height: 56px;
-  background: var(--sidebar-active);
-  border-radius: 0 60% 60% 0;
-  box-shadow: 4px 0 18px var(--sidebar-active-glow);
-  pointer-events: none;
-  z-index: -1;
 }
 
-.sidebar-nav__link--active .sidebar-nav__wave {
-  display: block;
-  animation: sidebar-wave-in var(--sidebar-duration) ease;
-}
-
-@keyframes sidebar-wave-in {
-  from {
-    opacity: 0;
-    transform: translateY(-50%) scaleX(0.5);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(-50%) scaleX(1);
-  }
-}
-
-/* Ícono SVG: tamaño y color */
 .sidebar-nav__icon {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   flex-shrink: 0;
   position: relative;
   z-index: 1;
+  stroke-width: 1.75;
   transition: transform var(--sidebar-duration) ease;
 }
 
-.sidebar-nav__link:hover .sidebar-nav__icon,
-.sidebar-nav__link--active .sidebar-nav__icon {
+.sidebar-nav__link:hover .sidebar-nav__icon {
   transform: scale(1.05);
 }
 
-/* Etiqueta de texto: oculta cuando el menú está colapsado */
+.sidebar-nav__link--active .sidebar-nav__icon {
+  transform: scale(1.02);
+}
+
 .sidebar-nav__label {
   display: block;
   width: 0;
   overflow: hidden;
   opacity: 0;
   white-space: nowrap;
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
   font-weight: 500;
+  letter-spacing: 0.01em;
   margin-left: 0;
-  transition: opacity var(--sidebar-duration) ease,
-              width var(--sidebar-duration) ease,
-              margin-left var(--sidebar-duration) ease;
+  transition: opacity var(--sidebar-duration) ease, width var(--sidebar-duration) ease, margin-left var(--sidebar-duration) ease;
 }
 
-/* --- Menú expandido (al hacer clic en las 3 rayas) --- */
+/* Menú expandido - ancho con nombres y logo más grande */
 .sidebar-layout--expanded .sidebar-nav {
-  width: 220px;
+  width: var(--sidebar-width-expanded);
   align-items: flex-start;
-  padding-left: 0.75rem;
-  padding-right: 0.75rem;
+  padding-left: 0.875rem;
+  padding-right: 0.875rem;
+}
+
+.sidebar-layout--expanded .sidebar-nav__brand {
+  width: 100%;
+  padding: 1.25rem 0 1.75rem;
+  justify-content: center;
+  align-items: center;
+}
+
+.sidebar-layout--expanded .sidebar-nav__brand-img {
+  width: 140px;
+  height: 140px;
+}
+
+.sidebar-layout--expanded .sidebar-nav__welcome {
+  padding: 0 0.875rem 1rem;
+}
+
+.sidebar-layout--expanded .sidebar-nav__footer {
+  padding: 1rem 0.875rem 0.75rem;
+}
+
+.sidebar-layout--expanded .sidebar-nav__logout {
+  padding: 0.625rem 0.75rem;
 }
 
 .sidebar-layout--expanded .sidebar-nav__list {
   align-items: stretch;
   width: 100%;
+  padding: 0;
+  gap: 0;
+  justify-content: space-evenly;
 }
 
 .sidebar-layout--expanded .sidebar-nav__item {
@@ -236,15 +354,22 @@
   width: 100%;
   min-width: 0;
   justify-content: flex-start;
-  padding: 0 0.5rem;
+  padding: 0 0.75rem;
   gap: 0.75rem;
   border-radius: 12px;
 }
 
-/* Mantener el círculo del ícono con tamaño fijo al expandir (no estirar) */
+.sidebar-layout--expanded .sidebar-nav__link::before {
+  height: 0;
+}
+
+.sidebar-layout--expanded .sidebar-nav__link--active::before {
+  height: 28px;
+}
+
 .sidebar-layout--expanded .sidebar-nav__icon-wrap {
-  width: var(--sidebar-icon-size);
-  height: var(--sidebar-icon-size);
+  width: 40px;
+  height: 40px;
   flex-shrink: 0;
 }
 
@@ -255,65 +380,510 @@
 }
 
 .sidebar-layout--expanded .sidebar-layout__main {
-  margin-left: 220px;
+  margin-left: calc(var(--sidebar-width-expanded) + 32px);
 }
 
-/* Espacio reservado para el contenido principal (evitar solapamiento con sidebar) */
-.sidebar-layout {
-  display: flex;
-  min-height: 100vh;
-  width: 100%;
-}
-
+/* Área principal: margen por sidebar flotante, fondo blanco (clase bg-white en layout) */
 .sidebar-layout__main {
   flex: 1;
-  margin-left: var(--sidebar-width);
+  margin-left: calc(var(--sidebar-width) + 32px);
   min-height: 100vh;
-  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
-  border-radius: 24px 0 0 24px;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
 }
 
+/* Encabezado de página con degradado azul */
+/* Barra superior: mismo diseño que contenedores (degradado, esquinas redondeadas, centrada) */
+.top-bar-gradient {
+  background: linear-gradient(145deg, #1e4976 0%, #1a3d6b 50%, #0f2744 100%);
+  box-shadow: 0 4px 20px rgba(30, 73, 118, 0.4);
+}
 
-/* Responsive: mantener proporciones en pantallas pequeñas */
-/* Títulos del header legibles sobre fondo oscuro (prioridad sobre utilidades en el slot) */
-.sidebar-layout__main .sidebar-layout__header,
-.sidebar-layout__main .sidebar-layout__header h1,
-.sidebar-layout__main .sidebar-layout__header h2,
-.sidebar-layout__main .sidebar-layout__header h3 {
-  color: #f1f5f9 !important;
+.top-bar-gradient__slogan {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-accent);
+  margin: 0;
+  letter-spacing: 0.02em;
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .top-bar-gradient__slogan {
+    font-size: 1rem;
+  }
+}
+
+.sidebar-layout__header {
+  background: linear-gradient(135deg, #1a3d6b 0%, #1e4976 40%, #234b7a 100%);
+  box-shadow: 0 2px 12px rgba(26, 61, 107, 0.25);
+}
+
+.sidebar-layout__header .view-header__title {
+  color: #fff;
+}
+
+.sidebar-layout__header .view-header__subtitle {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Icono amarillo en header (ej. Panel principal) */
+.sidebar-layout__header .view-header__icon--accent,
+.view-header__icon--accent {
+  background: rgba(255, 230, 0, 0.2);
+  color: var(--color-accent);
+}
+
+.sidebar-layout__header .view-header__icon--accent svg,
+.view-header__icon--accent svg {
+  color: inherit;
+}
+
+/* Saludo Bienvenido administrador en amarillo */
+.page-header-greeting {
+  color: var(--color-accent);
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
 }
 
 @media (max-width: 640px) {
   :root {
     --sidebar-width: 64px;
     --sidebar-icon-size: 40px;
-    --sidebar-wave-width: 16px;
   }
-
   .sidebar-nav {
-    border-radius: 0 16px 16px 0;
+    left: 8px;
+    top: 8px;
+    bottom: 8px;
+    border-radius: 16px;
+    padding: 1rem 0;
   }
-
   .sidebar-nav__brand-img {
-    width: 48px;
-    height: 48px;
+    width: 44px;
+    height: 44px;
   }
-
+  .sidebar-nav__list {
+    gap: 0.375rem;
+    padding: 0 0.375rem;
+  }
+  .sidebar-nav__link {
+    border-radius: 12px;
+  }
   .sidebar-nav__icon {
-    width: 22px;
-    height: 22px;
+    width: 20px;
+    height: 20px;
   }
-
   .sidebar-layout__main {
-    margin-left: 64px;
-    border-radius: 16px 0 0 16px;
+    margin-left: calc(64px + 16px);
   }
 }
 
-/* ==========================================================================
-   Dropdown usuario (menú Perfil / Cerrar Sesión) - estilo pro
-   ========================================================================== */
+/* --------------------------------------------------------------------------
+   CARDS - Bordes muy redondeados, diseño C&CE CRM
+   -------------------------------------------------------------------------- */
+.view-card,
+.card {
+  background: #ffffff;
+  border-radius: var(--radius-card);
+  border: 1px solid rgba(0, 51, 102, 0.08);
+  padding: 1.5rem 1.75rem;
+  box-shadow:
+    0 1px 3px rgba(0, 51, 102, 0.04),
+    0 6px 20px rgba(0, 51, 102, 0.06);
+  transition: box-shadow 0.25s ease, border-color 0.25s ease, transform 0.2s ease;
+}
+
+.view-card:hover,
+.card:hover {
+  box-shadow:
+    0 2px 6px rgba(0, 51, 102, 0.05),
+    0 12px 28px rgba(0, 51, 102, 0.08);
+  border-color: rgba(0, 51, 102, 0.12);
+}
+
+/* --------------------------------------------------------------------------
+   TARJETAS DE MÉTRICAS OSCURAS - Panel principal (azul marino, ícono dorado)
+   -------------------------------------------------------------------------- */
+.metric-card-dark {
+  background: linear-gradient(145deg, #1e4976 0%, #1a3d6b 50%, #0f2744 100%);
+  border-radius: var(--radius-card);
+  padding: 1.5rem 1.75rem;
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(30, 73, 118, 0.4);
+  transition: box-shadow 0.25s ease, transform 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.metric-card-dark:hover {
+  box-shadow: 0 8px 28px rgba(30, 73, 118, 0.5);
+  transform: translateY(-2px);
+}
+
+.metric-card-dark__label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 0.25rem;
+}
+
+.metric-card-dark__value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.2;
+}
+
+.metric-card-dark__value::after {
+  content: '';
+  display: block;
+  width: 100%;
+  height: 2px;
+  margin-top: 0.5rem;
+  border-radius: 9999px;
+  background: var(--color-accent);
+}
+
+.metric-card-dark__icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 230, 0, 0.2);
+  color: var(--color-accent);
+}
+
+.metric-card-dark--highlight::after {
+  content: '';
+  position: absolute;
+  left: 1.5rem;
+  right: 1.5rem;
+  bottom: 1.25rem;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--color-accent);
+}
+
+/* Paneles azul más claro (Últimas empresas, Próximos seguimientos, Estado de prospectos) */
+.panel-card-dark {
+  background: linear-gradient(145deg, #1e4976 0%, #1a3d6b 50%, #0f2744 100%);
+  border-radius: var(--radius-card);
+  padding: 1.5rem 1.75rem;
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(30, 73, 118, 0.4);
+}
+
+.panel-card-dark__title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 2rem;
+}
+
+/* Título con más espacio abajo (ej. Estado de prospectos) */
+.panel-card-dark__title--spaced {
+  margin-bottom: 2.5rem;
+}
+
+/* Subrayado amarillo bajo títulos de secciones */
+.section-title-underline {
+  position: relative;
+  padding-bottom: 0.35rem;
+}
+
+.section-title-underline::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 64px;
+  height: 2px;
+  border-radius: 9999px;
+  background: var(--color-accent);
+}
+
+.panel-card-dark__link {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  transition: color 0.2s ease;
+}
+
+.panel-card-dark__link:hover {
+  color: var(--color-accent);
+}
+
+.panel-card-dark .panel-card-dark__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+  text-decoration: none;
+  transition: background 0.2s ease;
+}
+
+.panel-card-dark .panel-card-dark__item:last-child {
+  border-bottom: none;
+}
+
+.panel-card-dark .panel-card-dark__item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-panel);
+}
+
+.panel-card-dark__item-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 230, 0, 0.2);
+  color: var(--color-accent);
+  flex-shrink: 0;
+}
+
+.panel-card-dark__item-name {
+  font-weight: 500;
+  color: #fff;
+}
+
+.panel-card-dark__item-meta {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* --------------------------------------------------------------------------
+   TARJETAS DE MÉTRICAS (claras - para listados secundarios)
+   -------------------------------------------------------------------------- */
+.metric-card {
+  background: #ffffff;
+  border-radius: var(--radius-card);
+  border: 1px solid rgba(0, 51, 102, 0.08);
+  padding: 1.5rem 1.75rem;
+  box-shadow:
+    0 1px 3px rgba(0, 51, 102, 0.04),
+    0 6px 20px rgba(0, 51, 102, 0.06);
+  transition: box-shadow 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
+}
+
+.metric-card:hover {
+  box-shadow:
+    0 2px 8px rgba(0, 51, 102, 0.06),
+    0 14px 32px rgba(0, 51, 102, 0.09);
+  border-color: rgba(0, 51, 102, 0.12);
+  transform: translateY(-2px);
+}
+
+.metric-card__icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 51, 102, 0.08);
+  color: #003366;
+}
+
+.metric-card__label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6B7280;
+  margin-bottom: 0.25rem;
+}
+
+.metric-card__value {
+  font-size: 28px;
+  font-weight: 600;
+  color: #1F2937;
+  line-height: 1.2;
+}
+
+/* --------------------------------------------------------------------------
+   SEMÁFORO - Fondos pastel (sin bordes ni colores saturados)
+   -------------------------------------------------------------------------- */
+.badge-semaphore-verde,
+.semaphore-verde {
+  background: #F0FDF4;
+  color: #15803D;
+}
+
+.badge-semaphore-amarillo,
+.semaphore-amarillo {
+  background: #FEF9C3;
+  color: #CA8A04;
+}
+
+.badge-semaphore-rojo,
+.semaphore-rojo {
+  background: #FEF2F2;
+  color: #B91C1C;
+}
+
+/* Círculo indicador pequeño (listas/tablas) */
+.dot-semaphore-verde { background: #15803D; }
+.dot-semaphore-amarillo { background: #CA8A04; }
+.dot-semaphore-rojo { background: #B91C1C; }
+
+/* --------------------------------------------------------------------------
+   VIEW HEADER - Títulos de página (sobre fondo claro)
+   -------------------------------------------------------------------------- */
+.view-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.view-header__icon {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: var(--radius-panel);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: rgba(0, 51, 102, 0.08);
+  color: #003366;
+}
+
+.view-header__icon svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.view-header__title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1F2937;
+  line-height: 1.3;
+}
+
+.view-header__subtitle {
+  font-size: 0.875rem;
+  color: #6B7280;
+  margin-top: 0.125rem;
+}
+
+/* --------------------------------------------------------------------------
+   BOTONES - Con presencia, bordes redondeados, sombra y hover suave
+   -------------------------------------------------------------------------- */
+.btn-primary-app {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0 1.5rem;
+  height: 44px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: #003366;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow:
+    0 1px 3px rgba(0, 51, 102, 0.2),
+    0 4px 12px rgba(0, 51, 102, 0.15);
+  transition: background 0.22s ease, box-shadow 0.22s ease, transform 0.22s ease;
+}
+
+.btn-primary-app:hover {
+  background: #000099;
+  color: #ffffff;
+  box-shadow:
+    0 2px 6px rgba(0, 0, 153, 0.25),
+    0 6px 20px rgba(0, 0, 153, 0.2);
+  transform: translateY(-1px);
+}
+
+.btn-primary-app:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 3px rgba(0, 51, 102, 0.2);
+}
+
+.btn-primary-app:focus {
+  outline: none;
+  box-shadow:
+    0 1px 3px rgba(0, 51, 102, 0.2),
+    0 4px 12px rgba(0, 51, 102, 0.15),
+    0 0 0 3px rgba(0, 51, 102, 0.25);
+}
+
+.btn-primary-app:focus:hover {
+  box-shadow:
+    0 2px 6px rgba(0, 0, 153, 0.25),
+    0 6px 20px rgba(0, 0, 153, 0.2),
+    0 0 0 3px rgba(0, 0, 153, 0.3);
+}
+
+.btn-primary-app svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+}
+
+/* Botón secundario / CTA (ámbar) - misma presencia y redondeado */
+.btn-amber-app {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0 1.5rem;
+  height: 44px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #003366;
+  background: #FFE600;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow:
+    0 1px 3px rgba(180, 150, 0, 0.2),
+    0 4px 12px rgba(255, 230, 0, 0.2);
+  transition: background 0.22s ease, box-shadow 0.22s ease, transform 0.22s ease, color 0.22s ease;
+}
+
+.btn-amber-app:hover {
+  background: #f0d900;
+  color: #000836;
+  box-shadow:
+    0 2px 6px rgba(180, 150, 0, 0.3),
+    0 6px 20px rgba(255, 230, 0, 0.25);
+  transform: translateY(-1px);
+}
+
+.btn-amber-app:active {
+  transform: translateY(0);
+}
+
+.btn-amber-app:focus {
+  outline: none;
+  box-shadow:
+    0 1px 3px rgba(180, 150, 0, 0.2),
+    0 4px 12px rgba(255, 230, 0, 0.2),
+    0 0 0 3px rgba(255, 230, 0, 0.35);
+}
+
+.btn-amber-app svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+}
+
+/* --------------------------------------------------------------------------
+   DROPDOWN USUARIO (Perfil / Cerrar sesión)
+   -------------------------------------------------------------------------- */
 .dropdown-item-pro {
   display: flex;
   align-items: center;
@@ -322,137 +892,82 @@
   padding: 0.625rem 1rem;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #1f2937;
+  color: #F9FAFB;
   text-align: left;
   border-left: 3px solid transparent;
   transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
+
 .dropdown-item-pro svg {
   flex-shrink: 0;
-  vertical-align: middle;
-}
-.dropdown-item-pro span {
-  line-height: 1.25;
-  display: inline-block;
-  vertical-align: middle;
-}
-.dropdown-item-pro:hover {
-  background-color: rgba(251, 191, 36, 0.08);
-  border-left-color: #E6B800;
-  color: #111827;
-}
-.dropdown-item-pro--danger:hover {
-  background-color: rgba(239, 68, 68, 0.08);
-  border-left-color: #ef4444;
-  color: #b91c1c;
-}
-.dark .dropdown-item-pro {
-  color: #e5e7eb;
-}
-.dark .dropdown-item-pro:hover {
-  background-color: rgba(251, 191, 36, 0.12);
-  color: #fff;
-}
-.dark .dropdown-item-pro--danger:hover {
-  background-color: rgba(239, 68, 68, 0.15);
-  color: #fca5a5;
+  color: #E5E7EB;
 }
 
-/* ==========================================================================
-   Estilo unificado para todas las vistas: icono + texto, tarjetas
-   ========================================================================== */
+.dropdown-item-pro:hover {
+  background-color: rgba(255, 230, 0, 0.08);
+  border-left-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.dropdown-item-pro--danger:hover {
+  background-color: #FEF2F2;
+  border-left-color: #B91C1C;
+  color: #B91C1C;
+}
+
+/* Icono de Cerrar sesión siempre gris; solo el texto cambia en hover */
+.dropdown-item-pro--danger svg,
+.dropdown-item-pro--danger:hover svg {
+  color: #E5E7EB !important;
+}
+
+/* --------------------------------------------------------------------------
+   UTILIDADES
+   -------------------------------------------------------------------------- */
 .btn-icon-text {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
 }
+
 .btn-icon-text svg {
   flex-shrink: 0;
 }
-.view-card {
-  background: #fff;
-  border-radius: 1rem;
-  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.05), 0 8px 10px -6px rgb(0 0 0 / 0.05);
-  border: 1px solid rgb(243 244 246);
-  border-left-width: 4px;
-  border-left-color: #E6B800;
-  overflow: hidden;
-  transition: box-shadow 0.2s ease;
-}
-.view-card:hover {
-  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.08);
-}
-.view-header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-.view-header__icon {
-  width: 2.75rem;
-  height: 2.75rem;
-  border-radius: 0.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  background: rgba(230, 184, 0, 0.12);
-}
-.view-header__icon svg {
-  width: 1.25rem;
-  height: 1.25rem;
-  color: #003366;
-}
-.view-header__title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #003366;
-  line-height: 1.3;
-}
-.view-header__subtitle {
-  font-size: 0.875rem;
-  color: #6b7280;
-  margin-top: 0.125rem;
-}
-.btn-primary-app {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #fff;
+
+/* Tablas: cabecera corporativa suave (no negro) */
+.table-header-corporate {
   background: #003366;
-  border-radius: 0.75rem;
-  box-shadow: 0 4px 6px -1px rgb(0 51 102 / 0.2);
-  transition: background 0.2s, box-shadow 0.2s;
+  color: #fff;
 }
-.btn-primary-app:hover {
-  background: #000836;
-  box-shadow: 0 10px 15px -3px rgb(0 51 102 / 0.25);
-}
-.btn-primary-app svg {
-  width: 1.25rem;
-  height: 1.25rem;
-  flex-shrink: 0;
-}
-.btn-amber-app {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
+
+.table-header-corporate th {
   font-weight: 600;
+  font-size: 0.75rem;
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+}
+
+/* Inputs: focus con azul corporativo */
+.input-focus-corporate:focus {
+  border-color: #003366;
+  box-shadow: 0 0 0 3px rgba(0, 51, 102, 0.1);
+}
+
+/* Paginación Laravel - estilo corporativo */
+nav[aria-label="Pagination"] a,
+nav[aria-label="Pagination"] span {
+  color: #1F2937;
+  border-color: var(--color-border);
+}
+
+nav[aria-label="Pagination"] a:hover {
+  background: var(--color-bg);
+  border-color: var(--color-border);
   color: #003366;
-  background: #FFFF00;
-  border-radius: 0.75rem;
-  transition: background 0.2s, filter 0.2s;
 }
-.btn-amber-app:hover {
-  background: #facc15;
-  filter: brightness(1.02);
-}
-.btn-amber-app svg {
-  width: 1.25rem;
-  height: 1.25rem;
-  flex-shrink: 0;
+
+nav[aria-label="Pagination"] span[aria-current="page"] span {
+  background: #003366;
+  border-color: #003366;
+  color: #fff;
 }

@@ -7,6 +7,7 @@ use App\Http\Controllers\ContactController;
 use App\Http\Controllers\FollowUpController;
 use App\Http\Controllers\ApprovalController;
 use App\Http\Controllers\UserDashboardController;
+use App\Http\Controllers\DataManagementController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -46,6 +47,15 @@ Route::middleware(['auth', 'verified', 'ensure.role'])->group(function () {
 
     Route::resource('follow-ups', FollowUpController::class);
     Route::post('/follow-ups/{followUp}/complete', [FollowUpController::class, 'complete'])->name('follow-ups.complete');
+
+    // Gestión de Datos (visualización para todos, edición con permisos)
+    Route::get('/data-management', [DataManagementController::class, 'index'])->name('data-management.index');
+    Route::get('/data-management/contacts/{contact}', [DataManagementController::class, 'getContact'])->name('data-management.contacts.show');
+    Route::put('/data-management/contacts/{contact}', [DataManagementController::class, 'updateContact'])->name('data-management.contacts.update');
+    Route::delete('/data-management/contacts/{contact}', [DataManagementController::class, 'destroyContact'])->name('data-management.contacts.destroy');
+    Route::get('/data-management/companies/{company}', [DataManagementController::class, 'getCompany'])->name('data-management.companies.show');
+    Route::put('/data-management/companies/{company}', [DataManagementController::class, 'updateCompany'])->name('data-management.companies.update');
+    Route::delete('/data-management/companies/{company}', [DataManagementController::class, 'destroyCompany'])->name('data-management.companies.destroy');
 });
 
 // Rutas exclusivas de Administrador (dashboard global, aprobaciones, descargas)
@@ -59,6 +69,13 @@ Route::middleware(['auth', 'verified', 'ensure.role', 'admin'])->group(function 
         Route::post('/companies/{company}/approve', [ApprovalController::class, 'approveCompany'])->name('companies.approve');
         Route::get('/users', [ApprovalController::class, 'users'])->name('users');
         Route::post('/users/{user}/approve', [ApprovalController::class, 'approveUser'])->name('users.approve');
+    });
+
+    // Gestión de Datos - Funciones exclusivas de Admin (Exportar/Importar)
+    Route::prefix('data-management')->name('data-management.')->group(function () {
+        Route::get('/tables', [DataManagementController::class, 'getTables'])->name('tables');
+        Route::post('/export', [DataManagementController::class, 'export'])->name('export');
+        Route::post('/import', [DataManagementController::class, 'import'])->name('import');
     });
 });
 

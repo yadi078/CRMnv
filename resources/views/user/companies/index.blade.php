@@ -33,7 +33,7 @@
             </div>
             @endif
             <div class="view-card p-6">
-                <p class="text-gris text-sm mb-4">Las empresas que agregue quedarán en estado <span class="font-semibold text-amber-700">Pendiente</span> hasta que un administrador las apruebe. Estatus con colores tipo semáforo.</p>
+                <p class="text-[#6B7280] text-sm mb-4">Las empresas que agregue quedarán en estado <span class="font-semibold text-amber-700">Pendiente</span> hasta que un administrador las apruebe. Estatus con colores tipo semáforo.</p>
                 <form method="GET" action="{{ route('companies.index') }}" class="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
                     <input type="text" name="search" value="{{ request('search') }}" placeholder="Buscar por nombre, RFC o ejecutivo..." class="rounded-xl border-gray-300 shadow-sm focus:border-amarillo focus:ring-2 focus:ring-amber-400/20 py-2">
                     <select name="status_color" class="rounded-xl border-gray-300 shadow-sm focus:border-amarillo focus:ring-2 focus:ring-amber-400/20 py-2">

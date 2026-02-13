@@ -22,7 +22,7 @@
                     </svg>
                 </div>
                 <h3 class="text-lg font-semibold text-azul-fuerte mb-2">Módulo en preparación</h3>
-                <p class="text-gris mb-6">Aquí podrás editar la información de los cursos vendidos para mantener el historial comercial actualizado. Esta función estará disponible próximamente.</p>
+                <p class="text-[#6B7280] mb-6">Aquí podrás editar la información de los cursos vendidos para mantener el historial comercial actualizado. Esta función estará disponible próximamente.</p>
                 <a href="{{ route('user.dashboard') }}" class="btn-amber-app inline-flex items-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />

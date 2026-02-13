@@ -60,15 +60,15 @@ class RolePermissionSeeder extends Seeder
         ];
 
         foreach ($permissions as $permission) {
-            Permission::create(['name' => $permission]);
+            Permission::firstOrCreate(['name' => $permission]);
         }
 
         // Crear rol Admin con todos los permisos
-        $adminRole = Role::create(['name' => 'admin']);
-        $adminRole->givePermissionTo(Permission::all());
+        $adminRole = Role::firstOrCreate(['name' => 'admin']);
+        $adminRole->syncPermissions(Permission::all());
 
         // Crear rol Usuario con permisos limitados
-        $userRole = Role::create(['name' => 'usuario']);
+        $userRole = Role::firstOrCreate(['name' => 'usuario']);
         $userRole->givePermissionTo([
             'companies.view',
             'companies.create',

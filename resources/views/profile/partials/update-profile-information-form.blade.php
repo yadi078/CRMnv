@@ -29,7 +29,7 @@
                 id="name"
                 name="name"
                 type="text"
-                class="block w-full rounded-xl border-gray-300 shadow-sm focus:border-amarillo focus:ring-2 focus:ring-amber-400/30 py-2.5 transition"
+                class="block w-full rounded-xl border-[#E2E8F0] shadow-sm focus:border-[#003366] focus:ring-2 focus:ring-[#003366]/10 py-2.5 transition"
                 :value="old('name', $user->name)"
                 required
                 autofocus
@@ -44,7 +44,7 @@
                 id="email"
                 name="email"
                 type="email"
-                class="block w-full rounded-xl border-gray-300 shadow-sm focus:border-amarillo focus:ring-2 focus:ring-amber-400/30 py-2.5 transition"
+                class="block w-full rounded-xl border-[#E2E8F0] shadow-sm focus:border-[#003366] focus:ring-2 focus:ring-[#003366]/10 py-2.5 transition"
                 :value="old('email', $user->email)"
                 required
                 autocomplete="username"
@@ -55,7 +55,7 @@
                 <div class="mt-3 p-4 rounded-xl bg-amber-50 border border-amber-200/80">
                     <p class="text-sm text-amber-900">
                         Tu correo electrónico no está verificado.
-                        <button form="send-verification" type="submit" class="font-medium text-azul-fuerte hover:text-azul-bright underline underline-offset-2 rounded focus:outline-none focus:ring-2 focus:ring-amber-400/50">
+                        <button form="send-verification" type="submit" class="font-medium text-azul-fuerte hover:text-azul-bright underline underline-offset-2 rounded focus:outline-none focus:ring-2 focus:ring-[#003366]/20">
                             Reenviar correo de verificación
                         </button>
                     </p>
