@@ -1,0 +1,92 @@
+<?php
+
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\ContactController;
+use App\Http\Controllers\FollowUpController;
+use App\Http\Controllers\ApprovalController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\UserDashboardController;
+use App\Http\Controllers\DataManagementController;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
+
+// Redirección raíz: invitados → login; autenticados → dashboard según rol
+Route::get('/', function () {
+    if (! Auth::check()) {
+        return redirect()->route('login');
+    }
+    return Auth::user()->esAdmin()
+        ? redirect()->route('dashboard')
+        : redirect()->route('user.dashboard');
+});
+
+// Rutas accesibles por cualquier usuario autenticado (admin y usuario normal)
+Route::middleware(['auth', 'verified', 'ensure.role'])->group(function () {
+    // Vista de Usuario (panel para rol usuario)
+    Route::get('/user/dashboard', [UserDashboardController::class, 'index'])->name('user.dashboard');
+
+    // Historial de Ventas (solo usuario normal; admin no usa esta ruta)
+    Route::get('/user/historial-ventas', function () {
+        if (Auth::user()->esAdmin()) {
+            return redirect()->route('dashboard');
+        }
+        return view('user.sales.index');
+    })->name('user.sales.index');
+
+    // Perfil (compartido)
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Empresas, Contactos y Seguimientos (usuario: captura, consulta, seguimiento; admin: además aprobaciones)
+    Route::resource('companies', CompanyController::class);
+    Route::post('/companies/check-duplicates', [CompanyController::class, 'checkDuplicates'])->name('companies.check-duplicates');
+
+    Route::resource('contacts', ContactController::class);
+
+    Route::resource('follow-ups', FollowUpController::class);
+    Route::post('/follow-ups/{followUp}/complete', [FollowUpController::class, 'complete'])->name('follow-ups.complete');
+
+    // Gestión de Datos (visualización para todos, edición con permisos)
+    Route::get('/data-management', [DataManagementController::class, 'index'])->name('data-management.index');
+    Route::get('/data-management/contacts/{contact}', [DataManagementController::class, 'getContact'])->name('data-management.contacts.show');
+    Route::put('/data-management/contacts/{contact}', [DataManagementController::class, 'updateContact'])->name('data-management.contacts.update');
+    Route::delete('/data-management/contacts/{contact}', [DataManagementController::class, 'destroyContact'])->name('data-management.contacts.destroy');
+    Route::get('/data-management/companies/{company}', [DataManagementController::class, 'getCompany'])->name('data-management.companies.show');
+    Route::put('/data-management/companies/{company}', [DataManagementController::class, 'updateCompany'])->name('data-management.companies.update');
+    Route::delete('/data-management/companies/{company}', [DataManagementController::class, 'destroyCompany'])->name('data-management.companies.destroy');
+});
+
+// Rutas exclusivas de Administrador (dashboard global, aprobaciones, descargas)
+Route::middleware(['auth', 'verified', 'ensure.role', 'admin'])->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/notifications/{notification}', [NotificationController::class, 'show'])->name('notifications.show');
+    Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
+    Route::post('/notifications/{notification}/star', [NotificationController::class, 'star'])->name('notifications.star');
+    Route::post('/notifications/{notification}/unstar', [NotificationController::class, 'unstar'])->name('notifications.unstar');
+    Route::delete('/notifications/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
+
+    Route::get('/contacts/{contact}/pdf', [ContactController::class, 'generatePdf'])->name('contacts.pdf');
+
+    Route::prefix('approvals')->name('approvals.')->group(function () {
+        Route::get('/companies', [ApprovalController::class, 'companies'])->name('companies');
+        Route::post('/companies/{company}/approve', [ApprovalController::class, 'approveCompany'])->name('companies.approve');
+        Route::get('/users', [ApprovalController::class, 'users'])->name('users');
+        Route::post('/users/{user}/approve', [ApprovalController::class, 'approveUser'])->name('users.approve');
+    });
+
+    // Gestión de Datos - Funciones exclusivas de Admin (Exportar/Importar)
+    Route::prefix('data-management')->name('data-management.')->group(function () {
+        Route::get('/tables', [DataManagementController::class, 'getTables'])->name('tables');
+        Route::post('/export', [DataManagementController::class, 'export'])->name('export');
+        Route::post('/import', [DataManagementController::class, 'import'])->name('import');
+    });
+});
+
+require __DIR__.'/auth.php';
