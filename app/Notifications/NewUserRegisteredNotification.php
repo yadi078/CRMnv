@@ -6,7 +6,7 @@ use App\Models\User;
 use Illuminate\Notifications\Notification;
 
 class NewUserRegisteredNotification extends Notification
-
+{
     public function __construct(
         public User $registeredUser
     ) {}
