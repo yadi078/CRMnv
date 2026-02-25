@@ -27,6 +27,7 @@ class FollowUp extends Model
         'bitacora_notas',
         'completado',
         'completado_at',
+        'notification_sent_at',
         'created_by',
         'asignado_a',
     ];
@@ -40,6 +41,7 @@ class FollowUp extends Model
             'fecha_alarma' => 'datetime',
             'completado' => 'boolean',
             'completado_at' => 'datetime',
+            'notification_sent_at' => 'datetime',
         ];
     }
 

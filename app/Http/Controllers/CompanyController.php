@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\Log;
 class CompanyController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Mostrar listado del recurso.
      */
     public function index(Request $request)
     {
@@ -61,7 +61,7 @@ class CompanyController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Mostrar formulario para crear un nuevo recurso.
      */
     public function create()
     {
@@ -88,13 +88,13 @@ class CompanyController extends Controller
 
             $company = Company::create([
                 'nombre_comercial' => $request->nombre_comercial,
-                'rfc' => strtoupper($request->rfc),
+                'rfc' => $request->filled('rfc') ? strtoupper($request->rfc) : null,
                 'sector' => $request->sector,
                 'municipio' => $request->municipio,
                 'estado' => $request->estado,
                 'ejecutivo_asignado' => $request->ejecutivo_asignado,
                 'datos_fiscales' => $request->datos_fiscales,
-                'status_color' => $request->status_color ?? 'amarillo',
+                'status_color' => $request->status_color ?? 'seguimiento',
                 'approval_status' => $approvalStatus,
                 'created_by' => $user->id,
                 'approved_by' => $approvalStatus === 'aprobado' ? $user->id : null,
@@ -135,7 +135,7 @@ class CompanyController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * Mostrar el recurso especificado.
      */
     public function show(Company $company)
     {
@@ -150,7 +150,7 @@ class CompanyController extends Controller
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Mostrar formulario para editar el recurso especificado.
      */
     public function edit(Company $company)
     {
@@ -163,7 +163,7 @@ class CompanyController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Actualizar el recurso especificado en el almacenamiento.
      */
     public function update(UpdateCompanyRequest $request, Company $company)
     {
@@ -171,7 +171,7 @@ class CompanyController extends Controller
         try {
             $company->update([
                 'nombre_comercial' => $request->nombre_comercial,
-                'rfc' => strtoupper($request->rfc),
+                'rfc' => $request->filled('rfc') ? strtoupper($request->rfc) : null,
                 'sector' => $request->sector,
                 'municipio' => $request->municipio,
                 'estado' => $request->estado,
@@ -179,9 +179,6 @@ class CompanyController extends Controller
                 'datos_fiscales' => $request->datos_fiscales,
                 'status_color' => $request->status_color ?? $company->status_color,
             ]);
-
-            // Actualizar semáforo automáticamente
-            $company->actualizarSemáforo();
 
             DB::commit();
 
@@ -197,8 +194,8 @@ class CompanyController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
-     * Solo administradores pueden borrar definitivamente
+     * Eliminar el recurso especificado del almacenamiento.
+     * Solo administradores pueden borrar definitivamente.
      */
     public function destroy(Company $company)
     {

@@ -15,6 +15,20 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="font-sans text-gray-900 antialiased bg-[#808080]">
+        {{-- Alertas flotantes (login, forgot-password, verify-email) --}}
+        @if(session('success'))
+            <x-alert type="success" :message="session('success')" />
+        @elseif(session('error'))
+            <x-alert type="error" :message="session('error')" />
+        @elseif(session('status'))
+            @php
+                $statusMsg = match(session('status')) {
+                    'verification-link-sent' => 'Se ha enviado un nuevo enlace de verificación a tu correo.',
+                    default => is_string(session('status')) ? session('status') : 'Listo.',
+                };
+            @endphp
+            <x-alert type="success" :message="$statusMsg" />
+        @endif
         <div class="min-h-screen flex items-center justify-center px-4 py-8">
             <div class="w-full max-w-5xl">
                 {{ $slot }}

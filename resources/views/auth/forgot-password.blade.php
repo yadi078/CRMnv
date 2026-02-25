@@ -10,9 +10,6 @@
         ¿Olvidaste tu contraseña? Indica tu correo electrónico y te enviaremos un enlace para elegir una nueva.
     </div>
 
-    <!-- Session Status -->
-    <x-auth-session-status class="mb-4" :status="session('status')" />
-
     <form method="POST" action="{{ route('password.email') }}">
         @csrf
 

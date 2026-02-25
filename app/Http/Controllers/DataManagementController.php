@@ -86,7 +86,7 @@ class DataManagementController extends Controller
             'estado' => 'nullable|string|max:255',
             'ejecutivo_asignado' => 'nullable|string|max:255',
             'datos_fiscales' => 'nullable|string',
-            'status_color' => 'sometimes|in:verde,amarillo,rojo',
+            'status_color' => 'sometimes|in:seguimiento,interesado,si_le_interesa_nos_llaman_o_no_compro,vendido,no_estaba',
         ]);
         $company->update($validated);
         return response()->json(['success' => true, 'company' => $company->fresh()]);

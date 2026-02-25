@@ -42,17 +42,25 @@
                     </div>
                 @endisset
 
+                {{-- Mensajes flash flotantes --}}
                 @if(session('success'))
                     <x-alert type="success" :message="session('success')" />
-                @endif
-                @if(session('error'))
+                @elseif(session('error'))
                     <x-alert type="error" :message="session('error')" />
-                @endif
-                @if(session('warning'))
+                @elseif(session('warning'))
                     <x-alert type="warning" :message="session('warning')" />
-                @endif
-                @if(session('info'))
+                @elseif(session('info'))
                     <x-alert type="info" :message="session('info')" />
+                @elseif(session('status'))
+                    @php
+                        $statusMsg = match(session('status')) {
+                            'profile-updated' => 'Perfil actualizado correctamente.',
+                            'password-updated' => 'Contraseña actualizada correctamente.',
+                            'verification-link-sent' => 'Se ha enviado un nuevo enlace de verificación a tu correo.',
+                            default => session('status'),
+                        };
+                    @endphp
+                    <x-alert type="success" :message="$statusMsg" />
                 @endif
 
                 <main class="flex-1 p-4 sm:p-6 md:p-8 pt-[calc(2.75rem+1rem)] lg:pt-8 min-w-0 overflow-x-hidden">

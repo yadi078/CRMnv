@@ -28,7 +28,7 @@
             <a
                 href="{{ route('dashboard') }}"
                 class="sidebar-nav__link {{ request()->routeIs('dashboard') ? 'sidebar-nav__link--active' : '' }}"
-                aria-label="Dashboard"
+                aria-label="Panel"
                 aria-current="{{ request()->routeIs('dashboard') ? 'page' : false }}"
             >
                 <span class="sidebar-nav__icon-wrap">
@@ -37,14 +37,14 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                     </svg>
                 </span>
-                <span class="sidebar-nav__label">Dashboard</span>
+                <span class="sidebar-nav__label">Panel</span>
             </a>
         </li>
 
         <li class="sidebar-nav__item">
             <a
                 href="{{ route('companies.index') }}"
-                class="sidebar-nav__link {{ request()->routeIs('companies.*') ? 'sidebar-nav__link--active' : '' }}"
+                class="sidebar-nav__link sidebar-nav__link--icon-accent-when-active {{ request()->routeIs('companies.*') ? 'sidebar-nav__link--active' : '' }}"
                 aria-label="Empresas"
                 aria-current="{{ request()->routeIs('companies.*') ? 'page' : false }}"
             >
@@ -94,6 +94,23 @@
 
         <li class="sidebar-nav__item">
             <a
+                href="{{ route('approvals.index') }}"
+                class="sidebar-nav__link {{ request()->routeIs('approvals.*') ? 'sidebar-nav__link--active' : '' }}"
+                aria-label="Solicitudes pendientes"
+                aria-current="{{ request()->routeIs('approvals.*') ? 'page' : false }}"
+            >
+                <span class="sidebar-nav__icon-wrap">
+                    <span class="sidebar-nav__wave" aria-hidden="true"></span>
+                    <svg class="sidebar-nav__icon" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                </span>
+                <span class="sidebar-nav__label">Solicitudes pendientes</span>
+            </a>
+        </li>
+
+        <li class="sidebar-nav__item">
+            <a
                 href="{{ route('notifications.index') }}"
                 class="sidebar-nav__link {{ request()->routeIs('notifications.*') ? 'sidebar-nav__link--active' : '' }}"
                 aria-label="Notificaciones"
@@ -107,7 +124,11 @@
                 </span>
                 <span class="sidebar-nav__label">Notificaciones</span>
                 @php
-                    $unread = auth()->user()->unreadNotifications->count();
+                    try {
+                        $unread = auth()->user()->unreadNotifications->count();
+                    } catch (\Throwable $e) {
+                        $unread = 0;
+                    }
                     $display = $unread > 99 ? '99+' : $unread;
                 @endphp
                 <span id="sidebar-notification-badge-wrap" class="ml-1 inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full text-xs font-bold bg-red-500 text-white shadow-sm" style="{{ $unread > 0 ? '' : 'display: none;' }}">

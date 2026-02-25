@@ -1,106 +1,114 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex justify-between items-center flex-wrap gap-4">
-            <div class="view-header">
-                <div class="view-header__icon">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                    </svg>
-                </div>
-                <div>
-                    <h2 class="view-header__title">Notificaciones</h2>
-                    <p id="notifications-header-subtitle" class="view-header__subtitle">
-                        @if($unreadCount > 0)
-                            <span class="font-semibold text-amber-600" data-unread-badge>{{ $unreadCount }} sin leer</span>
-                        @else
-                            Centro de notificaciones
-                        @endif
-                    </p>
-                </div>
-            </div>
-            <div class="flex items-center gap-3">
-                {{-- Botón refrescar: blanco, forma redondeada, sombra suave, ícono azul --}}
-                <a href="{{ request()->fullUrl() }}" class="inline-flex items-center justify-center w-11 h-11 rounded-2xl bg-white text-[#003366] shadow-md hover:shadow-lg hover:bg-gray-50 transition-all" title="Refrescar">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                </a>
-                {{-- Botón menú: azul pastel, misma forma y sombra, ícono azul oscuro --}}
-                <div class="relative overflow-visible" x-data="{ open: false }">
-                    <button type="button" @click="open = !open" class="inline-flex items-center justify-center w-11 h-11 rounded-2xl bg-blue-100 text-[#003366] shadow-md hover:shadow-lg hover:bg-blue-200/80 transition-all" aria-label="Más opciones" aria-haspopup="true" :aria-expanded="open">
-                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
-                    </button>
-                    <div x-show="open"
-                         x-transition:enter="transition ease-out duration-100"
-                         x-transition:enter-start="opacity-0 scale-95"
-                         x-transition:enter-end="opacity-100 scale-100"
-                         x-transition:leave="transition ease-in duration-75"
-                         x-transition:leave-start="opacity-100 scale-100"
-                         x-transition:leave-end="opacity-0 scale-95"
-                         @click.outside="open = false"
-                         class="absolute right-0 mt-1 w-56 rounded-xl shadow-lg bg-white border border-[#E2E8F0] py-1 z-[100] min-w-[14rem]">
-                        <form method="POST" action="{{ route('notifications.mark-all-read') }}" class="block js-mark-all-read-form">
-                            @csrf
-                            <button type="submit" class="w-full text-left px-4 py-2 text-sm text-[#1F2937] hover:bg-gray-100">Marcar todas como leídas</button>
-                        </form>
-                        <a href="{{ route('notifications.index', ['filtro' => request('filtro'), 'orden' => 'fecha']) }}" class="block px-4 py-2 text-sm text-[#1F2937] hover:bg-gray-100">Ordenar por fecha</a>
-                        <a href="{{ route('notifications.index', ['filtro' => request('filtro'), 'orden' => 'alfabetico']) }}" class="block px-4 py-2 text-sm text-[#1F2937] hover:bg-gray-100">Ordenar alfabéticamente</a>
-                    </div>
-                </div>
-            </div>
+        <div class="page-header-card__icon" aria-hidden="true">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+        </div>
+        <div>
+            <h2 class="page-header-card__title">Notificaciones</h2>
+            <p id="notifications-header-subtitle" class="page-header-card__subtitle">
+                @if($unreadCount > 0)
+                    <span class="font-semibold text-[#FFE600]" data-unread-badge>{{ $unreadCount }} sin leer</span>
+                @else
+                    Centro de notificaciones
+                @endif
+            </p>
         </div>
     </x-slot>
 
-    <div class="space-y-0" x-data="{ detailId: null }">
-        {{-- Tabs (filtros) --}}
-        <div class="flex flex-wrap gap-1 border-b border-[#E2E8F0] mb-4">
-            @php
-                $tabs = [
-                    'todas' => ['label' => 'Todas', 'count' => $notifications->total()],
-                    'no_leidas' => ['label' => 'No leídas', 'count' => $unreadCount],
-                    'leidas' => ['label' => 'Leídas', 'count' => null],
-                    'destacadas' => ['label' => 'Destacadas', 'count' => $starredCount],
-                    'sin_destacar' => ['label' => 'Sin destacar', 'count' => null],
-                ];
-            @endphp
-            @foreach($tabs as $key => $tab)
-                @php
-                    $params = ['orden' => $sort];
-                    if ($key !== 'todas') {
-                        $params['filtro'] = $key;
-                    }
-                @endphp
-                <a href="{{ route('notifications.index', $params) }}"
-                   class="px-4 py-3 text-sm font-medium border-b-2 transition-colors {{ $filter === $key ? 'border-amber-400 text-[#003366]' : 'border-transparent text-[#6B7280] hover:text-[#1F2937] hover:border-gray-300' }}">
-                    {{ $tab['label'] }}
-                    @if($tab['count'] !== null && $tab['count'] > 0)
-                        <span class="ml-1 text-xs font-semibold text-amber-600">({{ $tab['count'] }})</span>
+    <div class="space-y-8" x-data="{ detailId: null }">
+        {{-- Tarjeta de filtros + iconos refrescar y menú alineados a la derecha --}}
+        <div class="panel-card-dark">
+            <form method="GET" action="{{ route('notifications.index') }}" id="notifications-filter-form" class="flex flex-wrap items-center justify-between gap-4">
+                <input type="hidden" name="orden" value="{{ $sort }}">
+                <input type="hidden" name="filtro" id="notif-filtro-input" value="{{ $filter }}">
+                <div class="flex flex-wrap items-center gap-4">
+                    <span class="text-sm font-semibold text-[#FFE600]">Mostrar:</span>
+                    <label class="inline-flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" name="filtro_no_leidas" value="1" class="rounded border-white/40 text-[#FFE600] bg-transparent focus:ring-[#FFE600]"
+                            {{ $filter === 'no_leidas' ? 'checked' : '' }} data-filtro-value="no_leidas">
+                        <span class="text-sm text-white">No leídas</span>
+                        @if($unreadCount > 0)
+                            <span class="text-xs font-semibold text-[#FFE600]">({{ $unreadCount }})</span>
+                        @endif
+                    </label>
+                    <label class="inline-flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" name="filtro_leidas" value="1" class="rounded border-white/40 text-[#FFE600] bg-transparent focus:ring-[#FFE600]"
+                            {{ $filter === 'leidas' ? 'checked' : '' }} data-filtro-value="leidas">
+                        <span class="text-sm text-white">Leídas</span>
+                    </label>
+                    <label class="inline-flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" name="filtro_todas" value="1" class="rounded border-white/40 text-[#FFE600] bg-transparent focus:ring-[#FFE600]"
+                            {{ $filter === 'todas' ? 'checked' : '' }} data-filtro-value="todas">
+                        <span class="text-sm text-white">Todas</span>
+                    </label>
+                </div>
+                <div class="flex items-center gap-2 flex-shrink-0">
+                    <a href="{{ request()->fullUrl() }}" class="inline-flex items-center justify-center w-11 h-11 rounded-2xl bg-white text-[#003366] shadow-md hover:shadow-lg hover:bg-white/90 border-2 border-[#FFE600] transition-all" title="Refrescar">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                    </a>
+                    <div class="relative overflow-visible" x-data="{ open: false }">
+                        <button type="button" @click="open = !open" class="inline-flex items-center justify-center w-11 h-11 rounded-2xl bg-white text-[#003366] shadow-md hover:shadow-lg hover:bg-white/90 border-2 border-[#FFE600] transition-all" aria-label="Más opciones" aria-haspopup="true" :aria-expanded="open">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+                        </button>
+                        <div x-show="open"
+                             x-transition:enter="transition ease-out duration-100"
+                             x-transition:enter-start="opacity-0 scale-95"
+                             x-transition:enter-end="opacity-100 scale-100"
+                             x-transition:leave="transition ease-in duration-75"
+                             x-transition:leave-start="opacity-100 scale-100"
+                             x-transition:leave-end="opacity-0 scale-95"
+                             @click.outside="open = false"
+                             class="absolute right-0 mt-1 w-56 rounded-xl shadow-lg bg-white border border-[#E2E8F0] py-1 z-[100] min-w-[14rem]">
+                            <form method="POST" action="{{ route('notifications.mark-all-read') }}" class="block js-mark-all-read-form">
+                                @csrf
+                                <button type="submit" class="w-full text-left px-4 py-2 text-sm text-[#1F2937] hover:bg-gray-100">Marcar todas como leídas</button>
+                            </form>
+                            <a href="{{ route('notifications.index', ['filtro' => request('filtro'), 'orden' => 'fecha']) }}" class="block px-4 py-2 text-sm text-[#1F2937] hover:bg-gray-100">Ordenar por fecha</a>
+                            <a href="{{ route('notifications.index', ['filtro' => request('filtro'), 'orden' => 'alfabetico']) }}" class="block px-4 py-2 text-sm text-[#1F2937] hover:bg-gray-100">Ordenar alfabéticamente</a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var form = document.getElementById('notifications-filter-form');
+            var hidden = document.getElementById('notif-filtro-input');
+            if (!form || !hidden) return;
+            form.querySelectorAll('input[type="checkbox"][data-filtro-value]').forEach(function(cb) {
+                cb.addEventListener('change', function() {
+                    var value = this.getAttribute('data-filtro-value');
+                    form.querySelectorAll('input[type="checkbox"][data-filtro-value]').forEach(function(o) { o.checked = (o.getAttribute('data-filtro-value') === value); });
+                    hidden.value = value;
+                    form.submit();
+                });
+            });
+        });
+        </script>
+
+        {{-- Tarjeta lista de notificaciones (mismo estilo que dashboard, fondo azul) --}}
+        <div class="panel-card-dark p-0 overflow-hidden divide-y divide-white/10">
+            @if($notifications->total() > 0)
+            <div class="flex items-center justify-between text-sm text-white/80 px-4 sm:px-5 py-3 border-b border-white/10 bg-white/5 rounded-t-[var(--radius-card)]">
+                <span>
+                    {{ $notifications->firstItem() }}-{{ $notifications->lastItem() }} de {{ $notifications->total() }}
+                </span>
+                <div class="flex gap-1">
+                    @if($notifications->onFirstPage())
+                        <span class="px-2 py-1 rounded text-white/40 cursor-not-allowed">←</span>
+                    @else
+                        <a href="{{ $notifications->previousPageUrl() }}" class="px-2 py-1 rounded hover:bg-white/10 text-[#FFE600]">←</a>
                     @endif
-                </a>
-            @endforeach
-        </div>
-
-        {{-- Paginación superior --}}
-        @if($notifications->total() > 0)
-        <div class="flex items-center justify-between text-sm text-[#6B7280] mb-3">
-            <span>
-                {{ $notifications->firstItem() }}-{{ $notifications->lastItem() }} de {{ $notifications->total() }}
-            </span>
-            <div class="flex gap-1">
-                @if($notifications->onFirstPage())
-                    <span class="px-2 py-1 rounded text-gray-400 cursor-not-allowed">←</span>
-                @else
-                    <a href="{{ $notifications->previousPageUrl() }}" class="px-2 py-1 rounded hover:bg-gray-100">←</a>
-                @endif
-                @if($notifications->hasMorePages())
-                    <a href="{{ $notifications->nextPageUrl() }}" class="px-2 py-1 rounded hover:bg-gray-100">→</a>
-                @else
-                    <span class="px-2 py-1 rounded text-gray-400 cursor-not-allowed">→</span>
-                @endif
+                    @if($notifications->hasMorePages())
+                        <a href="{{ $notifications->nextPageUrl() }}" class="px-2 py-1 rounded hover:bg-white/10 text-[#FFE600]">→</a>
+                    @else
+                        <span class="px-2 py-1 rounded text-white/40 cursor-not-allowed">→</span>
+                    @endif
+                </div>
             </div>
-        </div>
-        @endif
-
-        {{-- Lista de notificaciones --}}
-        <div class="view-card divide-y divide-[#E2E8F0] p-0 overflow-hidden">
+            @endif
             @forelse($notifications as $notification)
                 @php
                     $d = is_array($notification->data) ? $notification->data : [];
@@ -110,16 +118,16 @@
                     $isUnread = !$notification->read_at;
                     $isStarred = !empty($notification->starred);
                 @endphp
-                <div class="notification-row flex items-start gap-3 px-4 py-3 hover:bg-gray-50/80 transition-colors {{ $isUnread ? 'bg-blue-50/70' : 'bg-white' }}"
+                <div class="notification-row flex items-start gap-3 px-4 sm:px-5 py-3 hover:bg-white/5 transition-colors {{ $isUnread ? 'bg-white/10' : 'bg-transparent' }}"
                      role="button"
                      data-notification-id="{{ $notification->id }}"
                      data-unread="{{ $isUnread ? '1' : '0' }}"
                      @click="detailId = '{{ $notification->id }}'">
                     {{-- Icono tipo --}}
                     <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center
-                        @if($tipo === 'registro') bg-indigo-100 text-indigo-600
-                        @elseif($tipo === 'contacto') bg-emerald-100 text-emerald-600
-                        @else bg-gray-100 text-gray-600 @endif">
+                        @if($tipo === 'registro') bg-indigo-100 text-indigo-700
+                        @elseif($tipo === 'contacto') bg-emerald-100 text-emerald-700
+                        @else bg-white/10 text-white @endif">
                         @if($tipo === 'registro')
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
                         @elseif($tipo === 'contacto')
@@ -133,27 +141,27 @@
                         @if($isStarred)
                             <form method="POST" action="{{ route('notifications.unstar', $notification) }}" class="inline">
                                 @csrf
-                                <button type="submit" class="text-amber-500 hover:text-amber-600" title="Quitar de destacadas">★</button>
+                                <button type="submit" class="text-[#FFE600] hover:opacity-80" title="Quitar de destacadas">★</button>
                             </form>
                         @else
                             <form method="POST" action="{{ route('notifications.star', $notification) }}" class="inline">
                                 @csrf
-                                <button type="submit" class="text-gray-300 hover:text-amber-500" title="Destacar">☆</button>
+                                <button type="submit" class="text-[#9CA3AF] hover:text-[#003366]" title="Destacar">☆</button>
                             </form>
                         @endif
                     </div>
                     {{-- Contenido --}}
                     <div class="flex-1 min-w-0">
-                        <p class="notification-row-title text-sm {{ $isUnread ? 'font-semibold text-[#1F2937]' : 'text-[#1F2937]' }}">{{ $titulo }}</p>
-                        <p class="text-sm text-[#6B7280] truncate mt-0.5">{{ $mensaje ?: 'Sin descripción' }}</p>
-                        <p class="text-xs text-[#9CA3AF] mt-1">{{ $notification->created_at->format('d M Y H:i') }}</p>
+                        <p class="notification-row-title text-sm {{ $isUnread ? 'font-semibold text-white' : 'text-white' }}">{{ $titulo }}</p>
+                        <p class="text-sm text-white/80 truncate mt-0.5">{{ $mensaje ?: 'Sin descripción' }}</p>
+                        <p class="text-xs text-white/60 mt-1">{{ $notification->created_at->format('d M Y H:i') }}</p>
                     </div>
                     {{-- Acciones rápidas (evitar que abran el detalle) --}}
                     <div class="flex-shrink-0 flex items-center gap-1" @click.stop>
                         @if($isUnread)
                             <form method="POST" action="{{ route('notifications.mark-read', $notification) }}" class="inline js-mark-read-form" data-notification-id="{{ $notification->id }}">
                                 @csrf
-                                <button type="submit" class="text-xs text-[#003366] hover:underline">Leer</button>
+                                <button type="submit" class="text-xs font-medium text-white hover:underline">Leer</button>
                             </form>
                         @endif
                         <form method="POST" action="{{ route('notifications.destroy', $notification) }}" class="inline" onsubmit="return confirm('¿Eliminar esta notificación?');">
@@ -164,13 +172,13 @@
                     </div>
                 </div>
             @empty
-                <div class="mx-4 my-6 rounded-2xl border-2 border-[#003366]/25 border-l-4 border-l-amber-400 bg-gradient-to-br from-blue-50 via-amber-50/40 to-blue-50 px-6 py-12 shadow-inner flex items-center justify-center min-h-[120px]">
-                    <p class="text-[#1F2937] font-medium text-center">No hay notificaciones todavía.</p>
+                <div class="mx-4 my-8 rounded-2xl border-2 border-[#FFE600]/70 border-l-4 border-l-[#FFE600] bg-white/5 px-6 py-12 flex items-center justify-center min-h-[140px]">
+                    <p class="text-white font-medium text-center">No hay notificaciones todavía.</p>
                 </div>
             @endforelse
         </div>
 
-        <div class="mt-4">
+        <div class="mt-6">
             {{ $notifications->withQueryString()->links() }}
         </div>
 
@@ -239,8 +247,8 @@
         function setRowAsRead(row) {
             if (!row) return;
             row.setAttribute('data-unread', '0');
-            row.classList.remove('bg-blue-50/70');
-            row.classList.add('bg-white');
+            row.classList.remove('bg-white/10');
+            row.classList.add('bg-transparent');
             var title = row.querySelector('.notification-row-title');
             if (title) title.classList.remove('font-semibold');
             var markReadForm = row.querySelector('.js-mark-read-form');

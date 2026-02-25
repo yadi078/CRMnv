@@ -27,10 +27,7 @@
 
             <!-- Right Section - Login Form -->
             <div class="lg:w-3/5 bg-white px-8 py-12 lg:py-16">
-                <!-- Session Status -->
-                <x-auth-session-status class="mb-6" :status="session('status')" />
-                
-                <h2 class="text-3xl font-bold text-[#003366] mb-8">Iniciar Sesion</h2>
+                <h2 class="text-3xl font-bold text-[#003366] mb-8">Iniciar Sesión</h2>
 
                 <form method="POST" action="{{ route('login') }}" class="space-y-6">
                     @csrf
@@ -114,7 +111,7 @@
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
                             </svg>
-                            Iniciar Sesion
+                            Iniciar Sesión
                         </button>
                     </div>
                 </form>

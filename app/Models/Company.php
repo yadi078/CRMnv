@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Carbon\Carbon;
 
 /**
  * Modelo Company - Empresas/Prospectos
@@ -79,42 +78,33 @@ class Company extends Model
     }
 
     /**
-     * Calcula el semáforo automáticamente basado en la última actividad
-     * 
-     * Verde: Última actividad hace menos de 7 días
-     * Amarillo: Última actividad hace entre 7 y 30 días
-     * Rojo: Última actividad hace más de 30 días o sin actividad
-     * 
-     * @return string Color del semáforo
+     * Estados de prospecto disponibles
      */
-    public function calcularSemáforo(): string
-    {
-        $ultimoSeguimiento = $this->followUps()
-            ->where('completado', true)
-            ->latest('completado_at')
-            ->first();
-
-        if (!$ultimoSeguimiento) {
-            return 'rojo';
-        }
-
-        $diasDesdeUltimaActividad = Carbon::now()->diffInDays($ultimoSeguimiento->completado_at);
-
-        if ($diasDesdeUltimaActividad <= 7) {
-            return 'verde';
-        } elseif ($diasDesdeUltimaActividad <= 30) {
-            return 'amarillo';
-        } else {
-            return 'rojo';
-        }
-    }
+    public const PROSPECT_STATUSES = [
+        'seguimiento',
+        'interesado',
+        'si_le_interesa_nos_llaman_o_no_compro',
+        'vendido',
+        'no_estaba',
+    ];
 
     /**
-     * Actualiza el semáforo automáticamente
+     * Etiquetas legibles para cada estado de prospecto
      */
-    public function actualizarSemáforo(): void
+    public const PROSPECT_STATUS_LABELS = [
+        'seguimiento' => 'Seguimiento',
+        'interesado' => 'Interesado',
+        'si_le_interesa_nos_llaman_o_no_compro' => 'Si le interesa nos llaman o no compro',
+        'vendido' => 'Vendido',
+        'no_estaba' => 'No estaba',
+    ];
+
+    /**
+     * Obtiene la etiqueta legible del estado de prospecto
+     */
+    public function getStatusLabelAttribute(): string
     {
-        $this->update(['status_color' => $this->calcularSemáforo()]);
+        return self::PROSPECT_STATUS_LABELS[$this->status_color] ?? ucfirst($this->status_color ?? '');
     }
 
     /**
@@ -134,11 +124,19 @@ class Company extends Model
     }
 
     /**
-     * Scope: Filtrar por color de semáforo
+     * Scope: Filtrar por estado de prospecto (status_color)
      */
-    public function scopePorColor($query, string $color)
+    public function scopePorStatus($query, string $status)
     {
-        return $query->where('status_color', $color);
+        return $query->where('status_color', $status);
+    }
+
+    /**
+     * Scope: Filtrar por color/estado (alias para compatibilidad)
+     */
+    public function scopePorColor($query, string $status)
+    {
+        return $query->where('status_color', $status);
     }
 
     /**
@@ -156,6 +154,18 @@ class Company extends Model
     {
         $this->update([
             'approval_status' => 'aprobado',
+            'approved_by' => $userId,
+            'approved_at' => now(),
+        ]);
+    }
+
+    /**
+     * Denegar la solicitud de la empresa
+     */
+    public function denegar(int $userId, ?string $motivo = null): void
+    {
+        $this->update([
+            'approval_status' => 'rechazado',
             'approved_by' => $userId,
             'approved_at' => now(),
         ]);

@@ -75,10 +75,13 @@ Route::middleware(['auth', 'verified', 'ensure.role', 'admin'])->group(function 
     Route::get('/contacts/{contact}/pdf', [ContactController::class, 'generatePdf'])->name('contacts.pdf');
 
     Route::prefix('approvals')->name('approvals.')->group(function () {
+        Route::get('/', [ApprovalController::class, 'index'])->name('index');
         Route::get('/companies', [ApprovalController::class, 'companies'])->name('companies');
         Route::post('/companies/{company}/approve', [ApprovalController::class, 'approveCompany'])->name('companies.approve');
+        Route::post('/companies/{company}/deny', [ApprovalController::class, 'denyCompany'])->name('companies.deny');
         Route::get('/users', [ApprovalController::class, 'users'])->name('users');
         Route::post('/users/{user}/approve', [ApprovalController::class, 'approveUser'])->name('users.approve');
+        Route::post('/users/{user}/deny', [ApprovalController::class, 'denyUser'])->name('users.deny');
     });
 
     // Gestión de Datos - Funciones exclusivas de Admin (Exportar/Importar)

@@ -17,7 +17,7 @@ class User extends Authenticatable
     use HasFactory, Notifiable, HasRoles;
 
     /**
-     * The attributes that are mass assignable.
+     * Atributos asignables en masa.
      *
      * @var list<string>
      */
@@ -32,7 +32,7 @@ class User extends Authenticatable
     ];
 
     /**
-     * The attributes that should be hidden for serialization.
+     * Atributos que deben ocultarse para la serialización.
      *
      * @var list<string>
      */
@@ -42,7 +42,7 @@ class User extends Authenticatable
     ];
 
     /**
-     * Get the attributes that should be cast.
+     * Obtener los atributos que deben convertirse.
      *
      * @return array<string, string>
      */
@@ -130,6 +130,18 @@ class User extends Authenticatable
     {
         $this->update([
             'approval_status' => 'aprobado',
+            'approved_by' => $adminId,
+            'approved_at' => now(),
+        ]);
+    }
+
+    /**
+     * Denegar solicitud de registro del usuario
+     */
+    public function denegar(int $adminId, ?string $motivo = null): void
+    {
+        $this->update([
+            'approval_status' => 'rechazado',
             'approved_by' => $adminId,
             'approved_at' => now(),
         ]);

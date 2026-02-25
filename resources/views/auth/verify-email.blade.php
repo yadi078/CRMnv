@@ -3,12 +3,6 @@
         Gracias por registrarte. Para continuar, verifica tu correo electrónico haciendo clic en el enlace que te enviamos. Si no lo recibiste, podemos enviarte otro.
     </div>
 
-    @if (session('status') == 'verification-link-sent')
-        <div class="mb-4 font-medium text-sm text-green-600 dark:text-green-400">
-            Se ha enviado un nuevo enlace de verificación al correo que indicaste al registrarte.
-        </div>
-    @endif
-
     <div class="mt-4 flex items-center justify-between">
         <form method="POST" action="{{ route('verification.send') }}">
             @csrf

@@ -6,55 +6,55 @@ window.Alpine = Alpine;
 
 Alpine.start();
 
-// Función global para mostrar alertas
-window.showAlert = function(type, message, duration = 7000) {
+// Función global para mostrar alertas (modal flotante centrado)
+window.showAlert = function(type, message, duration = 0) {
     const alertContainer = document.getElementById('alert-container') || createAlertContainer();
-    
     const alertId = 'alert-' + Date.now();
     const alertData = getAlertData(type);
     
     const alertHtml = `
-        <div 
-            id="${alertId}"
-            x-data="{ show: true }"
-            x-show="show"
-            x-transition:enter="transition ease-out duration-300"
-            x-transition:enter-start="opacity-0 transform translate-y-2"
-            x-transition:enter-end="opacity-100 transform translate-y-0"
-            x-transition:leave="transition ease-in duration-200"
-            x-transition:leave-start="opacity-100 transform translate-y-0"
-            x-transition:leave-end="opacity-0 transform translate-y-2"
-            x-init="setTimeout(() => show = false, ${duration}); setTimeout(() => document.getElementById('${alertId}')?.remove(), ${duration + 200})"
-            class="fixed top-4 right-4 z-50 max-w-md w-full mx-4"
-            style="display: none;"
-        >
-            <div class="rounded-xl ${alertData.bg} border-2 ${alertData.border} shadow-2xl backdrop-blur-sm"
-                 style="box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(230, 184, 0, 0.2), 0 0 20px rgba(230, 184, 0, 0.1);">
-                <div class="px-4 py-3 flex items-start gap-3">
-                    <div class="flex-shrink-0 mt-0.5">
-                        <svg class="w-5 h-5 ${alertData.iconColor}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${alertData.icon}" />
-                        </svg>
-                    </div>
-                    <div class="flex-1 ${alertData.text} text-sm font-medium">
-                        ${escapeHtml(message)}
-                    </div>
-                    <button 
-                        @click="show = false; setTimeout(() => document.getElementById('${alertId}')?.remove(), 200)"
-                        class="flex-shrink-0 text-gray-400 hover:text-white transition-colors"
-                    >
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
+        <div id="${alertId}"
+             x-data="{ show: true }"
+             x-show="show"
+             x-cloak
+             x-transition:enter="ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm"
+             @keydown.escape.window="show = false; setTimeout(() => document.getElementById('${alertId}')?.remove(), 200)"
+             role="alertdialog"
+             aria-modal="true"
+             style="display: none;">
+            <div x-show="show"
+                 x-transition:enter="ease-out duration-300"
+                 x-transition:enter-start="opacity-0 scale-95"
+                 x-transition:enter-end="opacity-100 scale-100"
+                 x-transition:leave="ease-in duration-200"
+                 x-transition:leave-start="opacity-100 scale-100"
+                 x-transition:leave-end="opacity-0 scale-95"
+                 class="w-full max-w-md bg-[#1a3d6b] rounded-2xl shadow-xl p-8 text-center border-4 border-[#FFE600]"
+                 @click.outside="show = false; setTimeout(() => document.getElementById('${alertId}')?.remove(), 200)">
+                <div class="mx-auto w-16 h-16 rounded-full ${alertData.iconBg} flex items-center justify-center shadow-lg mb-6">
+                    <svg class="w-9 h-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="${alertData.icon}" />
+                    </svg>
                 </div>
+                <h3 class="text-xl font-bold text-white mb-2">${alertData.title}</h3>
+                <p class="text-white/90 text-sm mb-6">${escapeHtml(message)}</p>
+                <button type="button"
+                        @click="show = false; setTimeout(() => document.getElementById('${alertId}')?.remove(), 200)"
+                        class="w-full py-3 px-4 rounded-xl font-semibold text-gray-900 bg-[#FFE600] hover:bg-[#E6CF00] focus:outline-none focus:ring-2 focus:ring-[#FFE600] focus:ring-offset-2 focus:ring-offset-[#1a3d6b] transition-colors">
+                    Aceptar
+                </button>
             </div>
         </div>
     `;
     
     alertContainer.insertAdjacentHTML('beforeend', alertHtml);
     
-    // Inicializar Alpine para el nuevo elemento
     const alertElement = document.getElementById(alertId);
     if (alertElement && window.Alpine) {
         window.Alpine.initTree(alertElement);
@@ -70,38 +70,13 @@ function createAlertContainer() {
 }
 
 function getAlertData(type) {
-    const typeClasses = {
-        'success': {
-            'bg': 'bg-green-900/20',
-            'border': 'border-green-500/40',
-            'text': 'text-green-200',
-            'icon': 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
-            'iconColor': 'text-green-400'
-        },
-        'error': {
-            'bg': 'bg-red-900/20',
-            'border': 'border-red-500/40',
-            'text': 'text-red-200',
-            'icon': 'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z',
-            'iconColor': 'text-red-400'
-        },
-        'warning': {
-            'bg': 'bg-yellow-900/20',
-            'border': 'border-yellow-500/40',
-            'text': 'text-yellow-200',
-            'icon': 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z',
-            'iconColor': 'text-yellow-400'
-        },
-        'info': {
-            'bg': 'bg-blue-900/20',
-            'border': 'border-blue-500/40',
-            'text': 'text-blue-200',
-            'icon': 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
-            'iconColor': 'text-blue-400'
-        },
+    const types = {
+        'success': { title: 'Éxito', icon: 'M5 13l4 4L19 7', iconBg: 'bg-emerald-500' },
+        'error': { title: 'Error', icon: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z', iconBg: 'bg-red-500' },
+        'warning': { title: 'Advertencia', icon: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z', iconBg: 'bg-amber-500' },
+        'info': { title: 'Información', icon: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z', iconBg: 'bg-blue-500' },
     };
-    
-    return typeClasses[type] || typeClasses['success'];
+    return types[type] || types['info'];
 }
 
 function escapeHtml(text) {

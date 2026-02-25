@@ -86,7 +86,7 @@
         
         <div class="info-row">
             <div class="info-label">RFC:</div>
-            <div class="info-value">{{ $contact->company->rfc }}</div>
+            <div class="info-value">{{ $contact->company->rfc ?? '-' }}</div>
         </div>
         
         @if($contact->puesto_de_trabajo)
@@ -104,7 +104,7 @@
         @endif
         
         <div class="info-row">
-            <div class="info-label">Email:</div>
+            <div class="info-label">Correo electrónico:</div>
             <div class="info-value">{{ $contact->email }}</div>
         </div>
         
@@ -146,7 +146,7 @@
 
     <div class="footer">
         <p>C&CE Consultoría y Capacitación Empresarial</p>
-        <p>Email: info@cactonultoricempresarial.com | Teléfono: (330) 0244-3678</p>
+        <p>Correo: info@cactonultoricempresarial.com | Teléfono: (330) 0244-3678</p>
         <p>Horario de atención: Lunes a viernes de 8 am a 6 pm</p>
         <p>Generado el {{ now()->format('d/m/Y H:i') }}</p>
     </div>

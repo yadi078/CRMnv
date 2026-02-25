@@ -42,7 +42,4 @@
         </div>
     </div>
 
-    @if(session('success'))
-    <script>document.addEventListener('DOMContentLoaded', function() { alert({{ json_encode(session('success')) }}); });</script>
-    @endif
 </x-app-user-layout>

@@ -398,6 +398,11 @@ body {
   transform: scale(1.02);
 }
 
+/* Ícono amarillo cuando el ítem está activo (ej. Empresas, para distinguir como en dashboard) */
+.sidebar-nav__link--active.sidebar-nav__link--icon-accent-when-active .sidebar-nav__icon {
+  color: var(--color-accent);
+}
+
 .sidebar-nav__label {
   display: block;
   width: 0;
@@ -578,19 +583,73 @@ body {
 }
 
 .sidebar-layout__header {
-  background: linear-gradient(135deg, #1a3d6b 0%, #1e4976 40%, #234b7a 100%);
-  box-shadow: 0 2px 12px rgba(26, 61, 107, 0.25);
+  /* Fondo limpio: dejamos que el encabezado sea una tarjeta blanca dentro */
+  background: transparent;
+  box-shadow: none;
+  border-bottom: none;
 }
 
-.sidebar-layout__header .view-header__title {
+/* Tarjeta de encabezado principal (ej. Dashboard): contenedor azul, margen amarillo */
+.page-header-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-radius: var(--radius-card);
+  background: linear-gradient(145deg, #1e4976 0%, #1a3d6b 50%, #0f2744 100%);
+  border: 3px solid var(--color-accent);
+  box-shadow: 0 4px 20px rgba(30, 73, 118, 0.4);
+  color: var(--color-accent);
+}
+
+.page-header-card__icon {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: var(--radius-panel);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 230, 0, 0.18);
+  color: var(--color-accent);
+  flex-shrink: 0;
+}
+
+.page-header-card__icon svg {
+  width: 1.4rem;
+  height: 1.4rem;
+}
+
+.page-header-card__title {
+  font-size: clamp(1.05rem, 2.6vw + 0.7rem, 1.3rem);
+  font-weight: 700;
+  color: var(--color-accent);
+  line-height: 1.3;
+}
+
+.page-header-card__subtitle {
+  font-size: 0.9rem;
+  font-weight: 500;
   color: #fff;
 }
 
-.sidebar-layout__header .view-header__subtitle {
-  color: rgba(255, 255, 255, 0.85);
+@media (max-width: 640px) {
+  .page-header-card {
+    padding: 0.9rem 1rem;
+    gap: 0.75rem;
+  }
+
+  .page-header-card__icon {
+    width: 2.3rem;
+    height: 2.3rem;
+  }
+
+  .page-header-card__icon svg {
+    width: 1.1rem;
+    height: 1.1rem;
+  }
 }
 
-/* Icono amarillo en header (ej. Panel principal) */
+/* Icono amarillo en header (ej. otros encabezados) */
 .sidebar-layout__header .view-header__icon--accent,
 .view-header__icon--accent {
   background: rgba(255, 230, 0, 0.2);
@@ -665,6 +724,25 @@ body {
   max-width: 100%;
   height: auto;
   object-fit: contain;
+}
+
+/* Inputs en panel oscuro: fondo blanco siempre, borde amarillo al enfocar */
+.panel-card-dark input[type="text"],
+.panel-card-dark input[type="email"],
+.panel-card-dark input[type="number"],
+.panel-card-dark select,
+.panel-card-dark textarea {
+  background-color: #ffffff !important;
+  color: #1F2937;
+  border: 2px solid #E2E8F0;
+  border-radius: 0.375rem;
+}
+.panel-card-dark input:focus,
+.panel-card-dark select:focus,
+.panel-card-dark textarea:focus {
+  outline: none;
+  border: 3px solid #FFE600;
+  box-shadow: none;
 }
 
 .view-card:hover,
@@ -802,6 +880,78 @@ body {
 /* Título con más espacio abajo (ej. Estado de prospectos) */
 .panel-card-dark__title--spaced {
   margin-bottom: 2.5rem;
+}
+
+/* Título amarillo en paneles oscuros (ej. Empresas) */
+.panel-card-dark__title--accent {
+  color: var(--color-accent);
+}
+
+/* Botón secundario dentro de panel oscuro */
+.btn-panel-dark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-primary-deep);
+  background: var(--color-accent);
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+  box-shadow: 0 2px 8px rgba(255, 230, 0, 0.3);
+}
+
+.btn-panel-dark:hover {
+  background: #f0d900;
+  transform: translateY(-1px);
+}
+
+/* Encabezados de tabla dentro de panel oscuro: texto amarillo */
+.table-header-panel-dark th {
+  color: var(--color-accent);
+  font-size: 0.75rem;
+  letter-spacing: 0.025em;
+}
+
+/* Filas de tabla en panel oscuro */
+.panel-card-dark__row {
+  color: #fff;
+}
+
+/* Paginación dentro de panel oscuro: enlaces visibles */
+.panel-card-dark .pagination,
+.panel-card-dark nav[role="navigation"] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  justify-content: center;
+}
+
+.panel-card-dark .pagination a,
+.panel-card-dark .pagination span,
+.panel-card-dark nav[role="navigation"] a,
+.panel-card-dark nav[role="navigation"] span {
+  color: rgba(255, 255, 255, 0.9);
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.panel-card-dark .pagination a:hover,
+.panel-card-dark nav[role="navigation"] a:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+
+.panel-card-dark .pagination span[aria-current="page"],
+.panel-card-dark nav[role="navigation"] span.relative {
+  background: var(--color-accent);
+  color: var(--color-primary-deep);
 }
 
 /* Subrayado amarillo bajo títulos de secciones */
@@ -951,6 +1101,20 @@ body {
 .dot-semaphore-verde { background: #15803D; }
 .dot-semaphore-amarillo { background: #CA8A04; }
 .dot-semaphore-rojo { background: #B91C1C; }
+
+/* Estados de prospecto - Círculo indicador */
+.dot-prospect-seguimiento { background: #15803D; }
+.dot-prospect-interesado { background: #DC2626; }
+.dot-prospect-si_le_interesa_nos_llaman_o_no_compro { background: #1e3a5f; }
+.dot-prospect-vendido { background: #EAB308; }
+.dot-prospect-no_estaba { background: #7C3AED; }
+
+/* Estados de prospecto - Badge en tablas */
+.badge-prospect-seguimiento { background: rgba(21, 128, 61, 0.3); color: #86EFAC; }
+.badge-prospect-interesado { background: rgba(220, 38, 38, 0.3); color: #FCA5A5; }
+.badge-prospect-si_le_interesa_nos_llaman_o_no_compro { background: rgba(30, 58, 95, 0.3); color: #93C5FD; }
+.badge-prospect-vendido { background: rgba(234, 179, 8, 0.3); color: #FDE047; }
+.badge-prospect-no_estaba { background: rgba(124, 58, 237, 0.3); color: #C4B5FD; }
 
 /* --------------------------------------------------------------------------
    VIEW HEADER - Títulos de página (sobre fondo claro)
@@ -1147,6 +1311,55 @@ body {
   width: 1.25rem;
   height: 1.25rem;
   flex-shrink: 0;
+}
+
+/* Botón cancelar (rojo) */
+.btn-danger-app {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0 1.25rem;
+  min-height: 44px;
+  min-width: 44px;
+  font-size: clamp(0.875rem, 2vw + 0.5rem, 0.9375rem);
+  font-weight: 600;
+  color: #ffffff;
+  background: #DC2626;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow:
+    0 1px 3px rgba(153, 27, 27, 0.35),
+    0 4px 12px rgba(248, 113, 113, 0.45);
+  transition: background 0.22s ease, box-shadow 0.22s ease, transform 0.22s ease, color 0.22s ease;
+}
+
+.btn-danger-app:hover {
+  background: #B91C1C;
+  box-shadow:
+    0 2px 6px rgba(153, 27, 27, 0.4),
+    0 6px 20px rgba(248, 113, 113, 0.5);
+  transform: translateY(-1px);
+}
+
+.btn-danger-app:active {
+  transform: translateY(0);
+}
+
+.btn-danger-app:focus {
+  outline: none;
+  box-shadow:
+    0 1px 3px rgba(153, 27, 27, 0.35),
+    0 4px 12px rgba(248, 113, 113, 0.5),
+    0 0 0 3px rgba(248, 113, 113, 0.55);
+}
+
+.btn-danger-app svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+  color: #ffffff;
 }
 
 /* --------------------------------------------------------------------------

@@ -107,7 +107,7 @@
                         @forelse($companies as $company)
                         <tr class="hover:bg-fondo transition-colors">
                             <td class="px-4 py-3 text-sm text-[#1F2937]">{{ $company->nombre_comercial }}</td>
-                            <td class="px-4 py-3 text-sm text-[#6B7280]">{{ $company->rfc }}</td>
+                            <td class="px-4 py-3 text-sm text-[#6B7280]">{{ $company->rfc ?? '-' }}</td>
                             <td class="px-4 py-3 text-sm text-[#6B7280]">{{ $company->contacts_count }}</td>
                             <td class="px-4 py-3">
                                 <a href="{{ route('companies.show', $company) }}" class="text-[#003366] font-medium hover:underline">Ver</a>
@@ -133,7 +133,7 @@
                     <thead class="table-header-corporate">
                         <tr>
                             <th class="px-4 py-3 text-left text-xs font-semibold uppercase">Nombre</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase">Email</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase">Correo electrónico</th>
                             <th class="px-4 py-3 text-left text-xs font-semibold uppercase">Empresa</th>
                             <th class="px-4 py-3 text-left text-xs font-semibold uppercase">Acción</th>
                         </tr>

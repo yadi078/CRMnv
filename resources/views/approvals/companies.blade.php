@@ -33,8 +33,8 @@
                         <div class="flex justify-between items-start">
                             <div class="flex-1">
                                 <h3 class="font-semibold text-gray-900">{{ $company->nombre_comercial }}</h3>
-                                <p class="text-sm text-gray-600">RFC: {{ $company->rfc }}</p>
-                                <p class="text-sm text-gray-500">Creado por: {{ $company->creator?->name ?? 'N/A' }} el {{ $company->created_at->format('d/m/Y H:i') }}</p>
+                                <p class="text-sm text-gray-600">RFC: {{ $company->rfc ?? '-' }}</p>
+                                <p class="text-sm text-gray-500">Creado por: {{ $company->creator?->name ?? 'N/D' }} el {{ $company->created_at->format('d/m/Y H:i') }}</p>
                             </div>
                             <form method="POST" action="{{ route('approvals.companies.approve', $company) }}" class="inline">
                                 @csrf

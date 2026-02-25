@@ -28,14 +28,14 @@
                         </div>
 
                         <div>
-                            <x-input-label for="rfc" value="RFC *" />
-                            <x-text-input id="rfc" name="rfc" type="text" class="mt-1 block w-full uppercase" :value="old('rfc', $company->rfc)" maxlength="12" required />
+                            <x-input-label for="rfc" value="RFC" />
+                            <x-text-input id="rfc" name="rfc" type="text" class="mt-1 block w-full uppercase" :value="old('rfc', $company->rfc)" maxlength="13" />
                             <x-input-error :messages="$errors->get('rfc')" class="mt-2" />
                         </div>
 
                         <div class="md:col-span-2">
-                            <x-input-label for="sector" value="Sector/Giro" />
-                            <x-text-input id="sector" name="sector" type="text" class="mt-1 block w-full" :value="old('sector', $company->sector)" />
+                            <x-input-label for="sector" value="Sector/Giro *" />
+                            <x-text-input id="sector" name="sector" type="text" class="mt-1 block w-full" :value="old('sector', $company->sector)" required />
                             <x-input-error :messages="$errors->get('sector')" class="mt-2" />
                         </div>
 
@@ -58,11 +58,11 @@
                         </div>
 
                         <div>
-                            <x-input-label for="status_color" value="Estado" />
+                            <x-input-label for="status_color" value="Estado de prospecto" />
                             <select id="status_color" name="status_color" class="mt-1 block w-full rounded-md border-gray-300">
-                                <option value="verde" {{ old('status_color', $company->status_color) === 'verde' ? 'selected' : '' }}>Verde</option>
-                                <option value="amarillo" {{ old('status_color', $company->status_color) === 'amarillo' ? 'selected' : '' }}>Amarillo</option>
-                                <option value="rojo" {{ old('status_color', $company->status_color) === 'rojo' ? 'selected' : '' }}>Rojo</option>
+                                @foreach(\App\Models\Company::PROSPECT_STATUS_LABELS as $value => $label)
+                                    <option value="{{ $value }}" {{ old('status_color', $company->status_color) === $value ? 'selected' : '' }}>{{ $label }}</option>
+                                @endforeach
                             </select>
                             <x-input-error :messages="$errors->get('status_color')" class="mt-2" />
                         </div>

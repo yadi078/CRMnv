@@ -32,15 +32,21 @@ class DashboardController extends Controller
         $totalSeguimientos = FollowUp::count();
         $seguimientosPendientes = FollowUp::pendientes()->count();
 
-        // Empresas por color de semáforo
-        $empresasVerde = Company::porColor('verde')->count();
-        $empresasAmarillo = Company::porColor('amarillo')->count();
-        $empresasRojo = Company::porColor('rojo')->count();
+        // Empresas por estado de prospecto
+        $empresasSeguimiento = Company::porStatus('seguimiento')->count();
+        $empresasInteresado = Company::porStatus('interesado')->count();
+        $empresasSiLeInteresa = Company::porStatus('si_le_interesa_nos_llaman_o_no_compro')->count();
+        $empresasVendido = Company::porStatus('vendido')->count();
+        $empresasNoEstaba = Company::porStatus('no_estaba')->count();
 
-        // Empresas pendientes de aprobación (solo para admin)
+        // Solicitudes pendientes: empresas y usuarios (solo para admin)
         $empresasPendientes = 0;
+        $usuariosPendientes = 0;
         if ($user->can('companies.approve')) {
             $empresasPendientes = Company::pendientes()->count();
+        }
+        if ($user->can('users.approve')) {
+            $usuariosPendientes = \App\Models\User::where('approval_status', 'pendiente')->count();
         }
 
         // Seguimientos vencidos
@@ -68,10 +74,13 @@ class DashboardController extends Controller
             'totalContactos',
             'totalSeguimientos',
             'seguimientosPendientes',
-            'empresasVerde',
-            'empresasAmarillo',
-            'empresasRojo',
+            'empresasSeguimiento',
+            'empresasInteresado',
+            'empresasSiLeInteresa',
+            'empresasVendido',
+            'empresasNoEstaba',
             'empresasPendientes',
+            'usuariosPendientes',
             'seguimientosVencidos',
             'ultimasEmpresas',
             'proximosSeguimientos'

@@ -35,18 +35,21 @@ class StoreCompanyRequest extends FormRequest
                 'unique:companies,nombre_comercial',
             ],
             'rfc' => [
-                'required',
+                'nullable',
                 'string',
-                'size:12',
-                'regex:/^[A-ZÑ&]{3,4}\d{6}[A-Z0-9]{3}$/',
-                'unique:companies,rfc',
+                'max:13',
+                Rule::when($this->filled('rfc'), [
+                    'size:12',
+                    'regex:/^[A-ZÑ&]{3,4}\d{6}[A-Z0-9]{3}$/',
+                    'unique:companies,rfc',
+                ]),
             ],
-            'sector' => 'nullable|string|max:500',
+            'sector' => 'required|string|max:500',
             'municipio' => 'nullable|string|max:255',
             'estado' => 'nullable|string|max:255',
             'ejecutivo_asignado' => 'nullable|string|max:255',
             'datos_fiscales' => 'nullable|string',
-            'status_color' => 'nullable|in:verde,amarillo,rojo',
+            'status_color' => 'nullable|in:seguimiento,interesado,si_le_interesa_nos_llaman_o_no_compro,vendido,no_estaba',
         ];
     }
 
@@ -60,7 +63,7 @@ class StoreCompanyRequest extends FormRequest
         return [
             'nombre_comercial.required' => 'El nombre comercial es obligatorio.',
             'nombre_comercial.unique' => 'Ya existe una empresa con este nombre comercial.',
-            'rfc.required' => 'El RFC es obligatorio.',
+            'sector.required' => 'El sector o giro es obligatorio.',
             'rfc.size' => 'El RFC debe tener exactamente 12 caracteres.',
             'rfc.regex' => 'El formato del RFC no es válido.',
             'rfc.unique' => 'Ya existe una empresa con este RFC.',
@@ -73,10 +76,10 @@ class StoreCompanyRequest extends FormRequest
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
-            // Validación adicional de RFC en backend (capa dual)
-            $rfc = strtoupper($this->input('rfc'));
+            // Validación adicional de RFC en backend (solo si se proporciona)
+            $rfc = $this->filled('rfc') ? strtoupper($this->input('rfc')) : '';
             
-            if (!$this->validarRFC($rfc)) {
+            if ($rfc !== '' && !$this->validarRFC($rfc)) {
                 $validator->errors()->add('rfc', 'El RFC no es válido según las reglas fiscales mexicanas.');
             }
         });

@@ -74,11 +74,6 @@
                             Reenviar correo de verificación
                         </button>
                     </p>
-                    @if (session('status') === 'verification-link-sent')
-                        <p class="mt-2 text-sm font-medium text-green-700">
-                            Se ha enviado un nuevo enlace de verificación a tu correo.
-                        </p>
-                    @endif
                 </div>
             @endif
         </div>
@@ -93,20 +88,6 @@
                 </svg>
                 Guardar cambios
             </button>
-            @if (session('status') === 'profile-updated')
-                <p
-                    x-data="{ show: true }"
-                    x-show="show"
-                    x-transition
-                    x-init="setTimeout(() => show = false, 2000)"
-                    class="inline-flex items-center text-sm font-medium text-green-700 bg-green-50 px-3 py-1.5 rounded-lg border border-green-200"
-                >
-                    <svg class="w-4 h-4 mr-1.5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                    Guardado correctamente
-                </p>
-            @endif
         </div>
     </form>
 </section>

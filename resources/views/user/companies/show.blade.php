@@ -27,13 +27,13 @@
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-lg font-semibold text-azul-fuerte">Información de la Empresa</h3>
                     <div class="flex items-center space-x-2">
-                        <div class="w-4 h-4 rounded-full @if($company->status_color === 'verde') bg-green-500 @elseif($company->status_color === 'amarillo') bg-yellow-500 @else bg-red-500 @endif"></div>
-                        <span class="text-sm font-medium text-gray-700">{{ ucfirst($company->status_color) }}</span>
+                        <div class="w-4 h-4 rounded-full dot-prospect-{{ $company->status_color }}"></div>
+                        <span class="text-sm font-medium text-gray-700">{{ $company->status_label }}</span>
                     </div>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div><p class="text-sm text-gray-500">Nombre Comercial</p><p class="text-lg font-medium text-gray-900">{{ $company->nombre_comercial }}</p></div>
-                    <div><p class="text-sm text-gray-500">RFC</p><p class="text-lg font-medium text-gray-900">{{ $company->rfc }}</p></div>
+                    <div><p class="text-sm text-gray-500">RFC</p><p class="text-lg font-medium text-gray-900">{{ $company->rfc ?? '-' }}</p></div>
                     <div><p class="text-sm text-gray-500">Sector/Giro</p><p class="text-lg font-medium text-gray-900">{{ $company->sector ?? '-' }}</p></div>
                     <div><p class="text-sm text-gray-500">Ejecutivo Asignado</p><p class="text-lg font-medium text-gray-900">{{ $company->ejecutivo_asignado ?? '-' }}</p></div>
                     <div><p class="text-sm text-gray-500">Ubicación</p><p class="text-lg font-medium text-gray-900">{{ $company->municipio ?? '' }}{{ $company->estado ? ', ' . $company->estado : '' }}</p></div>
