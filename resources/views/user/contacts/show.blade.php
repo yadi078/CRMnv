@@ -28,7 +28,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div><p class="text-sm text-gray-500">Nombre Completo</p><p class="text-lg font-medium text-gray-900">{{ $contact->nombre_completo }}</p></div>
                     @if($contact->genero)<div><p class="text-sm text-gray-500">Género</p><p class="text-lg font-medium text-gray-900">{{ $contact->genero }}</p></div>@endif
-                    <div><p class="text-sm text-gray-500">Empresa</p><p class="text-lg font-medium text-gray-900"><a href="{{ route('companies.show', $contact->company) }}" class="text-azul-bright hover:text-azul-fuerte">{{ $contact->company->nombre_comercial }}</a></p></div>
+                    <div><p class="text-sm text-gray-500">Empresa</p><p class="text-lg font-medium text-gray-900">@if($contact->company)<a href="{{ route('companies.show', $contact->company) }}" class="text-azul-bright hover:text-azul-fuerte">{{ $contact->company->nombre_comercial }}</a>@else<span class="text-gray-500">-</span>@endif</p></div>
                     <div><p class="text-sm text-gray-500">Puesto</p><p class="text-lg font-medium text-gray-900">{{ $contact->puesto_de_trabajo ?? '-' }}</p></div>
                     <div><p class="text-sm text-gray-500">Departamento</p><p class="text-lg font-medium text-gray-900">{{ $contact->departamento ?? '-' }}</p></div>
                     <div><p class="text-sm text-gray-500">Correo</p><p class="text-lg font-medium text-gray-900">{{ $contact->email }}</p></div>

@@ -38,6 +38,7 @@
                         <option value="">Todos los estados</option>
                         <option value="pendiente" {{ request('approval_status') === 'pendiente' ? 'selected' : '' }}>Pendiente</option>
                         <option value="aprobado" {{ request('approval_status') === 'aprobado' ? 'selected' : '' }}>Aprobado</option>
+                        <option value="rechazado" {{ request('approval_status') === 'rechazado' ? 'selected' : '' }}>Rechazado</option>
                     </select>
                 </div>
                 @endcan
@@ -82,6 +83,8 @@
                                         <div class="text-sm font-medium text-white">{{ $company->nombre_comercial }}</div>
                                         @if($company->approval_status === 'pendiente')
                                         <span class="text-xs font-medium text-[#FCD34D] bg-amber-500/20 px-2 py-0.5 rounded-lg mt-0.5 inline-block">Pendiente</span>
+                                        @elseif($company->approval_status === 'rechazado')
+                                        <span class="text-xs font-medium text-red-300 bg-red-500/20 px-2 py-0.5 rounded-lg mt-0.5 inline-block">Rechazado</span>
                                         @endif
                                     </div>
                                 </div>

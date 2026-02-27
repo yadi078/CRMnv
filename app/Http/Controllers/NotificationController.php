@@ -142,7 +142,7 @@ class NotificationController extends Controller
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json(['success' => true, 'starred' => true]);
         }
-        return back()->with('success', 'Notificación destacada.');
+        return back();
     }
 
     public function unstar(Request $request, string $notification)
@@ -154,7 +154,7 @@ class NotificationController extends Controller
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json(['success' => true, 'starred' => false]);
         }
-        return back()->with('success', 'Quitada de destacadas.');
+        return back();
     }
 
     public function destroy(Request $request, string $notification)

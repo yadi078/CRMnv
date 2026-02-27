@@ -1,122 +1,149 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="view-header">
-            <div class="view-header__icon">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-            </div>
-            <div>
-                <h2 class="view-header__title">Solicitudes pendientes</h2>
-                <p class="view-header__subtitle">Autorizar o denegar solicitudes de usuarios y empresas</p>
-            </div>
+        <div class="page-header-card__icon" aria-hidden="true">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+        </div>
+        <div>
+            <h2 class="page-header-card__title text-[#FFE600] font-bold">Solicitudes pendientes</h2>
+            <p class="page-header-card__subtitle text-[#FFE600]/90 font-semibold">Autorizar o denegar solicitudes de usuarios y empresas</p>
         </div>
     </x-slot>
 
-    <div class="py-6 sm:py-8">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            {{-- Pestañas --}}
-            <div class="flex gap-1 p-1 rounded-xl bg-gray-100 mb-6">
+    <div class="space-y-8">
+        {{-- Recuadro: contador a la izquierda, pestañas a la derecha --}}
+        <div class="panel-card-dark">
+            <div class="flex flex-wrap items-center justify-between gap-4">
+                <div class="flex items-center gap-2 text-white shrink-0">
+                    <span class="text-base font-semibold">Total de solicitudes pendientes:</span>
+                    <span class="inline-flex items-center justify-center min-w-[1.75rem] h-8 px-2.5 rounded-lg text-base font-bold bg-[#FFE600] text-[#003366]">{{ $totalPendientes ?? 0 }}</span>
+                </div>
+                <div class="approval-tabs flex gap-1 p-1 rounded-xl mb-0 shrink-0">
                 @can('companies.approve')
                 <a href="{{ route('approvals.index', ['tab' => 'empresas']) }}"
-                   class="flex-1 sm:flex-none px-4 py-2.5 rounded-lg text-sm font-medium transition {{ $tab === 'empresas' ? 'bg-white text-[#003366] shadow-sm' : 'text-gray-600 hover:text-gray-900' }}">
+                   class="flex-1 sm:flex-none px-4 py-2.5 rounded-lg text-sm font-medium transition {{ $tab === 'empresas' ? 'approval-tabs__item--active' : 'approval-tabs__item' }}">
                     Empresas
-                    @if($companiesCount > 0)
-                        <span class="ml-1.5 inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full text-xs font-bold bg-amber-500 text-white">{{ $companiesCount }}</span>
+                    @if(($companiesCount ?? 0) > 0)
+                        <span class="ml-1.5 inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 rounded-full text-xs font-bold bg-red-500 text-white">{{ $companiesCount }}</span>
                     @endif
                 </a>
                 @endcan
                 @can('users.approve')
                 <a href="{{ route('approvals.index', ['tab' => 'usuarios']) }}"
-                   class="flex-1 sm:flex-none px-4 py-2.5 rounded-lg text-sm font-medium transition {{ $tab === 'usuarios' ? 'bg-white text-[#003366] shadow-sm' : 'text-gray-600 hover:text-gray-900' }}">
+                   class="flex-1 sm:flex-none px-4 py-2.5 rounded-lg text-sm font-medium transition {{ $tab === 'usuarios' ? 'approval-tabs__item--active' : 'approval-tabs__item' }}">
                     Usuarios
-                    @if($usersCount > 0)
-                        <span class="ml-1.5 inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full text-xs font-bold bg-amber-500 text-white">{{ $usersCount }}</span>
+                    @if(($usersCount ?? 0) > 0)
+                        <span class="ml-1.5 inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 rounded-full text-xs font-bold bg-red-500 text-white">{{ $usersCount }}</span>
                     @endif
                 </a>
                 @endcan
-            </div>
-
-            <div class="view-card p-6">
-                @if($tab === 'empresas')
-                    @can('companies.approve')
-                        @if($companies->count() > 0)
-                            <div class="space-y-4">
-                                @foreach($companies as $company)
-                                    <div class="p-4 bg-amber-50/80 border-l-4 border-amber-500 rounded-lg flex flex-wrap items-start justify-between gap-4">
-                                        <div class="flex-1 min-w-0">
-                                            <h3 class="font-semibold text-gray-900">{{ $company->nombre_comercial }}</h3>
-                                            <p class="text-sm text-gray-600">RFC: {{ $company->rfc ?? '-' }}</p>
-                                            <p class="text-sm text-gray-500">Solicitado por <strong>{{ $company->creator?->name ?? 'N/D' }}</strong> el {{ $company->created_at->format('d/m/Y H:i') }}</p>
-                                        </div>
-                                        <div class="flex flex-wrap items-center gap-2">
-                                            <form method="POST" action="{{ route('approvals.companies.approve', $company) }}" class="inline">
-                                                @csrf
-                                                <button type="submit" class="btn-icon-text bg-green-600 text-white px-4 py-2 rounded-xl font-semibold hover:bg-green-700 transition shadow">
-                                                    Aprobar
-                                                </button>
-                                            </form>
-                                            <form method="POST" action="{{ route('approvals.companies.deny', $company) }}" class="inline" onsubmit="return confirm('¿Denegar esta solicitud de empresa?');">
-                                                @csrf
-                                                <button type="submit" class="btn-icon-text bg-red-600 text-white px-4 py-2 rounded-xl font-semibold hover:bg-red-700 transition shadow">
-                                                    Denegar
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
-                            <div class="mt-4">
-                                {{ $companies->withQueryString()->links() }}
-                            </div>
-                        @else
-                            <p class="text-center text-gray-500 py-8">No hay empresas pendientes de aprobación.</p>
-                        @endif
-                    @endcan
-                @endif
-
-                @if($tab === 'usuarios')
-                    @can('users.approve')
-                        @if($users->count() > 0)
-                            <div class="space-y-4">
-                                @foreach($users as $user)
-                                    <div class="p-4 bg-amber-50/80 border-l-4 border-amber-500 rounded-lg flex flex-wrap items-start justify-between gap-4">
-                                        <div class="flex-1 min-w-0">
-                                            <h3 class="font-semibold text-gray-900">{{ $user->name }}</h3>
-                                            <p class="text-sm text-gray-600">Correo: {{ $user->email }}</p>
-                                            <p class="text-sm text-gray-500">Registrado el {{ $user->created_at->format('d/m/Y H:i') }}</p>
-                                            @if($user->roles->isNotEmpty())
-                                                <p class="text-sm text-gray-500">
-                                                    Rol: @foreach($user->roles as $role)<span class="px-2 py-0.5 bg-blue-100 text-blue-800 rounded text-xs">{{ ucfirst($role->name) }}</span> @endforeach
-                                                </p>
-                                            @endif
-                                        </div>
-                                        <div class="flex flex-wrap items-center gap-2">
-                                            <form method="POST" action="{{ route('approvals.users.approve', $user) }}" class="inline">
-                                                @csrf
-                                                <button type="submit" class="btn-icon-text bg-green-600 text-white px-4 py-2 rounded-xl font-semibold hover:bg-green-700 transition shadow">
-                                                    Aprobar
-                                                </button>
-                                            </form>
-                                            <form method="POST" action="{{ route('approvals.users.deny', $user) }}" class="inline" onsubmit="return confirm('¿Denegar el registro de este usuario?');">
-                                                @csrf
-                                                <button type="submit" class="btn-icon-text bg-red-600 text-white px-4 py-2 rounded-xl font-semibold hover:bg-red-700 transition shadow">
-                                                    Denegar
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
-                            <div class="mt-4">
-                                {{ $users->withQueryString()->links() }}
-                            </div>
-                        @else
-                            <p class="text-center text-gray-500 py-8">No hay usuarios pendientes de aprobación.</p>
-                        @endif
-                    @endcan
-                @endif
+                </div>
             </div>
         </div>
+
+        {{-- Contenido según pestaña activa --}}
+        @if($tab === 'empresas')
+        @can('companies.approve')
+        <div class="panel-card-dark p-0 overflow-hidden">
+            @if($companies->count() > 0)
+                <div>
+                    @foreach($companies as $company)
+                    <div class="approval-request-card">
+                        <div class="px-4 sm:px-5 py-4 flex flex-wrap items-start justify-between gap-4">
+                            <div class="flex-1 min-w-0 space-y-2">
+                                <p class="approval-request-card__header">Nuevo registro solicitado</p>
+                                <p class="text-sm text-white/90">
+                                    El usuario <strong class="text-[#FFE600]">{{ $company->creator?->name ?? 'N/D' }}</strong> solicita registrar la siguiente empresa:
+                                </p>
+                                <dl class="text-sm space-y-1 mt-2">
+                                    <div><span class="approval-request-card__label">Nombre comercial:</span> <span class="text-white">{{ $company->nombre_comercial }}</span></div>
+                                    <div><span class="approval-request-card__label">RFC:</span> {{ $company->rfc ?? '—' }}</div>
+                                    <div><span class="approval-request-card__label">Sector:</span> {{ $company->sector ?? '—' }}</div>
+                                    <div><span class="approval-request-card__label">Fecha y hora:</span> {{ $company->created_at->format('d/m/Y H:i') }}</div>
+                                </dl>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-2 flex-shrink-0">
+                                <form method="POST" action="{{ route('approvals.companies.approve', $company) }}" class="inline">
+                                    @csrf
+                                    <button type="submit" class="btn-approve-amber">
+                                        Aprobar
+                                    </button>
+                                </form>
+                                <form method="POST" action="{{ route('approvals.companies.deny', $company) }}" class="inline flex items-center gap-2">
+                                    @csrf
+                                    <input type="text" name="motivo" placeholder="Motivo (opcional)" class="px-2 py-1.5 rounded text-sm bg-white/10 text-white placeholder-white/50 border border-white/20 w-40">
+                                    <button type="submit" class="px-4 py-2 rounded-xl font-semibold bg-red-600 text-white hover:bg-red-500 transition" onclick="return confirm('¿Denegar esta solicitud de empresa?');">
+                                        Denegar
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+                <div class="px-4 py-4 border-t border-white/20">
+                    {{ $companies->withQueryString()->links() }}
+                </div>
+            @else
+                <p class="text-center text-white py-8 px-4">No hay empresas pendientes de aprobación.</p>
+            @endif
+        </div>
+        @endcan
+        @endif
+
+        @if($tab === 'usuarios')
+        @can('users.approve')
+        <div class="panel-card-dark p-0 overflow-hidden">
+            @if($users->count() > 0)
+                <div>
+                    @foreach($users as $user)
+                    <div class="approval-request-card">
+                        <div class="px-4 sm:px-5 py-4 flex flex-wrap items-start justify-between gap-4">
+                            <div class="flex-1 min-w-0 space-y-2">
+                                <p class="approval-request-card__header">Nuevo registro solicitado</p>
+                                <dl class="text-sm space-y-1">
+                                    <div><span class="approval-request-card__label">Nombre:</span> <span class="text-white">{{ $user->name }}</span></div>
+                                    <div><span class="approval-request-card__label">Correo:</span> {{ $user->email }}</div>
+                                    <div><span class="approval-request-card__label">Fecha y hora:</span> {{ $user->created_at->format('d/m/Y H:i') }}</div>
+                                    <div>
+                                        <span class="approval-request-card__label">Rol:</span>
+                                        @if($user->roles->isNotEmpty())
+                                            @foreach($user->roles as $role)
+                                                <span class="px-2 py-0.5 bg-white/20 text-white rounded text-xs">{{ ucfirst($role->name) }}</span>
+                                            @endforeach
+                                        @else
+                                            <span class="text-white/50 italic">Sin rol asignado</span>
+                                        @endif
+                                    </div>
+                                </dl>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-2 flex-shrink-0">
+                                <form method="POST" action="{{ route('approvals.users.approve', $user) }}" class="inline">
+                                    @csrf
+                                    <button type="submit" class="btn-approve-amber">
+                                        Aprobar
+                                    </button>
+                                </form>
+                                <form method="POST" action="{{ route('approvals.users.deny', $user) }}" class="inline" onsubmit="return confirm('¿Denegar y eliminar este registro? El usuario deberá registrarse nuevamente si desea intentarlo.');">
+                                    @csrf
+                                    <button type="submit" class="px-4 py-2 rounded-xl font-semibold bg-red-600 text-white hover:bg-red-500 transition">
+                                        Denegar
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+                <div class="px-4 py-4 border-t border-white/20">
+                    {{ $users->withQueryString()->links() }}
+                </div>
+            @else
+                <p class="text-center text-white py-8 px-4">No hay usuarios pendientes de aprobación.</p>
+            @endif
+        </div>
+        @endcan
+        @endif
     </div>
 </x-app-layout>

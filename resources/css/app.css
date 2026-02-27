@@ -726,6 +726,11 @@ body {
   object-fit: contain;
 }
 
+/* Labels en panel oscuro: texto blanco */
+.panel-card-dark label {
+  color: rgba(255, 255, 255, 0.9);
+}
+
 /* Inputs en panel oscuro: fondo blanco siempre, borde amarillo al enfocar */
 .panel-card-dark input[type="text"],
 .panel-card-dark input[type="email"],
@@ -908,6 +913,30 @@ body {
 .btn-panel-dark:hover {
   background: #f0d900;
   transform: translateY(-1px);
+}
+
+/* Botón Aprobar: amarillo fijo, hover sin cambio de color */
+.btn-approve-amber {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #003366;
+  background: #FFE600;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  box-shadow: 0 2px 8px rgba(255, 230, 0, 0.3);
+}
+.btn-approve-amber:hover {
+  background: #FFE600;
+  color: #003366;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(255, 230, 0, 0.45);
 }
 
 /* Encabezados de tabla dentro de panel oscuro: texto amarillo */
@@ -1109,12 +1138,24 @@ body {
 .dot-prospect-vendido { background: #EAB308; }
 .dot-prospect-no_estaba { background: #7C3AED; }
 
-/* Estados de prospecto - Badge en tablas */
+/* Estados de prospecto - Badge en tablas (fondo oscuro) */
 .badge-prospect-seguimiento { background: rgba(21, 128, 61, 0.3); color: #86EFAC; }
 .badge-prospect-interesado { background: rgba(220, 38, 38, 0.3); color: #FCA5A5; }
 .badge-prospect-si_le_interesa_nos_llaman_o_no_compro { background: rgba(30, 58, 95, 0.3); color: #93C5FD; }
 .badge-prospect-vendido { background: rgba(234, 179, 8, 0.3); color: #FDE047; }
 .badge-prospect-no_estaba { background: rgba(124, 58, 237, 0.3); color: #C4B5FD; }
+
+/* Estados de seguimiento (FollowUp) - Badge en fondos oscuros */
+.badge-followup-completado { background: rgba(21, 128, 61, 0.3); color: #86EFAC; }
+.badge-followup-vencido { background: rgba(220, 38, 38, 0.3); color: #FCA5A5; }
+.badge-followup-pendiente { background: rgba(180, 83, 9, 0.3); color: #FCD34D; }
+
+/* Estados de prospecto - Badge en fondos claros (vista usuario) */
+.badge-prospect-light-seguimiento { background: #DCFCE7; color: #166534; }
+.badge-prospect-light-interesado { background: #FEE2E2; color: #991B1B; }
+.badge-prospect-light-si_le_interesa_nos_llaman_o_no_compro { background: #DBEAFE; color: #1e3a5f; }
+.badge-prospect-light-vendido { background: #FEF9C3; color: #713F12; }
+.badge-prospect-light-no_estaba { background: #EDE9FE; color: #4C1D95; }
 
 /* --------------------------------------------------------------------------
    VIEW HEADER - Títulos de página (sobre fondo claro)
@@ -1451,4 +1492,49 @@ nav[aria-label="Pagination"] span[aria-current="page"] span {
   background: #003366;
   border-color: #003366;
   color: #fff;
+}
+
+/* Pestañas Empresas | Usuarios en aprobaciones */
+.approval-tabs {
+  background: rgba(26, 61, 107, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+.approval-tabs__item {
+  color: #fff;
+  background: transparent;
+}
+.approval-tabs__item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+.approval-tabs__item--active {
+  background: #FFE600;
+  color: #003366;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* Recuadro de solicitud en aprobaciones - caja completa */
+.approval-request-card {
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-radius: 0.5rem;
+  margin: 0.5rem 0.75rem;
+  padding: 0;
+  background: rgba(0, 0, 0, 0.15);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+.approval-request-card:first-child { margin-top: 0.75rem; }
+.approval-request-card:last-child { margin-bottom: 0.5rem; }
+
+.approval-request-card__header {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #FFE600;
+}
+
+.approval-request-card__label {
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.9);
 }

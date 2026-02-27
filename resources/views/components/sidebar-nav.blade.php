@@ -94,6 +94,23 @@
 
         <li class="sidebar-nav__item">
             <a
+                href="{{ route('user.sales.index') }}"
+                class="sidebar-nav__link {{ request()->routeIs('user.sales.*') ? 'sidebar-nav__link--active' : '' }}"
+                aria-label="Historial de Ventas"
+                aria-current="{{ request()->routeIs('user.sales.*') ? 'page' : false }}"
+            >
+                <span class="sidebar-nav__icon-wrap">
+                    <span class="sidebar-nav__wave" aria-hidden="true"></span>
+                    <svg class="sidebar-nav__icon" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                </span>
+                <span class="sidebar-nav__label">Historial de Ventas</span>
+            </a>
+        </li>
+
+        <li class="sidebar-nav__item">
+            <a
                 href="{{ route('approvals.index') }}"
                 class="sidebar-nav__link {{ request()->routeIs('approvals.*') ? 'sidebar-nav__link--active' : '' }}"
                 aria-label="Solicitudes pendientes"
@@ -106,6 +123,25 @@
                     </svg>
                 </span>
                 <span class="sidebar-nav__label">Solicitudes pendientes</span>
+                @php
+                    $pendientes = 0;
+                    try {
+                        if (auth()->user()?->can('companies.approve')) {
+                            $pendientes += \App\Models\Company::pendientes()->count();
+                        }
+                        if (auth()->user()?->can('users.approve')) {
+                            $pendientes += \App\Models\User::where('approval_status', 'pendiente')->count();
+                        }
+                    } catch (\Throwable $e) {
+                        $pendientes = 0;
+                    }
+                    $displayPend = $pendientes > 99 ? '99+' : $pendientes;
+                @endphp
+                @if($pendientes > 0)
+                <span class="ml-1 inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full text-xs font-bold bg-red-500 text-white shadow-sm">
+                    {{ $displayPend }}
+                </span>
+                @endif
             </a>
         </li>
 

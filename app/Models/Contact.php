@@ -60,11 +60,4 @@ class Contact extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    /**
-     * Obtiene el contacto principal de una empresa
-     */
-    public function esContactoPrincipal(): bool
-    {
-        return $this->company->contacts()->first()->id === $this->id;
-    }
 }

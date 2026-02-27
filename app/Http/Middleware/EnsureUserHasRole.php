@@ -26,6 +26,9 @@ class EnsureUserHasRole
         'follow-ups.view',
         'follow-ups.create',
         'follow-ups.edit',
+        'sales.view',
+        'sales.create',
+        'sales.edit',
         'dashboard.view',
     ];
 

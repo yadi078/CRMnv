@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\ResolvesAdminUserView;
 use App\Models\Contact;
 use App\Models\Company;
 use App\Models\User;
 use App\Notifications\NewContactAddedNotification;
 use App\Http\Requests\StoreContactRequest;
+use App\Http\Requests\UpdateContactRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -19,6 +21,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
  */
 class ContactController extends Controller
 {
+    use ResolvesAdminUserView;
     /**
      * Display a listing of the resource.
      */
@@ -44,12 +47,9 @@ class ContactController extends Controller
         }
 
         $contacts = $query->latest()->paginate(15);
-        $companies = Company::aprobados()->orderBy('nombre_comercial')->get();
+        $companies = Company::aprobadosOrdenados()->get();
 
-        if (!auth()->user()->esAdmin()) {
-            return view('user.contacts.index', compact('contacts', 'companies'));
-        }
-        return view('contacts.index', compact('contacts', 'companies'));
+        return $this->resolveView('contacts.index', 'user.contacts.index', compact('contacts', 'companies'));
     }
 
     /**
@@ -60,12 +60,9 @@ class ContactController extends Controller
         $this->authorize('create', Contact::class);
 
         $companyId = $request->company_id;
-        $companies = Company::aprobados()->orderBy('nombre_comercial')->get();
+        $companies = Company::aprobadosOrdenados()->get();
 
-        if (!auth()->user()->esAdmin()) {
-            return view('user.contacts.create', compact('companies', 'companyId'));
-        }
-        return view('contacts.create', compact('companies', 'companyId'));
+        return $this->resolveView('contacts.create', 'user.contacts.create', compact('companies', 'companyId'));
     }
 
     /**
@@ -142,10 +139,7 @@ class ContactController extends Controller
 
         $contact->load(['company', 'followUps', 'creator']);
 
-        if (!auth()->user()->esAdmin()) {
-            return view('user.contacts.show', compact('contact'));
-        }
-        return view('contacts.show', compact('contact'));
+        return $this->resolveView('contacts.show', 'user.contacts.show', compact('contact'));
     }
 
     /**
@@ -155,38 +149,20 @@ class ContactController extends Controller
     {
         $this->authorize('update', $contact);
 
-        $companies = Company::aprobados()->orderBy('nombre_comercial')->get();
+        $companies = Company::aprobadosOrdenados()->get();
 
-        if (!auth()->user()->esAdmin()) {
-            return view('user.contacts.edit', compact('contact', 'companies'));
-        }
-        return view('contacts.edit', compact('contact', 'companies'));
+        return $this->resolveView('contacts.edit', 'user.contacts.edit', compact('contact', 'companies'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Contact $contact)
+    public function update(UpdateContactRequest $request, Contact $contact)
     {
         $this->authorize('update', $contact);
 
-        $validated = $request->validate([
-            'company_id' => 'required|exists:companies,id',
-            'nombre_completo' => 'required|string|max:255',
-            'genero' => 'nullable|string|max:50',
-            'puesto_de_trabajo' => 'nullable|string|max:255',
-            'departamento' => 'nullable|string|max:255',
-            'celular' => 'nullable|string|max:20',
-            'telefono' => 'nullable|string|max:30',
-            'extension' => 'nullable|string|max:10',
-            'email' => 'required|email|unique:contacts,email,' . $contact->id,
-            'municipio' => 'nullable|string|max:255',
-            'estado' => 'nullable|string|max:255',
-            'notas' => 'nullable|string',
-        ]);
-
         try {
-            $contact->update($validated);
+            $contact->update($request->validated());
             return redirect()->route('contacts.show', $contact)
                 ->with('success', 'Contacto actualizado exitosamente.');
         } catch (\Exception $e) {

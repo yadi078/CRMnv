@@ -15,37 +15,39 @@ use Illuminate\Http\Request;
 class ApprovalController extends Controller
 {
     /**
-     * Centro único de solicitudes pendientes (pestañas Usuarios | Empresas)
+     * Centro único de solicitudes pendientes (pestañas Empresas | Usuarios)
      */
     public function index(Request $request)
     {
         $tab = $request->get('tab', 'empresas');
 
+        $companies = collect();
+        $users = collect();
         $companiesCount = 0;
         $usersCount = 0;
+
         if ($request->user()->can('companies.approve')) {
             $companiesCount = Company::pendientes()->count();
+            if ($tab === 'empresas') {
+                $companies = Company::pendientes()
+                    ->with(['creator'])
+                    ->latest()
+                    ->paginate(10, ['*'], 'companies_page');
+            }
         }
         if ($request->user()->can('users.approve')) {
             $usersCount = User::where('approval_status', 'pendiente')->count();
+            if ($tab === 'usuarios') {
+                $users = User::where('approval_status', 'pendiente')
+                    ->with('roles')
+                    ->latest()
+                    ->paginate(10, ['*'], 'users_page');
+            }
         }
 
-        $companies = collect();
-        $users = collect();
-        if ($tab === 'empresas' && $request->user()->can('companies.approve')) {
-            $companies = Company::pendientes()
-                ->with(['creator'])
-                ->latest()
-                ->paginate(10, ['*'], 'companies_page');
-        }
-        if ($tab === 'usuarios' && $request->user()->can('users.approve')) {
-            $users = User::where('approval_status', 'pendiente')
-                ->with('roles')
-                ->latest()
-                ->paginate(10, ['*'], 'users_page');
-        }
+        $totalPendientes = $companiesCount + $usersCount;
 
-        return view('approvals.index', compact('tab', 'companies', 'users', 'companiesCount', 'usersCount'));
+        return view('approvals.index', compact('tab', 'companies', 'users', 'companiesCount', 'usersCount', 'totalPendientes'));
     }
 
     /**
@@ -114,14 +116,19 @@ class ApprovalController extends Controller
     }
 
     /**
-     * Denega la solicitud de registro de un usuario
+     * Denega la solicitud de registro de un usuario.
+     * Se elimina el usuario para que deba registrarse nuevamente si lo desea.
      */
     public function denyUser(Request $request, User $user)
     {
         $this->authorize('users.approve');
 
-        $user->denegar(auth()->id(), $request->input('motivo'));
+        if ($user->approval_status !== 'pendiente') {
+            return back()->with('error', 'Solo se pueden denegar usuarios pendientes de aprobación.');
+        }
 
-        return back()->with('success', 'Solicitud de registro denegada.');
+        $user->delete();
+
+        return back()->with('success', 'Registro denegado. El usuario ha sido eliminado y deberá registrarse nuevamente si desea intentarlo.');
     }
 }

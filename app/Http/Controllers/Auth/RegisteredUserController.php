@@ -3,13 +3,11 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\RegisterRequest;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules;
 use Illuminate\View\View;
 
 class RegisteredUserController extends Controller
@@ -24,39 +22,25 @@ class RegisteredUserController extends Controller
 
     /**
      * Handle an incoming registration request.
+     * El usuario queda pendiente de aprobación del administrador.
+     * No puede iniciar sesión hasta ser aprobado.
      *
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function store(Request $request): RedirectResponse
+    public function store(RegisterRequest $request): RedirectResponse
     {
-        $request->merge([
-            'name' => is_string($request->name) ? trim($request->name) : $request->name,
-            'email' => is_string($request->email) ? trim($request->email) : $request->email,
-            'password' => is_string($request->password) ? trim($request->password) : $request->password,
-            'password_confirmation' => is_string($request->password_confirmation) ? trim($request->password_confirmation) : $request->password_confirmation,
-        ]);
-
-        $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
-        ], [
-            'email.lowercase' => 'El correo electrónico debe estar en minúsculas.',
-        ]);
-
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'approval_status' => 'pendiente',
         ]);
 
-        // Asignar rol "usuario" para que tenga permisos (companies.view, contacts.view, etc.)
         $user->assignRole('usuario');
 
         event(new Registered($user));
 
-        Auth::login($user);
-
-        return redirect(route('user.dashboard', absolute: false));
+        return redirect()->route('register.pending')
+            ->with('status', 'Registro exitoso. Un administrador debe aprobar tu cuenta antes de que puedas iniciar sesión.');
     }
 }

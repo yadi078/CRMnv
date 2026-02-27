@@ -9,6 +9,7 @@ use App\Http\Controllers\ApprovalController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\UserDashboardController;
 use App\Http\Controllers\DataManagementController;
+use App\Http\Controllers\SalesController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -27,13 +28,16 @@ Route::middleware(['auth', 'verified', 'ensure.role'])->group(function () {
     // Vista de Usuario (panel para rol usuario)
     Route::get('/user/dashboard', [UserDashboardController::class, 'index'])->name('user.dashboard');
 
-    // Historial de Ventas (solo usuario normal; admin no usa esta ruta)
-    Route::get('/user/historial-ventas', function () {
-        if (Auth::user()->esAdmin()) {
-            return redirect()->route('dashboard');
-        }
-        return view('user.sales.index');
-    })->name('user.sales.index');
+    // Historial de Ventas (admin y usuario pueden acceder)
+    Route::prefix('user')->name('user.')->group(function () {
+        Route::get('historial-ventas', [SalesController::class, 'index'])->name('sales.index');
+        Route::get('historial-ventas/create', [SalesController::class, 'create'])->name('sales.create');
+        Route::post('historial-ventas', [SalesController::class, 'store'])->name('sales.store');
+        Route::get('historial-ventas/{sale}', [SalesController::class, 'show'])->name('sales.show');
+        Route::get('historial-ventas/{sale}/edit', [SalesController::class, 'edit'])->name('sales.edit');
+        Route::put('historial-ventas/{sale}', [SalesController::class, 'update'])->name('sales.update');
+        Route::delete('historial-ventas/{sale}', [SalesController::class, 'destroy'])->name('sales.destroy');
+    });
 
     // Perfil (compartido)
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

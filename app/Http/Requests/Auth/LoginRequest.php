@@ -38,8 +38,35 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['required', 'string', 'email'],
-            'password' => ['required', 'string'],
+            'email' => [
+                'required',
+                'string',
+                'email',
+                'max:255',
+                'not_regex:/[<>"\'\\;`|&\x00-\x08\x0B\x0C\x0E-\x1F]/',
+            ],
+            'password' => [
+                'required',
+                'string',
+                'max:255',
+                'not_regex:/[<>"\'\\;`|&\x00-\x08\x0B\x0C\x0E-\x1F]/',
+            ],
+        ];
+    }
+
+    /**
+     * Get custom messages for validator errors.
+     *
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'email.required' => 'El correo electrónico es obligatorio.',
+            'email.email' => 'El correo electrónico debe tener un formato válido.',
+            'email.not_regex' => 'El correo no puede contener caracteres especiales no permitidos.',
+            'password.required' => 'La contraseña es obligatoria.',
+            'password.not_regex' => 'La contraseña no puede contener caracteres especiales no permitidos.',
         ];
     }
 
@@ -57,6 +84,14 @@ class LoginRequest extends FormRequest
 
             throw ValidationException::withMessages([
                 'email' => 'Las credenciales no coinciden con nuestros registros.',
+            ]);
+        }
+
+        $user = Auth::user();
+        if (! $user->esAdmin() && ! $user->estaAprobado()) {
+            Auth::logout();
+            throw ValidationException::withMessages([
+                'email' => 'Tu cuenta aún está pendiente de aprobación. Un administrador debe autorizar tu acceso.',
             ]);
         }
 

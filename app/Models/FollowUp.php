@@ -104,10 +104,8 @@ class FollowUp extends Model
             'completado_at' => now(),
         ]);
 
-        // Actualizar semáforo de la empresa si existe
-        if ($this->company) {
-            $this->company->actualizarSemáforo();
-        }
+        // El status_color (estado de prospecto) se gestiona de forma manual
+        // en Company, no se actualiza automáticamente al completar seguimientos.
     }
 
     /**

@@ -36,7 +36,7 @@
                             <select id="contact_id" name="contact_id" class="mt-1 block w-full rounded-md border-gray-300">
                                 <option value="">Seleccione un contacto</option>
                                 @foreach($contacts as $contact)
-                                <option value="{{ $contact->id }}" {{ (old('contact_id', $contactId ?? null) == $contact->id) ? 'selected' : '' }}>{{ $contact->nombre_completo }} - {{ $contact->company->nombre_comercial }}</option>
+                                <option value="{{ $contact->id }}" {{ (old('contact_id', $contactId ?? null) == $contact->id) ? 'selected' : '' }}>{{ $contact->nombre_completo }} - {{ $contact->company?->nombre_comercial ?? 'Sin empresa' }}</option>
                                 @endforeach
                             </select>
                             <x-input-error :messages="$errors->get('contact_id')" class="mt-2" />

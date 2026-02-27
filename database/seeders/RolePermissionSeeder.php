@@ -47,6 +47,12 @@ class RolePermissionSeeder extends Seeder
             'follow-ups.create',
             'follow-ups.edit',
             'follow-ups.delete',
+
+            // Historial de ventas
+            'sales.view',
+            'sales.create',
+            'sales.edit',
+            'sales.delete',
             
             // Usuarios
             'users.view',
@@ -79,6 +85,9 @@ class RolePermissionSeeder extends Seeder
             'follow-ups.view',
             'follow-ups.create',
             'follow-ups.edit',
+            'sales.view',
+            'sales.create',
+            'sales.edit',
             'dashboard.view',
         ]);
     }

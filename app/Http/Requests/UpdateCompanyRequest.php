@@ -39,9 +39,9 @@ class UpdateCompanyRequest extends FormRequest
             'rfc' => [
                 'nullable',
                 'string',
+                'min:12',
                 'max:13',
                 Rule::when($this->filled('rfc'), [
-                    'size:12',
                     'regex:/^[A-ZÑ&]{3,4}\d{6}[A-Z0-9]{3}$/',
                     Rule::unique('companies', 'rfc')->ignore($companyId),
                 ]),
@@ -66,7 +66,8 @@ class UpdateCompanyRequest extends FormRequest
             'nombre_comercial.required' => 'El nombre comercial es obligatorio.',
             'nombre_comercial.unique' => 'Ya existe una empresa con este nombre comercial.',
             'sector.required' => 'El sector o giro es obligatorio.',
-            'rfc.size' => 'El RFC debe tener exactamente 12 caracteres.',
+            'rfc.min' => 'El RFC debe tener entre 12 y 13 caracteres.',
+            'rfc.max' => 'El RFC debe tener entre 12 y 13 caracteres.',
             'rfc.regex' => 'El formato del RFC no es válido.',
             'rfc.unique' => 'Ya existe una empresa con este RFC.',
         ];

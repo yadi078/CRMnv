@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\ResolvesAdminUserView;
 use App\Models\FollowUp;
 use App\Models\Company;
 use App\Models\Contact;
@@ -15,6 +16,7 @@ use Illuminate\Support\Facades\DB;
  */
 class FollowUpController extends Controller
 {
+    use ResolvesAdminUserView;
     /**
      * Display a listing of the resource.
      */
@@ -34,10 +36,7 @@ class FollowUpController extends Controller
 
         $followUps = $query->latest('fecha_alarma')->paginate(15);
 
-        if (!auth()->user()->esAdmin()) {
-            return view('user.follow-ups.index', compact('followUps'));
-        }
-        return view('follow-ups.index', compact('followUps'));
+        return $this->resolveView('follow-ups.index', 'user.follow-ups.index', compact('followUps'));
     }
 
     /**
@@ -50,13 +49,10 @@ class FollowUpController extends Controller
         $companyId = $request->company_id;
         $contactId = $request->contact_id;
 
-        $companies = Company::aprobados()->orderBy('nombre_comercial')->get();
+        $companies = Company::aprobadosOrdenados()->get();
         $contacts = Contact::with('company')->orderBy('nombre_completo')->get();
 
-        if (!auth()->user()->esAdmin()) {
-            return view('user.follow-ups.create', compact('companies', 'contacts', 'companyId', 'contactId'));
-        }
-        return view('follow-ups.create', compact('companies', 'contacts', 'companyId', 'contactId'));
+        return $this->resolveView('follow-ups.create', 'user.follow-ups.create', compact('companies', 'contacts', 'companyId', 'contactId'));
     }
 
     /**
@@ -108,10 +104,7 @@ class FollowUpController extends Controller
 
         $followUp->load(['company', 'contact', 'asignado', 'creator']);
 
-        if (!auth()->user()->esAdmin()) {
-            return view('user.follow-ups.show', compact('followUp'));
-        }
-        return view('follow-ups.show', compact('followUp'));
+        return $this->resolveView('follow-ups.show', 'user.follow-ups.show', compact('followUp'));
     }
 
     /**
@@ -121,13 +114,10 @@ class FollowUpController extends Controller
     {
         $this->authorize('update', $followUp);
 
-        $companies = Company::aprobados()->orderBy('nombre_comercial')->get();
+        $companies = Company::aprobadosOrdenados()->get();
         $contacts = Contact::with('company')->orderBy('nombre_completo')->get();
 
-        if (!auth()->user()->esAdmin()) {
-            return view('user.follow-ups.edit', compact('followUp', 'companies', 'contacts'));
-        }
-        return view('follow-ups.edit', compact('followUp', 'companies', 'contacts'));
+        return $this->resolveView('follow-ups.edit', 'user.follow-ups.edit', compact('followUp', 'companies', 'contacts'));
     }
 
     /**
@@ -141,7 +131,7 @@ class FollowUpController extends Controller
             'company_id' => 'nullable|exists:companies,id',
             'contact_id' => 'nullable|exists:contacts,id',
             'tipo_accion' => 'required|in:llamada,reunión,cierre',
-            'fecha_alarma' => 'required|date',
+            'fecha_alarma' => 'required|date|after_or_equal:now',
             'bitacora_notas' => 'nullable|string',
             'asignado_a' => 'nullable|exists:users,id',
         ]);

@@ -5,17 +5,27 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
- * Request de validación para crear contactos
+ * Request de validación para actualizar contactos
  */
-class StoreContactRequest extends FormRequest
+class UpdateContactRequest extends FormRequest
 {
+    /**
+     * Determine if the user is authorized to make this request.
+     */
     public function authorize(): bool
     {
-        return $this->user()->can('contacts.create');
+        return $this->user()->can('contacts.edit');
     }
 
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     */
     public function rules(): array
     {
+        $contact = $this->route('contact');
+
         return [
             'company_id' => 'required|exists:companies,id',
             'nombre_completo' => 'required|string|max:255',
@@ -25,13 +35,18 @@ class StoreContactRequest extends FormRequest
             'celular' => 'nullable|string|max:20',
             'telefono' => 'nullable|string|max:30',
             'extension' => 'nullable|string|max:10',
-            'email' => 'required|email|unique:contacts,email|max:255',
+            'email' => 'required|email|unique:contacts,email,' . $contact->id . '|max:255',
             'municipio' => 'nullable|string|max:255',
             'estado' => 'nullable|string|max:255',
             'notas' => 'nullable|string',
         ];
     }
 
+    /**
+     * Get custom messages for validator errors.
+     *
+     * @return array<string, string>
+     */
     public function messages(): array
     {
         return [

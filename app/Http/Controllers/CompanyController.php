@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\ResolvesAdminUserView;
 use App\Models\Company;
+use App\Models\Sale;
 use App\Http\Requests\StoreCompanyRequest;
 use App\Http\Requests\UpdateCompanyRequest;
 use Illuminate\Http\Request;
@@ -17,6 +19,7 @@ use Illuminate\Support\Facades\Log;
  */
 class CompanyController extends Controller
 {
+    use ResolvesAdminUserView;
     /**
      * Mostrar listado del recurso.
      */
@@ -67,10 +70,7 @@ class CompanyController extends Controller
     {
         $this->authorize('create', Company::class);
 
-        if (!auth()->user()->esAdmin()) {
-            return view('user.companies.create');
-        }
-        return view('companies.create');
+        return $this->resolveView('companies.create', 'user.companies.create');
     }
 
     /**
@@ -141,12 +141,9 @@ class CompanyController extends Controller
     {
         $this->authorize('view', $company);
 
-        $company->load(['contacts', 'followUps.asignado', 'creator', 'approver']);
+        $company->load(['contacts', 'followUps.asignado', 'sales.creator', 'creator', 'approver']);
 
-        if (!auth()->user()->esAdmin()) {
-            return view('user.companies.show', compact('company'));
-        }
-        return view('companies.show', compact('company'));
+        return $this->resolveView('companies.show', 'user.companies.show', compact('company'));
     }
 
     /**
@@ -156,10 +153,7 @@ class CompanyController extends Controller
     {
         $this->authorize('update', $company);
 
-        if (!auth()->user()->esAdmin()) {
-            return view('user.companies.edit', compact('company'));
-        }
-        return view('companies.edit', compact('company'));
+        return $this->resolveView('companies.edit', 'user.companies.edit', compact('company'));
     }
 
     /**
@@ -169,6 +163,9 @@ class CompanyController extends Controller
     {
         DB::beginTransaction();
         try {
+            $statusAnterior = $company->status_color;
+            $nuevoStatus = $request->status_color ?? $company->status_color;
+
             $company->update([
                 'nombre_comercial' => $request->nombre_comercial,
                 'rfc' => $request->filled('rfc') ? strtoupper($request->rfc) : null,
@@ -177,8 +174,21 @@ class CompanyController extends Controller
                 'estado' => $request->estado,
                 'ejecutivo_asignado' => $request->ejecutivo_asignado,
                 'datos_fiscales' => $request->datos_fiscales,
-                'status_color' => $request->status_color ?? $company->status_color,
+                'status_color' => $nuevoStatus,
             ]);
+
+            if ($nuevoStatus === 'vendido' && $statusAnterior !== 'vendido') {
+                Sale::create([
+                    'company_id' => $company->id,
+                    'nombre_servicio' => 'Venta registrada desde prospecto',
+                    'fecha_venta' => now(),
+                    'monto' => null,
+                    'tipo_pago' => null,
+                    'participantes' => null,
+                    'notas' => 'Registrado automáticamente al cambiar estado de prospecto a Vendido.',
+                    'created_by' => auth()->id(),
+                ]);
+            }
 
             DB::commit();
 

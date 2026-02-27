@@ -65,6 +65,30 @@
                 </div>
             </div>
 
+            @can('sales.view')
+            <div class="view-card view-card--azul p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-azul-fuerte">Historial de Ventas</h3>
+                    @can('sales.create')
+                    <a href="{{ route('user.sales.create', ['company_id' => $company->id]) }}" class="btn-primary-app">Nueva Venta</a>
+                    @endcan
+                </div>
+                <div class="space-y-3">
+                    @forelse($company->sales as $sale)
+                    <div class="p-4 bg-gray-50 rounded-lg flex justify-between items-start">
+                        <div>
+                            <p class="font-medium text-gray-900">{{ $sale->nombre_servicio }}</p>
+                            <p class="text-sm text-gray-500">{{ $sale->fecha_venta->format('d/m/Y') }} · {{ $sale->monto_formateado }}</p>
+                        </div>
+                        <a href="{{ route('user.sales.show', $sale) }}" class="text-azul-bright hover:text-azul-fuerte btn-icon-text">Ver</a>
+                    </div>
+                    @empty
+                    <p class="text-gray-500 text-center py-4">No hay ventas registradas</p>
+                    @endforelse
+                </div>
+            </div>
+            @endcan
+
             <div class="view-card view-card--azul p-6">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-lg font-semibold text-azul-fuerte">Seguimientos</h3>

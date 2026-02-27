@@ -33,6 +33,7 @@ class Company extends Model
         'created_by',
         'approved_by',
         'approved_at',
+        'motivo_rechazo',
     ];
 
     /**
@@ -59,6 +60,14 @@ class Company extends Model
     public function followUps(): HasMany
     {
         return $this->hasMany(FollowUp::class);
+    }
+
+    /**
+     * Relación: Una empresa tiene muchas ventas (historial de ventas)
+     */
+    public function sales(): HasMany
+    {
+        return $this->hasMany(Sale::class);
     }
 
     /**
@@ -124,6 +133,14 @@ class Company extends Model
     }
 
     /**
+     * Scope: Empresas aprobadas ordenadas por nombre comercial
+     */
+    public function scopeAprobadosOrdenados($query)
+    {
+        return $query->aprobados()->orderBy('nombre_comercial');
+    }
+
+    /**
      * Scope: Filtrar por estado de prospecto (status_color)
      */
     public function scopePorStatus($query, string $status)
@@ -168,6 +185,7 @@ class Company extends Model
             'approval_status' => 'rechazado',
             'approved_by' => $userId,
             'approved_at' => now(),
+            'motivo_rechazo' => $motivo,
         ]);
     }
 }
