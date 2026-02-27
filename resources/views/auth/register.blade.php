@@ -45,6 +45,7 @@
                                 name="name" 
                                 value="{{ old('name') }}" 
                                 required 
+                                maxlength="100"
                                 autofocus 
                                 autocomplete="name"
                                 class="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFFF00] focus:border-[#FFFF00] text-gray-900 placeholder:text-[#808080] transition-all duration-200"
@@ -69,9 +70,10 @@
                                 name="email" 
                                 value="{{ old('email') }}" 
                                 required 
+                                maxlength="100"
                                 autocomplete="username"
                                 class="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFFF00] focus:border-[#FFFF00] text-gray-900 placeholder:text-[#808080] transition-all duration-200"
-                                placeholder="Ingresa tu correo electrónico"
+                                placeholder="usuario@ejemplo.com"
                             />
                         </div>
                         <x-input-error :messages="$errors->get('email')" class="mt-2 text-sm" />
@@ -91,6 +93,7 @@
                                 :type="showPassword ? 'text' : 'password'" 
                                 name="password" 
                                 required 
+                                maxlength="100"
                                 autocomplete="new-password"
                                 class="w-full pl-12 pr-12 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFFF00] focus:border-[#FFFF00] text-gray-900 placeholder:text-[#808080] transition-all duration-200"
                                 placeholder="Ingresa tu contraseña"
@@ -128,6 +131,7 @@
                                 :type="showPasswordConfirmation ? 'text' : 'password'" 
                                 name="password_confirmation" 
                                 required 
+                                maxlength="100"
                                 autocomplete="new-password"
                                 class="w-full pl-12 pr-12 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFFF00] focus:border-[#FFFF00] text-gray-900 placeholder:text-[#808080] transition-all duration-200"
                                 placeholder="Confirma tu contraseña"

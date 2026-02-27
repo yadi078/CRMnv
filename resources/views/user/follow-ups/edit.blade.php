@@ -1,21 +1,19 @@
 <x-app-user-layout>
     <x-slot name="header">
-        <div class="view-header">
-            <div class="view-header__icon">
+        <div class="page-header-card__icon" aria-hidden="true">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
             </div>
             <div>
-                <h2 class="view-header__title">Editar Seguimiento</h2>
-                <p class="view-header__subtitle">{{ ucfirst($followUp->tipo_accion) }}</p>
+                <h2 class="page-header-card__title">Editar Seguimiento</h2>
+            <p class="page-header-card__subtitle">{{ ucfirst($followUp->tipo_accion) }}</p>
             </div>
-        </div>
     </x-slot>
 
     <div class="py-8 sm:py-10">
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
-            <div class="view-card view-card--azul p-6">
+            <div class="panel-card-dark p-6">
                 <form method="POST" action="{{ route('follow-ups.update', $followUp) }}">
                     @csrf
                     @method('PUT')

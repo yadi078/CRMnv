@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Company;
 use App\Models\Contact;
 use App\Models\FollowUp;
+use App\Models\Sale;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -56,13 +57,17 @@ class UserDashboardController extends Controller
         // Mis contactos: los creados por el usuario
         $misContactos = Contact::where('created_by', $user->id)->latest()->limit(20)->get();
 
+        // Ventas recientes del usuario
+        $ventasRecientes = Sale::where('created_by', $user->id)->with('company')->latest('fecha_venta')->limit(5)->get();
+
         return view('user.dashboard', compact(
             'seguimientosPendientes',
             'alarmasProgramadas',
             'solicitudesPendientes',
             'misEmpresas',
             'misContactos',
-            'alarmasHoy'
+            'alarmasHoy',
+            'ventasRecientes'
         ));
     }
 }

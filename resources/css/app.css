@@ -855,6 +855,33 @@ body {
   color: var(--color-accent);
 }
 
+/* Variante compacta: tarjetas pequeñas en hilera única */
+.metric-card-dark--compact {
+  padding: 0.5rem 0.75rem;
+}
+
+.metric-card-dark--compact .metric-card-dark__label {
+  font-size: 0.6875rem;
+  margin-bottom: 0;
+  line-height: 1.2;
+}
+
+.metric-card-dark--compact .metric-card-dark__value {
+  font-size: 1rem;
+  line-height: 1.2;
+}
+
+.metric-card-dark--compact .metric-card-dark__value::after {
+  margin-top: 0.2rem;
+  height: 1px;
+}
+
+.metric-card-dark--compact .metric-card-dark__icon-wrap {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+}
+
 .metric-card-dark--highlight::after {
   content: '';
   position: absolute;

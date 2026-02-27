@@ -1,28 +1,26 @@
 <x-app-user-layout>
     <x-slot name="header">
-        <div class="view-header">
-            <div class="view-header__icon">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                </svg>
-            </div>
-            <div>
-                <h2 class="view-header__title">Nuevo Seguimiento</h2>
-                <p class="view-header__subtitle">Registrar nuevo seguimiento (llamadas, reuniones, cierres)</p>
-            </div>
+        <div class="page-header-card__icon" aria-hidden="true">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+            </svg>
+        </div>
+        <div>
+            <h2 class="page-header-card__title">Nuevo Seguimiento</h2>
+            <p class="page-header-card__subtitle">Registrar nuevo seguimiento (llamadas, reuniones, cierres)</p>
         </div>
     </x-slot>
 
-    <div class="py-8 sm:py-10">
-        <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
-            <div class="view-card view-card--azul p-6">
+    <div class="space-y-8">
+        <div class="panel-card-dark p-6">
                 <form method="POST" action="{{ route('follow-ups.store') }}">
                     @csrf
 
+                    <h3 class="panel-card-dark__title panel-card-dark__title--accent mb-4">Datos del seguimiento</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <x-input-label for="company_id" value="Empresa (Opcional)" />
-                            <select id="company_id" name="company_id" class="mt-1 block w-full rounded-md border-gray-300">
+                            <x-input-label for="company_id" value="Empresa (Opcional)" class="text-white" />
+                            <select id="company_id" name="company_id" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white [&>option]:bg-[#1a3d6b] [&>option]:text-white py-2.5 px-3">
                                 <option value="">Seleccione una empresa</option>
                                 @foreach($companies as $company)
                                 <option value="{{ $company->id }}" {{ (old('company_id', $companyId ?? null) == $company->id) ? 'selected' : '' }}>{{ $company->nombre_comercial }}</option>
@@ -32,8 +30,8 @@
                         </div>
 
                         <div>
-                            <x-input-label for="contact_id" value="Contacto (Opcional)" />
-                            <select id="contact_id" name="contact_id" class="mt-1 block w-full rounded-md border-gray-300">
+                            <x-input-label for="contact_id" value="Contacto (Opcional)" class="text-white" />
+                            <select id="contact_id" name="contact_id" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white [&>option]:bg-[#1a3d6b] [&>option]:text-white py-2.5 px-3">
                                 <option value="">Seleccione un contacto</option>
                                 @foreach($contacts as $contact)
                                 <option value="{{ $contact->id }}" {{ (old('contact_id', $contactId ?? null) == $contact->id) ? 'selected' : '' }}>{{ $contact->nombre_completo }} - {{ $contact->company?->nombre_comercial ?? 'Sin empresa' }}</option>
@@ -43,8 +41,8 @@
                         </div>
 
                         <div>
-                            <x-input-label for="tipo_accion" value="Tipo de Acción *" />
-                            <select id="tipo_accion" name="tipo_accion" class="mt-1 block w-full rounded-md border-gray-300" required>
+                            <x-input-label for="tipo_accion" value="Tipo de Acción *" class="text-white" />
+                            <select id="tipo_accion" name="tipo_accion" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white [&>option]:bg-[#1a3d6b] [&>option]:text-white py-2.5 px-3" required>
                                 <option value="">Seleccione un tipo</option>
                                 <option value="llamada" {{ old('tipo_accion') === 'llamada' ? 'selected' : '' }}>Llamada</option>
                                 <option value="reunión" {{ old('tipo_accion') === 'reunión' ? 'selected' : '' }}>Reunión</option>
@@ -54,14 +52,14 @@
                         </div>
 
                         <div>
-                            <x-input-label for="fecha_alarma" value="Fecha y Hora Programada *" />
-                            <x-text-input id="fecha_alarma" name="fecha_alarma" type="datetime-local" class="mt-1 block w-full" :value="old('fecha_alarma')" required />
+                            <x-input-label for="fecha_alarma" value="Fecha y Hora Programada *" class="text-white" />
+                            <x-text-input id="fecha_alarma" name="fecha_alarma" type="datetime-local" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white py-2.5 px-3" :value="old('fecha_alarma')" required />
                             <x-input-error :messages="$errors->get('fecha_alarma')" class="mt-2" />
                         </div>
 
                         <div>
-                            <x-input-label for="asignado_a" value="Asignado a" />
-                            <select id="asignado_a" name="asignado_a" class="mt-1 block w-full rounded-md border-gray-300">
+                            <x-input-label for="asignado_a" value="Asignado a" class="text-white" />
+                            <select id="asignado_a" name="asignado_a" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white [&>option]:bg-[#1a3d6b] [&>option]:text-white py-2.5 px-3">
                                 <option value="">Asignar a mí mismo</option>
                                 @foreach(\App\Models\User::all() as $user)
                                 <option value="{{ $user->id }}" {{ old('asignado_a', auth()->id()) == $user->id ? 'selected' : '' }}>{{ $user->name }}</option>
@@ -71,14 +69,14 @@
                         </div>
 
                         <div class="md:col-span-2">
-                            <x-input-label for="bitacora_notas" value="Bitácora de Notas" />
-                            <textarea id="bitacora_notas" name="bitacora_notas" rows="6" class="mt-1 block w-full rounded-md border-gray-300" placeholder="Ingrese las notas y observaciones del seguimiento...">{{ old('bitacora_notas') }}</textarea>
+                            <x-input-label for="bitacora_notas" value="Bitácora de Notas" class="text-white" />
+                            <textarea id="bitacora_notas" name="bitacora_notas" rows="6" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3" placeholder="Ingrese las notas y observaciones del seguimiento...">{{ old('bitacora_notas') }}</textarea>
                             <x-input-error :messages="$errors->get('bitacora_notas')" class="mt-2" />
                         </div>
                     </div>
 
                     <div class="flex items-center justify-end mt-6 gap-3 flex-wrap">
-                        <a href="{{ route('follow-ups.index') }}" class="btn-icon-text text-gray-600 hover:text-gray-800 px-4 py-2 rounded-xl border border-gray-300 hover:bg-gray-50">
+                        <a href="{{ route('follow-ups.index') }}" class="btn-danger-app">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                             </svg>

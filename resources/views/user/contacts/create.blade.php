@@ -1,42 +1,40 @@
 <x-app-user-layout>
     <x-slot name="header">
-        <div class="view-header">
-            <div class="view-header__icon">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                </svg>
-            </div>
-            <div>
-                <h2 class="view-header__title">Nuevo Contacto</h2>
-                <p class="view-header__subtitle">Registrar nuevo contacto (vinculado a empresa)</p>
-            </div>
+        <div class="page-header-card__icon" aria-hidden="true">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+            </svg>
+        </div>
+        <div>
+            <h2 class="page-header-card__title">Nuevo Contacto</h2>
+            <p class="page-header-card__subtitle">Registrar nuevo contacto (vinculado a empresa)</p>
         </div>
     </x-slot>
 
-    <div class="py-8 sm:py-10">
-        <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
-            <div class="view-card view-card--azul p-6">
+    <div class="space-y-8">
+        <div class="panel-card-dark p-6">
                 <form id="form-nuevo-contacto" method="POST" action="{{ route('contacts.store') }}">
                     @csrf
+                    <h3 class="panel-card-dark__title panel-card-dark__title--accent mb-4">Datos del contacto</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="md:col-span-2">
-                            <x-input-label for="company_id" value="Empresa *" />
-                            <select id="company_id" name="company_id" class="mt-1 block w-full rounded-md border-gray-300" required>
+                            <label for="company_id" class="block text-sm font-medium text-white/90 mb-1">Empresa *</label>
+                            <select id="company_id" name="company_id" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white [&>option]:bg-[#1a3d6b] [&>option]:text-white py-2.5 px-3" required>
                                 <option value="">Seleccione una empresa</option>
                                 @foreach($companies as $company)
                                 <option value="{{ $company->id }}" {{ (old('company_id', $companyId ?? null) == $company->id) ? 'selected' : '' }}>{{ $company->nombre_comercial }}</option>
                                 @endforeach
                             </select>
-                            <x-input-error :messages="$errors->get('company_id')" class="mt-2" />
+                            <x-input-error :messages="$errors->get('company_id')" class="mt-2 text-red-300" />
                         </div>
                         <div class="md:col-span-2">
-                            <x-input-label for="nombre_completo" value="Nombre Completo *" />
-                            <x-text-input id="nombre_completo" name="nombre_completo" type="text" class="mt-1 block w-full" :value="old('nombre_completo')" required />
-                            <x-input-error :messages="$errors->get('nombre_completo')" class="mt-2" />
+                            <label for="nombre_completo" class="block text-sm font-medium text-white/90 mb-1">Nombre Completo *</label>
+                            <input id="nombre_completo" name="nombre_completo" type="text" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3" value="{{ old('nombre_completo') }}" required />
+                            <x-input-error :messages="$errors->get('nombre_completo')" class="mt-2 text-red-300" />
                         </div>
                         <div>
-                            <x-input-label for="genero" value="Género" />
-                            <select id="genero" name="genero" class="mt-1 block w-full rounded-md border-gray-300">
+                            <label for="genero" class="block text-sm font-medium text-white/90 mb-1">Género</label>
+                            <select id="genero" name="genero" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white [&>option]:bg-[#1a3d6b] [&>option]:text-white py-2.5 px-3">
                                 <option value="">Seleccione</option>
                                 <option value="Masculino" {{ old('genero') === 'Masculino' ? 'selected' : '' }}>Masculino</option>
                                 <option value="Femenino" {{ old('genero') === 'Femenino' ? 'selected' : '' }}>Femenino</option>
@@ -44,50 +42,49 @@
                             </select>
                         </div>
                         <div>
-                            <x-input-label for="puesto_de_trabajo" value="Puesto de Trabajo" />
-                            <x-text-input id="puesto_de_trabajo" name="puesto_de_trabajo" type="text" class="mt-1 block w-full" :value="old('puesto_de_trabajo')" />
+                            <label for="puesto_de_trabajo" class="block text-sm font-medium text-white/90 mb-1">Puesto de Trabajo</label>
+                            <input id="puesto_de_trabajo" name="puesto_de_trabajo" type="text" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3" value="{{ old('puesto_de_trabajo') }}" />
                         </div>
                         <div>
-                            <x-input-label for="departamento" value="Departamento" />
-                            <x-text-input id="departamento" name="departamento" type="text" class="mt-1 block w-full" :value="old('departamento')" />
+                            <label for="departamento" class="block text-sm font-medium text-white/90 mb-1">Departamento</label>
+                            <input id="departamento" name="departamento" type="text" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3" value="{{ old('departamento') }}" />
                         </div>
                         <div>
-                            <x-input-label for="email" value="Correo electrónico *" />
-                            <x-text-input id="email" name="email" type="email" class="mt-1 block w-full" :value="old('email')" required />
-                            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+                            <label for="email" class="block text-sm font-medium text-white/90 mb-1">Correo electrónico *</label>
+                            <input id="email" name="email" type="email" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3" value="{{ old('email') }}" required />
+                            <x-input-error :messages="$errors->get('email')" class="mt-2 text-red-300" />
                         </div>
                         <div>
-                            <x-input-label for="telefono" value="Teléfono" />
-                            <x-text-input id="telefono" name="telefono" type="text" class="mt-1 block w-full" :value="old('telefono')" placeholder="Teléfono fijo" />
+                            <label for="telefono" class="block text-sm font-medium text-white/90 mb-1">Teléfono</label>
+                            <input id="telefono" name="telefono" type="text" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3" value="{{ old('telefono') }}" placeholder="Teléfono fijo" />
                         </div>
                         <div>
-                            <x-input-label for="celular" value="Celular" />
-                            <x-text-input id="celular" name="celular" type="text" class="mt-1 block w-full" :value="old('celular')" />
+                            <label for="celular" class="block text-sm font-medium text-white/90 mb-1">Celular</label>
+                            <input id="celular" name="celular" type="text" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3" value="{{ old('celular') }}" />
                         </div>
                         <div>
-                            <x-input-label for="extension" value="Extensión" />
-                            <x-text-input id="extension" name="extension" type="text" class="mt-1 block w-full" :value="old('extension')" />
+                            <label for="extension" class="block text-sm font-medium text-white/90 mb-1">Extensión</label>
+                            <input id="extension" name="extension" type="text" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3" value="{{ old('extension') }}" />
                         </div>
                         <div>
-                            <x-input-label for="municipio" value="Municipio" />
-                            <x-text-input id="municipio" name="municipio" type="text" class="mt-1 block w-full" :value="old('municipio')" />
+                            <label for="municipio" class="block text-sm font-medium text-white/90 mb-1">Municipio</label>
+                            <input id="municipio" name="municipio" type="text" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3" value="{{ old('municipio') }}" />
                         </div>
                         <div>
-                            <x-input-label for="estado" value="Estado" />
-                            <x-text-input id="estado" name="estado" type="text" class="mt-1 block w-full" :value="old('estado')" />
+                            <label for="estado" class="block text-sm font-medium text-white/90 mb-1">Estado</label>
+                            <input id="estado" name="estado" type="text" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3" value="{{ old('estado') }}" />
                         </div>
                         <div class="md:col-span-2">
-                            <x-input-label for="notas" value="Notas" />
-                            <textarea id="notas" name="notas" rows="4" class="mt-1 block w-full rounded-md border-gray-300">{{ old('notas') }}</textarea>
+                            <label for="notas" class="block text-sm font-medium text-white/90 mb-1">Notas</label>
+                            <textarea id="notas" name="notas" rows="4" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3">{{ old('notas') }}</textarea>
                         </div>
                     </div>
                     <div class="flex items-center justify-end mt-6 gap-3 flex-wrap">
-                        <a href="{{ route('contacts.index') }}" class="btn-icon-text text-gray-600 hover:text-gray-800 px-4 py-2 rounded-xl border border-gray-300 hover:bg-gray-50">Cancelar</a>
+                        <a href="{{ route('contacts.index') }}" class="btn-danger-app">Cancelar</a>
                         <button type="submit" id="btn-guardar-contacto" class="btn-amber-app">Guardar</button>
                     </div>
                 </form>
             </div>
-        </div>
     </div>
 
     <x-modal-success id="modal-registro-exitoso" />

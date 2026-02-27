@@ -6,6 +6,25 @@ window.Alpine = Alpine;
 
 Alpine.start();
 
+// Mensajes de validación en español para campos tipo email (evita tooltips en inglés del navegador)
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('form input[type="email"]').forEach(function(input) {
+        input.addEventListener('invalid', function() {
+            if (this.validity.valueMissing) {
+                this.setCustomValidity('El correo electrónico es obligatorio.');
+            } else {
+                this.setCustomValidity('El correo electrónico debe tener un formato válido.');
+            }
+        });
+        input.addEventListener('input', function() {
+            this.setCustomValidity('');
+        });
+        input.addEventListener('blur', function() {
+            this.setCustomValidity('');
+        });
+    });
+});
+
 // Función global para mostrar alertas (modal flotante centrado)
 window.showAlert = function(type, message, duration = 0) {
     const alertContainer = document.getElementById('alert-container') || createAlertContainer();

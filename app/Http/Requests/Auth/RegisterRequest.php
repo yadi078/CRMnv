@@ -14,6 +14,12 @@ class RegisterRequest extends FormRequest
     protected const DANGEROUS_CHARS_REGEX = '/[<>"\'\\;`|&\x00-\x08\x0B\x0C\x0E-\x1F]/';
 
     /**
+     * Formato de correo: usuario@dominio.tld (ej: usuario@ejemplo.com).
+     * Requiere @ y dominio con TLD de al menos 2 caracteres.
+     */
+    protected const EMAIL_REGEX = '/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/';
+
+    /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
@@ -45,24 +51,30 @@ class RegisterRequest extends FormRequest
             'name' => [
                 'required',
                 'string',
-                'max:255',
+                'max:100',
                 'not_regex:' . self::DANGEROUS_CHARS_REGEX,
             ],
             'email' => [
                 'required',
                 'string',
                 'lowercase',
+                'max:100',
+                'regex:' . self::EMAIL_REGEX,
                 'email',
-                'max:255',
                 'unique:' . User::class,
                 'not_regex:' . self::DANGEROUS_CHARS_REGEX,
             ],
             'password' => [
                 'required',
                 'confirmed',
-                'max:255',
+                'max:100',
                 'not_regex:' . self::DANGEROUS_CHARS_REGEX,
                 Rules\Password::defaults(),
+            ],
+            'password_confirmation' => [
+                'required',
+                'string',
+                'max:100',
             ],
         ];
     }
@@ -76,22 +88,26 @@ class RegisterRequest extends FormRequest
     {
         return [
             'name.required' => 'El nombre es obligatorio.',
-            'name.max' => 'El nombre no puede tener más de 255 caracteres.',
+            'name.max' => 'El nombre no puede tener más de 100 caracteres.',
             'name.not_regex' => 'El nombre no puede contener caracteres especiales no permitidos.',
             'email.required' => 'El correo electrónico es obligatorio.',
+            'email.regex' => 'El correo debe tener formato válido (ej: usuario@dominio.com).',
             'email.email' => 'El correo electrónico debe tener un formato válido.',
             'email.unique' => 'Ya existe una cuenta con este correo electrónico.',
             'email.lowercase' => 'El correo electrónico debe estar en minúsculas.',
+            'email.max' => 'El correo electrónico no puede tener más de 100 caracteres.',
             'email.not_regex' => 'El correo no puede contener caracteres especiales no permitidos.',
             'password.required' => 'La contraseña es obligatoria.',
             'password.confirmed' => 'La confirmación de la contraseña no coincide.',
-            'password.max' => 'La contraseña no puede exceder 255 caracteres.',
+            'password.max' => 'La contraseña no puede exceder 100 caracteres.',
             'password.not_regex' => 'La contraseña no puede contener caracteres especiales no permitidos.',
             'password.min' => 'La contraseña debe tener al menos 8 caracteres.',
             'password.letters' => 'La contraseña debe contener al menos una letra.',
             'password.mixed' => 'La contraseña debe contener mayúsculas y minúsculas.',
             'password.numbers' => 'La contraseña debe contener al menos un número.',
             'password.symbols' => 'La contraseña debe contener al menos un símbolo.',
+            'password_confirmation.required' => 'La confirmación de la contraseña es obligatoria.',
+            'password_confirmation.max' => 'La confirmación de la contraseña no puede exceder 100 caracteres.',
         ];
     }
 }

@@ -12,6 +12,6 @@ class AppUserLayout extends Component
      */
     public function render(): View
     {
-        return view('layouts.app-user');
+        return view('layouts.app');
     }
 }

@@ -8,7 +8,7 @@
         </div>
         <div>
             <h2 class="page-header-card__title">Página principal</h2>
-            <p class="page-header-card__subtitle">Resumen general del CRM</p>
+            <p class="page-header-card__subtitle">Bienvenido, {{ Auth::user()->name }}</p>
         </div>
     </x-slot>
 

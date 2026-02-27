@@ -1,21 +1,18 @@
 <x-app-user-layout>
     <x-slot name="header">
-        <div class="view-header">
-            <div class="view-header__icon">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" />
-                </svg>
-            </div>
-            <div>
-                <h2 class="view-header__title">Registrar Venta</h2>
-                <p class="view-header__subtitle">Agregar curso o servicio vendido al historial</p>
-            </div>
+        <div class="page-header-card__icon" aria-hidden="true">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+        </div>
+        <div>
+            <h2 class="page-header-card__title">Registrar Venta</h2>
+            <p class="page-header-card__subtitle">Agregar curso o servicio vendido al historial</p>
         </div>
     </x-slot>
 
-    <div class="py-8 sm:py-10">
-        <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
-            <div class="view-card view-card--azul p-6">
+    <div class="space-y-8">
+        <div class="panel-card-dark p-6">
                 <form method="POST" action="{{ route('user.sales.store') }}">
                     @csrf
 
@@ -78,7 +75,7 @@
                     </div>
 
                     <div class="flex items-center justify-end mt-6 gap-3 flex-wrap">
-                        <a href="{{ route('user.sales.index') }}" class="btn-icon-text text-gray-600 hover:text-gray-800 px-4 py-2 rounded-xl border border-gray-300 hover:bg-gray-50">
+                        <a href="{{ route('user.sales.index') }}" class="btn-danger-app">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                             </svg>
@@ -93,6 +90,5 @@
                     </div>
                 </form>
             </div>
-        </div>
     </div>
 </x-app-user-layout>
