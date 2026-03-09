@@ -34,18 +34,46 @@
                         {{ session('status') }}
                     </div>
                 @endif
-                <p class="text-sm text-gray-500 mb-8">
-                    Te notificaremos cuando tu cuenta sea aprobada. Mientras tanto, puedes intentar iniciar sesión para verificar el estado.
+                <p class="text-sm text-gray-500 mb-4">
+                    Cuando un administrador apruebe tu cuenta, serás redirigido automáticamente a tu panel. No necesitas volver a iniciar sesión.
                 </p>
-                <div class="mt-auto pt-8">
-                    <a href="{{ route('login') }}" class="w-full lg:w-auto inline-flex justify-center items-center bg-[#000099] text-white font-bold py-3.5 px-4 rounded-xl hover:bg-[#003366] focus:outline-none focus:ring-2 focus:ring-[#000099] focus:ring-offset-2 transition-all duration-200 uppercase tracking-wider shadow-md hover:shadow-lg">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
-                        </svg>
+                <p id="checking-approval" class="text-sm text-amber-600 mb-8 flex items-center gap-2">
+                    <span class="inline-block w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></span>
+                    Comprobando aprobación…
+                </p>
+                <div class="mt-auto pt-8 flex flex-wrap gap-3">
+                    <a href="{{ route('login') }}" class="w-full lg:w-auto inline-flex justify-center items-center bg-gray-200 text-gray-700 font-semibold py-3 px-4 rounded-xl hover:bg-gray-300 transition-all duration-200">
                         Ir a Iniciar Sesión
                     </a>
                 </div>
             </div>
         </div>
     </div>
+
+    <script>
+    (function() {
+        var checkUrl = '{{ route("approval.check") }}';
+        var interval = 5000;
+
+        function check() {
+            fetch(checkUrl, {
+                method: 'GET',
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                credentials: 'same-origin'
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.approved && data.url) {
+                    var el = document.getElementById('checking-approval');
+                    if (el) el.innerHTML = '¡Cuenta aprobada! Entrando a tu panel…';
+                    window.location.href = data.url;
+                }
+            })
+            .catch(function() {});
+        }
+
+        check();
+        setInterval(check, interval);
+    })();
+    </script>
 </x-guest-layout>

@@ -93,20 +93,6 @@
                             <x-input-error :messages="$errors->get('ejecutivo_asignado')" class="mt-2" />
                         </div>
 
-                        <div>
-                            <x-input-label for="status_color" value="Estado de prospecto" class="text-white" />
-                            <select
-                                id="status_color"
-                                name="status_color"
-                                class="mt-1 block w-full rounded-md border-[#E2E8F0] bg-white text-[#1F2937] focus:border-[#FFE600] focus:ring-4 focus:ring-[#FFE600]/40"
-                            >
-                                @foreach(\App\Models\Company::PROSPECT_STATUS_LABELS as $value => $label)
-                                    <option value="{{ $value }}" {{ old('status_color', 'seguimiento') === $value ? 'selected' : '' }}>{{ $label }}</option>
-                                @endforeach
-                            </select>
-                            <x-input-error :messages="$errors->get('status_color')" class="mt-2" />
-                        </div>
-
                         <div class="md:col-span-2">
                             <x-input-label for="datos_fiscales" value="Datos Fiscales" class="text-white" />
                             <textarea

@@ -43,6 +43,18 @@ class CompanyController extends Controller
             $query->porColor($request->status_color);
         }
 
+        if ($request->filled('sector')) {
+            $query->where('sector', $request->sector);
+        }
+
+        if ($request->filled('estado')) {
+            $query->where('estado', $request->estado);
+        }
+
+        if ($request->filled('ejecutivo_asignado')) {
+            $query->where('ejecutivo_asignado', $request->ejecutivo_asignado);
+        }
+
         $user = auth()->user();
         $isAdmin = $user->esAdmin();
         if ($isAdmin && $request->filled('approval_status')) {
@@ -55,12 +67,70 @@ class CompanyController extends Controller
 
         $companies = $query->latest()->paginate(15);
 
+        // Si el resultado del filtro devuelve solo una empresa,
+        // la usaremos para mostrar una ficha con sus contactos (filtrados por estado prospecto si aplica).
+        $companyContactsCard = null;
+        if ($companies->count() === 1) {
+            $companyContactsCard = $companies->first();
+            if ($request->filled('status_color')) {
+                $companyContactsCard->setRelation('contacts',
+                    $companyContactsCard->contacts->where('status_color', $request->status_color)->values()
+                );
+            }
+        }
+
+        // Lista de nombres de empresas para autocompletar en el buscador (solo admin)
+        $companyNames = collect();
+        $sectorOptions = collect();
+        $estadoOptions = collect();
+        $ejecutivoOptions = collect();
+
+        // Opciones para selects de filtros (admin y usuario)
+        $baseQueryForOptions = Company::query();
+        $sectorOptions = (clone $baseQueryForOptions)
+            ->whereNotNull('sector')
+            ->orderBy('sector')
+            ->pluck('sector')
+            ->unique()
+            ->values();
+        $estadoOptions = (clone $baseQueryForOptions)
+            ->whereNotNull('estado')
+            ->orderBy('estado')
+            ->pluck('estado')
+            ->unique()
+            ->values();
+        $ejecutivoOptions = (clone $baseQueryForOptions)
+            ->whereNotNull('ejecutivo_asignado')
+            ->orderBy('ejecutivo_asignado')
+            ->pluck('ejecutivo_asignado')
+            ->unique()
+            ->values();
+
+        if ($isAdmin) {
+            $companyNames = Company::orderBy('nombre_comercial')
+                ->pluck('nombre_comercial')
+                ->unique();
+        }
+
         // Usuario normal (rol usuario o no admin): vista limitada operativa
         if (!$isAdmin) {
             $misPendientes = Company::where('created_by', $user->id)->pendientes()->count();
-            return view('user.companies.index', compact('companies', 'misPendientes'));
+            return view('user.companies.index', [
+                'companies' => $companies,
+                'misPendientes' => $misPendientes,
+                'sectorOptions' => $sectorOptions,
+                'estadoOptions' => $estadoOptions,
+                'ejecutivoOptions' => $ejecutivoOptions,
+            ]);
         }
-        return view('companies.index', compact('companies'));
+        return view('companies.index', [
+            'companies' => $companies,
+            'companyContactsCard' => $companyContactsCard,
+            'companyNames' => $companyNames,
+            'sectorOptions' => $sectorOptions,
+            'estadoOptions' => $estadoOptions,
+            'ejecutivoOptions' => $ejecutivoOptions,
+        ]);
     }
 
     /**

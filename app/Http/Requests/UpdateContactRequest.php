@@ -36,9 +36,17 @@ class UpdateContactRequest extends FormRequest
             'telefono' => 'nullable|string|max:30',
             'extension' => 'nullable|string|max:10',
             'email' => 'required|email|unique:contacts,email,' . $contact->id . '|max:255',
+            'email_activo' => 'sometimes|boolean',
             'municipio' => 'nullable|string|max:255',
             'estado' => 'nullable|string|max:255',
+            'razon_social' => 'nullable|string|max:255',
+            'nombre_comercial' => 'nullable|string|max:255',
+            'calle_numero' => 'nullable|string|max:500',
+            'colonia_cp' => 'nullable|string|max:255',
+            'rfc' => 'nullable|string|max:20',
+            'regimen_fiscal' => 'nullable|string|max:255',
             'notas' => 'nullable|string',
+            'status_color' => 'nullable|string|in:seguimiento,interesado,si_le_interesa_nos_llaman_o_no_compro,vendido,no_estaba',
         ];
     }
 

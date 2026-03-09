@@ -29,6 +29,16 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerate();
 
         $user = $request->user();
+
+        // Guardar información básica de la empresa en sesión para uso rápido en el dashboard
+        if ($user->relationLoaded('company') || method_exists($user, 'company')) {
+            $company = $user->company;
+            if ($company) {
+                $request->session()->put('company_id', $company->id);
+                $request->session()->put('company_name', $company->nombre_comercial);
+            }
+        }
+
         if ($user->esAdmin()) {
             return redirect()->intended(route('dashboard', absolute: false));
         }

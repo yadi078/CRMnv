@@ -10,8 +10,14 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\UserDashboardController;
 use App\Http\Controllers\DataManagementController;
 use App\Http\Controllers\SalesController;
+use App\Http\Controllers\Auth\AutoLoginController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+
+// Entrada automática cuando el admin aprueba a un usuario (enlace firmado, sin auth)
+Route::get('/entrar/{user}', AutoLoginController::class)
+    ->name('auth.auto-login')
+    ->middleware('signed');
 
 // Redirección raíz: invitados → login; autenticados → dashboard según rol
 Route::get('/', function () {
@@ -34,6 +40,7 @@ Route::middleware(['auth', 'verified', 'ensure.role'])->group(function () {
         Route::get('historial-ventas/create', [SalesController::class, 'create'])->name('sales.create');
         Route::post('historial-ventas', [SalesController::class, 'store'])->name('sales.store');
         Route::get('historial-ventas/{sale}', [SalesController::class, 'show'])->name('sales.show');
+        Route::get('historial-ventas/{sale}/ficha-pdf', [SalesController::class, 'fichaPdf'])->name('sales.ficha-pdf');
         Route::get('historial-ventas/{sale}/edit', [SalesController::class, 'edit'])->name('sales.edit');
         Route::put('historial-ventas/{sale}', [SalesController::class, 'update'])->name('sales.update');
         Route::delete('historial-ventas/{sale}', [SalesController::class, 'destroy'])->name('sales.destroy');
@@ -49,6 +56,8 @@ Route::middleware(['auth', 'verified', 'ensure.role'])->group(function () {
     Route::post('/companies/check-duplicates', [CompanyController::class, 'checkDuplicates'])->name('companies.check-duplicates');
 
     Route::resource('contacts', ContactController::class);
+    Route::patch('/contacts/{contact}/email-status', [ContactController::class, 'updateEmailStatus'])->name('contacts.email-status');
+    Route::patch('/contacts/{contact}/notes', [ContactController::class, 'updateNotes'])->name('contacts.notes');
 
     Route::resource('follow-ups', FollowUpController::class);
     Route::post('/follow-ups/{followUp}/complete', [FollowUpController::class, 'complete'])->name('follow-ups.complete');

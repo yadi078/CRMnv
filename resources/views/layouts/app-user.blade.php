@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>C&CE CRM - {{ config('app.name', 'Laravel') }}</title>
+        <title>CE CRM - {{ config('app.name', 'Laravel') }}</title>
 
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&display=swap" rel="stylesheet" />
@@ -16,8 +16,8 @@
         <div class="sidebar-layout sidebar-layout--expanded" x-data="{ mobileMenuOpen: false }">
             <header class="mobile-header lg:hidden fixed top-0 left-0 right-0 z-30 flex items-center justify-between min-h-touch px-4 bg-[#000836] shadow-lg safe-area-inset">
                 <a href="{{ auth()->user()->esAdmin() ? route('dashboard') : route('user.dashboard') }}" class="flex items-center gap-2 shrink-0" aria-label="Ir al inicio">
-                    <img src="{{ asset('img/logo-empresa.png') }}" onerror="this.onerror=null; this.src='{{ asset('img/logo.png') }}';" alt="C&amp;CE" class="w-9 h-9 rounded-full object-cover border-2 border-[#FFE600]" />
-                    <span class="font-semibold text-white text-fluid-lg">C&CE CRM</span>
+                    <img src="{{ asset('img/logo-empresa.png') }}" onerror="this.onerror=null; this.src='{{ asset('img/logo.png') }}';" alt="CE" class="w-9 h-9 rounded-full object-cover border-2 border-[#FFE600]" />
+                    <span class="font-semibold text-white text-fluid-lg">CE CRM</span>
                 </a>
                 <button type="button" @click="mobileMenuOpen = true" class="flex items-center justify-center min-w-[44px] min-h-[44px] rounded-xl text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-[#FFE600] focus:ring-offset-2 focus:ring-offset-[#000836] transition-colors" aria-label="Abrir menú">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>

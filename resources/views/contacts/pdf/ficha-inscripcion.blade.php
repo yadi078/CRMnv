@@ -60,7 +60,7 @@
 </head>
 <body>
     <div class="header">
-        <div class="logo">C&CE CONSULTORÍA</div>
+        <div class="logo">CE CONSULTORÍA</div>
         <div class="slogan">INVERTIR EN VALOR ¡ATRAE VALOR!</div>
     </div>
 
@@ -83,10 +83,43 @@
             <div class="info-label">Empresa:</div>
             <div class="info-value">{{ $contact->company->nombre_comercial }}</div>
         </div>
-        
+
+        <div class="section-title" style="margin-top: 20px;">DATOS PARA FICHA DE REGISTRO / FACTURACIÓN</div>
+        <div class="info-row">
+            <div class="info-label">RAZÓN SOCIAL:</div>
+            <div class="info-value">{{ $contact->razon_social ?? $contact->company->nombre_comercial ?? '—' }}</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Nombre comercial:</div>
+            <div class="info-value">{{ $contact->nombre_comercial ?? $contact->company->nombre_comercial ?? '—' }}</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">CALLE Y NÚMERO:</div>
+            <div class="info-value">{{ $contact->calle_numero ?? $contact->company->datos_fiscales ?? '—' }}</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">COLONIA Y C.P.:</div>
+            <div class="info-value">{{ $contact->colonia_cp ?? '—' }}</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">CIUDAD:</div>
+            <div class="info-value">{{ $contact->municipio ?? '—' }}</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">ESTADO:</div>
+            <div class="info-value">{{ $contact->estado ?? '—' }}</div>
+        </div>
         <div class="info-row">
             <div class="info-label">RFC:</div>
-            <div class="info-value">{{ $contact->company->rfc ?? '-' }}</div>
+            <div class="info-value">{{ $contact->rfc ?? $contact->company->rfc ?? '—' }}</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">TEL:</div>
+            <div class="info-value">{{ $contact->celular ?? $contact->telefono ?? '—' }}</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">RÉGIMEN EN QUE TRIBUTA:</div>
+            <div class="info-value">{{ $contact->regimen_fiscal ?? '—' }}</div>
         </div>
         
         @if($contact->puesto_de_trabajo)
@@ -105,7 +138,7 @@
         
         <div class="info-row">
             <div class="info-label">Correo electrónico:</div>
-            <div class="info-value">{{ $contact->email }}</div>
+            <div class="info-value">{{ $contact->email_activo ? $contact->email : 'Correo desactivado' }}</div>
         </div>
         
         @if($contact->telefono)
@@ -145,7 +178,7 @@
     </div>
 
     <div class="footer">
-        <p>C&CE Consultoría y Capacitación Empresarial</p>
+        <p>CE Consultoría y Capacitación Empresarial</p>
         <p>Correo: info@cactonultoricempresarial.com | Teléfono: (330) 0244-3678</p>
         <p>Horario de atención: Lunes a viernes de 8 am a 6 pm</p>
         <p>Generado el {{ now()->format('d/m/Y H:i') }}</p>

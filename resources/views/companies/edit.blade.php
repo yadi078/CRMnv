@@ -54,16 +54,6 @@
                             <x-input-error :messages="$errors->get('ejecutivo_asignado')" class="mt-2" />
                         </div>
 
-                        <div>
-                            <x-input-label for="status_color" value="Estado de prospecto" />
-                            <select id="status_color" name="status_color" class="mt-1 block w-full rounded-md border-gray-300">
-                                @foreach(\App\Models\Company::PROSPECT_STATUS_LABELS as $value => $label)
-                                    <option value="{{ $value }}" {{ old('status_color', $company->status_color) === $value ? 'selected' : '' }}>{{ $label }}</option>
-                                @endforeach
-                            </select>
-                            <x-input-error :messages="$errors->get('status_color')" class="mt-2" />
-                        </div>
-
                         <div class="md:col-span-2">
                             <x-input-label for="datos_fiscales" value="Datos Fiscales" />
                             <textarea id="datos_fiscales" name="datos_fiscales" rows="4" class="mt-1 block w-full rounded-md border-gray-300">{{ old('datos_fiscales', $company->datos_fiscales) }}</textarea>

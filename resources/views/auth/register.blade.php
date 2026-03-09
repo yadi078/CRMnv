@@ -2,14 +2,14 @@
     <div class="bg-white rounded-3xl shadow-2xl overflow-hidden">
         <div class="flex flex-col lg:flex-row">
             <!-- Left Section - Welcome/Login -->
-            <div class="lg:w-2/5 bg-[#000836] relative px-8 py-12 lg:py-16 flex flex-col justify-center items-center text-center lg:text-left lg:items-start overflow-hidden">
+            <div class="lg:w-2/5 bg-[#000836] relative px-8 py-12 lg:py-16 flex flex-col justify-center items-center text-center overflow-hidden">
                 <!-- Curved bottom-right corner effect -->
                 <div class="absolute bottom-0 right-0 w-40 h-40 bg-[#FFFF00] rounded-tl-[100px] opacity-0 lg:opacity-100"></div>
                 <div class="absolute bottom-0 right-0 w-32 h-32 bg-white rounded-tl-[80px]"></div>
                 
-                <div class="relative z-10">
-                    <div class="mb-6 flex justify-center">
-                        <img src="{{ asset('img/logo.png') }}" alt="Logo" class="h-36 lg:h-44 w-auto object-contain">
+                <div class="relative z-10 w-full flex flex-col items-center">
+                    <div class="mb-6 w-full flex justify-center">
+                        <img src="{{ asset('img/logo.png') }}" alt="Logo" class="h-48 lg:h-64 w-auto max-w-full object-contain">
                     </div>
                     <h1 class="text-2xl lg:text-3xl font-bold text-amarillo mb-2 text-center w-full">INVERTIR EN VALOR</h1>
                     <h2 class="text-2xl lg:text-3xl font-bold text-amarillo mb-4 text-center w-full">¡ATRAE VALOR!</h2>

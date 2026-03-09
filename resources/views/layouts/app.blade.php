@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>C&CE CRM - {{ config('app.name', 'Laravel') }}</title>
+        <title>CE CRM - {{ config('app.name', 'Laravel') }}</title>
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
@@ -19,8 +19,8 @@
             {{-- Barra superior móvil/tablet: logo + notificaciones + menú hamburguesa (solo < lg) --}}
             <header class="mobile-header lg:hidden fixed top-0 left-0 right-0 z-30 flex items-center justify-between min-h-touch px-4 bg-[#000836] shadow-lg safe-area-inset">
                 <a href="{{ auth()->user()->esAdmin() ? route('dashboard') : route('user.dashboard') }}" class="flex items-center gap-2 shrink-0" aria-label="Ir al inicio">
-                    <img src="{{ asset('img/logo-empresa.png') }}" onerror="this.onerror=null; this.src='{{ asset('img/logo.png') }}';" alt="C&amp;CE" class="w-9 h-9 rounded-full object-cover border-2 border-[#FFE600]" />
-                    <span class="font-semibold text-white text-fluid-lg">C&CE CRM</span>
+                    <img src="{{ asset('img/logo-empresa.png') }}" onerror="this.onerror=null; this.src='{{ asset('img/logo.png') }}';" alt="CE" class="w-9 h-9 rounded-full object-cover border-2 border-[#FFE600]" />
+                    <span class="font-semibold text-white text-fluid-lg">CE CRM</span>
                 </a>
                 <div class="flex items-center gap-1">
                     @if(auth()->user()->esAdmin())
@@ -52,7 +52,7 @@
                 </button>
             </div>
 
-            {{-- Área principal: fondo blanco/gris muy claro como en diseño C&CE CRM --}}
+            {{-- Área principal: fondo blanco/gris muy claro como en diseño CE CRM --}}
             <div class="sidebar-layout__main bg-white">
                 {{-- Encabezado: recuadro único (page-header-card) con título + icono notificaciones DENTRO --}}
                 @isset($header)

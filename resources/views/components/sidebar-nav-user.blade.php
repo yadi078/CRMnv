@@ -13,10 +13,10 @@
             <img
                 src="{{ asset('img/logo-empresa.png') }}"
                 onerror="this.onerror=null; this.src='{{ asset('img/logo.png') }}';"
-                alt="C&amp;CE Consultoría"
+                alt="CE Consultoría"
                 class="sidebar-nav__brand-img"
-                width="72"
-                height="72"
+                width="58"
+                height="58"
             />
         </a>
     </div>
@@ -128,9 +128,9 @@
     <div class="sidebar-nav__footer">
         <form method="POST" action="{{ route('logout') }}" class="w-full">
             @csrf
-            <button type="submit" class="sidebar-nav__logout">
-                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            <button type="submit" class="sidebar-nav__logout" aria-label="Cerrar sesión">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
                 </svg>
                 <span class="sidebar-nav__label">Cerrar sesión</span>
             </button>

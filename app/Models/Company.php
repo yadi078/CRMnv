@@ -71,6 +71,14 @@ class Company extends Model
     }
 
     /**
+     * Relación: Una empresa tiene muchos usuarios
+     */
+    public function users(): HasMany
+    {
+        return $this->hasMany(User::class);
+    }
+
+    /**
      * Relación: Usuario que creó el registro
      */
     public function creator(): BelongsTo
