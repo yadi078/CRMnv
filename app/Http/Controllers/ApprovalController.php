@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Company;
 use App\Models\User;
+use App\Notifications\UserApprovedNotification;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\URL;
 
 /**
  * Controlador de Aprobaciones (Solicitudes pendientes)
@@ -104,7 +106,7 @@ class ApprovalController extends Controller
     }
 
     /**
-     * Aprueba un usuario
+     * Aprueba un usuario y le envía un enlace para entrar automáticamente a su panel.
      */
     public function approveUser(User $user)
     {
@@ -112,7 +114,14 @@ class ApprovalController extends Controller
 
         $user->aprobar(auth()->id());
 
-        return back()->with('success', 'Usuario aprobado. Ya puede iniciar sesión.');
+        $entrarUrl = URL::temporarySignedRoute(
+            'auth.auto-login',
+            now()->addDays(2),
+            ['user' => $user->id]
+        );
+        $user->notify(new UserApprovedNotification($entrarUrl));
+
+        return back()->with('success', 'Usuario aprobado. Se le ha enviado un enlace para entrar a su panel.');
     }
 
     /**

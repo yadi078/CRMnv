@@ -72,28 +72,28 @@
                 </a>
             </div>
 
-            <!-- Estado de prospectos - Barra horizontal con 5 secciones -->
+            <!-- Estado de prospectos (por contactos) - Semáforo -->
             <div class="panel-card-dark">
-                <h3 class="panel-card-dark__title panel-card-dark__title--spaced section-title-underline">Estado de prospectos</h3>
+                <h3 class="panel-card-dark__title panel-card-dark__title--spaced section-title-underline">Estado de prospectos (contactos)</h3>
                 <div class="flex flex-col sm:flex-row gap-3 sm:gap-3">
-                    <a href="{{ route('companies.index', ['status_color' => 'seguimiento']) }}" class="prospect-status-bar flex-1 min-h-[80px] sm:min-h-[100px] flex flex-col items-center justify-center gap-1 p-3 sm:p-4 rounded-xl border-4 border-[#15803D] bg-[#BBF7D0] hover:bg-[#86EFAC] transition-all cursor-pointer text-[#14532D] text-center">
-                        <span class="text-2xl sm:text-3xl font-bold">{{ $empresasSeguimiento }}</span>
+                    <a href="{{ route('contacts.index', ['status_color' => 'seguimiento']) }}" class="prospect-status-bar flex-1 min-h-[80px] sm:min-h-[100px] flex flex-col items-center justify-center gap-1 p-3 sm:p-4 rounded-xl border-4 border-[#15803D] bg-[#BBF7D0] hover:bg-[#86EFAC] transition-all cursor-pointer text-[#14532D] text-center">
+                        <span class="text-2xl sm:text-3xl font-bold">{{ $contactosSeguimiento }}</span>
                         <span class="text-xs sm:text-sm font-semibold uppercase leading-tight">Seguimiento</span>
                     </a>
-                    <a href="{{ route('companies.index', ['status_color' => 'interesado']) }}" class="prospect-status-bar flex-1 min-h-[80px] sm:min-h-[100px] flex flex-col items-center justify-center gap-1 p-3 sm:p-4 rounded-xl border-4 border-[#DC2626] bg-[#FECACA] hover:bg-[#FCA5A5] transition-all cursor-pointer text-[#991B1B] text-center">
-                        <span class="text-2xl sm:text-3xl font-bold">{{ $empresasInteresado }}</span>
+                    <a href="{{ route('contacts.index', ['status_color' => 'interesado']) }}" class="prospect-status-bar flex-1 min-h-[80px] sm:min-h-[100px] flex flex-col items-center justify-center gap-1 p-3 sm:p-4 rounded-xl border-4 border-[#DC2626] bg-[#FECACA] hover:bg-[#FCA5A5] transition-all cursor-pointer text-[#991B1B] text-center">
+                        <span class="text-2xl sm:text-3xl font-bold">{{ $contactosInteresado }}</span>
                         <span class="text-xs sm:text-sm font-semibold uppercase leading-tight">Interesado</span>
                     </a>
-                    <a href="{{ route('companies.index', ['status_color' => 'si_le_interesa_nos_llaman_o_no_compro']) }}" class="prospect-status-bar flex-1 min-h-[80px] sm:min-h-[100px] flex flex-col items-center justify-center gap-1 p-3 sm:p-4 rounded-xl border-4 border-[#3B82F6] bg-[#BFDBFE] hover:bg-[#93C5FD] transition-all cursor-pointer text-[#1e3a5f] text-center">
-                        <span class="text-2xl sm:text-3xl font-bold">{{ $empresasSiLeInteresa }}</span>
+                    <a href="{{ route('contacts.index', ['status_color' => 'si_le_interesa_nos_llaman_o_no_compro']) }}" class="prospect-status-bar flex-1 min-h-[80px] sm:min-h-[100px] flex flex-col items-center justify-center gap-1 p-3 sm:p-4 rounded-xl border-4 border-[#3B82F6] bg-[#BFDBFE] hover:bg-[#93C5FD] transition-all cursor-pointer text-[#1e3a5f] text-center">
+                        <span class="text-2xl sm:text-3xl font-bold">{{ $contactosSiLeInteresa }}</span>
                         <span class="text-xs sm:text-sm font-semibold uppercase leading-tight" style="line-height: 1.2;">Si le interesa nos llaman o no compro</span>
                     </a>
-                    <a href="{{ route('companies.index', ['status_color' => 'vendido']) }}" class="prospect-status-bar flex-1 min-h-[80px] sm:min-h-[100px] flex flex-col items-center justify-center gap-1 p-3 sm:p-4 rounded-xl border-4 border-[#CA8A04] bg-[#FEF08A] hover:bg-[#FDE047] transition-all cursor-pointer text-[#713F12] text-center">
-                        <span class="text-2xl sm:text-3xl font-bold">{{ $empresasVendido }}</span>
+                    <a href="{{ route('contacts.index', ['status_color' => 'vendido']) }}" class="prospect-status-bar flex-1 min-h-[80px] sm:min-h-[100px] flex flex-col items-center justify-center gap-1 p-3 sm:p-4 rounded-xl border-4 border-[#CA8A04] bg-[#FEF08A] hover:bg-[#FDE047] transition-all cursor-pointer text-[#713F12] text-center">
+                        <span class="text-2xl sm:text-3xl font-bold">{{ $contactosVendido }}</span>
                         <span class="text-xs sm:text-sm font-semibold uppercase leading-tight">Vendido</span>
                     </a>
-                    <a href="{{ route('companies.index', ['status_color' => 'no_estaba']) }}" class="prospect-status-bar flex-1 min-h-[80px] sm:min-h-[100px] flex flex-col items-center justify-center gap-1 p-3 sm:p-4 rounded-xl border-4 border-[#7C3AED] bg-[#DDD6FE] hover:bg-[#C4B5FD] transition-all cursor-pointer text-[#4C1D95] text-center">
-                        <span class="text-2xl sm:text-3xl font-bold">{{ $empresasNoEstaba }}</span>
+                    <a href="{{ route('contacts.index', ['status_color' => 'no_estaba']) }}" class="prospect-status-bar flex-1 min-h-[80px] sm:min-h-[100px] flex flex-col items-center justify-center gap-1 p-3 sm:p-4 rounded-xl border-4 border-[#7C3AED] bg-[#DDD6FE] hover:bg-[#C4B5FD] transition-all cursor-pointer text-[#4C1D95] text-center">
+                        <span class="text-2xl sm:text-3xl font-bold">{{ $contactosNoEstaba }}</span>
                         <span class="text-xs sm:text-sm font-semibold uppercase leading-tight">No estaba</span>
                     </a>
                 </div>

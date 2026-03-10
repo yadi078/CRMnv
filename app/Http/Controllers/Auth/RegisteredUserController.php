@@ -40,6 +40,8 @@ class RegisteredUserController extends Controller
 
         event(new Registered($user));
 
+        session(['pending_approval_user_id' => $user->id]);
+
         return redirect()->route('register.pending')
             ->with('status', 'Registro exitoso. Un administrador debe aprobar tu cuenta antes de que puedas iniciar sesión.');
     }

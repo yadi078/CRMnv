@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Auth\CheckApprovalController;
 use App\Http\Controllers\Auth\ConfirmablePasswordController;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\Auth\EmailVerificationPromptController;
@@ -19,6 +20,9 @@ Route::middleware('guest')->group(function () {
 
     Route::get('register/pending', fn () => view('auth.register-pending'))
         ->name('register.pending');
+
+    Route::get('verificar-aprobacion', CheckApprovalController::class)
+        ->name('approval.check');
 
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');

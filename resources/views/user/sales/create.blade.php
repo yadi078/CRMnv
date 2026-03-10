@@ -19,7 +19,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="md:col-span-2">
                             <x-input-label for="company_id" value="Empresa *" />
-                            <select id="company_id" name="company_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500" required>
+                            <select id="company_id" name="company_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-gray-900" required onchange="if(this.value) window.location.href='{{ route('user.sales.create') }}?company_id='+this.value">
                                 <option value="">Seleccione una empresa</option>
                                 @foreach($companies as $company)
                                 <option value="{{ $company->id }}" {{ old('company_id', $companyId ?? null) == $company->id ? 'selected' : '' }}>{{ $company->nombre_comercial }}</option>
@@ -27,6 +27,19 @@
                             </select>
                             <x-input-error :messages="$errors->get('company_id')" class="mt-2" />
                         </div>
+
+                        @if($contacts->isNotEmpty())
+                        <div class="md:col-span-2">
+                            <x-input-label for="contact_id" value="Contacto que compró (opcional)" />
+                            <select id="contact_id" name="contact_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-gray-900">
+                                <option value="">Ninguno / No especificado</option>
+                                @foreach($contacts as $contact)
+                                <option value="{{ $contact->id }}" {{ old('contact_id') == $contact->id ? 'selected' : '' }}>{{ $contact->nombre_completo }}{{ $contact->puesto_de_trabajo ? ' — ' . $contact->puesto_de_trabajo : '' }}</option>
+                                @endforeach
+                            </select>
+                            <x-input-error :messages="$errors->get('contact_id')" class="mt-2" />
+                        </div>
+                        @endif
 
                         <div class="md:col-span-2">
                             <x-input-label for="nombre_servicio" value="Nombre del curso o servicio *" />
@@ -36,12 +49,19 @@
 
                         <div>
                             <x-input-label for="fecha_venta" value="Fecha de venta *" />
-                            <x-text-input id="fecha_venta" name="fecha_venta" type="date" class="mt-1 block w-full" :value="old('fecha_venta', date('Y-m-d'))" required />
+                            <x-text-input
+                                id="fecha_venta"
+                                name="fecha_venta"
+                                type="date"
+                                class="mt-1 block w-full text-gray-900"
+                                :value="old('fecha_venta', date('Y-m-d'))"
+                                required
+                            />
                             <x-input-error :messages="$errors->get('fecha_venta')" class="mt-2" />
                         </div>
 
                         <div>
-                            <x-input-label for="monto" value="Monto ($)" />
+                            <x-input-label for="monto" value="Monto ($) + IVA" />
                             <x-text-input id="monto" name="monto" type="number" step="0.01" min="0" class="mt-1 block w-full" :value="old('monto')" placeholder="0.00" />
                             <x-input-error :messages="$errors->get('monto')" class="mt-2" />
                         </div>
@@ -67,10 +87,88 @@
                             <x-input-error :messages="$errors->get('participantes')" class="mt-2" />
                         </div>
 
+                        {{-- Nombres y correos de participantes (visible cuando hay más de 1) --}}
+                        <div id="participantes-datos-wrap" class="md:col-span-2 hidden">
+                            <h3 class="text-base font-semibold text-[#FFE600] mb-3">Datos de los participantes</h3>
+                            <p class="text-sm text-white/80 mb-3">Indique nombre completo y correo de cada participante.</p>
+                            <div id="participantes-datos-list" class="space-y-4 p-4 rounded-xl bg-white/5 border border-white/10"></div>
+                        </div>
+
                         <div class="md:col-span-2">
                             <x-input-label for="notas" value="Notas" />
                             <textarea id="notas" name="notas" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500" placeholder="Observaciones adicionales...">{{ old('notas') }}</textarea>
                             <x-input-error :messages="$errors->get('notas')" class="mt-2" />
+                        </div>
+
+                        {{-- DATOS DE FACTURACIÓN (los que aparecen en la ficha final) --}}
+                        <div class="md:col-span-2 mt-2 pt-6 border-t border-white/20">
+                            <h3 class="text-lg font-semibold text-[#FFE600] mb-4">Datos de facturación</h3>
+                            <p class="text-sm text-white/80 mb-4">Estos datos se mostrarán en la ficha final. Seleccione empresa y contacto para ver la vista previa.</p>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-xl bg-white/5 border border-white/10">
+                                <div class="md:col-span-2">
+                                    <span class="text-xs font-medium text-white/70 uppercase">Razón social</span>
+                                    <p class="text-white font-medium mt-0.5">{{ $company->nombre_comercial ?? '—' }}</p>
+                                </div>
+                                <div class="md:col-span-2">
+                                    <span class="text-xs font-medium text-white/70 uppercase">Calle y número</span>
+                                    <p class="text-white mt-0.5">{{ $company ? Str::limit($company->datos_fiscales ?? '—', 80) : '—' }}</p>
+                                </div>
+                                <div>
+                                    <x-input-label for="colonia_cp" value="Colonia y C.P." />
+                                    <x-text-input id="colonia_cp" name="colonia_cp" type="text" class="mt-1 block w-full" :value="old('colonia_cp')" placeholder="—" />
+                                    <x-input-error :messages="$errors->get('colonia_cp')" class="mt-2" />
+                                </div>
+                                <div>
+                                    <span class="text-xs font-medium text-white/70 uppercase block mt-2 md:mt-0">Ciudad, Estado</span>
+                                    <p class="text-white mt-0.5">{{ $company ? (trim(($company->municipio ?? '') . ', ' . ($company->estado ?? ''), ' ,') ?: '—') : '—' }}</p>
+                                </div>
+                                <div>
+                                    <span class="text-xs font-medium text-white/70 uppercase block">RFC</span>
+                                    <p class="text-white mt-0.5">{{ $company?->rfc ?? '—' }}</p>
+                                </div>
+                                <div>
+                                    <span class="text-xs font-medium text-white/70 uppercase block">TEL</span>
+                                    <p class="text-white mt-0.5">{{ $contact?->celular ?? $contact?->telefono ?? '—' }}</p>
+                                </div>
+                                <div>
+                                    <x-input-label for="regimen_fiscal" value="Régimen en que tributa" />
+                                    <x-text-input id="regimen_fiscal" name="regimen_fiscal" type="text" class="mt-1 block w-full" :value="old('regimen_fiscal')" placeholder="—" />
+                                    <x-input-error :messages="$errors->get('regimen_fiscal')" class="mt-2" />
+                                </div>
+                                <div>
+                                    <span class="text-xs font-medium text-white/70 uppercase block">Método de pago</span>
+                                    <p class="text-white mt-0.5">Se muestra según el tipo de pago elegido arriba</p>
+                                </div>
+                                <div>
+                                    <x-input-label for="forma_pago" value="Forma de pago" />
+                                    <select id="forma_pago" name="forma_pago" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-gray-900">
+                                        <option value="">—</option>
+                                        @foreach(\App\Models\Sale::FORMA_DE_PAGO_LABELS as $valor => $etiqueta)
+                                            <option value="{{ $valor }}" {{ old('forma_pago') == $valor ? 'selected' : '' }}>{{ $etiqueta }}</option>
+                                        @endforeach
+                                    </select>
+                                    <x-input-error :messages="$errors->get('forma_pago')" class="mt-2" />
+                                </div>
+                                <div>
+                                    <x-input-label for="uso_cfdi" value="Uso de CFDI" />
+                                    <x-text-input id="uso_cfdi" name="uso_cfdi" type="text" class="mt-1 block w-full" :value="old('uso_cfdi')" placeholder="—" />
+                                    <x-input-error :messages="$errors->get('uso_cfdi')" class="mt-2" />
+                                </div>
+                                <div>
+                                    <x-input-label for="orden_compra" value="Orden de compra" />
+                                    <select id="orden_compra" name="orden_compra" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-gray-900">
+                                        <option value="">—</option>
+                                        @foreach(\App\Models\Sale::ORDEN_COMPRA_LABELS as $valor => $etiqueta)
+                                            <option value="{{ $valor }}" {{ old('orden_compra') == $valor ? 'selected' : '' }}>{{ $etiqueta }}</option>
+                                        @endforeach
+                                    </select>
+                                    <x-input-error :messages="$errors->get('orden_compra')" class="mt-2" />
+                                </div>
+                                <div class="md:col-span-2">
+                                    <span class="text-xs font-medium text-white/70 uppercase block">Correo</span>
+                                    <p class="text-white mt-0.5">{{ $contact?->email ?? '—' }}</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -91,4 +189,54 @@
                 </form>
             </div>
     </div>
+
+    @php
+        $participantesInicialesCreate = [];
+        if (old('participantes_nombres')) {
+            foreach (old('participantes_nombres') as $i => $n) {
+                $participantesInicialesCreate[] = ['nombre' => $n, 'email' => old('participantes_emails')[$i] ?? ''];
+            }
+        }
+    @endphp
+    <script>
+    (function() {
+        var participantesInput = document.getElementById('participantes');
+        var wrap = document.getElementById('participantes-datos-wrap');
+        var list = document.getElementById('participantes-datos-list');
+        var initialData = @json($participantesInicialesCreate ?? []);
+
+        function buildRows(n) {
+            list.innerHTML = '';
+            for (var i = 0; i < n; i++) {
+                var data = initialData[i] || { nombre: '', email: '' };
+                var div = document.createElement('div');
+                div.className = 'grid grid-cols-1 md:grid-cols-2 gap-3';
+                div.innerHTML = '<label class="block text-sm font-medium text-white/90">Participante ' + (i + 1) + '</label>' +
+                    '<div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-3">' +
+                    '<div><label class="block text-xs text-white/70 mb-1">Nombre completo</label><input type="text" name="participantes_nombres[]" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-gray-900" value="' + (data.nombre || '').replace(/"/g, '&quot;') + '" placeholder="Nombre completo"></div>' +
+                    '<div><label class="block text-xs text-white/70 mb-1">Correo</label><input type="email" name="participantes_emails[]" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-gray-900" value="' + (data.email || '').replace(/"/g, '&quot;') + '" placeholder="correo@ejemplo.com"></div>' +
+                    '</div>';
+                list.appendChild(div);
+            }
+            initialData = [];
+        }
+
+        function updateParticipantesSection() {
+            var n = parseInt(participantesInput.value, 10) || 0;
+            if (n > 1) {
+                wrap.classList.remove('hidden');
+                buildRows(n);
+            } else {
+                wrap.classList.add('hidden');
+                list.innerHTML = '';
+            }
+        }
+
+        if (participantesInput) {
+            participantesInput.addEventListener('input', updateParticipantesSection);
+            participantesInput.addEventListener('change', updateParticipantesSection);
+            updateParticipantesSection();
+        }
+    })();
+    </script>
 </x-app-user-layout>

@@ -9,17 +9,21 @@
             <h2 class="page-header-card__title">Historial de Ventas</h2>
             <p class="page-header-card__subtitle">Cursos y servicios vendidos por empresa</p>
         </div>
+        @can('sales.create')
+        <a href="{{ route('user.sales.create') }}" class="btn-amber-app ml-auto">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            Nueva Venta
+        </a>
+        @endcan
     </x-slot>
 
     <div class="space-y-8">
         <div class="panel-card-dark overflow-hidden p-6">
             <form method="GET" action="{{ route('user.sales.index') }}" class="mb-6 flex flex-wrap items-end gap-3 sm:gap-4">
-                <div class="min-w-[140px] max-w-[220px] flex-1 sm:flex-initial">
-                    <label for="search" class="block text-sm font-medium text-white/90 mb-1">Buscar</label>
-                    <input type="text" id="search" name="search" value="{{ request('search') }}" placeholder="Servicio o empresa..." class="w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3">
-                </div>
                 <div class="min-w-[140px] flex-1 sm:flex-initial sm:max-w-[180px]">
-                    <label for="filtro_fecha" class="block text-sm font-medium text-white/90 mb-1">Filtrar por fecha</label>
+                    <label for="filtro_fecha" class="block text-sm font-medium text-white/90 mb-1">Fecha</label>
                     <select id="filtro_fecha" name="filtro_fecha" class="w-full rounded-xl border-0 bg-white/15 text-white focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3 [&>option]:bg-[#1a3d6b] [&>option]:text-white">
                         <option value="todos" {{ request('filtro_fecha', 'todos') === 'todos' ? 'selected' : '' }}>Todos</option>
                         <option value="7" {{ request('filtro_fecha') === '7' ? 'selected' : '' }}>Últimos 7 días</option>
@@ -51,47 +55,46 @@
             </form>
 
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-white/20">
+                <table class="min-w-full border-collapse">
                     <thead>
-                        <tr class="table-header-panel-dark">
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Servicio / Curso</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Empresa</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Fecha</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Monto</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Participantes</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Acciones</th>
-                            </tr>
+                        <tr class="border-b border-[#5b8fc7]/50">
+                            <th class="text-left py-3 px-6 text-[#FFE600] font-semibold text-sm uppercase tracking-wide">EMPRESA</th>
+                            <th class="text-left py-3 px-6 text-[#FFE600] font-semibold text-sm uppercase tracking-wide">CONTACTO</th>
+                        </tr>
                     </thead>
-                    <tbody class="divide-y divide-white/15">
+                    <tbody>
                         @forelse($sales as $sale)
-                        <tr class="panel-card-dark__row hover:bg-white/8 transition-colors">
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="text-sm font-medium text-white">{{ $sale->nombre_servicio }}</span>
+                        <tr class="border-b border-[#5b8fc7]/30 hover:bg-white/5 transition-colors">
+                            <td class="py-4 px-6 align-middle">
+                                <span class="text-[#FFE600] font-medium">{{ $sale->company->nombre_comercial }}</span>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <a href="{{ route('companies.show', $sale->company) }}" class="text-[#FFE600] hover:text-white text-sm font-medium">{{ $sale->company->nombre_comercial }}</a>
+                            <td class="py-4 px-6 align-middle">
+                                <div class="flex flex-wrap items-center justify-between gap-4">
+                                    <div class="text-white space-y-0.5 min-w-0">
+                                        @if($sale->contact)
+                                            <div class="font-bold text-white">{{ $sale->contact->nombre_completo }}</div>
+                                            @if($sale->contact->puesto_de_trabajo)
+                                                <div class="text-white/90 text-sm">{{ $sale->contact->puesto_de_trabajo }}</div>
+                                            @endif
+                                            <div class="text-white/80 text-sm">{{ $sale->contact->email ?? '—' }}</div>
+                                        @else
+                                            <span class="text-white/70">—</span>
+                                        @endif
+                                    </div>
+                                    <div class="flex items-center gap-4 flex-shrink-0">
+                                        <span class="text-white text-sm">{{ $sale->fecha_venta->format('d/m/Y') }}</span>
+                                        <a href="{{ route('user.sales.edit', $sale) }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#FFE600] text-[#071A3D] font-semibold text-sm hover:bg-yellow-300 transition shadow">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                                            Crear Ficha
+                                        </a>
+                                    </div>
+                                </div>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-white/90">{{ $sale->fecha_venta->format('d/m/Y') }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-white/90">{{ $sale->monto_formateado }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-white/90">{{ $sale->participantes ?? '—' }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <a href="{{ route('user.sales.show', $sale) }}" class="text-[#FFE600] hover:text-white mr-3">Ver</a>
-                                @can('sales.edit')
-                                <a href="{{ route('user.sales.edit', $sale) }}" class="text-[#FFE600] hover:text-white mr-3">Editar</a>
-                                    @endcan
-                                @can('sales.delete')
-                                <form action="{{ route('user.sales.destroy', $sale) }}" method="POST" class="inline" onsubmit="return confirm('¿Eliminar este registro de venta?');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="text-red-400 hover:text-red-300">Eliminar</button>
-                                </form>
-                                @endcan
-                                </td>
-                            </tr>
+                        </tr>
                         @empty
                         <tr>
-                            <td colspan="6" class="px-6 py-8 text-center text-white/80">
-                                No hay ventas registradas. 
+                            <td colspan="2" class="py-8 px-6 text-center text-white/80">
+                                No hay ventas registradas.
                                 @can('sales.create')
                                 <a href="{{ route('user.sales.create') }}" class="text-[#FFE600] hover:text-white underline ml-1">Registrar la primera</a>
                                 @endcan

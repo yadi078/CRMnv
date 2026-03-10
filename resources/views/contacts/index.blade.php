@@ -14,31 +14,93 @@
     <div class="space-y-8">
         <div class="panel-card-dark">
             <h3 class="panel-card-dark__title panel-card-dark__title--accent mb-4">Filtros</h3>
-            <form method="GET" action="{{ route('contacts.index') }}" class="flex flex-wrap items-end gap-3 sm:gap-4 mb-0">
-                <div class="flex-1 min-w-[180px]">
+            <form method="GET" action="{{ route('contacts.index') }}" class="grid grid-cols-1 md:grid-cols-12 gap-3 sm:gap-4 mb-0">
+                <!-- Fila 1: buscador ancho -->
+                <div class="md:col-span-12">
                     <label for="search" class="block text-sm font-medium text-white/90 mb-1">Buscar</label>
-                    <input type="text" id="search" name="search" value="{{ request('search') }}" placeholder="Buscar..." class="w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3">
+                    <input
+                        type="text"
+                        id="search"
+                        name="search"
+                        value="{{ request('search') }}"
+                        placeholder="Nombre del contacto..."
+                        list="contact_names"
+                        class="w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3"
+                    >
                 </div>
-                <div class="min-w-[180px]">
+
+                <!-- Fila 2: cuatro filtros principales -->
+                <div class="md:col-span-3">
                     <label for="company_id" class="block text-sm font-medium text-white/90 mb-1">Empresa</label>
-                    <select id="company_id" name="company_id" class="w-full rounded-xl border-0 bg-white/15 text-white focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3 [&>option]:bg-[#1a3d6b] [&>option]:text-white">
+                    <select
+                        id="company_id"
+                        name="company_id"
+                        class="w-full rounded-xl border border-gray-200 bg-white text-[#1F2937] focus:border-[#FFE600] focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3"
+                    >
                         <option value="">Todas las empresas</option>
                         @foreach($companies as $company)
-                        <option value="{{ $company->id }}" {{ request('company_id') == $company->id ? 'selected' : '' }}>{{ $company->nombre_comercial }}</option>
+                            <option value="{{ $company->id }}" {{ request('company_id') == $company->id ? 'selected' : '' }}>
+                                {{ $company->nombre_comercial }}
+                            </option>
                         @endforeach
                     </select>
                 </div>
-                <button type="submit" class="btn-panel-dark">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z" /></svg>
-                    Filtrar
-                </button>
-                @can('contacts.create')
-                <a href="{{ route('contacts.create') }}" class="btn-amber-app flex-shrink-0">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" /></svg>
-                    Nuevo Contacto
-                </a>
-                @endcan
+                <div class="md:col-span-3">
+                    <label for="status_color" class="block text-sm font-medium text-white/90 mb-1">Estado prospecto</label>
+                    <select id="status_color" name="status_color" class="w-full rounded-xl border-0 bg-white/15 text-white focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3 [&>option]:bg-[#1a3d6b] [&>option]:text-white">
+                        <option value="">Todos</option>
+                        @foreach(\App\Models\Contact::PROSPECT_STATUS_LABELS as $value => $label)
+                        <option value="{{ $value }}" {{ request('status_color') === $value ? 'selected' : '' }}>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="md:col-span-3">
+                    <label for="genero" class="block text-sm font-medium text-white/90 mb-1">Género</label>
+                    <select id="genero" name="genero" class="w-full rounded-xl border-0 bg-white/15 text-white focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3 [&>option]:bg-[#1a3d6b] [&>option]:text-white">
+                        <option value="">Todos</option>
+                        <option value="Masculino" {{ request('genero') === 'Masculino' ? 'selected' : '' }}>Masculino</option>
+                        <option value="Femenino" {{ request('genero') === 'Femenino' ? 'selected' : '' }}>Femenino</option>
+                        <option value="Otro" {{ request('genero') === 'Otro' ? 'selected' : '' }}>Otro</option>
+                    </select>
+                </div>
+                <div class="md:col-span-3">
+                    <label for="email_activo" class="block text-sm font-medium text-white/90 mb-1">Correo</label>
+                    <select id="email_activo" name="email_activo" class="w-full rounded-xl border-0 bg-white/15 text-white focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3 [&>option]:bg-[#1a3d6b] [&>option]:text-white">
+                        <option value="">Todos</option>
+                        <option value="1" {{ request('email_activo') === '1' ? 'selected' : '' }}>Solo activos</option>
+                        <option value="0" {{ request('email_activo') === '0' ? 'selected' : '' }}>Solo desactivados</option>
+                    </select>
+                </div>
+
+                <!-- Fila 3: ciudad/estado + botones -->
+                <div class="md:col-span-4">
+                    <label for="municipio" class="block text-sm font-medium text-white/90 mb-1">Municipio / Ciudad</label>
+                    <input type="text" id="municipio" name="municipio" value="{{ request('municipio') }}" class="w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3" placeholder="Ej. Guadalajara">
+                </div>
+                <div class="md:col-span-4">
+                    <label for="estado" class="block text-sm font-medium text-white/90 mb-1">Estado</label>
+                    <input type="text" id="estado" name="estado" value="{{ request('estado') }}" class="w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3" placeholder="Ej. Jalisco">
+                </div>
+                <div class="md:col-span-4 flex flex-wrap justify-end items-end gap-3 pt-2">
+                    <button type="submit" class="btn-panel-dark">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z" /></svg>
+                        Filtrar
+                    </button>
+                    @can('contacts.create')
+                    <a href="{{ route('contacts.create') }}" class="btn-amber-app flex-shrink-0">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                        Nuevo Contacto
+                    </a>
+                    @endcan
+                </div>
             </form>
+            @if(!empty($contactNames))
+                <datalist id="contact_names">
+                    @foreach($contactNames as $contactName)
+                        <option value="{{ $contactName }}"></option>
+                    @endforeach
+                </datalist>
+            @endif
         </div>
 
         <div class="panel-card-dark overflow-hidden">
@@ -49,6 +111,7 @@
                         <tr class="table-header-panel-dark">
                             <th class="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">Nombre</th>
                             <th class="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">Empresa</th>
+                            <th class="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">Estado</th>
                             <th class="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">Correo</th>
                             <th class="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">Teléfono</th>
                             <th class="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">Acciones</th>
@@ -62,7 +125,12 @@
                                 <div class="text-sm text-white/80">{{ $contact->puesto_de_trabajo ?? '-' }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-white/90">{{ $contact->company?->nombre_comercial ?? '-' }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-white/90">{{ $contact->email }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2.5 py-1 text-xs font-medium rounded-lg badge-prospect-{{ $contact->status_color ?? 'seguimiento' }}">{{ $contact->status_label ?? 'Seguimiento' }}</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-white/90">
+                                {{ ($contact->email_activo ?? true) ? ($contact->email ?? '—') : '—' }}
+                            </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-white/90">{{ $contact->celular ?? '-' }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <a href="{{ route('contacts.show', $contact) }}" class="text-[#FFE600] hover:text-[#fff] mr-3 inline-flex items-center gap-1">
@@ -78,7 +146,7 @@
                             </td>
                         </tr>
                         @empty
-                        <tr><td colspan="5" class="px-6 py-8 text-center text-white/70">No se encontraron contactos</td></tr>
+                        <tr><td colspan="6" class="px-6 py-8 text-center text-white/70">No se encontraron contactos</td></tr>
                         @endforelse
                     </tbody>
                 </table>

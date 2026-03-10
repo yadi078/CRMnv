@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Concerns\ResolvesAdminUserView;
 use App\Models\Contact;
 use App\Models\Company;
+use App\Models\Sale;
 use App\Models\User;
 use App\Notifications\NewContactAddedNotification;
 use App\Http\Requests\StoreContactRequest;
@@ -29,27 +30,64 @@ class ContactController extends Controller
     {
         $this->authorize('viewAny', Contact::class);
 
+        $user = auth()->user();
+        $isAdmin = $user->esAdmin();
+
         $query = Contact::with(['company', 'creator']);
+
+        // Mostrar solo contactos creados por el usuario autenticado (usuarios normales)
+        // Los administradores pueden ver todos los contactos.
+        if (! $isAdmin) {
+            $query->where('created_by', $user->id);
+        }
 
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('nombre_completo', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhereHas('company', function($q) use ($search) {
-                      $q->where('nombre_comercial', 'like', "%{$search}%");
-                  });
-            });
+            $query->where('nombre_completo', 'like', "%{$search}%");
         }
 
         if ($request->filled('company_id')) {
             $query->where('company_id', $request->company_id);
         }
 
-        $contacts = $query->latest()->paginate(15);
+        if ($request->filled('status_color')) {
+            $query->porStatus($request->status_color);
+        }
+
+        if ($request->filled('genero')) {
+            $query->where('genero', $request->genero);
+        }
+
+        if ($request->filled('municipio')) {
+            $query->where('municipio', 'like', "%{$request->municipio}%");
+        }
+
+        if ($request->filled('estado')) {
+            $query->where('estado', 'like', "%{$request->estado}%");
+        }
+
+        if ($request->filled('email_activo')) {
+            if ($request->email_activo === '1') {
+                $query->where('email_activo', true);
+            } elseif ($request->email_activo === '0') {
+                $query->where('email_activo', false);
+            }
+        }
+
+        $contacts = $query->latest()->paginate(15)->withQueryString();
         $companies = Company::aprobadosOrdenados()->get();
 
-        return $this->resolveView('contacts.index', 'user.contacts.index', compact('contacts', 'companies'));
+        // Lista de nombres de contactos para el autocompletado
+        $namesQuery = Contact::query();
+        if (! $isAdmin) {
+            $namesQuery->where('created_by', $user->id);
+        }
+        $contactNames = $namesQuery
+            ->orderBy('nombre_completo')
+            ->pluck('nombre_completo')
+            ->unique();
+
+        return $this->resolveView('contacts.index', 'user.contacts.index', compact('contacts', 'companies', 'contactNames'));
     }
 
     /**
@@ -82,9 +120,17 @@ class ContactController extends Controller
                 'telefono' => $request->telefono,
                 'extension' => $request->extension,
                 'email' => $request->email,
+                'email_activo' => $request->boolean('email_activo', true),
                 'municipio' => $request->municipio,
                 'estado' => $request->estado,
+                'razon_social' => $request->razon_social,
+                'nombre_comercial' => $request->nombre_comercial,
+                'calle_numero' => $request->calle_numero,
+                'colonia_cp' => $request->colonia_cp,
+                'rfc' => $request->rfc,
+                'regimen_fiscal' => $request->regimen_fiscal,
                 'notas' => $request->notas,
+                'status_color' => $request->input('status_color', 'seguimiento'),
                 'created_by' => auth()->id(),
             ]);
 
@@ -163,13 +209,72 @@ class ContactController extends Controller
         $this->authorize('update', $contact);
 
         try {
-            $contact->update($request->validated());
+            $statusAnterior = $contact->status_color;
+            $nuevoStatus = $request->input('status_color', $contact->status_color);
+
+            $data = $request->validated();
+            $data['email_activo'] = $request->boolean('email_activo', $contact->email_activo);
+
+            $contact->update($data);
+
+            // Si el contacto pasa a "vendido", crear registro en Historial de Ventas
+            // para que aparezca y se pueda completar la ficha de venta.
+            if ($nuevoStatus === 'vendido' && $statusAnterior !== 'vendido' && $contact->company_id) {
+                Sale::create([
+                    'company_id' => $contact->company_id,
+                    'contact_id' => $contact->id,
+                    'nombre_servicio' => 'Venta desde contacto: ' . $contact->nombre_completo,
+                    'fecha_venta' => now(),
+                    'monto' => null,
+                    'tipo_pago' => null,
+                    'participantes' => null,
+                    'notas' => 'Registrado al marcar el contacto como Vendido. Complete los datos de la venta.',
+                    'created_by' => auth()->id(),
+                ]);
+            }
+
             return redirect()->route('contacts.show', $contact)
                 ->with('success', 'Contacto actualizado exitosamente.');
         } catch (\Exception $e) {
             return back()->withInput()
                 ->with('error', 'Error al actualizar el contacto. Por favor, intente nuevamente.');
         }
+    }
+
+    /**
+     * Actualizar rápidamente el estado del correo (activado / desactivado) desde la ficha.
+     */
+    public function updateEmailStatus(Request $request, Contact $contact)
+    {
+        $this->authorize('update', $contact);
+
+        $request->validate([
+            'email_activo' => 'required|boolean',
+        ]);
+
+        $contact->update([
+            'email_activo' => (bool) $request->email_activo,
+        ]);
+
+        return back();
+    }
+
+    /**
+     * Actualizar solo las notas del contacto desde la ficha (sin pasar por la vista de edición completa).
+     */
+    public function updateNotes(Request $request, Contact $contact)
+    {
+        $this->authorize('update', $contact);
+
+        $validated = $request->validate([
+            'notas' => 'nullable|string|max:2000',
+        ]);
+
+        $contact->update([
+            'notas' => $validated['notas'] ?? null,
+        ]);
+
+        return back()->with('success', 'Notas actualizadas correctamente.');
     }
 
     /**

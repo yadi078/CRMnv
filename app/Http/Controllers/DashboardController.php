@@ -10,9 +10,9 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Controlador del Dashboard
- * 
+ *
  * Muestra resumen de actividad, seguimientos pendientes
- * y sistema visual de semáforo para prospectos
+ * y semáforo de prospectos por contactos (estado de cada contacto)
  */
 class DashboardController extends Controller
 {
@@ -32,12 +32,12 @@ class DashboardController extends Controller
         $totalSeguimientos = FollowUp::count();
         $seguimientosPendientes = FollowUp::pendientes()->count();
 
-        // Empresas por estado de prospecto
-        $empresasSeguimiento = Company::porStatus('seguimiento')->count();
-        $empresasInteresado = Company::porStatus('interesado')->count();
-        $empresasSiLeInteresa = Company::porStatus('si_le_interesa_nos_llaman_o_no_compro')->count();
-        $empresasVendido = Company::porStatus('vendido')->count();
-        $empresasNoEstaba = Company::porStatus('no_estaba')->count();
+        // Contactos por estado de prospecto (semáforo)
+        $contactosSeguimiento = Contact::porStatus('seguimiento')->count();
+        $contactosInteresado = Contact::porStatus('interesado')->count();
+        $contactosSiLeInteresa = Contact::porStatus('si_le_interesa_nos_llaman_o_no_compro')->count();
+        $contactosVendido = Contact::porStatus('vendido')->count();
+        $contactosNoEstaba = Contact::porStatus('no_estaba')->count();
 
         // Solicitudes pendientes: empresas y usuarios (solo para admin)
         $empresasPendientes = 0;
@@ -74,11 +74,11 @@ class DashboardController extends Controller
             'totalContactos',
             'totalSeguimientos',
             'seguimientosPendientes',
-            'empresasSeguimiento',
-            'empresasInteresado',
-            'empresasSiLeInteresa',
-            'empresasVendido',
-            'empresasNoEstaba',
+            'contactosSeguimiento',
+            'contactosInteresado',
+            'contactosSiLeInteresa',
+            'contactosVendido',
+            'contactosNoEstaba',
             'empresasPendientes',
             'usuariosPendientes',
             'seguimientosVencidos',

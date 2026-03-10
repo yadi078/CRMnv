@@ -55,6 +55,12 @@
                             <x-text-input id="email" name="email" type="email" class="mt-1 block w-full" :value="old('email', $contact->email)" required />
                             <x-input-error :messages="$errors->get('email')" class="mt-2" />
                         </div>
+                        <div class="flex items-center gap-3 md:col-span-2">
+                            <input id="email_activo" name="email_activo" type="checkbox" value="1" class="rounded border-gray-300 text-amber-500 shadow-sm focus:border-amber-500 focus:ring-amber-500" @checked(old('email_activo', $contact->email_activo ?? true)) />
+                            <label for="email_activo" class="text-sm text-white/90 select-none">
+                                Mostrar correo en fichas, listados y PDF
+                            </label>
+                        </div>
                         <div>
                             <x-input-label for="telefono" value="Teléfono" />
                             <x-text-input id="telefono" name="telefono" type="text" class="mt-1 block w-full" :value="old('telefono', $contact->telefono)" placeholder="Teléfono fijo" />
@@ -68,12 +74,42 @@
                             <x-text-input id="extension" name="extension" type="text" class="mt-1 block w-full" :value="old('extension', $contact->extension)" />
                         </div>
                         <div>
-                            <x-input-label for="municipio" value="Municipio" />
+                            <x-input-label for="municipio" value="Municipio / Ciudad" />
                             <x-text-input id="municipio" name="municipio" type="text" class="mt-1 block w-full" :value="old('municipio', $contact->municipio)" />
                         </div>
                         <div>
                             <x-input-label for="estado" value="Estado" />
                             <x-text-input id="estado" name="estado" type="text" class="mt-1 block w-full" :value="old('estado', $contact->estado)" />
+                        </div>
+                        <div class="md:col-span-2 mt-2 pt-6 border-t border-white/20">
+                            <h3 class="text-lg font-semibold text-[#FFE600] mb-2">Datos para ficha de registro del cliente</h3>
+                            <p class="text-sm text-white/80 mb-4">Razón social, nombre comercial, domicilio fiscal, RFC y régimen. TEL se toma de Teléfono/Celular de arriba.</p>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="md:col-span-2">
+                                    <x-input-label for="razon_social" value="RAZÓN SOCIAL" />
+                                    <x-text-input id="razon_social" name="razon_social" type="text" class="mt-1 block w-full" :value="old('razon_social', $contact->razon_social)" />
+                                </div>
+                                <div class="md:col-span-2">
+                                    <x-input-label for="nombre_comercial" value="Nombre comercial" />
+                                    <x-text-input id="nombre_comercial" name="nombre_comercial" type="text" class="mt-1 block w-full" :value="old('nombre_comercial', $contact->nombre_comercial)" />
+                                </div>
+                                <div class="md:col-span-2">
+                                    <x-input-label for="calle_numero" value="CALLE Y NÚMERO" />
+                                    <x-text-input id="calle_numero" name="calle_numero" type="text" class="mt-1 block w-full" :value="old('calle_numero', $contact->calle_numero)" />
+                                </div>
+                                <div>
+                                    <x-input-label for="colonia_cp" value="COLONIA Y C.P." />
+                                    <x-text-input id="colonia_cp" name="colonia_cp" type="text" class="mt-1 block w-full" :value="old('colonia_cp', $contact->colonia_cp)" />
+                                </div>
+                                <div>
+                                    <x-input-label for="rfc" value="RFC" />
+                                    <x-text-input id="rfc" name="rfc" type="text" class="mt-1 block w-full" :value="old('rfc', $contact->rfc)" />
+                                </div>
+                                <div class="md:col-span-2">
+                                    <x-input-label for="regimen_fiscal" value="RÉGIMEN EN QUE TRIBUTA" />
+                                    <x-text-input id="regimen_fiscal" name="regimen_fiscal" type="text" class="mt-1 block w-full" :value="old('regimen_fiscal', $contact->regimen_fiscal)" />
+                                </div>
+                            </div>
                         </div>
                         <div class="md:col-span-2">
                             <x-input-label for="notas" value="Notas" />

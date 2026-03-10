@@ -70,7 +70,21 @@
                 </div>
                 <div>
                     <p class="text-sm text-white/70">Correo</p>
-                    <p class="text-lg font-medium text-white">{{ $contact->email }}</p>
+                    <div class="flex items-center gap-4 mt-1">
+                        <p class="text-lg font-medium text-white">
+                            {{ $contact->email_activo ? $contact->email : 'Correo desactivado' }}
+                        </p>
+                        @can('contacts.edit')
+                        <form method="POST" action="{{ route('contacts.email-status', $contact) }}" class="inline-block">
+                            @csrf
+                            @method('PATCH')
+                            <input type="hidden" name="email_activo" value="{{ $contact->email_activo ? 0 : 1 }}">
+                            <button type="submit" class="relative inline-flex items-center h-7 w-11 rounded-full transition-colors shadow-sm {{ $contact->email_activo ? 'bg-green-500' : 'bg-gray-300' }}">
+                                <span class="inline-block w-4 h-4 bg-white rounded-full transform transition-transform duration-200 {{ $contact->email_activo ? 'translate-x-4' : '' }}"></span>
+                            </button>
+                        </form>
+                        @endcan
+                    </div>
                 </div>
                 <div>
                     <p class="text-sm text-white/70">Teléfono</p>
@@ -92,12 +106,53 @@
                     <p class="text-lg font-medium text-white">{{ $contact->municipio ?? '' }}{{ $contact->municipio && $contact->estado ? ', ' : '' }}{{ $contact->estado ?? '' }}</p>
                 </div>
                 @endif
-                @if($contact->notas)
+
                 <div class="md:col-span-2">
-                    <p class="text-sm text-white/70">Notas</p>
-                    <p class="text-white">{{ $contact->notas }}</p>
+                    <div class="flex items-center justify-between mb-1">
+                        <p class="text-sm text-white/70">Notas</p>
+                        @can('contacts.edit')
+                        <button
+                            type="button"
+                            onclick="document.getElementById('notas-view').classList.add('hidden'); document.getElementById('notas-form').classList.remove('hidden');"
+                            class="inline-flex items-center justify-center w-7 h-7 rounded-full border border-white/30 bg-white/5 text-white hover:bg-white/15 transition"
+                            title="Editar notas"
+                        >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                        </button>
+                        @endcan
+                    </div>
+                    <div id="notas-view" class="text-white text-sm {{ $contact->notas ? '' : 'text-white/60 italic' }}">
+                        {{ $contact->notas ?: 'Sin notas registradas.' }}
+                    </div>
+                    @can('contacts.edit')
+                    <form
+                        id="notas-form"
+                        method="POST"
+                        action="{{ route('contacts.notes', $contact) }}"
+                        class="hidden space-y-2"
+                    >
+                        @csrf
+                        @method('PATCH')
+                        <textarea
+                            name="notas"
+                            rows="3"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm"
+                        >{{ old('notas', $contact->notas) }}</textarea>
+                        <div class="flex items-center gap-2">
+                            <button type="submit" class="btn-amber-app text-xs py-1.5 px-3">Guardar notas</button>
+                            <button
+                                type="button"
+                                class="text-xs text-white/80 hover:text-white"
+                                onclick="document.getElementById('notas-form').classList.add('hidden'); document.getElementById('notas-view').classList.remove('hidden');"
+                            >
+                                Cancelar
+                            </button>
+                        </div>
+                    </form>
+                    @endcan
                 </div>
-                @endif
             </div>
         </div>
     </div>

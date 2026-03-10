@@ -23,6 +23,9 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'company_name',
+        'company_rfc',
+        'company_id',
         'email',
         'password',
         'profile_photo_path',
@@ -88,6 +91,14 @@ class User extends Authenticatable
     public function approver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    /**
+     * Relación: Empresa a la que pertenece el usuario
+     */
+    public function company(): BelongsTo
+    {
+        return $this->belongsTo(Company::class);
     }
 
     /**

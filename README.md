@@ -1,4 +1,4 @@
-# CRM C&CE Consultoría y Capacitación Empresarial
+# CRM CE Consultoría y Capacitación Empresarial
 
 Sistema CRM desarrollado con Laravel 11, PHP 8.3, Tailwind CSS y MySQL para la gestión de empresas, contactos y seguimientos.
 
@@ -15,7 +15,7 @@ Sistema CRM desarrollado con Laravel 11, PHP 8.3, Tailwind CSS y MySQL para la g
 - ✅ Control de acceso basado en roles (Admin y Usuario)
 - ✅ Dashboard con resumen de actividad y seguimientos pendientes
 - ✅ Interfaz moderna y responsiva con Tailwind CSS
-- ✅ Paleta de colores corporativa de C&CE Consultoría
+- ✅ Paleta de colores corporativa de CE Consultoría
 
 ## 📋 Requisitos
 
@@ -179,7 +179,7 @@ php artisan test
 
 ## 📄 Licencia
 
-Este proyecto es propiedad de C&CE Consultoría y Capacitación Empresarial.
+Este proyecto es propiedad de CE Consultoría y Capacitación Empresarial.
 
 ## 👨‍💻 Desarrollo
 
@@ -187,5 +187,5 @@ Desarrollado siguiendo las mejores prácticas de Laravel y arquitectura MVC.
 
 ---
 
-**C&CE Consultoría y Capacitación Empresarial**  
+**CE Consultoría y Capacitación Empresarial**  
 *INVERTIR EN VALOR ¡ATRAE VALOR!*

@@ -15,12 +15,23 @@
         <!-- Filtros + Nueva Empresa: contenedor azul, título amarillo -->
         <div class="panel-card-dark">
             <h3 class="panel-card-dark__title panel-card-dark__title--accent mb-4">Filtros</h3>
-            <form method="GET" action="{{ route('companies.index') }}" class="flex flex-wrap items-end gap-3 sm:gap-4">
-                <div class="flex-1 min-w-[180px]">
+            <form method="GET" action="{{ route('companies.index') }}" class="grid grid-cols-1 md:grid-cols-12 gap-3 sm:gap-4 mb-0">
+                <!-- Fila 1: buscador ancho -->
+                <div class="md:col-span-12">
                     <label for="search" class="block text-sm font-medium text-white/90 mb-1">Buscar</label>
-                    <input type="text" id="search" name="search" value="{{ request('search') }}" placeholder="Buscar..." class="w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3">
+                    <input
+                        type="text"
+                        id="search"
+                        name="search"
+                        value="{{ request('search') }}"
+                        placeholder="Nombre de la empresa..."
+                        list="company_names"
+                        class="w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3"
+                    >
                 </div>
-                <div class="min-w-[180px]">
+
+                <!-- Fila 2: cuatro selects -->
+                <div class="md:col-span-3">
                     <label for="status_color" class="block text-sm font-medium text-white/90 mb-1">Estado prospecto</label>
                     <select id="status_color" name="status_color" class="w-full rounded-xl border-0 bg-white/15 text-white focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3 [&>option]:bg-[#1a3d6b] [&>option]:text-white">
                         <option value="">Todos los estados</option>
@@ -31,22 +42,143 @@
                         <option value="no_estaba" {{ request('status_color') === 'no_estaba' ? 'selected' : '' }}>No estaba</option>
                     </select>
                 </div>
-                <button type="submit" class="btn-panel-dark">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z" />
-                    </svg>
-                    Filtrar
-                </button>
-                @can('companies.create')
-                <a href="{{ route('companies.create') }}" class="btn-amber-app flex-shrink-0">
-                    <svg class="flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" />
-                    </svg>
-                    Nueva Empresa
-                </a>
+                <div class="md:col-span-3">
+                    <label for="sector" class="block text-sm font-medium text-white/90 mb-1">Sector</label>
+                    <select id="sector" name="sector" class="w-full rounded-xl border border-gray-200 bg-white text-[#1F2937] focus:border-[#FFE600] focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3">
+                        <option value="">Todos</option>
+                        @foreach($sectorOptions as $sector)
+                            <option value="{{ $sector }}" {{ request('sector') === $sector ? 'selected' : '' }}>{{ $sector }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="md:col-span-3">
+                    <label for="estado" class="block text-sm font-medium text-white/90 mb-1">Estado</label>
+                    <select id="estado" name="estado" class="w-full rounded-xl border border-gray-200 bg-white text-[#1F2937] focus:border-[#FFE600] focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3">
+                        <option value="">Todos</option>
+                        @foreach($estadoOptions as $estado)
+                            <option value="{{ $estado }}" {{ request('estado') === $estado ? 'selected' : '' }}>{{ $estado }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                @can('companies.approve')
+                <div class="md:col-span-3">
+                    <label for="approval_status" class="block text-sm font-medium text-white/90 mb-1">Estatus de aprobación</label>
+                    <select id="approval_status" name="approval_status" class="w-full rounded-xl border border-gray-200 bg-white text-[#1F2937] focus:border-[#FFE600] focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3">
+                        <option value="">Todos</option>
+                        <option value="aprobado" {{ request('approval_status') === 'aprobado' ? 'selected' : '' }}>Aprobado</option>
+                        <option value="pendiente" {{ request('approval_status') === 'pendiente' ? 'selected' : '' }}>Pendiente</option>
+                        <option value="rechazado" {{ request('approval_status') === 'rechazado' ? 'selected' : '' }}>Rechazado</option>
+                    </select>
+                </div>
                 @endcan
+
+                <!-- Fila 3: ejecutivo + botones a la derecha -->
+                <div class="md:col-span-4">
+                    <label for="ejecutivo_asignado" class="block text-sm font-medium text-white/90 mb-1">Ejecutivo</label>
+                    <select id="ejecutivo_asignado" name="ejecutivo_asignado" class="w-full rounded-xl border border-gray-200 bg-white text-[#1F2937] focus:border-[#FFE600] focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3">
+                        <option value="">Todos</option>
+                        @foreach($ejecutivoOptions as $ejecutivo)
+                            <option value="{{ $ejecutivo }}" {{ request('ejecutivo_asignado') === $ejecutivo ? 'selected' : '' }}>{{ $ejecutivo }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="md:col-span-8 flex flex-wrap justify-end items-end gap-3 pt-2">
+                    @can('companies.create')
+                    <a href="{{ route('companies.create') }}" class="btn-amber-app flex-shrink-0">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
+                        Nueva Empresa
+                    </a>
+                    @endcan
+
+                    <button type="submit" class="btn-panel-dark">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z" />
+                        </svg>
+                        Filtrar
+                    </button>
+                </div>
             </form>
+            @if(isset($companyNames) && $companyNames->isNotEmpty())
+                <datalist id="company_names">
+                    @foreach($companyNames as $companyName)
+                        <option value="{{ $companyName }}"></option>
+                    @endforeach
+                </datalist>
+            @endif
         </div>
+
+        @if(isset($companyContactsCard) && $companyContactsCard)
+        <!-- Ficha de contactos de la empresa seleccionada -->
+        <div class="panel-card-dark">
+            <div class="mb-4 pb-4 border-b border-white/20">
+                <h4 class="text-xl font-bold text-[#FFE600]">
+                    {{ $companyContactsCard->nombre_comercial }}
+                </h4>
+                <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-2 text-sm text-white/90">
+                    @if($companyContactsCard->rfc)
+                        <p><span class="text-white/70 font-medium">RFC:</span> {{ $companyContactsCard->rfc }}</p>
+                    @endif
+                    @if($companyContactsCard->municipio || $companyContactsCard->estado)
+                        <p><span class="text-white/70 font-medium">Ciudad, Estado:</span> {{ trim(($companyContactsCard->municipio ?? '') . ', ' . ($companyContactsCard->estado ?? ''), ' ,') }}</p>
+                    @endif
+                    @if($companyContactsCard->sector)
+                        <p><span class="text-white/70 font-medium">Sector:</span> {{ $companyContactsCard->sector }}</p>
+                    @endif
+                    @if($companyContactsCard->ejecutivo_asignado)
+                        <p><span class="text-white/70 font-medium">Ejecutivo asignado:</span> {{ $companyContactsCard->ejecutivo_asignado }}</p>
+                    @endif
+                </div>
+                @if($companyContactsCard->datos_fiscales)
+                    <p class="mt-3 pt-3 border-t border-white/10 text-sm text-white/90"><span class="text-white/70 font-medium">Domicilio fiscal:</span> {{ Str::limit($companyContactsCard->datos_fiscales, 120) }}</p>
+                @endif
+            </div>
+
+            @if($companyContactsCard->contacts->isEmpty())
+                <p class="text-white/80 text-sm">
+                    Esta empresa aún no tiene contactos registrados.
+                </p>
+            @else
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    @foreach($companyContactsCard->contacts as $contact)
+                        <a
+                            href="{{ route('contacts.show', $contact) }}"
+                            class="bg-white rounded-2xl shadow-md px-4 py-3 flex flex-col gap-1 border-2 border-[#071A3D] border-t-4 border-t-[#FFE600] transition transform hover:-translate-y-0.5 hover:shadow-lg cursor-pointer"
+                        >
+                            <span class="text-sm font-semibold text-[#071A3D]">
+                                {{ $contact->nombre_completo }}
+                            </span>
+                            @if($contact->puesto_de_trabajo)
+                                <p class="text-xs text-gray-600">
+                                    {{ $contact->puesto_de_trabajo }}
+                                </p>
+                            @endif
+                            <p class="text-xs text-gray-700">
+                                <span class="font-semibold">Correo:</span>
+                                {{ ($contact->email_activo ?? true) ? ($contact->email ?? '—') : '—' }}
+                            </p>
+                            <p class="text-xs text-gray-700">
+                                <span class="font-semibold">Teléfono:</span>
+                                {{ $contact->celular ?? $contact->telefono ?? '—' }}
+                            </p>
+                            <div class="pt-2 mt-1 border-t border-gray-200">
+                                @if($contact->status_color)
+                                    <span class="px-3 py-1 text-xs font-bold rounded-full badge-prospect-{{ $contact->status_color }} border border-[#071A3D]/50 shrink-0 inline-block !text-[#0f172a]">
+                                        {{ $contact->status_label }}
+                                    </span>
+                                @else
+                                    <span class="px-3 py-1 text-xs font-bold rounded-full bg-yellow-300 !text-[#0f172a] border border-[#071A3D]/50 shrink-0 inline-block">
+                                        Seguimiento
+                                    </span>
+                                @endif
+                            </div>
+                        </a>
+                    @endforeach
+                </div>
+            @endif
+        </div>
+        @endif
 
         <!-- Tabla: contenedor azul, encabezados amarillos, texto blanco -->
         <div class="panel-card-dark overflow-hidden">
@@ -94,12 +226,12 @@
                                     Ver
                                 </a>
                                 @can('companies.edit')
-                                <button type="button" class="js-company-edit-modal text-[#FFE600] hover:text-[#fff] mr-3 inline-flex items-center gap-1 bg-transparent border-0 p-0 cursor-pointer" data-edit-url="{{ route('companies.edit-form', $company) }}" data-company-name="{{ $company->nombre_comercial }}">
+                                <a href="{{ route('companies.edit', $company) }}" class="text-[#FFE600] hover:text-[#fff] mr-3 inline-flex items-center gap-1">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
                                     </svg>
                                     Editar
-                                </button>
+                                </a>
                                 @endcan
                             </td>
                         </tr>
@@ -117,122 +249,5 @@
                 {{ $companies->links() }}
             </div>
         </div>
-
-        <!-- Modal editar empresa: ventana flotante con margen amarillo y botón cerrar -->
-        <div id="company-edit-modal" class="company-edit-modal" role="dialog" aria-modal="true" aria-labelledby="company-edit-modal-title" hidden>
-            <div class="company-edit-modal__backdrop js-company-modal-close"></div>
-            <div class="company-edit-modal__box">
-                <div class="company-edit-modal__header">
-                    <h2 id="company-edit-modal-title" class="company-edit-modal__title">Editar Empresa</h2>
-                    <button type="button" class="company-edit-modal__close js-company-modal-close" aria-label="Cerrar">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>
-                <div class="company-edit-modal__body">
-                    <div id="company-edit-modal-loading" class="company-edit-modal__loading" hidden>
-                        <p class="text-white/90">Cargando...</p>
-                    </div>
-                    <div id="company-edit-modal-content" class="company-edit-modal__content"></div>
-                </div>
-            </div>
-        </div>
     </div>
-
-    @push('scripts')
-    <script>
-    (function() {
-        var modal = document.getElementById('company-edit-modal');
-        var backdrop = modal && modal.querySelector('.company-edit-modal__backdrop');
-        var content = document.getElementById('company-edit-modal-content');
-        var loading = document.getElementById('company-edit-modal-loading');
-        var titleEl = document.getElementById('company-edit-modal-title');
-
-        function closeModal() {
-            if (modal) {
-                modal.setAttribute('hidden', '');
-                document.body.style.overflow = '';
-            }
-        }
-
-        function openModal() {
-            if (modal) {
-                modal.removeAttribute('hidden');
-                document.body.style.overflow = 'hidden';
-            }
-        }
-
-        if (backdrop) backdrop.addEventListener('click', closeModal);
-        document.querySelectorAll('.js-company-modal-close').forEach(function(btn) {
-            btn.addEventListener('click', closeModal);
-        });
-
-        document.querySelectorAll('.js-company-edit-modal').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                var url = this.getAttribute('data-edit-url');
-                var name = this.getAttribute('data-company-name') || 'Empresa';
-                if (!url || !content) return;
-                titleEl.textContent = 'Editar: ' + name;
-                content.innerHTML = '';
-                loading.hidden = false;
-                openModal();
-                fetch(url, { headers: { 'Accept': 'text/html', 'X-Requested-With': 'XMLHttpRequest' } })
-                    .then(function(r) { return r.text(); })
-                    .then(function(html) {
-                        loading.hidden = true;
-                        content.innerHTML = html;
-                        var form = content.querySelector('#company-edit-form-modal');
-                        if (form) {
-                            form.addEventListener('submit', function(e) {
-                                e.preventDefault();
-                                var submitBtn = form.querySelector('button[type="submit"]');
-                                if (submitBtn) {
-                                    submitBtn.disabled = true;
-                                    submitBtn.textContent = 'Guardando...';
-                                }
-                                var formData = new FormData(form);
-                                fetch(form.action, {
-                                    method: 'POST',
-                                    body: formData,
-                                    headers: {
-                                        'Accept': 'application/json',
-                                        'X-Requested-With': 'XMLHttpRequest'
-                                    }
-                                })
-                                .then(function(res) { return res.json().then(function(data) { return { ok: res.ok, data: data }; }); })
-                                .then(function(result) {
-                                    if (result.ok && result.data.success) {
-                                        closeModal();
-                                        window.location.reload();
-                                    } else {
-                                        if (submitBtn) {
-                                            submitBtn.disabled = false;
-                                            submitBtn.innerHTML = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg> Actualizar';
-                                        }
-                                        alert(result.data.message || 'Error al actualizar.');
-                                    }
-                                })
-                                .catch(function() {
-                                    if (submitBtn) {
-                                        submitBtn.disabled = false;
-                                        submitBtn.innerHTML = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg> Actualizar';
-                                    }
-                                    alert('Error de conexión.');
-                                });
-                            });
-                        }
-                        content.querySelectorAll('.js-company-modal-close').forEach(function(b) {
-                            b.addEventListener('click', closeModal);
-                        });
-                    })
-                    .catch(function() {
-                        loading.hidden = true;
-                        content.innerHTML = '<p class="text-red-300">No se pudo cargar el formulario.</p>';
-                    });
-            });
-        });
-    })();
-    </script>
-    @endpush
 </x-app-layout>

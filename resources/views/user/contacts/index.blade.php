@@ -16,22 +16,105 @@
 
     <div class="space-y-8">
         <div class="panel-card-dark overflow-hidden p-6">
-            <form method="GET" action="{{ route('contacts.index') }}" class="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                <input type="text" name="search" value="{{ request('search') }}" placeholder="Buscar..." class="rounded-xl border-0 bg-white/15 text-white placeholder-white/60 focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3">
-                <select name="company_id" class="rounded-xl border-0 bg-white/15 text-white focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3 [&>option]:bg-[#1a3d6b] [&>option]:text-white">
+            <form method="GET" action="{{ route('contacts.index') }}" class="mb-6 grid grid-cols-1 md:grid-cols-12 gap-4">
+                <!-- Fila 1: buscador ancho -->
+                <div class="md:col-span-12">
+                    <label for="search" class="block text-sm font-medium text-white/90 mb-1">Buscar</label>
+                    <input
+                        id="search"
+                        type="text"
+                        name="search"
+                        value="{{ request('search') }}"
+                        placeholder="Nombre del contacto..."
+                        list="contact_names"
+                        class="w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3"
+                    >
+                </div>
+
+                <!-- Fila 2: cuatro filtros principales -->
+                <div class="md:col-span-3">
+                    <label for="company_id" class="block text-sm font-medium text-white/90 mb-1">Empresa</label>
+                    <select
+                        name="company_id"
+                        id="company_id"
+                        class="w-full rounded-xl border border-gray-200 bg-white text-[#1F2937] focus:border-[#FFE600] focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3"
+                    >
                         <option value="">Todas las empresas</option>
                         @foreach($companies as $company)
-                        <option value="{{ $company->id }}" {{ request('company_id') == $company->id ? 'selected' : '' }}>{{ $company->nombre_comercial }}</option>
+                            <option value="{{ $company->id }}" {{ request('company_id') == $company->id ? 'selected' : '' }}>
+                                {{ $company->nombre_comercial }}
+                            </option>
                         @endforeach
                     </select>
+                </div>
+                <div class="md:col-span-3">
+                    <label for="status_color" class="block text-sm font-medium text-white/90 mb-1">Estado prospecto</label>
+                    <select name="status_color" id="status_color" class="w-full rounded-xl border-0 bg-white/15 text-white focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3 [&>option]:bg-[#1a3d6b] [&>option]:text-white">
+                        <option value="">Estado prospecto</option>
+                        @foreach(\App\Models\Contact::PROSPECT_STATUS_LABELS as $value => $label)
+                        <option value="{{ $value }}" {{ request('status_color') === $value ? 'selected' : '' }}>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="md:col-span-3">
+                    <label for="genero" class="block text-sm font-medium text-white/90 mb-1">Género</label>
+                    <select name="genero" id="genero" class="w-full rounded-xl border-0 bg-white/15 text-white focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3 [&>option]:bg-[#1a3d6b] [&>option]:text-white">
+                        <option value="">Género</option>
+                        <option value="Masculino" {{ request('genero') === 'Masculino' ? 'selected' : '' }}>Masculino</option>
+                        <option value="Femenino" {{ request('genero') === 'Femenino' ? 'selected' : '' }}>Femenino</option>
+                        <option value="Otro" {{ request('genero') === 'Otro' ? 'selected' : '' }}>Otro</option>
+                    </select>
+                </div>
+                <div class="md:col-span-3">
+                    <label for="email_activo" class="block text-sm font-medium text-white/90 mb-1">Correo</label>
+                    <select name="email_activo" id="email_activo" class="w-full rounded-xl border-0 bg-white/15 text-white focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3 [&>option]:bg-[#1a3d6b] [&>option]:text-white">
+                        <option value="">Correo</option>
+                        <option value="1" {{ request('email_activo') === '1' ? 'selected' : '' }}>Solo activos</option>
+                        <option value="0" {{ request('email_activo') === '0' ? 'selected' : '' }}>Solo desactivados</option>
+                    </select>
+                </div>
+
+                <!-- Fila 3: ciudad/estado + botón -->
+                <div class="md:col-span-4">
+                    <label for="municipio" class="block text-sm font-medium text-white/90 mb-1">Municipio / Ciudad</label>
+                    <input
+                        id="municipio"
+                        type="text"
+                        name="municipio"
+                        value="{{ request('municipio') }}"
+                        placeholder="Municipio / Ciudad"
+                        class="w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3"
+                    >
+                </div>
+                <div class="md:col-span-4">
+                    <label for="estado" class="block text-sm font-medium text-white/90 mb-1">Estado</label>
+                    <input
+                        id="estado"
+                        type="text"
+                        name="estado"
+                        value="{{ request('estado') }}"
+                        placeholder="Estado"
+                        class="w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3"
+                    >
+                </div>
+                <div class="md:col-span-4 flex justify-end items-end pt-1">
                     <button type="submit" class="btn-primary-app">Filtrar</button>
-                </form>
+                </div>
+            </form>
+            @if(!empty($contactNames))
+                <datalist id="contact_names">
+                    @foreach($contactNames as $contactName)
+                        <option value="{{ $contactName }}"></option>
+                    @endforeach
+                </datalist>
+            @endif
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-white/20">
                     <thead>
                         <tr class="table-header-panel-dark">
                             <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Nombre</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Empresa</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Estado</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Correo</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Teléfono</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Acciones</th>
@@ -45,7 +128,12 @@
                                 <div class="text-sm text-white/80">{{ $contact->puesto_de_trabajo ?? '-' }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-white/90">{{ $contact->company?->nombre_comercial ?? '-' }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-white/90">{{ $contact->email }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 py-1 text-xs font-medium rounded badge-prospect-{{ $contact->status_color ?? 'seguimiento' }}">{{ $contact->status_label ?? 'Seguimiento' }}</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-white/90">
+                                {{ ($contact->email_activo ?? true) ? ($contact->email ?? '—') : '—' }}
+                            </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-white/90">{{ $contact->celular ?? '-' }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <a href="{{ route('contacts.show', $contact) }}" class="text-[#FFE600] hover:text-white mr-3">Ver</a>
@@ -56,7 +144,7 @@
                             </tr>
                         @empty
                         <tr>
-                            <td colspan="5" class="px-6 py-8 text-center text-white/80">No se encontraron contactos</td>
+                            <td colspan="6" class="px-6 py-8 text-center text-white/80">No se encontraron contactos</td>
                             </tr>
                         @endforelse
                     </tbody>
