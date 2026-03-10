@@ -31,17 +31,6 @@
                         <option value="no_estaba" {{ request('status_color') === 'no_estaba' ? 'selected' : '' }}>No estaba</option>
                     </select>
                 </div>
-                @can('companies.approve')
-                <div class="min-w-[140px]">
-                    <label for="approval_status" class="block text-sm font-medium text-white/90 mb-1">Estado</label>
-                    <select id="approval_status" name="approval_status" class="w-full rounded-xl border-0 bg-white/15 text-white focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3 [&>option]:bg-[#1a3d6b] [&>option]:text-white">
-                        <option value="">Todos los estados</option>
-                        <option value="pendiente" {{ request('approval_status') === 'pendiente' ? 'selected' : '' }}>Pendiente</option>
-                        <option value="aprobado" {{ request('approval_status') === 'aprobado' ? 'selected' : '' }}>Aprobado</option>
-                        <option value="rechazado" {{ request('approval_status') === 'rechazado' ? 'selected' : '' }}>Rechazado</option>
-                    </select>
-                </div>
-                @endcan
                 <button type="submit" class="btn-panel-dark">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z" />
@@ -105,12 +94,12 @@
                                     Ver
                                 </a>
                                 @can('companies.edit')
-                                <a href="{{ route('companies.edit', $company) }}" class="text-[#FFE600] hover:text-[#fff] mr-3 inline-flex items-center gap-1">
+                                <button type="button" class="js-company-edit-modal text-[#FFE600] hover:text-[#fff] mr-3 inline-flex items-center gap-1 bg-transparent border-0 p-0 cursor-pointer" data-edit-url="{{ route('companies.edit-form', $company) }}" data-company-name="{{ $company->nombre_comercial }}">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
                                     </svg>
                                     Editar
-                                </a>
+                                </button>
                                 @endcan
                             </td>
                         </tr>
@@ -128,5 +117,122 @@
                 {{ $companies->links() }}
             </div>
         </div>
+
+        <!-- Modal editar empresa: ventana flotante con margen amarillo y botón cerrar -->
+        <div id="company-edit-modal" class="company-edit-modal" role="dialog" aria-modal="true" aria-labelledby="company-edit-modal-title" hidden>
+            <div class="company-edit-modal__backdrop js-company-modal-close"></div>
+            <div class="company-edit-modal__box">
+                <div class="company-edit-modal__header">
+                    <h2 id="company-edit-modal-title" class="company-edit-modal__title">Editar Empresa</h2>
+                    <button type="button" class="company-edit-modal__close js-company-modal-close" aria-label="Cerrar">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="company-edit-modal__body">
+                    <div id="company-edit-modal-loading" class="company-edit-modal__loading" hidden>
+                        <p class="text-white/90">Cargando...</p>
+                    </div>
+                    <div id="company-edit-modal-content" class="company-edit-modal__content"></div>
+                </div>
+            </div>
+        </div>
     </div>
+
+    @push('scripts')
+    <script>
+    (function() {
+        var modal = document.getElementById('company-edit-modal');
+        var backdrop = modal && modal.querySelector('.company-edit-modal__backdrop');
+        var content = document.getElementById('company-edit-modal-content');
+        var loading = document.getElementById('company-edit-modal-loading');
+        var titleEl = document.getElementById('company-edit-modal-title');
+
+        function closeModal() {
+            if (modal) {
+                modal.setAttribute('hidden', '');
+                document.body.style.overflow = '';
+            }
+        }
+
+        function openModal() {
+            if (modal) {
+                modal.removeAttribute('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        if (backdrop) backdrop.addEventListener('click', closeModal);
+        document.querySelectorAll('.js-company-modal-close').forEach(function(btn) {
+            btn.addEventListener('click', closeModal);
+        });
+
+        document.querySelectorAll('.js-company-edit-modal').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var url = this.getAttribute('data-edit-url');
+                var name = this.getAttribute('data-company-name') || 'Empresa';
+                if (!url || !content) return;
+                titleEl.textContent = 'Editar: ' + name;
+                content.innerHTML = '';
+                loading.hidden = false;
+                openModal();
+                fetch(url, { headers: { 'Accept': 'text/html', 'X-Requested-With': 'XMLHttpRequest' } })
+                    .then(function(r) { return r.text(); })
+                    .then(function(html) {
+                        loading.hidden = true;
+                        content.innerHTML = html;
+                        var form = content.querySelector('#company-edit-form-modal');
+                        if (form) {
+                            form.addEventListener('submit', function(e) {
+                                e.preventDefault();
+                                var submitBtn = form.querySelector('button[type="submit"]');
+                                if (submitBtn) {
+                                    submitBtn.disabled = true;
+                                    submitBtn.textContent = 'Guardando...';
+                                }
+                                var formData = new FormData(form);
+                                fetch(form.action, {
+                                    method: 'POST',
+                                    body: formData,
+                                    headers: {
+                                        'Accept': 'application/json',
+                                        'X-Requested-With': 'XMLHttpRequest'
+                                    }
+                                })
+                                .then(function(res) { return res.json().then(function(data) { return { ok: res.ok, data: data }; }); })
+                                .then(function(result) {
+                                    if (result.ok && result.data.success) {
+                                        closeModal();
+                                        window.location.reload();
+                                    } else {
+                                        if (submitBtn) {
+                                            submitBtn.disabled = false;
+                                            submitBtn.innerHTML = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg> Actualizar';
+                                        }
+                                        alert(result.data.message || 'Error al actualizar.');
+                                    }
+                                })
+                                .catch(function() {
+                                    if (submitBtn) {
+                                        submitBtn.disabled = false;
+                                        submitBtn.innerHTML = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg> Actualizar';
+                                    }
+                                    alert('Error de conexión.');
+                                });
+                            });
+                        }
+                        content.querySelectorAll('.js-company-modal-close').forEach(function(b) {
+                            b.addEventListener('click', closeModal);
+                        });
+                    })
+                    .catch(function() {
+                        loading.hidden = true;
+                        content.innerHTML = '<p class="text-red-300">No se pudo cargar el formulario.</p>';
+                    });
+            });
+        });
+    })();
+    </script>
+    @endpush
 </x-app-layout>

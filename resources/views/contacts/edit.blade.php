@@ -31,7 +31,7 @@
 
                         <div class="md:col-span-2">
                             <x-input-label for="nombre_completo" value="Nombre Completo *" />
-                            <x-text-input id="nombre_completo" name="nombre_completo" type="text" class="mt-1 block w-full" :value="old('nombre_completo', $contact->nombre_completo)" required />
+                            <x-text-input id="nombre_completo" name="nombre_completo" type="text" class="mt-1 block w-full" :value="old('nombre_completo', $contact->nombre_completo)" minlength="4" maxlength="255" required />
                             <x-input-error :messages="$errors->get('nombre_completo')" class="mt-2" />
                         </div>
 
@@ -60,37 +60,37 @@
 
                         <div>
                             <x-input-label for="email" value="Correo electrónico *" />
-                            <x-text-input id="email" name="email" type="email" class="mt-1 block w-full" :value="old('email', $contact->email)" required />
+                            <x-text-input id="email" name="email" type="email" class="mt-1 block w-full" :value="old('email', $contact->email)" required pattern="^[^@]+@[^@]+\.com$" title="Debe ser un correo válido que termine en .com" />
                             <x-input-error :messages="$errors->get('email')" class="mt-2" />
                         </div>
 
                         <div>
                             <x-input-label for="telefono" value="Teléfono" />
-                            <x-text-input id="telefono" name="telefono" type="text" class="mt-1 block w-full" :value="old('telefono', $contact->telefono)" placeholder="Teléfono fijo" />
+                            <x-text-input id="telefono" name="telefono" type="tel" class="mt-1 block w-full bg-white text-gray-900" :value="old('telefono', $contact->telefono)" placeholder="Teléfono fijo" inputmode="numeric" pattern="[0-9]{7,15}" maxlength="15" title="Solo números, entre 7 y 15 dígitos" />
                             <x-input-error :messages="$errors->get('telefono')" class="mt-2" />
                         </div>
 
                         <div>
                             <x-input-label for="celular" value="Celular" />
-                            <x-text-input id="celular" name="celular" type="text" class="mt-1 block w-full" :value="old('celular', $contact->celular)" />
+                            <x-text-input id="celular" name="celular" type="tel" class="mt-1 block w-full bg-white text-gray-900" :value="old('celular', $contact->celular)" inputmode="numeric" pattern="[0-9]{8,15}" maxlength="15" title="Solo números, entre 8 y 15 dígitos" />
                             <x-input-error :messages="$errors->get('celular')" class="mt-2" />
                         </div>
 
                         <div>
                             <x-input-label for="extension" value="Extensión" />
-                            <x-text-input id="extension" name="extension" type="text" class="mt-1 block w-full" :value="old('extension', $contact->extension)" />
+                            <x-text-input id="extension" name="extension" type="text" class="mt-1 block w-full bg-white text-gray-900" :value="old('extension', $contact->extension)" inputmode="numeric" pattern="[0-9]{1,6}" maxlength="6" title="Solo números, máximo 6 dígitos" />
                             <x-input-error :messages="$errors->get('extension')" class="mt-2" />
                         </div>
 
                         <div>
                             <x-input-label for="municipio" value="Municipio" />
-                            <x-text-input id="municipio" name="municipio" type="text" class="mt-1 block w-full" :value="old('municipio', $contact->municipio)" />
+                            <x-text-input id="municipio" name="municipio" type="text" class="mt-1 block w-full" :value="old('municipio', $contact->municipio)" maxlength="70" />
                             <x-input-error :messages="$errors->get('municipio')" class="mt-2" />
                         </div>
 
                         <div>
                             <x-input-label for="estado" value="Estado" />
-                            <x-text-input id="estado" name="estado" type="text" class="mt-1 block w-full" :value="old('estado', $contact->estado)" />
+                            <x-text-input id="estado" name="estado" type="text" class="mt-1 block w-full" :value="old('estado', $contact->estado)" maxlength="70" pattern="^[^0-9]*$" title="No se permiten números y máximo 70 caracteres" />
                             <x-input-error :messages="$errors->get('estado')" class="mt-2" />
                         </div>
 
@@ -119,4 +119,19 @@
             </div>
         </div>
     </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        function enforceNumericInput(input) {
+            if (!input) return;
+            input.addEventListener('input', function () {
+                this.value = this.value.replace(/[^0-9]/g, '');
+            });
+        }
+
+        enforceNumericInput(document.getElementById('telefono'));
+        enforceNumericInput(document.getElementById('celular'));
+        enforceNumericInput(document.getElementById('extension'));
+    });
+    </script>
 </x-app-layout>

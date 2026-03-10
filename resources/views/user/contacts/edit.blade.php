@@ -30,7 +30,7 @@
                         </div>
                         <div class="md:col-span-2">
                             <x-input-label for="nombre_completo" value="Nombre Completo *" />
-                            <x-text-input id="nombre_completo" name="nombre_completo" type="text" class="mt-1 block w-full" :value="old('nombre_completo', $contact->nombre_completo)" required />
+                            <x-text-input id="nombre_completo" name="nombre_completo" type="text" class="mt-1 block w-full" :value="old('nombre_completo', $contact->nombre_completo)" minlength="4" maxlength="255" required />
                             <x-input-error :messages="$errors->get('nombre_completo')" class="mt-2" />
                         </div>
                         <div>

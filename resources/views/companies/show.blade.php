@@ -27,159 +27,165 @@
         </div>
     </x-slot>
 
-    <div class="space-y-8">
+    <div class="company-show company-show__sections">
             <!-- Información Principal -->
-            <div class="panel-card-dark p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="panel-card-dark__title panel-card-dark__title--accent mb-0">Información de la Empresa</h3>
-                    <div class="flex items-center space-x-2">
-                        <div class="w-4 h-4 rounded-full dot-prospect-{{ $company->status_color }}"></div>
-                        <span class="text-sm font-medium text-white/90 badge-prospect-{{ $company->status_color }} px-2 py-0.5 rounded">{{ $company->status_label }}</span>
+            <section class="company-show__card company-show__card--info">
+                <div class="company-show__card-header">
+                    <div>
+                        <h3 class="company-show__card-title">Información de la Empresa</h3>
+                        <p class="company-show__card-subtitle">Datos generales del prospecto</p>
                     </div>
+                    <span class="company-show__badge badge-prospect-{{ $company->status_color }}">{{ $company->status_label }}</span>
                 </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <p class="text-sm text-white/70">Nombre Comercial</p>
-                        <p class="text-lg font-medium text-white">{{ $company->nombre_comercial }}</p>
+                <div class="company-show__info-resumen">
+                    <span>{{ $company->contacts->count() }} contacto{{ $company->contacts->count() !== 1 ? 's' : '' }}</span>
+                    <span class="company-show__info-resumen-sep">·</span>
+                    <span>{{ $company->followUps->count() }} seguimiento{{ $company->followUps->count() !== 1 ? 's' : '' }}</span>
+                    @if(isset($company->created_at) && $company->created_at)
+                    <span class="company-show__info-resumen-sep">·</span>
+                    <span>Registrado el {{ $company->created_at->format('d/m/Y') }}</span>
+                    @endif
+                </div>
+                <div class="company-show__info-grid">
+                    <div class="company-show__info-item">
+                        <span class="company-show__info-label">
+                            <svg class="company-show__info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                            Nombre Comercial
+                        </span>
+                        <span class="company-show__info-value">{{ $company->nombre_comercial }}</span>
                     </div>
-                    <div>
-                        <p class="text-sm text-white/70">RFC</p>
-                        <p class="text-lg font-medium text-white">{{ $company->rfc ?? '-' }}</p>
+                    <div class="company-show__info-item">
+                        <span class="company-show__info-label">
+                            <svg class="company-show__info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                            RFC
+                        </span>
+                        <span class="company-show__info-value">{{ $company->rfc ?? '-' }}</span>
                     </div>
-                    <div>
-                        <p class="text-sm text-white/70">Sector/Giro</p>
-                        <p class="text-lg font-medium text-white">{{ $company->sector ?? '-' }}</p>
+                    <div class="company-show__info-item">
+                        <span class="company-show__info-label">
+                            <svg class="company-show__info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                            Sector/Giro
+                        </span>
+                        <span class="company-show__info-value">{{ $company->sector ?? '-' }}</span>
                     </div>
-                    <div>
-                        <p class="text-sm text-white/70">Ejecutivo Asignado</p>
-                        <p class="text-lg font-medium text-white">{{ $company->ejecutivo_asignado ?? '-' }}</p>
+                    <div class="company-show__info-item">
+                        <span class="company-show__info-label">
+                            <svg class="company-show__info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                            Ejecutivo Asignado
+                        </span>
+                        <span class="company-show__info-value">{{ $company->ejecutivo_asignado ?? '-' }}</span>
                     </div>
-                    <div>
-                        <p class="text-sm text-white/70">Ubicación</p>
-                        <p class="text-lg font-medium text-white">{{ $company->municipio ?? '' }}{{ $company->estado ? ', ' . $company->estado : '' }}</p>
+                    <div class="company-show__info-item">
+                        <span class="company-show__info-label">
+                            <svg class="company-show__info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                            Ubicación
+                        </span>
+                        <span class="company-show__info-value">{{ trim(($company->municipio ?? '') . ($company->estado ? ', ' . $company->estado : '')) ?: '-' }}</span>
                     </div>
                     @if($company->datos_fiscales)
-                    <div class="md:col-span-2">
-                        <p class="text-sm text-white/70">Datos Fiscales</p>
-                        <p class="text-white">{{ $company->datos_fiscales }}</p>
+                    <div class="company-show__info-item">
+                        <span class="company-show__info-label">
+                            <svg class="company-show__info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2V5a2 2 0 00-2-2h-2.5" /></svg>
+                            Datos Fiscales
+                        </span>
+                        <span class="company-show__info-value">{{ $company->datos_fiscales }}</span>
                     </div>
                     @endif
                 </div>
-            </div>
+            </section>
 
             <!-- Contactos -->
-            <div class="panel-card-dark p-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="panel-card-dark__title panel-card-dark__title--accent mb-0">Contactos</h3>
+            <section class="company-show__card company-show__card--contacts">
+                <div class="company-show__card-header">
+                    <h3 class="company-show__card-title">Contactos</h3>
                     @can('contacts.create')
-                    <a href="{{ route('contacts.create', ['company_id' => $company->id]) }}" class="btn-primary-app">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" />
-                        </svg>
+                    <a href="{{ route('contacts.create', ['company_id' => $company->id]) }}" class="company-show__btn-action">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" /></svg>
                         Nuevo Contacto
                     </a>
                     @endcan
                 </div>
-
-                <div class="space-y-3">
+                <div class="company-show__list">
                     @forelse($company->contacts as $contact)
-                    <div class="p-4 bg-white/5 rounded-lg hover:bg-white/10 transition-colors">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <p class="font-medium text-white">{{ $contact->nombre_completo }}</p>
-                                <p class="text-sm text-white/80">{{ $contact->puesto_de_trabajo ?? '-' }}</p>
-                                <p class="text-sm text-white/80">{{ $contact->email }}</p>
-                                @if($contact->celular)
-                                <p class="text-sm text-white/80">{{ $contact->celular }}</p>
-                                @endif
-                            </div>
-                            <a href="{{ route('contacts.show', $contact) }}" class="text-[#FFE600] hover:text-white btn-icon-text">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                </svg>
-                                Ver
-                            </a>
+                    <div class="company-show__list-item company-show__list-item--contact">
+                        <div class="company-show__list-body">
+                            <p class="company-show__list-title">{{ $contact->nombre_completo }}</p>
+                            <p class="company-show__list-meta">{{ $contact->puesto_de_trabajo ?? '-' }}</p>
+                            <p class="company-show__list-meta">{{ $contact->email }}</p>
+                            @if($contact->celular)
+                            <p class="company-show__list-meta">{{ $contact->celular }}</p>
+                            @endif
                         </div>
+                        <a href="{{ route('contacts.show', $contact) }}" class="company-show__list-link">Ver</a>
                     </div>
                     @empty
-                    <p class="text-white/80 text-center py-4">No hay contactos registrados</p>
+                    <p class="company-show__empty">No hay contactos registrados</p>
                     @endforelse
                 </div>
-            </div>
+            </section>
 
             <!-- Historial de Ventas -->
             @can('sales.view')
-            <div class="panel-card-dark p-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="panel-card-dark__title panel-card-dark__title--accent mb-0">Historial de Ventas</h3>
+            <section class="company-show__card company-show__card--sales">
+                <div class="company-show__card-header">
+                    <h3 class="company-show__card-title">Historial de Ventas</h3>
                     @can('sales.create')
-                    <a href="{{ route('user.sales.create', ['company_id' => $company->id]) }}" class="btn-primary-app">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" />
-                        </svg>
+                    <a href="{{ route('user.sales.create', ['company_id' => $company->id]) }}" class="company-show__btn-action">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" /></svg>
                         Nueva Venta
                     </a>
                     @endcan
                 </div>
-                <div class="space-y-3">
+                <div class="company-show__list">
                     @forelse($company->sales as $sale)
-                    <div class="p-4 bg-white/5 rounded-lg flex justify-between items-start hover:bg-white/10 transition-colors">
-                        <div>
-                            <p class="font-medium text-white">{{ $sale->nombre_servicio }}</p>
-                            <p class="text-sm text-white/80">{{ $sale->fecha_venta->format('d/m/Y') }} · {{ $sale->monto_formateado }}</p>
+                    <div class="company-show__list-item company-show__list-item--sale">
+                        <div class="company-show__list-body">
+                            <p class="company-show__list-title">{{ $sale->nombre_servicio }}</p>
+                            <p class="company-show__list-meta">{{ $sale->fecha_venta->format('d/m/Y') }} · {{ $sale->monto_formateado }}</p>
                             @if($sale->participantes)
-                            <p class="text-sm text-white/80">{{ $sale->participantes }} participantes</p>
+                            <p class="company-show__list-meta">{{ $sale->participantes }} participantes</p>
                             @endif
                         </div>
-                        <a href="{{ route('user.sales.show', $sale) }}" class="text-[#FFE600] hover:text-white btn-icon-text">Ver</a>
+                        <a href="{{ route('user.sales.show', $sale) }}" class="company-show__list-link">Ver</a>
                     </div>
                     @empty
-                    <p class="text-white/80 text-center py-4">No hay ventas registradas</p>
+                    <p class="company-show__empty">No hay ventas registradas</p>
                     @endforelse
                 </div>
-            </div>
+            </section>
             @endcan
 
             <!-- Seguimientos -->
-            <div class="panel-card-dark p-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="panel-card-dark__title panel-card-dark__title--accent mb-0">Seguimientos</h3>
+            <section class="company-show__card company-show__card--followups">
+                <div class="company-show__card-header">
+                    <h3 class="company-show__card-title">Seguimientos</h3>
                     @can('follow-ups.create')
-                    <a href="{{ route('follow-ups.create', ['company_id' => $company->id]) }}" class="btn-primary-app">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" />
-                        </svg>
+                    <a href="{{ route('follow-ups.create', ['company_id' => $company->id]) }}" class="company-show__btn-action">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" /></svg>
                         Nuevo Seguimiento
                     </a>
                     @endcan
                 </div>
-
-                <div class="space-y-3">
+                <div class="company-show__list">
                     @forelse($company->followUps as $followUp)
-                    <div class="p-4 bg-white/5 rounded-lg hover:bg-white/10 transition-colors">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <span class="px-2 py-1 text-xs font-semibold rounded badge-followup-{{ $followUp->completado ? 'completado' : ($followUp->estaVencido() ? 'vencido' : 'pendiente') }}">
-                                    {{ ucfirst($followUp->tipo_accion) }}
-                                </span>
-                                <p class="text-sm text-white/80 mt-2">{{ $followUp->fecha_alarma->format('d/m/Y H:i') }}</p>
-                                @if($followUp->bitacora_notas)
-                                <p class="text-sm text-white mt-2">{{ $followUp->bitacora_notas }}</p>
-                                @endif
-                            </div>
-                            @if(!$followUp->completado)
-                            <span class="text-xs badge-followup-{{ $followUp->estaVencido() ? 'vencido' : 'pendiente' }} px-2 py-1 rounded">{{ $followUp->estaVencido() ? 'Vencido' : 'Pendiente' }}</span>
-                            @else
-                            <span class="text-xs badge-followup-completado px-2 py-1 rounded">Completado</span>
+                    <div class="company-show__list-item company-show__list-item--followup">
+                        <div class="company-show__list-body">
+                            <span class="company-show__badge-inline badge-followup-{{ $followUp->completado ? 'completado' : ($followUp->estaVencido() ? 'vencido' : 'pendiente') }}">{{ ucfirst($followUp->tipo_accion) }}</span>
+                            <p class="company-show__list-meta mt-2">{{ $followUp->fecha_alarma->format('d/m/Y H:i') }}</p>
+                            @if($followUp->bitacora_notas)
+                            <p class="company-show__list-text mt-2">{{ $followUp->bitacora_notas }}</p>
                             @endif
                         </div>
+                        @if(!$followUp->completado)
+                        <span class="company-show__status badge-followup-{{ $followUp->estaVencido() ? 'vencido' : 'pendiente' }}">{{ $followUp->estaVencido() ? 'Vencido' : 'Pendiente' }}</span>
+                        @else
+                        <span class="company-show__status badge-followup-completado">Completado</span>
+                        @endif
                     </div>
                     @empty
-                    <p class="text-white/80 text-center py-4">No hay seguimientos registrados</p>
+                    <p class="company-show__empty">No hay seguimientos registrados</p>
                     @endforelse
                 </div>
-            </div>
+            </section>
     </div>
 </x-app-layout>

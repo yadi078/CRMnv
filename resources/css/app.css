@@ -562,6 +562,8 @@ body {
 .top-bar-gradient {
   background: linear-gradient(145deg, #1e4976 0%, #1a3d6b 50%, #0f2744 100%);
   box-shadow: 0 4px 20px rgba(30, 73, 118, 0.4);
+  border: 3px solid var(--color-accent);
+  box-sizing: border-box;
 }
 
 .top-bar-gradient__slogan {
@@ -735,6 +737,7 @@ body {
 .panel-card-dark input[type="text"],
 .panel-card-dark input[type="email"],
 .panel-card-dark input[type="number"],
+.panel-card-dark input[type="tel"],
 .panel-card-dark select,
 .panel-card-dark textarea {
   background-color: #ffffff !important;
@@ -1083,6 +1086,400 @@ body {
 .panel-card-dark__item-meta {
   font-size: 0.875rem;
   color: rgba(255, 255, 255, 0.7);
+}
+
+/* Vista detalle de empresa: más color, separaciones y jerarquía */
+.company-show__sections {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.company-show__card {
+  border-radius: var(--radius-card);
+  padding: 1.5rem 1.75rem;
+  background: linear-gradient(145deg, #1e4976 0%, #1a3d6b 50%, #0f2744 100%);
+  box-shadow: 0 4px 20px rgba(30, 73, 118, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-left-width: 4px;
+}
+
+.company-show__card--info {
+  border-left-color: var(--color-accent);
+  background: linear-gradient(145deg, #234a7a 0%, #1d4270 45%, #0f2744 100%);
+}
+
+.company-show__card--contacts,
+.company-show__card--sales,
+.company-show__card--followups {
+  border-left-color: var(--color-accent);
+}
+
+.company-show__card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.company-show__card-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+.company-show__card-subtitle {
+  margin: 0.25rem 0 0;
+  font-size: 0.8125rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 400;
+}
+
+.company-show__info-resumen {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  background: rgba(255, 230, 0, 0.1);
+  border-radius: 10px;
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.company-show__info-resumen-sep {
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0 0.15rem;
+}
+
+.company-show__info-icon {
+  width: 1.35rem;
+  height: 1.35rem;
+  color: var(--color-accent);
+  flex-shrink: 0;
+}
+
+.company-show__info-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.company-show__badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.35rem 0.75rem;
+  border-radius: 9999px;
+}
+
+.company-show__btn-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #0f2744;
+  background: var(--color-accent);
+  border-radius: 10px;
+  text-decoration: none;
+  transition: background 0.2s, transform 0.2s;
+  box-shadow: 0 2px 8px rgba(255, 230, 0, 0.25);
+}
+
+.company-show__btn-action:hover {
+  background: #f0d900;
+  color: #0f2744;
+  transform: translateY(-1px);
+}
+
+.company-show__btn-action svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+/* Grid de información: cada campo con separación */
+.company-show__info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+}
+
+@media (max-width: 767px) {
+  .company-show__info-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.company-show__info-item {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.company-show__info-item:nth-child(odd) {
+  border-right-width: 1px;
+}
+
+@media (max-width: 767px) {
+  .company-show__info-item { border-right: none; }
+}
+
+.company-show__info-item--full {
+  grid-column: 1 / -1;
+  border-right: none;
+}
+
+.company-show__info-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 0.25rem;
+}
+
+.company-show__info-value {
+  font-size: 1.15rem;
+  font-weight: 500;
+  color: #fff;
+  display: block;
+  margin-left: calc(1.1rem + 0.5rem); /* ancho ícono + separación, para alinear con el título */
+}
+
+/* Lista de contactos / ventas / seguimientos */
+.company-show__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.company-show__list-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-radius: 12px;
+  border-left: 4px solid transparent;
+  background: rgba(255, 255, 255, 0.05);
+  transition: background 0.2s;
+}
+
+.company-show__list-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.company-show__list-item--contact,
+.company-show__list-item--sale,
+.company-show__list-item--followup {
+  border-left-color: var(--color-accent);
+}
+
+.company-show__list-body {
+  min-width: 0;
+}
+
+.company-show__list-title {
+  margin: 0;
+  font-weight: 600;
+  color: #fff;
+  font-size: 1.15rem;
+}
+
+.company-show__list-meta {
+  margin: 0.25rem 0 0;
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.company-show__list-text {
+  margin: 0.25rem 0 0;
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.company-show__list-link {
+  flex-shrink: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-accent);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 8px;
+  background: rgba(255, 230, 0, 0.15);
+  transition: background 0.2s, color 0.2s;
+}
+
+.company-show__list-link:hover {
+  background: rgba(255, 230, 0, 0.3);
+  color: #fff;
+}
+
+.company-show__badge-inline {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+}
+
+.company-show__status {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.35rem 0.7rem;
+  border-radius: 6px;
+}
+
+.company-show__empty {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.75);
+  padding: 2rem 1rem;
+  margin: 0;
+  font-size: 0.9375rem;
+}
+
+/* Modal editar empresa: ventana flotante con margen amarillo y botón cerrar */
+.company-edit-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+.company-edit-modal[hidden] {
+  display: none;
+}
+
+.company-edit-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 8, 54, 0.7);
+  cursor: pointer;
+}
+
+.company-edit-modal__box {
+  position: relative;
+  width: 100%;
+  max-width: 42rem;
+  max-height: calc(100vh - 2rem);
+  background: linear-gradient(145deg, #1e4976 0%, #1a3d6b 50%, #0f2744 100%);
+  border-radius: var(--radius-card);
+  border: 3px solid var(--color-accent);
+  box-shadow: 0 4px 20px rgba(30, 73, 118, 0.4), 0 0 0 1px rgba(255, 230, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.company-edit-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.company-edit-modal__title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-accent);
+}
+
+.company-edit-modal__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border: none;
+  border-radius: 0.5rem;
+  background: #dc2626;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.company-edit-modal__close:hover {
+  background: #b91c1c;
+}
+
+.company-edit-modal__body {
+  padding: 1.5rem 1.75rem;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.company-edit-modal__content {
+  color: #fff;
+}
+
+.company-edit-modal__content label {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.company-edit-modal__content .panel-card-dark {
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* Botón Cerrar/Cancelar del modal: rojo, sin hover azul */
+.company-edit-modal__content .company-edit-modal__btn-cancel {
+  background: #dc2626;
+  color: #fff;
+  border: 2px solid #dc2626;
+}
+.company-edit-modal__content .company-edit-modal__btn-cancel:hover {
+  background: #b91c1c;
+  border-color: #b91c1c;
+  color: #fff;
+}
+
+/* Text boxes del modal: fondo blanco, al enfocar margen amarillo (sin sombra) */
+.company-edit-modal__content input[type="text"],
+.company-edit-modal__content input[type="email"],
+.company-edit-modal__content input[type="number"],
+.company-edit-modal__content select,
+.company-edit-modal__content textarea {
+  background: #ffffff !important;
+  color: #1f2937;
+  border: 2px solid #e5e7eb;
+  border-radius: 0.375rem;
+  box-shadow: none !important;
+}
+.company-edit-modal__content input:focus,
+.company-edit-modal__content select:focus,
+.company-edit-modal__content textarea:focus {
+  outline: none;
+  border: 3px solid var(--color-accent);
+  box-shadow: none !important;
+}
+
+.company-edit-modal__loading {
+  color: rgba(255, 255, 255, 0.9);
+  text-align: center;
+  padding: 2rem;
 }
 
 /* --------------------------------------------------------------------------

@@ -157,6 +157,16 @@ class CompanyController extends Controller
     }
 
     /**
+     * Devolver solo el formulario de edición (para modal en listado).
+     */
+    public function editForm(Company $company)
+    {
+        $this->authorize('update', $company);
+
+        return view('companies.partials.edit-form', compact('company'));
+    }
+
+    /**
      * Actualizar el recurso especificado en el almacenamiento.
      */
     public function update(UpdateCompanyRequest $request, Company $company)
@@ -192,12 +202,27 @@ class CompanyController extends Controller
 
             DB::commit();
 
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Empresa actualizada exitosamente.',
+                ]);
+            }
+
             return redirect()->route('companies.show', $company)
                 ->with('success', 'Empresa actualizada exitosamente.');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error al actualizar empresa: ' . $e->getMessage());
-            
+
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error al actualizar la empresa. Por favor, intente nuevamente.',
+                    'errors' => $e->getMessage(),
+                ], 422);
+            }
+
             return back()->withInput()
                 ->with('error', 'Error al actualizar la empresa. Por favor, intente nuevamente.');
         }

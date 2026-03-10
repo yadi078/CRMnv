@@ -44,3 +44,4 @@ class RegisteredUserController extends Controller
             ->with('status', 'Registro exitoso. Un administrador debe aprobar tu cuenta antes de que puedas iniciar sesión.');
     }
 }
+

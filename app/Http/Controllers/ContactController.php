@@ -100,11 +100,12 @@ class ContactController extends Controller
             if ($request->wantsJson()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'El registro se ha completado exitosamente.',
+                    'message' => 'Contacto creado exitosamente.',
+                    'redirect' => route('contacts.index'),
                 ], 201);
             }
 
-            return redirect()->route('contacts.show', $contact)
+            return redirect()->route('contacts.index')
                 ->with('success', 'Contacto creado exitosamente.');
         } catch (\Exception $e) {
             DB::rollBack();

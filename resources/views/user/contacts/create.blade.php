@@ -17,19 +17,20 @@
                     @csrf
                     <h3 class="panel-card-dark__title panel-card-dark__title--accent mb-4">Datos del contacto</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="md:col-span-2">
-                            <label for="company_id" class="block text-sm font-medium text-white/90 mb-1">Empresa *</label>
-                            <select id="company_id" name="company_id" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white [&>option]:bg-[#1a3d6b] [&>option]:text-white py-2.5 px-3" required>
-                                <option value="">Seleccione una empresa</option>
-                                @foreach($companies as $company)
-                                <option value="{{ $company->id }}" {{ (old('company_id', $companyId ?? null) == $company->id) ? 'selected' : '' }}>{{ $company->nombre_comercial }}</option>
-                                @endforeach
-                            </select>
+                        <div class="relative">
+                            <label for="company_autocomplete" class="block text-sm font-medium text-white/90 mb-1">Empresa *</label>
+                            <input type="hidden" id="company_id" name="company_id" value="{{ old('company_id', $companyId ?? '') }}" required />
+                            @php
+                                $preselectedId = old('company_id', $companyId ?? null);
+                                $preselectedName = $preselectedId ? ($companies->firstWhere('id', (int)$preselectedId)?->nombre_comercial ?? '') : '';
+                            @endphp
+                            <input type="text" id="company_autocomplete" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3 focus:ring-2 focus:ring-[#FFE600]/50" placeholder="Escriba o seleccione una empresa" value="{{ $preselectedName }}" autocomplete="off" />
+                            <div id="company_autocomplete_list" class="absolute left-0 right-0 top-full z-10 mt-1 max-h-56 overflow-auto rounded-xl border border-white/20 bg-[#1a3d6b] shadow-lg hidden"></div>
                             <x-input-error :messages="$errors->get('company_id')" class="mt-2 text-red-300" />
                         </div>
-                        <div class="md:col-span-2">
+                        <div>
                             <label for="nombre_completo" class="block text-sm font-medium text-white/90 mb-1">Nombre Completo *</label>
-                            <input id="nombre_completo" name="nombre_completo" type="text" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3" value="{{ old('nombre_completo') }}" required />
+                            <input id="nombre_completo" name="nombre_completo" type="text" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3" value="{{ old('nombre_completo') }}" minlength="4" maxlength="255" required title="Mínimo 4 caracteres" />
                             <x-input-error :messages="$errors->get('nombre_completo')" class="mt-2 text-red-300" />
                         </div>
                         <div>
@@ -96,6 +97,7 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {
+        var companiesData = @json($companies->map(fn($c) => ['id' => $c->id, 'nombre_comercial' => $c->nombre_comercial]));
         var form = document.getElementById('form-nuevo-contacto');
         var modal = document.getElementById('modal-registro-exitoso');
         var modalError = document.getElementById('modal-error');
@@ -108,6 +110,10 @@
         var errorCloseBtn = document.getElementById('modal-error-close');
         var errorBackdrop = document.getElementById('modal-error-backdrop');
 
+        var companyInput = document.getElementById('company_autocomplete');
+        var companyIdInput = document.getElementById('company_id');
+        var companyList = document.getElementById('company_autocomplete_list');
+
         function showModal() {
             modal.classList.remove('hidden');
             document.body.style.overflow = 'hidden';
@@ -117,8 +123,52 @@
             modal.classList.add('hidden');
             document.body.style.overflow = '';
             form.reset();
-            var companySelect = document.getElementById('company_id');
-            if (companySelect) companySelect.selectedIndex = 0;
+            if (companyIdInput) companyIdInput.value = '';
+            if (companyInput) companyInput.value = '';
+        }
+
+        function filterCompanies(q) {
+            var qq = (q || '').toLowerCase().trim();
+            if (!qq) return companiesData;
+            return companiesData.filter(function(c) { return (c.nombre_comercial || '').toLowerCase().indexOf(qq) !== -1; });
+        }
+
+        function renderCompanyList(items) {
+            if (!companyList) return;
+            companyList.innerHTML = '';
+            if (items.length === 0) {
+                companyList.classList.add('hidden');
+                return;
+            }
+            items.forEach(function(c) {
+                var div = document.createElement('div');
+                div.className = 'px-3 py-2.5 text-white/90 hover:bg-white/15 cursor-pointer text-sm';
+                div.textContent = c.nombre_comercial;
+                div.dataset.id = c.id;
+                div.dataset.name = c.nombre_comercial;
+                div.addEventListener('click', function() {
+                    companyIdInput.value = c.id;
+                    companyInput.value = c.nombre_comercial;
+                    companyList.classList.add('hidden');
+                    companyInput.blur();
+                });
+                companyList.appendChild(div);
+            });
+            companyList.classList.remove('hidden');
+        }
+
+        if (companyInput && companyList) {
+            companyInput.addEventListener('focus', function() { renderCompanyList(filterCompanies(companyInput.value)); });
+            companyInput.addEventListener('input', function() {
+                companyIdInput.value = '';
+                renderCompanyList(filterCompanies(companyInput.value));
+            });
+            companyInput.addEventListener('blur', function() {
+                setTimeout(function() { companyList.classList.add('hidden'); }, 200);
+            });
+            document.addEventListener('click', function(e) {
+                if (!companyList.contains(e.target) && e.target !== companyInput) companyList.classList.add('hidden');
+            });
         }
 
         function showErrorModal(message) {
@@ -142,7 +192,12 @@
         if (form) {
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
-
+                if (companyIdInput && companyInput && !companyIdInput.value && companyInput.value.trim()) {
+                    var match = companiesData.find(function(c) { return (c.nombre_comercial || '').trim().toLowerCase() === companyInput.value.trim().toLowerCase(); });
+                    if (match) {
+                        companyIdInput.value = match.id;
+                    }
+                }
                 var formData = new FormData(form);
                 var url = form.getAttribute('action');
                 var token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
@@ -171,7 +226,11 @@
                     btnGuardar.innerHTML = 'Guardar';
 
                     if (result.status === 201 && result.data.success) {
-                        showModal();
+                        if (result.data.redirect) {
+                            window.location.href = result.data.redirect;
+                        } else {
+                            showModal();
+                        }
                     } else if (result.status === 422) {
                         var msg = (result.data && result.data.message) || 'Por favor corrige los errores. El contacto no se registró.';
                         if (result.data && result.data.errors) {

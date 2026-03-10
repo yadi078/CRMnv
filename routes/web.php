@@ -46,6 +46,7 @@ Route::middleware(['auth', 'verified', 'ensure.role'])->group(function () {
 
     // Empresas, Contactos y Seguimientos (usuario: captura, consulta, seguimiento; admin: además aprobaciones)
     Route::resource('companies', CompanyController::class);
+    Route::get('/companies/{company}/edit-form', [CompanyController::class, 'editForm'])->name('companies.edit-form');
     Route::post('/companies/check-duplicates', [CompanyController::class, 'checkDuplicates'])->name('companies.check-duplicates');
 
     Route::resource('contacts', ContactController::class);
