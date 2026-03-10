@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Auth;
 
+use Spatie\Permission\Models\Role;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -18,6 +19,18 @@ class RegistrationTest extends TestCase
 
     public function test_new_users_can_register(): void
     {
+        // Aseguramos que exista el rol requerido por el registro
+        Role::firstOrCreate(
+            ['name' => 'usuario', 'guard_name' => 'web'],
+            ['name' => 'usuario', 'guard_name' => 'web']
+        );
+
+        // También el rol admin usado por los listeners/notificaciones
+        Role::firstOrCreate(
+            ['name' => 'admin', 'guard_name' => 'web'],
+            ['name' => 'admin', 'guard_name' => 'web']
+        );
+
         $response = $this->post('/register', [
             'name' => 'Test User',
             'email' => 'test@example.com',
@@ -25,7 +38,8 @@ class RegistrationTest extends TestCase
             'password_confirmation' => 'password',
         ]);
 
-        $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        // El usuario se crea pero queda pendiente de aprobación, no autenticado
+        $this->assertGuest();
+        $response->assertRedirect(route('register.pending', absolute: false));
     }
 }

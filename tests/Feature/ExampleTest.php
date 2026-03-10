@@ -14,6 +14,7 @@ class ExampleTest extends TestCase
     {
         $response = $this->get('/');
 
-        $response->assertStatus(200);
+        // La ruta raíz ahora redirige según el estado de autenticación
+        $response->assertRedirect(route('login', absolute: false));
     }
 }
