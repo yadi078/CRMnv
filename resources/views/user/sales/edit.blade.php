@@ -13,28 +13,49 @@
             </div>
     </x-slot>
 
-    <div class="py-8 sm:py-10">
-        <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
-            <div class="panel-card-dark p-6">
+    <div class="space-y-8">
+        <div class="panel-card-dark p-6 text-base md:text-lg">
                 <form method="POST" action="{{ route('user.sales.update', $sale) }}">
                     @csrf
                     @method('PUT')
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {{-- Fila 1: Nombre del curso (2/3) + Fecha (1/3) --}}
                         <div class="md:col-span-2">
-                            <x-input-label for="company_id" value="Empresa *" />
+                            <x-input-label for="nombre_servicio" value="Nombre del curso o servicio *" />
+                            <x-text-input id="nombre_servicio" name="nombre_servicio" type="text" class="mt-1 block w-full" :value="old('nombre_servicio', $sale->nombre_servicio)" placeholder="Ej: Capacitación en Ventas, Curso de Liderazgo" required />
+                            <x-input-error :messages="$errors->get('nombre_servicio')" class="mt-2" />
+                        </div>
+
+                        <div>
+                            <x-input-label for="fecha_venta" value="Fecha de venta *" class="text-base md:text-lg font-semibold text-white" />
+                            <x-text-input
+                                id="fecha_venta"
+                                name="fecha_venta"
+                                type="date"
+                                class="mt-1 block w-full text-black"
+                                style="background-color:#ffffff;color:#000000;"
+                                :value="old('fecha_venta', $sale->fecha_venta?->format('Y-m-d'))"
+                                min="{{ now()->toDateString() }}"
+                                required
+                            />
+                            <x-input-error :messages="$errors->get('fecha_venta')" class="mt-2" />
+                        </div>
+
+                        {{-- Fila 2: Empresa (2/3) + Contacto (1/3) --}}
+                        <div class="md:col-span-2">
+                            <x-input-label for="company_id" value="Empresa *" class="text-base md:text-lg font-semibold text-white" />
                             <select id="company_id" name="company_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-gray-900" required>
                                 <option value="">Seleccione una empresa</option>
                                 @foreach($companies as $company)
-                                <option value="{{ $company->id }}" {{ old('company_id', $sale->company_id) == $company->id ? 'selected' : '' }}>{{ $company->nombre_comercial }}</option>
+                                    <option value="{{ $company->id }}" {{ old('company_id', $sale->company_id) == $company->id ? 'selected' : '' }}>{{ $company->nombre_comercial }}</option>
                                 @endforeach
                             </select>
                             <x-input-error :messages="$errors->get('company_id')" class="mt-2" />
                         </div>
 
-                        @if(isset($contacts) && $contacts->isNotEmpty())
-                        <div class="md:col-span-2">
-                            <x-input-label for="contact_id" value="Contacto que compró (opcional)" />
+                        <div>
+                            <x-input-label for="contact_id" value="Contacto que compró (opcional)" class="text-base md:text-lg font-semibold text-white" />
                             <select id="contact_id" name="contact_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-gray-900">
                                 <option value="">Ninguno / No especificado</option>
                                 @foreach($contacts as $contact)
@@ -43,35 +64,16 @@
                             </select>
                             <x-input-error :messages="$errors->get('contact_id')" class="mt-2" />
                         </div>
-                        @endif
 
-                        <div class="md:col-span-2">
-                            <x-input-label for="nombre_servicio" value="Nombre del curso o servicio *" />
-                            <x-text-input id="nombre_servicio" name="nombre_servicio" type="text" class="mt-1 block w-full" :value="old('nombre_servicio', $sale->nombre_servicio)" required />
-                            <x-input-error :messages="$errors->get('nombre_servicio')" class="mt-2" />
-                        </div>
-
+                        {{-- Fila 3: Monto, Tipo de pago, Participantes --}}
                         <div>
-                            <x-input-label for="fecha_venta" value="Fecha de venta *" />
-                            <x-text-input
-                                id="fecha_venta"
-                                name="fecha_venta"
-                                type="date"
-                                class="mt-1 block w-full text-gray-900"
-                                :value="old('fecha_venta', $sale->fecha_venta?->format('Y-m-d'))"
-                                required
-                            />
-                            <x-input-error :messages="$errors->get('fecha_venta')" class="mt-2" />
-                        </div>
-
-                        <div>
-                            <x-input-label for="monto" value="Monto ($) + IVA" />
+                            <x-input-label for="monto" value="Monto ($) + IVA" class="text-base md:text-lg font-semibold text-white" />
                             <x-text-input id="monto" name="monto" type="number" step="0.01" min="0" class="mt-1 block w-full" :value="old('monto', $sale->monto)" />
                             <x-input-error :messages="$errors->get('monto')" class="mt-2" />
                         </div>
 
                         <div>
-                            <x-input-label for="tipo_pago" value="Tipo de pago" />
+                            <x-input-label for="tipo_pago" value="Tipo de pago" class="text-base md:text-lg font-semibold text-white" />
                             <select id="tipo_pago" name="tipo_pago" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500">
                                 <option value="">Seleccione</option>
                                 <option value="efectivo" {{ old('tipo_pago', $sale->tipo_pago) === 'efectivo' ? 'selected' : '' }}>Efectivo</option>
@@ -86,26 +88,29 @@
                         </div>
 
                         <div>
-                            <x-input-label for="participantes" value="Participantes" />
+                            <x-input-label for="participantes" value="Participantes" class="text-base md:text-lg font-semibold text-white" />
                             <x-text-input id="participantes" name="participantes" type="number" min="1" class="mt-1 block w-full" :value="old('participantes', $sale->participantes)" />
                             <x-input-error :messages="$errors->get('participantes')" class="mt-2" />
                         </div>
 
                         {{-- Nombres y correos de participantes (visible cuando hay más de 1) --}}
-                        <div id="participantes-datos-wrap" class="md:col-span-2 hidden">
-                            <h3 class="text-base font-semibold text-[#FFE600] mb-3">Datos de los participantes</h3>
-                            <p class="text-sm text-white/80 mb-3">Indique nombre completo y correo de cada participante.</p>
-                            <div id="participantes-datos-list" class="space-y-4 p-4 rounded-xl bg-white/5 border border-white/10"></div>
+                        <div id="participantes-datos-wrap" class="md:col-span-2 hidden flex flex-col items-center">
+                            <div class="w-full md:w-4/5 lg:w-3/4">
+                                <h3 class="text-lg md:text-xl font-semibold text-[#FFE600] mb-3 text-center">Datos de los participantes</h3>
+                                <p class="text-base text-white/80 mb-3 text-center">Indique nombre completo y correo de cada participante.</p>
+                                <div id="participantes-datos-list" class="space-y-4 p-4 rounded-xl bg-white/5 border border-white/10"></div>
+                            </div>
                         </div>
 
-                        <div class="md:col-span-2">
-                            <x-input-label for="notas" value="Notas" />
+                        <div class="md:col-span-3">
+                            <x-input-label for="notas" value="Notas" class="text-base md:text-lg font-semibold text-white" />
                             <textarea id="notas" name="notas" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500">{{ old('notas', $sale->notas) }}</textarea>
                             <x-input-error :messages="$errors->get('notas')" class="mt-2" />
                         </div>
 
                         {{-- DATOS DE FACTURACIÓN (los que aparecen en la ficha final) --}}
-                        <div class="md:col-span-2 mt-2 pt-6 border-t border-white/20">
+                        {{-- DATOS DE FACTURACIÓN (los que aparecen en la ficha final) --}}
+                        <div class="md:col-span-3 mt-2 pt-6 border-t border-white/20">
                             <h3 class="text-lg font-semibold text-[#FFE600] mb-4">Datos de facturación</h3>
                             <p class="text-sm text-white/80 mb-4">Estos datos se mostrarán en la ficha final. Los que vienen de la empresa y contacto seleccionados se actualizan automáticamente.</p>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-xl bg-white/5 border border-white/10">
@@ -217,10 +222,25 @@
                 div.className = 'grid grid-cols-1 md:grid-cols-2 gap-3';
                 div.innerHTML = '<label class="block text-sm font-medium text-white/90">Participante ' + (i + 1) + '</label>' +
                     '<div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-3">' +
-                    '<div><label class="block text-xs text-white/70 mb-1">Nombre completo</label><input type="text" name="participantes_nombres[]" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-gray-900" value="' + (data.nombre || '').replace(/"/g, '&quot;') + '" placeholder="Nombre completo"></div>' +
+                    '<div><label class="block text-xs text-white/70 mb-1">Nombre completo</label><input type="text" name="participantes_nombres[]" maxlength="100" pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\\s]+" title="Solo se permiten letras y espacios, máximo 100 caracteres." class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-gray-900" value="' + (data.nombre || '').replace(/\"/g, '&quot;') + '" placeholder="Nombre completo"></div>' +
                     '<div><label class="block text-xs text-white/70 mb-1">Correo</label><input type="email" name="participantes_emails[]" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-gray-900" value="' + (data.email || '').replace(/"/g, '&quot;') + '" placeholder="correo@ejemplo.com"></div>' +
                     '</div>';
                 list.appendChild(div);
+
+                var nombreInput = div.querySelector('input[name="participantes_nombres[]"]');
+                if (nombreInput) {
+                    nombreInput.addEventListener('invalid', function () {
+                        this.setCustomValidity('');
+                        if (this.validity.valueMissing) {
+                            this.setCustomValidity('Este campo es obligatorio.');
+                        } else if (this.validity.patternMismatch) {
+                            this.setCustomValidity('Solo se permiten letras y espacios, máximo 100 caracteres.');
+                        }
+                    });
+                    nombreInput.addEventListener('input', function () {
+                        this.setCustomValidity('');
+                    });
+                }
             }
             initialData = [];
         }
