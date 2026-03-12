@@ -10,10 +10,26 @@
             <p class="page-header-card__subtitle">Detalle de contacto</p>
         </div>
         <div class="flex gap-2 ml-auto">
-            @can('contacts.edit')
-            <a href="{{ route('contacts.edit', $contact) }}" class="btn-amber-app">Editar</a>
+            @can('contacts.generate-pdf')
+            <a href="{{ route('contacts.pdf', $contact) }}" class="btn-icon-text px-4 py-2 rounded-xl font-semibold bg-red-600 text-white hover:bg-red-700">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                </svg>
+                Generar PDF
+            </a>
             @endcan
-            <a href="{{ route('contacts.index') }}" class="btn-panel-dark bg-white/10 text-white border-2 border-[#FFE600] hover:bg-white/20">Volver</a>
+            @can('contacts.edit')
+            <a href="{{ route('contacts.edit', $contact) }}" class="btn-amber-app">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                Editar
+            </a>
+            @endcan
+            <a href="{{ route('contacts.index') }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-[#FFE600] bg-white/10 text-white font-medium hover:bg-white/20">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/></svg>
+                Volver
+            </a>
         </div>
     </x-slot>
 
@@ -78,10 +94,29 @@
 
                     <div class="flex items-start justify-between gap-3 border-t border-white/10 pt-3">
                         <div>
-                            <p class="text-base text-white/70">Puesto</p>
+                            <p class="text-base text-white/70">Puesto de Trabajo</p>
                             <p class="text-lg font-medium text-white">{{ $contact->puesto_de_trabajo ?? '-' }}</p>
                         </div>
                     </div>
+
+                    @if($contact->extension || $contact->municipio || $contact->estado)
+                    <div class="grid grid-cols-1 gap-3 border-t border-white/10 pt-3">
+                        @if($contact->extension)
+                        <div>
+                            <p class="text-base text-white/70">Extensión</p>
+                            <p class="text-lg font-medium text-white">{{ $contact->extension }}</p>
+                        </div>
+                        @endif
+                        @if($contact->municipio || $contact->estado)
+                        <div>
+                            <p class="text-base text-white/70">Ubicación</p>
+                            <p class="text-lg font-medium text-white">
+                                {{ $contact->municipio ?? '' }}{{ $contact->municipio && $contact->estado ? ', ' : '' }}{{ $contact->estado ?? '' }}
+                            </p>
+                        </div>
+                        @endif
+                    </div>
+                    @endif
                 </div>
 
                 {{-- Datos de contacto --}}

@@ -122,30 +122,36 @@
                     </thead>
                     <tbody class="divide-y divide-white/15">
                         @forelse($contacts as $contact)
-                        <tr class="panel-card-dark__row hover:bg-white/8 transition-colors">
+                        <tr class="panel-card-dark__row hover:bg:white/8 transition-colors">
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm font-medium text-white">{{ $contact->nombre_completo }}</div>
                                 <div class="text-sm text-white/80">{{ $contact->puesto_de_trabajo ?? '-' }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-white/90">{{ $contact->company?->nombre_comercial ?? '-' }}</td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2 py-1 text-xs font-medium rounded badge-prospect-{{ $contact->status_color ?? 'seguimiento' }}">{{ $contact->status_label ?? 'Seguimiento' }}</span>
+                                <span class="px-2.5 py-1 text-xs font-medium rounded-lg badge-prospect-{{ $contact->status_color ?? 'seguimiento' }}">{{ $contact->status_label ?? 'Seguimiento' }}</span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-white/90">
                                 {{ ($contact->email_activo ?? true) ? ($contact->email ?? '—') : '—' }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-white/90">{{ $contact->celular ?? '-' }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <a href="{{ route('contacts.show', $contact) }}" class="text-[#FFE600] hover:text-white mr-3">Ver</a>
-                                @can('contacts.edit')
-                                <a href="{{ route('contacts.edit', $contact) }}" class="text-[#FFE600] hover:text-white mr-3">Editar</a>
-                                    @endcan
-                                </td>
-                            </tr>
+                                <a href="{{ route('contacts.show', $contact) }}" class="text-[#FFE600] hover:text-[#fff] mr-3 inline-flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                                    Ver
+                                </a>
+                                @can('contacts.generate-pdf')
+                                <a href="{{ route('contacts.pdf', $contact) }}" class="text-red-400 hover:text-red-300 mr-3 inline-flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
+                                    PDF
+                                </a>
+                                @endcan
+                            </td>
+                        </tr>
                         @empty
                         <tr>
                             <td colspan="6" class="px-6 py-8 text-center text-white/80">No se encontraron contactos</td>
-                            </tr>
+                        </tr>
                         @endforelse
                     </tbody>
                 </table>
