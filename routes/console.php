@@ -10,3 +10,6 @@ Artisan::command('inspire', function () {
 
 // Recordatorios y vencidos de seguimientos: cada 30 minutos
 Schedule::command('follow-ups:send-reminders')->everyThirtyMinutes();
+
+// Recordatorios personales: cada minuto
+Schedule::command('reminders:send-due')->everyMinute();
