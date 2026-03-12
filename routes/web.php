@@ -7,6 +7,7 @@ use App\Http\Controllers\ContactController;
 use App\Http\Controllers\FollowUpController;
 use App\Http\Controllers\ApprovalController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\ReminderController;
 use App\Http\Controllers\UserDashboardController;
 use App\Http\Controllers\DataManagementController;
 use App\Http\Controllers\SalesController;
@@ -78,6 +79,7 @@ Route::middleware(['auth', 'verified', 'ensure.role', 'admin'])->group(function 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
+    Route::get('/notifications/reminder-alerts', [NotificationController::class, 'reminderAlerts'])->name('notifications.reminder-alerts');
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::get('/notifications/{notification}', [NotificationController::class, 'show'])->name('notifications.show');
     Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
@@ -85,6 +87,12 @@ Route::middleware(['auth', 'verified', 'ensure.role', 'admin'])->group(function 
     Route::post('/notifications/{notification}/star', [NotificationController::class, 'star'])->name('notifications.star');
     Route::post('/notifications/{notification}/unstar', [NotificationController::class, 'unstar'])->name('notifications.unstar');
     Route::delete('/notifications/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
+
+    // Recordatorios (sección dentro de notificaciones)
+    Route::post('/reminders', [ReminderController::class, 'store'])->name('reminders.store');
+    Route::put('/reminders/{reminder}', [ReminderController::class, 'update'])->name('reminders.update');
+    Route::patch('/reminders/{reminder}/toggle', [ReminderController::class, 'toggle'])->name('reminders.toggle');
+    Route::delete('/reminders/{reminder}', [ReminderController::class, 'destroy'])->name('reminders.destroy');
 
     Route::get('/contacts/{contact}/pdf', [ContactController::class, 'generatePdf'])->name('contacts.pdf');
 
