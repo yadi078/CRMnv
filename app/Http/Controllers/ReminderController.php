@@ -17,6 +17,13 @@ class ReminderController extends Controller
             'repeat' => ['nullable', 'string', 'max:20'],
             'deadline_date' => ['nullable', 'date'],
             'description' => ['nullable', 'string', 'max:1000'],
+            'extension' => ['nullable', 'string', 'max:20'],
+            'nombre_cliente' => ['nullable', 'string', 'max:255'],
+            'empresa' => ['nullable', 'string', 'max:255'],
+            'correo_electronico' => ['nullable', 'email', 'max:255'],
+            'numero_telefonico' => ['nullable', 'string', 'max:50'],
+            'area' => ['nullable', 'string', 'max:255'],
+            'puesto_trabajo' => ['nullable', 'string', 'max:255'],
         ]);
 
         $startAt = null;
@@ -33,12 +40,18 @@ class ReminderController extends Controller
         $request->user()->reminders()->create([
             'title' => $data['title'],
             'description' => $data['description'] ?? null,
+            'extension' => $data['extension'] ?? null,
+            'nombre_cliente' => $data['nombre_cliente'] ?? null,
+            'empresa' => $data['empresa'] ?? null,
+            'correo_electronico' => $data['correo_electronico'] ?? null,
+            'numero_telefonico' => $data['numero_telefonico'] ?? null,
+            'area' => $data['area'] ?? null,
+            'puesto_trabajo' => $data['puesto_trabajo'] ?? null,
             'start_at' => $startAt,
             'end_at' => null,
             'all_day' => $request->boolean('all_day'),
             'repeat' => $data['repeat'] ?? null,
             'deadline_at' => $deadlineAt,
-            // Mantener compatibilidad con scheduled_for usando la hora de inicio
             'scheduled_for' => $startAt,
         ]);
 
@@ -57,6 +70,13 @@ class ReminderController extends Controller
             'repeat' => ['nullable', 'string', 'max:20'],
             'deadline_at' => ['nullable', 'date'],
             'description' => ['nullable', 'string', 'max:1000'],
+            'extension' => ['nullable', 'string', 'max:20'],
+            'nombre_cliente' => ['nullable', 'string', 'max:255'],
+            'empresa' => ['nullable', 'string', 'max:255'],
+            'correo_electronico' => ['nullable', 'email', 'max:255'],
+            'numero_telefonico' => ['nullable', 'string', 'max:50'],
+            'area' => ['nullable', 'string', 'max:255'],
+            'puesto_trabajo' => ['nullable', 'string', 'max:255'],
         ]);
 
         $deadlineAt = !empty($data['deadline_at']) ? $data['deadline_at'] . ' 00:00:00' : $reminder->deadline_at;
@@ -64,6 +84,13 @@ class ReminderController extends Controller
         $reminder->update([
             'title' => $data['title'],
             'description' => $data['description'] ?? $reminder->description,
+            'extension' => $data['extension'] ?? $reminder->extension,
+            'nombre_cliente' => $data['nombre_cliente'] ?? $reminder->nombre_cliente,
+            'empresa' => $data['empresa'] ?? $reminder->empresa,
+            'correo_electronico' => $data['correo_electronico'] ?? $reminder->correo_electronico,
+            'numero_telefonico' => $data['numero_telefonico'] ?? $reminder->numero_telefonico,
+            'area' => $data['area'] ?? $reminder->area,
+            'puesto_trabajo' => $data['puesto_trabajo'] ?? $reminder->puesto_trabajo,
             'start_at' => $data['start_at'] ?? $reminder->start_at,
             'end_at' => $data['end_at'] ?? $reminder->end_at,
             'all_day' => $request->boolean('all_day', $reminder->all_day),

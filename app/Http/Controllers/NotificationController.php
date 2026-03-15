@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Contact;
 use App\Models\Reminder;
 use App\Notifications\ReminderDueNotification;
 use Illuminate\Http\Request;
@@ -93,6 +94,24 @@ class NotificationController extends Controller
             ->orderBy(DB::raw('COALESCE(start_at, scheduled_for)'))
             ->get();
 
+        // Contactos para el selector del modal de recordatorio (nombre del cliente)
+        $contactsQuery = Contact::with('company')->orderBy('nombre_completo');
+        if (! $user->esAdmin()) {
+            $contactsQuery->where('created_by', $user->id);
+        }
+        $contactsForReminder = $contactsQuery->get()->map(function ($c) {
+            return [
+                'id' => $c->id,
+                'nombre_completo' => $c->nombre_completo,
+                'email' => $c->email ?? '',
+                'telefono' => $c->telefono ?? $c->celular ?? '',
+                'extension' => $c->extension ?? '',
+                'departamento' => $c->departamento ?? '',
+                'puesto_de_trabajo' => $c->puesto_de_trabajo ?? '',
+                'empresa' => $c->company?->nombre_comercial ?? $c->nombre_comercial ?? '',
+            ];
+        })->values()->toArray();
+
         // IDs de notificaciones no leídas tipo recordatorio ya "vistas" (no disparar alarma al cargar).
         // Excluimos las creadas en los últimos 15 segundos para que las recién creadas sí disparen alarma al hacer el primer poll.
         $cutoff = $now->copy()->subSeconds(15);
@@ -115,7 +134,7 @@ class NotificationController extends Controller
             ]);
         }
 
-        return view('notifications.index', compact('notifications', 'unreadCount', 'starredCount', 'filter', 'sort', 'reminders', 'reminderAlertIds'));
+        return view('notifications.index', compact('notifications', 'unreadCount', 'starredCount', 'filter', 'sort', 'reminders', 'reminderAlertIds', 'contactsForReminder'));
     }
 
     /**
