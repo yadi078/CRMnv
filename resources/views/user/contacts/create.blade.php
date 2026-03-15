@@ -74,6 +74,11 @@
                             <input id="extension" name="extension" type="text" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3" value="{{ old('extension') }}" />
                         </div>
                         <div>
+                            <label for="fecha_cumpleanos" class="block text-sm font-medium text-white/90 mb-1">Fecha de cumpleaños (opcional)</label>
+                            <input id="fecha_cumpleanos" name="fecha_cumpleanos" type="date" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white [&>option]:bg-[#1a3d6b] py-2.5 px-3" value="{{ old('fecha_cumpleanos') }}" />
+                            <p class="mt-1 text-xs text-white/60">Para enviar felicitaciones al administrador el día del cumpleaños.</p>
+                        </div>
+                        <div>
                             <label for="municipio" class="block text-sm font-medium text-white/90 mb-1">Municipio / Ciudad</label>
                             <input id="municipio" name="municipio" type="text" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3" value="{{ old('municipio') }}" />
                         </div>

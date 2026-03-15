@@ -13,3 +13,6 @@ Schedule::command('follow-ups:send-reminders')->everyThirtyMinutes();
 
 // Recordatorios personales: cada minuto
 Schedule::command('reminders:send-due')->everyMinute();
+
+// Cumpleaños de contactos: notificar a administradores cada día a las 8:00
+Schedule::command('birthdays:notify')->dailyAt('08:00');

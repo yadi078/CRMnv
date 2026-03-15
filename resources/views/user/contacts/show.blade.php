@@ -156,6 +156,12 @@
                             <p class="text-base text-white/70">Celular</p>
                             <p class="text-lg font-medium text-white">{{ $contact->celular ?? '-' }}</p>
                         </div>
+                        @if($contact->fecha_cumpleanos)
+                        <div>
+                            <p class="text-base text-white/70">Fecha de cumpleaños</p>
+                            <p class="text-lg font-medium text-white">{{ $contact->fecha_cumpleanos->format('d/m/Y') }}</p>
+                        </div>
+                        @endif
                     </div>
                 </div>
 

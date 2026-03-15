@@ -74,6 +74,11 @@
                             <x-text-input id="extension" name="extension" type="text" class="mt-1 block w-full" :value="old('extension', $contact->extension)" />
                         </div>
                         <div>
+                            <x-input-label for="fecha_cumpleanos" value="Fecha de cumpleaños (opcional)" />
+                            <x-text-input id="fecha_cumpleanos" name="fecha_cumpleanos" type="date" class="mt-1 block w-full text-gray-900" :value="old('fecha_cumpleanos', $contact->fecha_cumpleanos?->format('Y-m-d'))" />
+                            <p class="mt-1 text-xs text-white/60">Para enviar felicitaciones al administrador el día del cumpleaños.</p>
+                        </div>
+                        <div>
                             <x-input-label for="municipio" value="Municipio / Ciudad" />
                             <x-text-input id="municipio" name="municipio" type="text" class="mt-1 block w-full" :value="old('municipio', $contact->municipio)" />
                         </div>

@@ -27,6 +27,7 @@ class StoreContactRequest extends FormRequest
             'extension' => 'nullable|string|max:10',
             'email' => 'required|email|unique:contacts,email|max:255',
             'email_activo' => 'sometimes|boolean',
+            'fecha_cumpleanos' => 'nullable|date',
             'municipio' => 'nullable|string|max:255',
             'estado' => 'nullable|string|max:255',
             'razon_social' => 'nullable|string|max:255',
