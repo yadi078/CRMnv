@@ -40,6 +40,10 @@
                         @endforeach
                     </select>
                 </div>
+                <a href="{{ route('user.sales.index') }}" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-white/40 text-white/90 text-sm font-medium hover:bg-white/10 transition-all">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    Limpiar filtros
+                </a>
                 <button type="submit" class="btn-panel-dark flex items-center justify-center gap-2">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />

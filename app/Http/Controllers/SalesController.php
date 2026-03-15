@@ -92,6 +92,7 @@ class SalesController extends Controller
             'nombre_servicio' => 'required|string|max:255',
             'fecha_venta' => 'required|date',
             'monto' => 'nullable|numeric|min:0',
+            'incluye_iva' => 'nullable|boolean',
             'tipo_pago' => 'nullable|string|max:50',
             'participantes' => 'nullable|integer|min:1',
             'notas' => 'nullable|string|max:2000',
@@ -108,6 +109,7 @@ class SalesController extends Controller
 
         $sale = Sale::create([
             ...collect($validated)->except(['participantes_nombres', 'participantes_emails'])->all(),
+            'incluye_iva' => $request->boolean('incluye_iva', true),
             'created_by' => auth()->id(),
         ]);
 
@@ -175,6 +177,7 @@ class SalesController extends Controller
             'nombre_servicio' => 'required|string|max:255',
             'fecha_venta' => 'required|date',
             'monto' => 'nullable|numeric|min:0',
+            'incluye_iva' => 'nullable|boolean',
             'tipo_pago' => 'nullable|string|max:50',
             'participantes' => 'nullable|integer|min:1',
             'notas' => 'nullable|string|max:2000',
@@ -189,7 +192,10 @@ class SalesController extends Controller
             'participantes_emails.*' => 'nullable|email|max:255',
         ]);
 
-        $sale->update(collect($validated)->except(['participantes_nombres', 'participantes_emails'])->all());
+        $sale->update([
+            ...collect($validated)->except(['participantes_nombres', 'participantes_emails'])->all(),
+            'incluye_iva' => $request->boolean('incluye_iva', $sale->incluye_iva),
+        ]);
 
         $sale->saleParticipants()->delete();
         if ($request->filled('participantes_nombres') && is_array($request->participantes_nombres)) {

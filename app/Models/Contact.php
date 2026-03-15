@@ -42,6 +42,7 @@ class Contact extends Model
         'extension',
         'email',
         'email_activo',
+        'fecha_cumpleanos',
         'municipio',
         'estado',
         'razon_social',
@@ -62,6 +63,7 @@ class Contact extends Model
     {
         return [
             'email_activo' => 'boolean',
+            'fecha_cumpleanos' => 'date',
         ];
     }
 

@@ -110,7 +110,8 @@
             $participantes = (int) ($sale->participantes ?? 1);
             $precioUnitario = $sale->monto ? (float) $sale->monto : 0;
             $subtotal = $participantes > 0 ? $precioUnitario * $participantes : $precioUnitario;
-            $iva = round($subtotal * 0.16, 2);
+            $incluyeIva = $sale->incluye_iva ?? true;
+            $iva = $incluyeIva ? round($subtotal * 0.16, 2) : 0;
             $total = $subtotal + $iva;
         @endphp
 
@@ -120,7 +121,9 @@
                 <p class="text-sm text-gray-900"><span class="font-semibold">NÚMERO DE PARTICIPANTES:</span> <span class="font-bold text-[#071A3D]">{{ $participantes }}</span></p>
                 <p class="text-sm text-gray-900 mt-2"><span class="font-semibold">PRECIO UNITARIO:</span> <span class="font-bold text-[#071A3D]">$ {{ number_format($precioUnitario, 2, '.', ',') }}</span></p>
                 <p class="text-sm text-gray-900 mt-1"><span class="font-semibold">SUB-TOTAL:</span> <span class="font-bold text-[#071A3D]">$ {{ number_format($subtotal, 2, '.', ',') }}</span></p>
-                <p class="text-sm text-gray-900 mt-1"><span class="font-semibold">IVA:</span> <span class="font-bold text-[#071A3D]">$ {{ number_format($iva, 2, '.', ',') }}</span></p>
+                @if($incluyeIva)
+                    <p class="text-sm text-gray-900 mt-1"><span class="font-semibold">IVA (16%):</span> <span class="font-bold text-[#071A3D]">$ {{ number_format($iva, 2, '.', ',') }}</span></p>
+                @endif
                 <p class="text-sm text-gray-900 mt-2 font-bold"><span class="font-semibold">TOTAL:</span> <span class="text-[#071A3D] text-lg">$ {{ number_format($total, 2, '.', ',') }}</span></p>
             </div>
             <div class="bg-[#FFE600]/30 p-6">

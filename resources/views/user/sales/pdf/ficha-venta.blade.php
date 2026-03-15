@@ -88,14 +88,17 @@
         $participantes = (int) ($sale->participantes ?? 1);
         $precioUnitario = $sale->monto ? (float) $sale->monto : 0;
         $subtotal = $participantes > 0 ? $precioUnitario * $participantes : $precioUnitario;
-        $iva = round($subtotal * 0.16, 2);
+        $incluyeIva = $sale->incluye_iva ?? true;
+        $iva = $incluyeIva ? round($subtotal * 0.16, 2) : 0;
         $total = $subtotal + $iva;
     @endphp
     <div class="yellow-box">
         <div class="row"><strong>NÚMERO DE PARTICIPANTES:</strong> {{ $participantes }}</div>
         <div class="row"><strong>PRECIO UNITARIO:</strong> $ {{ number_format($precioUnitario, 2, '.', ',') }}</div>
         <div class="row"><strong>SUB-TOTAL:</strong> $ {{ number_format($subtotal, 2, '.', ',') }}</div>
-        <div class="row"><strong>IVA:</strong> $ {{ number_format($iva, 2, '.', ',') }}</div>
+        @if($incluyeIva)
+        <div class="row"><strong>IVA (16%):</strong> $ {{ number_format($iva, 2, '.', ',') }}</div>
+        @endif
         <div class="row"><strong>TOTAL:</strong> $ {{ number_format($total, 2, '.', ',') }}</div>
     </div>
     <div class="yellow-box">

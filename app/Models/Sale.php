@@ -20,6 +20,7 @@ class Sale extends Model
         'nombre_servicio',
         'fecha_venta',
         'monto',
+        'incluye_iva',
         'tipo_pago',
         'participantes',
         'notas',
@@ -36,6 +37,7 @@ class Sale extends Model
         return [
             'fecha_venta' => 'date',
             'monto' => 'decimal:2',
+            'incluye_iva' => 'boolean',
         ];
     }
 

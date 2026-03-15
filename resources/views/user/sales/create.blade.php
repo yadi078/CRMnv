@@ -61,9 +61,19 @@
                         </div>
 
                         <div>
-                            <x-input-label for="monto" value="Monto ($) + IVA" />
+                            <x-input-label for="monto" value="Monto ($)" />
                             <x-text-input id="monto" name="monto" type="number" step="0.01" min="0" class="mt-1 block w-full" :value="old('monto')" placeholder="0.00" />
                             <x-input-error :messages="$errors->get('monto')" class="mt-2" />
+                        </div>
+
+                        <div class="flex items-center gap-3 md:col-span-2">
+                            <label class="inline-flex items-center gap-2 cursor-pointer">
+                                <input type="hidden" name="incluye_iva" value="0">
+                                <input type="checkbox" name="incluye_iva" value="1" class="rounded border-gray-300 text-amber-500 focus:ring-amber-500"
+                                    {{ old('incluye_iva', true) ? 'checked' : '' }}>
+                                <span class="text-sm font-medium text-white/90">Incluir IVA en esta venta</span>
+                            </label>
+                            <span class="text-xs text-white/60">Desmarque si el monto no lleva IVA (ej. factura exenta).</span>
                         </div>
 
                         <div>
