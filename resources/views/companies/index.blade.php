@@ -12,101 +12,243 @@
     </x-slot>
 
     <div class="space-y-6">
-        <!-- Filtros + Nueva Empresa: contenedor azul, título amarillo -->
+        <!-- Filtros avanzados estilo tablero -->
         <div class="panel-card-dark">
-            <h3 class="panel-card-dark__title panel-card-dark__title--accent mb-4">Filtros</h3>
-            <form method="GET" action="{{ route('companies.index') }}" class="grid grid-cols-1 md:grid-cols-12 gap-3 sm:gap-4 mb-0">
-                <!-- Fila 1: buscador ancho -->
-                <div class="md:col-span-12">
-                    <label for="search" class="block text-sm font-medium text-white/90 mb-1">Buscar</label>
-                    <input
-                        type="text"
-                        id="search"
-                        name="search"
-                        value="{{ request('search') }}"
-                        placeholder="Nombre de la empresa..."
-                        list="company_names"
-                        class="w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3"
-                    >
-                </div>
+            @php
+                $chips = [];
+                if(request('estado')) $chips[] = 'Estado: ' . request('estado');
+                if(request('sector')) $chips[] = 'Sector: ' . request('sector');
+                if(request('status_color')) $chips[] = 'Estado prospecto';
+                if(request('ejecutivo_asignado')) $chips[] = 'Ejecutivo: ' . request('ejecutivo_asignado');
+                if(request('approval_status')) $chips[] = 'Aprobación: ' . ucfirst(request('approval_status'));
+            @endphp
 
-                <!-- Fila 2: cuatro selects -->
-                <div class="md:col-span-3">
-                    <label for="status_color" class="block text-sm font-medium text-white/90 mb-1">Estado prospecto</label>
-                    <select id="status_color" name="status_color" class="w-full rounded-xl border-0 bg-white/15 text-white focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3 [&>option]:bg-[#1a3d6b] [&>option]:text-white">
-                        <option value="">Todos los estados</option>
-                        <option value="seguimiento" {{ request('status_color') === 'seguimiento' ? 'selected' : '' }}>Seguimiento</option>
-                        <option value="interesado" {{ request('status_color') === 'interesado' ? 'selected' : '' }}>Interesado</option>
-                        <option value="si_le_interesa_nos_llaman_o_no_compro" {{ request('status_color') === 'si_le_interesa_nos_llaman_o_no_compro' ? 'selected' : '' }}>Si le interesa nos llaman o no compro</option>
-                        <option value="vendido" {{ request('status_color') === 'vendido' ? 'selected' : '' }}>Vendido</option>
-                        <option value="no_estaba" {{ request('status_color') === 'no_estaba' ? 'selected' : '' }}>No estaba</option>
-                    </select>
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-3">
+                    <span class="text-sm font-semibold text-white/90">Filtros avanzados</span>
+                    <div class="flex flex-wrap gap-2">
+                        @forelse($chips as $chip)
+                            <span class="inline-flex items-center px-3 py-1 rounded-full bg-white/10 text-xs text-white/90 border border-white/20">
+                                {{ $chip }}
+                            </span>
+                        @empty
+                            <span class="text-xs text-white/60">Sin filtros aplicados</span>
+                        @endforelse
+                    </div>
                 </div>
-                <div class="md:col-span-3">
-                    <label for="sector" class="block text-sm font-medium text-white/90 mb-1">Sector</label>
-                    <select id="sector" name="sector" class="w-full rounded-xl border border-gray-200 bg-white text-[#1F2937] focus:border-[#FFE600] focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3">
-                        <option value="">Todos</option>
-                        @foreach($sectorOptions as $sector)
-                            <option value="{{ $sector }}" {{ request('sector') === $sector ? 'selected' : '' }}>{{ $sector }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="md:col-span-3">
-                    <label for="estado" class="block text-sm font-medium text-white/90 mb-1">Estado</label>
-                    <select id="estado" name="estado" class="w-full rounded-xl border border-gray-200 bg-white text-[#1F2937] focus:border-[#FFE600] focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3">
-                        <option value="">Todos</option>
-                        @foreach($estadoOptions as $estado)
-                            <option value="{{ $estado }}" {{ request('estado') === $estado ? 'selected' : '' }}>{{ $estado }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                @can('companies.approve')
-                <div class="md:col-span-3">
-                    <label for="approval_status" class="block text-sm font-medium text-white/90 mb-1">Estatus de aprobación</label>
-                    <select id="approval_status" name="approval_status" class="w-full rounded-xl border border-gray-200 bg-white text-[#1F2937] focus:border-[#FFE600] focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3">
-                        <option value="">Todos</option>
-                        <option value="aprobado" {{ request('approval_status') === 'aprobado' ? 'selected' : '' }}>Aprobado</option>
-                        <option value="pendiente" {{ request('approval_status') === 'pendiente' ? 'selected' : '' }}>Pendiente</option>
-                        <option value="rechazado" {{ request('approval_status') === 'rechazado' ? 'selected' : '' }}>Rechazado</option>
-                    </select>
-                </div>
-                @endcan
-
-                <!-- Fila 3: ejecutivo + botones a la derecha -->
-                <div class="md:col-span-4">
-                    <label for="ejecutivo_asignado" class="block text-sm font-medium text-white/90 mb-1">Ejecutivo</label>
-                    <select id="ejecutivo_asignado" name="ejecutivo_asignado" class="w-full rounded-xl border border-gray-200 bg-white text-[#1F2937] focus:border-[#FFE600] focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3">
-                        <option value="">Todos</option>
-                        @foreach($ejecutivoOptions as $ejecutivo)
-                            <option value="{{ $ejecutivo }}" {{ request('ejecutivo_asignado') === $ejecutivo ? 'selected' : '' }}>{{ $ejecutivo }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="md:col-span-8 flex flex-wrap justify-end items-end gap-3 pt-2">
-                    @can('companies.create')
-                    <a href="{{ route('companies.create') }}" class="btn-amber-app flex-shrink-0">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" />
+                <div class="flex items-center gap-3">
+                    <a href="{{ route('companies.index') }}" class="text-xs text-white/70 hover:text-[#FFE600] inline-flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                         </svg>
-                        Nueva Empresa
+                        Limpiar filtros
                     </a>
-                    @endcan
-
-                    <button type="submit" class="btn-panel-dark">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z" />
-                        </svg>
-                        Filtrar
-                    </button>
                 </div>
+            </div>
+
+            <form method="GET" action="{{ route('companies.index') }}" class="space-y-4">
+                <!-- Datos de empresa -->
+                <div class="bg-white/5 rounded-2xl px-4 py-4">
+                    <h4 class="text-sm font-semibold text-white/90 mb-3">Datos de empresa</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-6 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-white/80 mb-1">Sector</label>
+                            <select id="sector" name="sector" class="w-full rounded-xl border border-gray-200 bg-white text-[#1F2937] text-xs py-2 px-2">
+                                <option value="">Todos</option>
+                                @foreach($sectorOptions as $sector)
+                                    <option value="{{ $sector }}" {{ request('sector') === $sector ? 'selected' : '' }}>{{ $sector }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-white/80 mb-1">Giro</label>
+                            <select class="w-full rounded-xl border border-gray-200 bg-white text-[#1F2937] text-xs py-2 px-2">
+                                <option value="">Todos</option>
+                                @foreach($sectorOptions as $sector)
+                                    <option>{{ $sector }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-white/80 mb-1">Tamaño empresa</label>
+                            <select class="w-full rounded-xl border border-gray-200 bg-white text-[#1F2937] text-xs py-2 px-2">
+                                <option value="">Todos</option>
+                                <option>Pequeña</option>
+                                <option>Mediana</option>
+                                <option>Grande</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-white/80 mb-1">Estado</label>
+                            <select id="estado" name="estado" class="w-full rounded-xl border border-gray-200 bg-white text-[#1F2937] text-xs py-2 px-2">
+                                <option value="">Todos</option>
+                                @foreach($estadoOptions as $estado)
+                                    <option value="{{ $estado }}" {{ request('estado') === $estado ? 'selected' : '' }}>{{ $estado }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-white/80 mb-1">Ciudad</label>
+                            <input type="text" name="municipio" value="{{ request('municipio') }}" placeholder="Ciudad..."
+                                   class="w-full rounded-xl border-0 bg-white/15 text-white text-xs py-2 px-3 placeholder-white/50">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-white/80 mb-1">Domicilio</label>
+                            <input type="text" name="domicilio" value="{{ request('domicilio') }}" placeholder="Buscar..."
+                                   class="w-full rounded-xl border-0 bg-white/15 text-white text-xs py-2 px-3 placeholder-white/50">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Estado comercial -->
+                <div class="bg-white/5 rounded-2xl px-4 py-4">
+                    <h4 class="text-sm font-semibold text-white/90 mb-3">Estado comercial</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-white/80 mb-1">Estado prospecto</label>
+                            <select id="status_color" name="status_color" class="w-full rounded-xl border-0 bg-white/15 text-white text-xs py-2 px-3 [&>option]:bg-[#1a3d6b]">
+                                <option value="">Todos</option>
+                                <option value="seguimiento" {{ request('status_color') === 'seguimiento' ? 'selected' : '' }}>Seguimiento</option>
+                                <option value="interesado" {{ request('status_color') === 'interesado' ? 'selected' : '' }}>Interesado</option>
+                                <option value="si_le_interesa_nos_llaman_o_no_compro" {{ request('status_color') === 'si_le_interesa_nos_llaman_o_no_compro' ? 'selected' : '' }}>Si le interesa nos llaman o no compro</option>
+                                <option value="vendido" {{ request('status_color') === 'vendido' ? 'selected' : '' }}>Vendido</option>
+                                <option value="no_estaba" {{ request('status_color') === 'no_estaba' ? 'selected' : '' }}>No estaba</option>
+                            </select>
+                        </div>
+                        @can('companies.approve')
+                        <div>
+                            <label class="block text-xs font-medium text-white/80 mb-1">Estatus de aprobac.</label>
+                            <select id="approval_status" name="approval_status" class="w-full rounded-xl border border-gray-200 bg-white text-[#1F2937] text-xs py-2 px-2">
+                                <option value="">Todos</option>
+                                <option value="aprobado" {{ request('approval_status') === 'aprobado' ? 'selected' : '' }}>Aprobado</option>
+                                <option value="pendiente" {{ request('approval_status') === 'pendiente' ? 'selected' : '' }}>Pendiente</option>
+                                <option value="rechazado" {{ request('approval_status') === 'rechazado' ? 'selected' : '' }}>Rechazado</option>
+                            </select>
+                        </div>
+                        @endcan
+                        <div>
+                            <label class="block text-xs font-medium text-white/80 mb-1">Prioridad</label>
+                            <select class="w-full rounded-xl border border-gray-200 bg-white text-[#1F2937] text-xs py-2 px-2">
+                                <option value="">Todas</option>
+                                <option>Alta</option>
+                                <option>Media</option>
+                                <option>Baja</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-white/80 mb-1">Etapa de venta</label>
+                            <select class="w-full rounded-xl border border-gray-200 bg-white text-[#1F2937] text-xs py-2 px-2">
+                                <option value="">Todas</option>
+                                <option>Prospecto</option>
+                                <option>Negociación</option>
+                                <option>Cerrado</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Responsable -->
+                <div class="bg-white/5 rounded-2xl px-4 py-4">
+                    <h4 class="text-sm font-semibold text-white/90 mb-3">Responsable</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-white/80 mb-1">Ejecutivo</label>
+                            <select id="ejecutivo_asignado" name="ejecutivo_asignado" class="w-full rounded-xl border border-gray-200 bg-white text-[#1F2937] text-xs py-2 px-2">
+                                <option value="">Todos</option>
+                                @foreach($ejecutivoOptions as $ejecutivo)
+                                    <option value="{{ $ejecutivo }}" {{ request('ejecutivo_asignado') === $ejecutivo ? 'selected' : '' }}>{{ $ejecutivo }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-white/80 mb-1">Equipo de ventas</label>
+                            <select class="w-full rounded-xl border border-gray-200 bg-white text-[#1F2937] text-xs py-2 px-2">
+                                <option value="">Todos</option>
+                                <option>Equipo A</option>
+                                <option>Equipo B</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-white/80 mb-1">Buscar empresa</label>
+                            <input
+                                type="text"
+                                id="search"
+                                name="search"
+                                value="{{ request('search') }}"
+                                placeholder="Nombre de la empresa..."
+                                list="company_names"
+                                class="w-full rounded-xl border-0 bg-white/15 text-white text-xs py-2 px-3 placeholder-white/60"
+                            >
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contacto disponible -->
+                <div class="bg-white/5 rounded-2xl px-4 py-4">
+                    <h4 class="text-sm font-semibold text-white/90 mb-3">Contacto disponible</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-white/80 mb-1">Tiene teléfono</label>
+                            <select class="w-full rounded-xl border border-gray-200 bg-white text-[#1F2937] text-xs py-2 px-2">
+                                <option value="">Todos / Sí / No</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-white/80 mb-1">Tiene celular</label>
+                            <select class="w-full rounded-xl border border-gray-200 bg-white text-[#1F2937] text-xs py-2 px-2">
+                                <option value="">Todos / Sí / No</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-white/80 mb-1">No desea correos</label>
+                            <select class="w-full rounded-xl border border-gray-200 bg-white text-[#1F2937] text-xs py-2 px-2">
+                                <option value="">Todos / Sí / No</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between pt-2">
+                    <div class="flex items-center gap-3">
+                        <a href="{{ route('companies.index') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/30 text-white/90 text-sm font-medium hover:bg-white/10">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                            Limpiar filtros
+                        </a>
+                        <button type="button" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/20 text-white/90 text-sm font-medium bg-white/5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                            </svg>
+                            Guardar filtro
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        @can('companies.create')
+                        <a href="{{ route('companies.create') }}" class="btn-amber-app flex-shrink-0">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" />
+                            </svg>
+                            Nueva Empresa
+                        </a>
+                        @endcan
+                        <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#FFE600] text-[#071A3D] text-sm font-semibold shadow-md hover:bg-[#ffeb3b]">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z" />
+                            </svg>
+                            Filtrar
+                        </button>
+                    </div>
+                </div>
+
+                @if(isset($companyNames) && $companyNames->isNotEmpty())
+                    <datalist id="company_names">
+                        @foreach($companyNames as $companyName)
+                            <option value="{{ $companyName }}"></option>
+                        @endforeach
+                    </datalist>
+                @endif
             </form>
-            @if(isset($companyNames) && $companyNames->isNotEmpty())
-                <datalist id="company_names">
-                    @foreach($companyNames as $companyName)
-                        <option value="{{ $companyName }}"></option>
-                    @endforeach
-                </datalist>
-            @endif
         </div>
 
         @if(isset($companyContactsCard) && $companyContactsCard)

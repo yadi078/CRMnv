@@ -20,7 +20,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <x-input-label for="company_id" value="Empresa (Opcional)" class="text-white" />
-                            <select id="company_id" name="company_id" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white [&>option]:bg-[#1a3d6b] [&>option]:text-white py-2.5 px-3">
+                            <select id="company_id" name="company_id" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white [&>option]:bg-white [&>option]:text-gray-900 py-2.5 px-3">
                                 <option value="">Seleccione una empresa</option>
                                 @foreach($companies as $company)
                                 <option value="{{ $company->id }}" {{ (old('company_id', $companyId ?? null) == $company->id) ? 'selected' : '' }}>{{ $company->nombre_comercial }}</option>
@@ -31,7 +31,7 @@
 
                         <div>
                             <x-input-label for="contact_id" value="Contacto (Opcional)" class="text-white" />
-                            <select id="contact_id" name="contact_id" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white [&>option]:bg-[#1a3d6b] [&>option]:text-white py-2.5 px-3">
+                            <select id="contact_id" name="contact_id" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white [&>option]:bg-white [&>option]:text-gray-900 py-2.5 px-3">
                                 <option value="">Seleccione un contacto</option>
                                 @foreach($contacts as $contact)
                                 <option value="{{ $contact->id }}" {{ (old('contact_id', $contactId ?? null) == $contact->id) ? 'selected' : '' }}>{{ $contact->nombre_completo }} - {{ $contact->company?->nombre_comercial ?? 'Sin empresa' }}</option>
@@ -42,7 +42,7 @@
 
                         <div>
                             <x-input-label for="tipo_accion" value="Tipo de Acción *" class="text-white" />
-                            <select id="tipo_accion" name="tipo_accion" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white [&>option]:bg-[#1a3d6b] [&>option]:text-white py-2.5 px-3" required>
+                            <select id="tipo_accion" name="tipo_accion" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white [&>option]:bg-white [&>option]:text-gray-900 py-2.5 px-3" required>
                                 <option value="">Seleccione un tipo</option>
                                 <option value="llamada" {{ old('tipo_accion') === 'llamada' ? 'selected' : '' }}>Llamada</option>
                                 <option value="reunión" {{ old('tipo_accion') === 'reunión' ? 'selected' : '' }}>Reunión</option>
@@ -59,7 +59,7 @@
 
                         <div>
                             <x-input-label for="asignado_a" value="Asignado a" class="text-white" />
-                            <select id="asignado_a" name="asignado_a" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white [&>option]:bg-[#1a3d6b] [&>option]:text-white py-2.5 px-3">
+                            <select id="asignado_a" name="asignado_a" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white [&>option]:bg-white [&>option]:text-gray-900 py-2.5 px-3">
                                 <option value="">Asignar a mí mismo</option>
                                 @foreach(\App\Models\User::all() as $user)
                                 <option value="{{ $user->id }}" {{ old('asignado_a', auth()->id()) == $user->id ? 'selected' : '' }}>{{ $user->name }}</option>

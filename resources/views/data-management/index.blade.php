@@ -69,7 +69,7 @@
                 @csrf
                 <div>
                     <label class="block text-sm font-medium text-white/90 mb-1">Tabla</label>
-                    <select name="table" class="rounded-xl border-0 bg-white/15 text-white focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-2 px-3 [&>option]:bg-[#1a3d6b] [&>option]:text-white">
+                    <select name="table" class="rounded-xl border-0 bg-white/15 text-white focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-2 px-3 [&>option]:bg-white [&>option]:text-gray-900">
                         <option value="companies">Empresas</option>
                         <option value="contacts">Contactos</option>
                         <option value="follow_ups">Seguimientos</option>
@@ -285,7 +285,7 @@
                     <div>
                         <label class="block text-sm font-medium text-white/90 mb-1">Estado prospecto</label>
                         <select x-model="formCompany.status_color"
-                                class="w-full rounded-xl border-0 bg-white/15 text-white focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-2 px-3 [&>option]:bg-[#1a3d6b] [&>option]:text-white">
+                                class="w-full rounded-xl border-0 bg-white/15 text-white focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-2 px-3 [&>option]:bg-white [&>option]:text-gray-900">
                             @foreach(\App\Models\Company::PROSPECT_STATUS_LABELS as $value => $label)
                                 <option value="{{ $value }}">{{ $label }}</option>
                             @endforeach

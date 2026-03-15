@@ -23,7 +23,7 @@
             <form method="GET" action="{{ route('follow-ups.index') }}" class="flex flex-wrap items-end gap-3 sm:gap-4 mb-0">
                 <div class="min-w-[160px]">
                     <label class="block text-sm font-medium text-white/90 mb-1">Estado</label>
-                    <select name="completado" class="w-full rounded-xl border-0 bg-white/15 text-white focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3 [&>option]:bg-[#1a3d6b] [&>option]:text-white">
+                    <select name="completado" class="w-full rounded-xl border-0 bg-white/15 text-white focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3 [&>option]:bg-white [&>option]:text-gray-900">
                         <option value="">Todos</option>
                         <option value="0" {{ request('completado') === '0' ? 'selected' : '' }}>Pendientes</option>
                         <option value="1" {{ request('completado') === '1' ? 'selected' : '' }}>Completados</option>
@@ -31,7 +31,7 @@
                 </div>
                 <div class="min-w-[160px]">
                     <label class="block text-sm font-medium text-white/90 mb-1">Tipo</label>
-                    <select name="tipo_accion" class="w-full rounded-xl border-0 bg-white/15 text-white focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3 [&>option]:bg-[#1a3d6b] [&>option]:text-white">
+                    <select name="tipo_accion" class="w-full rounded-xl border-0 bg-white/15 text-white focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3 [&>option]:bg-white [&>option]:text-gray-900">
                         <option value="">Todos los tipos</option>
                         <option value="llamada" {{ request('tipo_accion') === 'llamada' ? 'selected' : '' }}>Llamada</option>
                         <option value="reunión" {{ request('tipo_accion') === 'reunión' ? 'selected' : '' }}>Reunión</option>
