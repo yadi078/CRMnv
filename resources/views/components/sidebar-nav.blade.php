@@ -65,10 +65,10 @@
 
         <li class="sidebar-nav__item">
             <a
-                href="{{ route('companies.index', ['view' => 'filtros']) }}"
-                class="sidebar-nav__link {{ request()->routeIs('companies.index') && request('view') === 'filtros' ? 'sidebar-nav__link--active' : '' }}"
+                href="{{ route('filtros.index') }}"
+                class="sidebar-nav__link {{ request()->routeIs('filtros.index') ? 'sidebar-nav__link--active' : '' }}"
                 aria-label="Filtros"
-                aria-current="{{ request()->routeIs('companies.index') && request('view') === 'filtros' ? 'page' : false }}"
+                aria-current="{{ request()->routeIs('filtros.index') ? 'page' : false }}"
             >
                 <span class="sidebar-nav__icon-wrap">
                     <span class="sidebar-nav__wave" aria-hidden="true"></span>

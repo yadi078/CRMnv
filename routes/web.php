@@ -10,6 +10,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ReminderController;
 use App\Http\Controllers\UserDashboardController;
 use App\Http\Controllers\DataManagementController;
+use App\Http\Controllers\FiltrosController;
 use App\Http\Controllers\SalesController;
 use App\Http\Controllers\Auth\AutoLoginController;
 use Illuminate\Support\Facades\Auth;
@@ -54,6 +55,7 @@ Route::middleware(['auth', 'verified', 'ensure.role'])->group(function () {
 
     // Empresas, Contactos y Seguimientos (usuario: captura, consulta, seguimiento; admin: además aprobaciones)
     Route::resource('companies', CompanyController::class);
+    Route::get('/filtros', [FiltrosController::class, 'index'])->name('filtros.index');
     Route::get('/companies/{company}/edit-form', [CompanyController::class, 'editForm'])->name('companies.edit-form');
     Route::post('/companies/check-duplicates', [CompanyController::class, 'checkDuplicates'])->name('companies.check-duplicates');
 
@@ -89,6 +91,7 @@ Route::middleware(['auth', 'verified', 'ensure.role', 'admin'])->group(function 
     Route::delete('/notifications/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
 
     // Recordatorios (sección dentro de notificaciones)
+    Route::get('/reminders', fn () => redirect()->route('notifications.index'))->name('reminders.index');
     Route::post('/reminders', [ReminderController::class, 'store'])->name('reminders.store');
     Route::put('/reminders/{reminder}', [ReminderController::class, 'update'])->name('reminders.update');
     Route::patch('/reminders/{reminder}/toggle', [ReminderController::class, 'toggle'])->name('reminders.toggle');
