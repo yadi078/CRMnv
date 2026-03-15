@@ -43,6 +43,7 @@ Route::middleware(['auth', 'verified', 'ensure.role'])->group(function () {
         Route::post('historial-ventas', [SalesController::class, 'store'])->name('sales.store');
         Route::get('historial-ventas/{sale}', [SalesController::class, 'show'])->name('sales.show');
         Route::get('historial-ventas/{sale}/ficha-pdf', [SalesController::class, 'fichaPdf'])->name('sales.ficha-pdf');
+        Route::get('historial-ventas/{sale}/ficha-word', [SalesController::class, 'fichaWord'])->name('sales.ficha-word');
         Route::get('historial-ventas/{sale}/edit', [SalesController::class, 'edit'])->name('sales.edit');
         Route::put('historial-ventas/{sale}', [SalesController::class, 'update'])->name('sales.update');
         Route::delete('historial-ventas/{sale}', [SalesController::class, 'destroy'])->name('sales.destroy');
@@ -98,6 +99,7 @@ Route::middleware(['auth', 'verified', 'ensure.role', 'admin'])->group(function 
     Route::delete('/reminders/{reminder}', [ReminderController::class, 'destroy'])->name('reminders.destroy');
 
     Route::get('/contacts/{contact}/pdf', [ContactController::class, 'generatePdf'])->name('contacts.pdf');
+    Route::get('/contacts/{contact}/word', [ContactController::class, 'generateWord'])->name('contacts.word');
 
     Route::prefix('approvals')->name('approvals.')->group(function () {
         Route::get('/', [ApprovalController::class, 'index'])->name('index');

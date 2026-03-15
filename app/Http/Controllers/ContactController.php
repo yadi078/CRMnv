@@ -312,4 +312,22 @@ class ContactController extends Controller
 
         return $pdf->download('Ficha_Inscripcion_' . $contact->nombre_completo . '.pdf');
     }
+
+    /**
+     * Genera Word (DOC) de Ficha de Inscripción del contacto
+     */
+    public function generateWord(Contact $contact)
+    {
+        $this->authorize('generatePdf', $contact);
+
+        $contact->load(['company']);
+
+        $html = view('contacts.pdf.ficha-inscripcion', compact('contact'))->render();
+
+        $filename = 'Ficha_Inscripcion_' . $contact->nombre_completo . '.doc';
+
+        return response($html)
+            ->header('Content-Type', 'application/msword; charset=UTF-8')
+            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
+    }
 }

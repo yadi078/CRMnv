@@ -265,4 +265,22 @@ class SalesController extends Controller
 
         return $pdf->download($filename);
     }
+
+    /**
+     * Descargar ficha de venta en formato Word (DOC) reutilizando la misma vista HTML
+     */
+    public function fichaWord(Sale $sale)
+    {
+        $this->authorize('view', $sale);
+
+        $sale->load(['company', 'contact', 'creator', 'saleParticipants']);
+
+        $html = view('user.sales.pdf.ficha-venta', compact('sale'))->render();
+
+        $filename = 'Ficha_Inscripcion_' . \Str::slug($sale->nombre_servicio) . '_' . $sale->fecha_venta->format('Y-m-d') . '.doc';
+
+        return response($html)
+            ->header('Content-Type', 'application/msword; charset=UTF-8')
+            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
+    }
 }

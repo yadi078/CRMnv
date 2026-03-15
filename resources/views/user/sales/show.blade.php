@@ -20,6 +20,10 @@
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                 Descargar PDF
             </a>
+            <a href="{{ route('user.sales.ficha-word', $sale) }}" target="_blank" class="btn-panel-dark bg-white text-[#071A3D] border border-[#071A3D] hover:bg-gray-100 inline-flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4h16v16H4z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 8l2 8 3-6 3 6 2-8" /></svg>
+                Word
+            </a>
         </div>
     </x-slot>
 
@@ -34,6 +38,9 @@
                     </a>
                     <a href="{{ route('user.sales.ficha-pdf', $sale) }}" target="_blank" class="px-5 py-3 rounded-xl bg-[#FFE600] text-[#071A3D] font-semibold shadow hover:bg-yellow-300">
                         Descargar ficha de inscripción (PDF)
+                    </a>
+                    <a href="{{ route('user.sales.ficha-word', $sale) }}" target="_blank" class="px-5 py-3 rounded-xl bg-white text-[#071A3D] font-semibold shadow border border-gray-300 hover:bg-gray-50">
+                        Descargar ficha de inscripción (Word)
                     </a>
                 </div>
             </div>
