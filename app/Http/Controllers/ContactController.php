@@ -46,6 +46,13 @@ class ContactController extends Controller
             $query->where('nombre_completo', 'like', "%{$search}%");
         }
 
+        if ($request->filled('empresa')) {
+            $empresa = $request->empresa;
+            $query->whereHas('company', function ($q) use ($empresa) {
+                $q->where('nombre_comercial', 'like', "%{$empresa}%");
+            });
+        }
+
         if ($request->filled('company_id')) {
             $query->where('company_id', $request->company_id);
         }
@@ -75,7 +82,6 @@ class ContactController extends Controller
         }
 
         $contacts = $query->latest()->paginate(15)->withQueryString();
-        $companies = Company::aprobadosOrdenados()->get();
 
         // Lista de nombres de contactos para el autocompletado
         $namesQuery = Contact::query();
@@ -87,7 +93,7 @@ class ContactController extends Controller
             ->pluck('nombre_completo')
             ->unique();
 
-        return $this->resolveView('contacts.index', 'user.contacts.index', compact('contacts', 'companies', 'contactNames'));
+        return $this->resolveView('contacts.index', 'user.contacts.index', compact('contacts', 'contactNames'));
     }
 
     /**

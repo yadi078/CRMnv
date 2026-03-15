@@ -15,8 +15,8 @@
         <div class="panel-card-dark">
             <h3 class="panel-card-dark__title panel-card-dark__title--accent mb-4">Filtros</h3>
             <form method="GET" action="{{ route('contacts.index') }}" class="grid grid-cols-1 md:grid-cols-12 gap-3 sm:gap-4 mb-0">
-                <!-- Fila 1: buscador ancho -->
-                <div class="md:col-span-12">
+                <!-- Fila 1: búsqueda + empresa -->
+                <div class="md:col-span-6">
                     <label for="search" class="block text-sm font-medium text-white/90 mb-1">Buscar</label>
                     <input
                         type="text"
@@ -29,23 +29,20 @@
                     >
                 </div>
 
-                <!-- Fila 2: cuatro filtros principales -->
-                <div class="md:col-span-3">
-                    <label for="company_id" class="block text-sm font-medium text-white/90 mb-1">Empresa</label>
-                    <select
-                        id="company_id"
-                        name="company_id"
-                        class="w-full rounded-xl border border-gray-200 bg-white text-[#1F2937] focus:border-[#FFE600] focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3"
+                <div class="md:col-span-6">
+                    <label for="empresa" class="block text-sm font-medium text-white/90 mb-1">Empresa</label>
+                    <input
+                        type="text"
+                        id="empresa"
+                        name="empresa"
+                        value="{{ request('empresa') }}"
+                        placeholder="Nombre de la empresa..."
+                        class="w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3"
                     >
-                        <option value="">Todas las empresas</option>
-                        @foreach($companies as $company)
-                            <option value="{{ $company->id }}" {{ request('company_id') == $company->id ? 'selected' : '' }}>
-                                {{ $company->nombre_comercial }}
-                            </option>
-                        @endforeach
-                    </select>
                 </div>
-                <div class="md:col-span-3">
+
+                <!-- Fila 2: estado prospecto + género + municipio -->
+                <div class="md:col-span-4">
                     <label for="status_color" class="block text-sm font-medium text-white/90 mb-1">Estado prospecto</label>
                     <select id="status_color" name="status_color" class="w-full rounded-xl border-0 bg-white/15 text-white focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3 [&>option]:bg-[#1a3d6b] [&>option]:text-white">
                         <option value="">Todos</option>
@@ -54,7 +51,7 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="md:col-span-3">
+                <div class="md:col-span-4">
                     <label for="genero" class="block text-sm font-medium text-white/90 mb-1">Género</label>
                     <select id="genero" name="genero" class="w-full rounded-xl border-0 bg-white/15 text-white focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3 [&>option]:bg-[#1a3d6b] [&>option]:text-white">
                         <option value="">Todos</option>
@@ -63,23 +60,23 @@
                         <option value="Otro" {{ request('genero') === 'Otro' ? 'selected' : '' }}>Otro</option>
                     </select>
                 </div>
-                <div class="md:col-span-3">
+                <div class="md:col-span-4">
+                    <label for="municipio" class="block text-sm font-medium text-white/90 mb-1">Municipio / Ciudad</label>
+                    <input type="text" id="municipio" name="municipio" value="{{ request('municipio') }}" class="w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3" placeholder="Ej. Guadalajara">
+                </div>
+
+                <!-- Fila 3: estado + correo + botones -->
+                <div class="md:col-span-4">
+                    <label for="estado" class="block text-sm font-medium text-white/90 mb-1">Estado</label>
+                    <input type="text" id="estado" name="estado" value="{{ request('estado') }}" class="w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3" placeholder="Ej. Jalisco">
+                </div>
+                <div class="md:col-span-4">
                     <label for="email_activo" class="block text-sm font-medium text-white/90 mb-1">Correo</label>
                     <select id="email_activo" name="email_activo" class="w-full rounded-xl border-0 bg-white/15 text-white focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3 [&>option]:bg-[#1a3d6b] [&>option]:text-white">
                         <option value="">Todos</option>
                         <option value="1" {{ request('email_activo') === '1' ? 'selected' : '' }}>Solo activos</option>
                         <option value="0" {{ request('email_activo') === '0' ? 'selected' : '' }}>Solo desactivados</option>
                     </select>
-                </div>
-
-                <!-- Fila 3: ciudad/estado + botones -->
-                <div class="md:col-span-4">
-                    <label for="municipio" class="block text-sm font-medium text-white/90 mb-1">Municipio / Ciudad</label>
-                    <input type="text" id="municipio" name="municipio" value="{{ request('municipio') }}" class="w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3" placeholder="Ej. Guadalajara">
-                </div>
-                <div class="md:col-span-4">
-                    <label for="estado" class="block text-sm font-medium text-white/90 mb-1">Estado</label>
-                    <input type="text" id="estado" name="estado" value="{{ request('estado') }}" class="w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3" placeholder="Ej. Jalisco">
                 </div>
                 <div class="md:col-span-4 flex flex-wrap justify-end items-end gap-3 pt-2">
                     <button type="submit" class="btn-panel-dark">
@@ -114,7 +111,7 @@
                             <th class="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">Estado</th>
                             <th class="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">Correo</th>
                             <th class="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">Teléfono</th>
-                            <th class="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">Acciones</th>
+                            <th class="px-6 py-3.5 text-center text-xs font-semibold uppercase tracking-wider">Acciones</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-white/15">
@@ -133,16 +130,29 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-white/90">{{ $contact->celular ?? '-' }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <a href="{{ route('contacts.show', $contact) }}" class="text-[#FFE600] hover:text-[#fff] mr-3 inline-flex items-center gap-1">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                                    Ver
-                                </a>
-                                @can('contacts.generate-pdf')
-                                <a href="{{ route('contacts.pdf', $contact) }}" class="text-red-400 hover:text-red-300 mr-3 inline-flex items-center gap-1">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
-                                    PDF
-                                </a>
-                                @endcan
+                                <div class="flex items-center gap-3">
+                                    @can('contacts.generate-pdf')
+                                    <a href="{{ route('contacts.pdf', $contact) }}" class="text-green-400 hover:text-green-200 inline-flex items-center gap-1">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
+                                        PDF
+                                    </a>
+                                    @endcan
+                                    <a href="{{ route('contacts.show', $contact) }}" class="text-[#FFE600] hover:text-white inline-flex items-center gap-1">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                                        Ver
+                                    </a>
+                                    @can('delete', $contact)
+                                    <form method="POST" action="{{ route('contacts.destroy', $contact) }}" class="inline-flex items-center gap-1"
+                                        onsubmit="return confirm('¿Eliminar el contacto \'{{ addslashes($contact->nombre_completo) }}\'? Esta acción no se puede deshacer.');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="text-red-400 hover:text-red-200 inline-flex items-center gap-1">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-4h4a1 1 0 011 1v2H9V4a1 1 0 011-1z" /></svg>
+                                            Eliminar
+                                        </button>
+                                    </form>
+                                    @endcan
+                                </div>
                             </td>
                         </tr>
                         @empty

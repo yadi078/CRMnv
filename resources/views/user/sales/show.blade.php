@@ -23,6 +23,23 @@
         </div>
     </x-slot>
 
+    @if(session('sale_created'))
+        <div class="fixed inset-0 z-40 flex items-center justify-center bg-black/60">
+            <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-lg w-full text-center">
+                <h2 class="text-2xl font-extrabold text-[#071A3D] mb-4">Registro de venta exitoso</h2>
+                <p class="text-base text-gray-700 mb-6">La venta se guardó correctamente. Ahora puedes descargar la ficha de inscripción o finalizar.</p>
+                <div class="flex flex-wrap justify-center gap-4">
+                    <a href="{{ route('user.sales.index') }}" class="px-5 py-3 rounded-xl border border-gray-300 text-gray-800 font-semibold hover:bg-gray-50">
+                        Finalizar
+                    </a>
+                    <a href="{{ route('user.sales.ficha-pdf', $sale) }}" target="_blank" class="px-5 py-3 rounded-xl bg-[#FFE600] text-[#071A3D] font-semibold shadow hover:bg-yellow-300">
+                        Descargar ficha de inscripción (PDF)
+                    </a>
+                </div>
+            </div>
+        </div>
+    @endif
+
     <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden print:shadow-none print:rounded-none" id="ficha-venta">
         {{-- Encabezado --}}
         <div class="flex flex-wrap items-start justify-between gap-4 p-6 pb-4 border-b-2 border-[#071A3D] print:break-inside-avoid">

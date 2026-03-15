@@ -90,7 +90,7 @@ class SalesController extends Controller
                 Rule::exists('contacts', 'id')->where('company_id', $request->company_id),
             ],
             'nombre_servicio' => 'required|string|max:255',
-            'fecha_venta' => 'required|date',
+            'fecha_venta' => 'required|date|after_or_equal:today',
             'monto' => 'nullable|numeric|min:0',
             'incluye_iva' => 'nullable|boolean',
             'tipo_pago' => 'nullable|string|max:50',
@@ -102,9 +102,21 @@ class SalesController extends Controller
             'uso_cfdi' => 'nullable|string|max:100',
             'orden_compra' => 'nullable|string|max:100',
             'participantes_nombres' => 'nullable|array',
-            'participantes_nombres.*' => 'nullable|string|max:255',
+            'participantes_nombres.*' => 'nullable|string|max:100|regex:/^[\pL\s]+$/u',
             'participantes_emails' => 'nullable|array',
             'participantes_emails.*' => 'nullable|email|max:255',
+        ], [
+            'company_id.required' => 'La empresa es obligatoria.',
+            'company_id.exists' => 'La empresa seleccionada no es válida.',
+            'nombre_servicio.required' => 'El nombre del curso o servicio es obligatorio.',
+            'fecha_venta.required' => 'La fecha de la venta es obligatoria.',
+            'fecha_venta.date' => 'La fecha de la venta no tiene un formato válido.',
+            'fecha_venta.after_or_equal' => 'La fecha de la venta no puede ser anterior a hoy.',
+            'participantes_nombres.*.regex' => 'El nombre de cada participante solo puede contener letras y espacios.',
+            'participantes_nombres.*.max' => 'El nombre de cada participante no puede superar los 100 caracteres.',
+            'participantes_emails.*.email' => 'Cada correo de participante debe ser un correo electrónico válido.',
+            'required' => 'Este campo es obligatorio.',
+            'email' => 'Ingrese un correo electrónico válido.',
         ]);
 
         $sale = Sale::create([
@@ -125,8 +137,8 @@ class SalesController extends Controller
             }
         }
 
-        return redirect()->route('user.sales.index')
-            ->with('success', 'Venta registrada exitosamente.');
+        return redirect()->route('user.sales.show', $sale)
+            ->with('sale_created', true);
     }
 
     /**
@@ -175,7 +187,7 @@ class SalesController extends Controller
                 Rule::exists('contacts', 'id')->where('company_id', $request->company_id),
             ],
             'nombre_servicio' => 'required|string|max:255',
-            'fecha_venta' => 'required|date',
+            'fecha_venta' => 'required|date|after_or_equal:today',
             'monto' => 'nullable|numeric|min:0',
             'incluye_iva' => 'nullable|boolean',
             'tipo_pago' => 'nullable|string|max:50',
@@ -187,9 +199,21 @@ class SalesController extends Controller
             'uso_cfdi' => 'nullable|string|max:100',
             'orden_compra' => 'nullable|string|max:100',
             'participantes_nombres' => 'nullable|array',
-            'participantes_nombres.*' => 'nullable|string|max:255',
+            'participantes_nombres.*' => 'nullable|string|max:100|regex:/^[\pL\s]+$/u',
             'participantes_emails' => 'nullable|array',
             'participantes_emails.*' => 'nullable|email|max:255',
+        ], [
+            'company_id.required' => 'La empresa es obligatoria.',
+            'company_id.exists' => 'La empresa seleccionada no es válida.',
+            'nombre_servicio.required' => 'El nombre del curso o servicio es obligatorio.',
+            'fecha_venta.required' => 'La fecha de la venta es obligatoria.',
+            'fecha_venta.date' => 'La fecha de la venta no tiene un formato válido.',
+            'fecha_venta.after_or_equal' => 'La fecha de la venta no puede ser anterior a hoy.',
+            'participantes_nombres.*.regex' => 'El nombre de cada participante solo puede contener letras y espacios.',
+            'participantes_nombres.*.max' => 'El nombre de cada participante no puede superar los 100 caracteres.',
+            'participantes_emails.*.email' => 'Cada correo de participante debe ser un correo electrónico válido.',
+            'required' => 'Este campo es obligatorio.',
+            'email' => 'Ingrese un correo electrónico válido.',
         ]);
 
         $sale->update([

@@ -46,74 +46,127 @@
         {{-- Admin: Exportar / Importar --}}
         @if($isAdmin)
         <div class="panel-card-dark">
-            <h3 class="panel-card-dark__title panel-card-dark__title--accent mb-4">Exportar o importar datos</h3>
-            <div class="flex flex-wrap gap-4">
+            <h3 class="panel-card-dark__title panel-card-dark__title--accent mb-4 text-center">Gestión de exportación e importación</h3>
+
+            <h4 class="text-lg font-bold text-[#FFE600] text-center tracking-wide mb-3">EXPORTAR</h4>
+            <div class="flex flex-wrap justify-center gap-4 mb-10">
                 <form action="{{ route('data-management.export') }}" method="POST" class="inline">
                     @csrf
                     <input type="hidden" name="table" value="companies">
-                    <button type="submit" class="btn-primary-app">Exportar empresas (CSV)</button>
+                    <button type="submit" class="btn-amber-app flex items-center gap-2">
+                        <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M16 12l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        <span>Exportar empresas (CSV)</span>
+                    </button>
                 </form>
                 <form action="{{ route('data-management.export') }}" method="POST" class="inline">
                     @csrf
                     <input type="hidden" name="table" value="contacts">
-                    <button type="submit" class="btn-primary-app">Exportar contactos (CSV)</button>
+                    <button type="submit" class="btn-amber-app flex items-center gap-2">
+                        <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M16 12l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        <span>Exportar contactos (CSV)</span>
+                    </button>
                 </form>
                 <form action="{{ route('data-management.export') }}" method="POST" class="inline">
                     @csrf
                     <input type="hidden" name="table" value="follow_ups">
-                    <button type="submit" class="btn-primary-app">Exportar seguimientos (CSV)</button>
+                    <button type="submit" class="btn-amber-app flex items-center gap-2">
+                        <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M16 12l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        <span>Exportar seguimientos (CSV)</span>
+                    </button>
                 </form>
             </div>
-            <p class="text-sm text-white/80 mt-3">Importar: use la misma estructura de columnas que el CSV exportado.</p>
-            <form action="{{ route('data-management.import') }}" method="POST" enctype="multipart/form-data" class="mt-4 flex flex-wrap items-end gap-4">
+
+            <h4 class="text-lg font-bold text-[#FFE600] text-center tracking-wide mt-2 mb-3">IMPORTAR</h4>
+            <p class="text-lg text-white/90 mt-1 text-center">Importar: use la misma estructura de columnas que el CSV exportado.</p>
+            <form action="{{ route('data-management.import') }}" method="POST" enctype="multipart/form-data" class="mt-6 flex flex-wrap items-end justify-center gap-6" x-data="{ fileName: 'Ningún archivo seleccionado' }">
                 @csrf
-                <div>
-                    <label class="block text-sm font-medium text-white/90 mb-1">Tabla</label>
-                    <select name="table" class="rounded-xl border-0 bg-white/15 text-white focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-2 px-3 [&>option]:bg-white [&>option]:text-gray-900">
+                <div class="flex flex-col items-center">
+                    <label class="block text-base font-semibold text-white/90 mb-2">Tabla</label>
+                    <select name="table" class="min-w-[220px] rounded-xl border-0 bg-white/15 text-white focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-3 px-4 text-base [&>option]:bg-[#1a3d6b] [&>option]:text-white">
                         <option value="companies">Empresas</option>
                         <option value="contacts">Contactos</option>
                         <option value="follow_ups">Seguimientos</option>
                     </select>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-white/90 mb-1">Archivo CSV</label>
-                    <input type="file" name="file" accept=".csv,.txt" required class="rounded-xl border-0 bg-white/15 text-white file:mr-2 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-[#FFE600] file:text-[#003366] file:font-semibold">
+                <div class="flex flex-col items-center">
+                    <label class="block text-base font-semibold text-white/90 mb-2">Archivo CSV</label>
+                    <div class="flex flex-wrap items-center gap-3">
+                        <label for="file" class="btn-amber-app cursor-pointer flex items-center gap-2 font-extrabold hover:text-[#003366]" style="color:#003366 !important;">
+                            <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4h7l5 5v11H4a2 2 0 01-2-2V6a2 2 0 012-2zm8 5v6m0 0l-3-3m3 3l3-3" />
+                            </svg>
+                            <span>Seleccionar archivo</span>
+                        </label>
+                        <span class="text-sm text-white min-w-[260px]" x-text="fileName"></span>
+                    </div>
+                    <input id="file" type="file" name="file" accept=".csv,.txt" required class="hidden" @change="fileName = $event.target.files[0]?.name || 'Ningún archivo seleccionado'">
                 </div>
-                <button type="submit" class="btn-amber-app">Importar</button>
+                <button type="submit" class="btn-amber-app flex items-center gap-2 text-[#003366] font-semibold">
+                    <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M8 12l4-4m0 0l4 4m-4-4v12" />
+                    </svg>
+                    <span>Importar</span>
+                </button>
             </form>
         </div>
         @endif
 
         {{-- Listado reciente: Empresas --}}
         <div class="panel-card-dark overflow-hidden">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="panel-card-dark__title panel-card-dark__title--accent mb-0">Últimas empresas</h3>
-                <a href="{{ route('companies.index') }}" class="text-sm font-medium text-[#FFE600] hover:text-white">Ver todas</a>
+            <div class="relative mb-8">
+                <h3 class="panel-card-dark__title panel-card-dark__title--accent mb-0 text-center text-2xl font-extrabold tracking-wide text-[#FFE600] drop-shadow-md">
+                    Últimas empresas
+                </h3>
+                <a href="{{ route('companies.index') }}" class="btn-amber-app absolute right-0 top-1/2 -translate-y-1/2 text-sm font-semibold px-4 py-2">
+                    Ver todas
+                </a>
             </div>
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-white/20">
+                <table class="min-w-full divide-y divide-white/10 rounded-2xl overflow-hidden bg-gradient-to-b from-[#06244a] via-[#082d5d] to-[#0a356e]">
                     <thead>
-                        <tr class="table-header-panel-dark">
-                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase">Nombre</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase">RFC</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase">Contactos</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase">Acción</th>
+                        <tr class="bg-[#FFE600]">
+                            <th class="px-7 py-4 text-left text-sm font-semibold uppercase tracking-wide text-[#003366]">Nombre</th>
+                            <th class="px-7 py-4 text-left text-sm font-semibold uppercase tracking-wide text-[#003366]">RFC</th>
+                            <th class="px-7 py-4 text-left text-sm font-semibold uppercase tracking-wide text-[#003366]">Contactos</th>
+                            <th class="px-7 py-4 text-center text-sm font-semibold uppercase tracking-wide text-[#003366]">Acción</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-white/15">
                         @forelse($companies as $company)
-                        <tr class="panel-card-dark__row hover:bg-white/8 transition-colors">
-                            <td class="px-4 py-3 text-sm text-white">{{ $company->nombre_comercial }}</td>
-                            <td class="px-4 py-3 text-sm text-white/90">{{ $company->rfc ?? '-' }}</td>
-                            <td class="px-4 py-3 text-sm text-white/90">{{ $company->contacts_count }}</td>
-                            <td class="px-4 py-3">
-                                <div class="flex flex-wrap items-center gap-2">
-                                    <a href="{{ route('companies.show', $company) }}" class="text-[#FFE600] font-medium hover:text-white">Ver</a>
+                        <tr class="panel-card-dark__row odd:bg-white/5 even:bg-white/0 hover:bg-white/10 transition-colors">
+                            <td class="px-7 py-5 text-base text-white">{{ $company->nombre_comercial }}</td>
+                            <td class="px-7 py-5 text-base text-white/90">{{ $company->rfc ?? '-' }}</td>
+                            <td class="px-7 py-5 text-base text-white/90">{{ $company->contacts_count }}</td>
+                            <td class="px-7 py-5">
+                                <div class="flex flex-wrap items-center gap-6">
+                                    <a href="{{ route('companies.show', $company) }}" class="inline-flex items-center gap-1 text-[#FFE600] font-medium hover:text-white">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                        </svg>
+                                        <span>Ver</span>
+                                    </a>
                                     @can('update', $company)
-                                    <button type="button" @click="openEditCompany({{ $company->id }})" class="text-amber-400 font-medium hover:text-white">Editar</button>
+                                    <button type="button" @click="openEditCompany({{ $company->id }})" class="inline-flex items-center gap-1 text-green-400 font-medium hover:text-white">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M4 20h4l9.232-9.232a2 2 0 000-2.828l-2.172-2.172a2 2 0 00-2.828 0L4 16v4z" />
+                                        </svg>
+                                        <span>Editar</span>
+                                    </button>
                                     @endcan
                                     @can('delete', $company)
-                                    <button type="button" @click="confirmDeleteCompany({{ $company->id }}, '{{ addslashes($company->nombre_comercial) }}')" class="text-red-400 font-medium hover:text-white">Eliminar</button>
+                                    <button type="button" @click="confirmDeleteCompany({{ $company->id }}, '{{ addslashes($company->nombre_comercial) }}')" class="inline-flex items-center gap-1 text-red-400 font-medium hover:text-white">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 5V4a1 1 0 011-1h4a1 1 0 011 1v1m-9 0h10" />
+                                        </svg>
+                                        <span>Eliminar</span>
+                                    </button>
                                     @endcan
                                 </div>
                             </td>
@@ -128,35 +181,55 @@
         </div>
 
         {{-- Listado reciente: Contactos --}}
-        <div class="panel-card-dark overflow-hidden">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="panel-card-dark__title panel-card-dark__title--accent mb-0">Últimos contactos</h3>
-                <a href="{{ route('contacts.index') }}" class="text-sm font-medium text-[#FFE600] hover:text-white">Ver todos</a>
+        <div class="panel-card-dark overflow-hidden mt-10">
+            <div class="relative mb-8">
+                <h3 class="panel-card-dark__title panel-card-dark__title--accent mb-0 text-center text-2xl font-extrabold tracking-wide text-[#FFE600] drop-shadow-md">
+                    Últimos contactos
+                </h3>
+                <a href="{{ route('contacts.index') }}" class="btn-amber-app absolute right-0 top-1/2 -translate-y-1/2 text-sm font-semibold px-4 py-2">
+                    Ver todos
+                </a>
             </div>
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-white/20">
+                <table class="min-w-full divide-y divide-white/10 rounded-2xl overflow-hidden bg-gradient-to-b from-[#06244a] via-[#082d5d] to-[#0a356e]">
                     <thead>
-                        <tr class="table-header-panel-dark">
-                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase">Nombre</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase">Correo electrónico</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase">Empresa</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase">Acción</th>
+                        <tr class="bg-[#FFE600]">
+                            <th class="px-7 py-4 text-left text-sm font-semibold uppercase tracking-wide text-[#003366]">Nombre</th>
+                            <th class="px-7 py-4 text-left text-sm font-semibold uppercase tracking-wide text-[#003366]">Correo electrónico</th>
+                            <th class="px-7 py-4 text-left text-sm font-semibold uppercase tracking-wide text-[#003366]">Empresa</th>
+                            <th class="px-7 py-4 text-center text-sm font-semibold uppercase tracking-wide text-[#003366]">Acción</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-white/15">
                         @forelse($contacts as $contact)
-                        <tr class="panel-card-dark__row hover:bg-white/8 transition-colors">
-                            <td class="px-4 py-3 text-sm text-white">{{ $contact->nombre_completo }}</td>
-                            <td class="px-4 py-3 text-sm text-white/90">{{ $contact->email }}</td>
-                            <td class="px-4 py-3 text-sm text-white/90">{{ $contact->company?->nombre_comercial ?? '—' }}</td>
-                            <td class="px-4 py-3">
-                                <div class="flex flex-wrap items-center gap-2">
-                                    <a href="{{ route('contacts.show', $contact) }}" class="text-[#FFE600] font-medium hover:text-white">Ver</a>
+                        <tr class="panel-card-dark__row odd:bg-white/5 even:bg-white/0 hover:bg-white/10 transition-colors">
+                            <td class="px-7 py-5 text-base text-white">{{ $contact->nombre_completo }}</td>
+                            <td class="px-7 py-5 text-base text-white/90">{{ $contact->email }}</td>
+                            <td class="px-7 py-5 text-base text-white/90">{{ $contact->company?->nombre_comercial ?? '—' }}</td>
+                            <td class="px-7 py-5">
+                                <div class="flex flex-wrap items-center gap-6">
+                                    <a href="{{ route('contacts.show', $contact) }}" class="inline-flex items-center gap-1 text-[#FFE600] font-medium hover:text-white">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                        </svg>
+                                        <span>Ver</span>
+                                    </a>
                                     @can('update', $contact)
-                                    <button type="button" @click="openEditContact({{ $contact->id }})" class="text-amber-400 font-medium hover:text-white">Editar</button>
+                                    <button type="button" @click="openEditContact({{ $contact->id }})" class="inline-flex items-center gap-1 text-green-400 font-medium hover:text-white">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M4 20h4l9.232-9.232a2 2 0 000-2.828l-2.172-2.172a2 2 0 00-2.828 0L4 16v4z" />
+                                        </svg>
+                                        <span>Editar</span>
+                                    </button>
                                     @endcan
                                     @can('delete', $contact)
-                                    <button type="button" @click="confirmDeleteContact({{ $contact->id }}, '{{ addslashes($contact->nombre_completo) }}')" class="text-red-400 font-medium hover:text-white">Eliminar</button>
+                                    <button type="button" @click="confirmDeleteContact({{ $contact->id }}, '{{ addslashes($contact->nombre_completo) }}')" class="inline-flex items-center gap-1 text-red-400 font-medium hover:text-white">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 5V4a1 1 0 011-1h4a1 1 0 011 1v1m-9 0h10" />
+                                        </svg>
+                                        <span>Eliminar</span>
+                                    </button>
                                     @endcan
                                 </div>
                             </td>

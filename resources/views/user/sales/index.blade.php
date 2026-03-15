@@ -9,14 +9,6 @@
             <h2 class="page-header-card__title">Historial de Ventas</h2>
             <p class="page-header-card__subtitle">Cursos y servicios vendidos por empresa</p>
         </div>
-        @can('sales.create')
-        <a href="{{ route('user.sales.create') }}" class="btn-amber-app ml-auto">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
-            Nueva Venta
-        </a>
-        @endcan
     </x-slot>
 
     <div class="space-y-8">
