@@ -26,6 +26,14 @@ class FollowUpController extends Controller
 
         $query = FollowUp::with(['company', 'contact', 'asignado', 'creator']);
 
+        // Usuario no admin: solo seguimientos que creó o tiene asignados
+        $user = auth()->user();
+        if (! $user->esAdmin()) {
+            $query->where(function ($q) use ($user) {
+                $q->where('created_by', $user->id)->orWhere('asignado_a', $user->id);
+            });
+        }
+
         if ($request->filled('completado')) {
             $query->where('completado', $request->completado);
         }

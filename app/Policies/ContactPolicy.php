@@ -18,10 +18,14 @@ class ContactPolicy
 
     /**
      * Determine whether the user can view the model.
+     * Admin ve todos; usuario solo los que creó (created_by).
      */
     public function view(User $user, Contact $contact): bool
     {
-        return $user->can('contacts.view');
+        if (! $user->can('contacts.view')) {
+            return false;
+        }
+        return $user->esAdmin() || $contact->created_by === $user->id;
     }
 
     /**
@@ -34,22 +38,31 @@ class ContactPolicy
 
     /**
      * Determine whether the user can update the model.
+     * Admin edita todos; usuario solo los que creó (created_by).
      */
     public function update(User $user, Contact $contact): bool
     {
-        return $user->can('contacts.edit');
+        if (! $user->can('contacts.edit')) {
+            return false;
+        }
+        return $user->esAdmin() || $contact->created_by === $user->id;
     }
 
     /**
      * Determine whether the user can delete the model.
+     * Admin elimina cualquiera; usuario solo los que creó (created_by).
      */
     public function delete(User $user, Contact $contact): bool
     {
-        return $user->can('contacts.delete');
+        if (! $user->can('contacts.delete')) {
+            return false;
+        }
+        return $user->esAdmin() || $contact->created_by === $user->id;
     }
 
     /**
      * Determine whether the user can generate PDF.
+     * Solo admin tiene permiso contacts.generate-pdf; usuario no.
      */
     public function generatePdf(User $user, Contact $contact): bool
     {

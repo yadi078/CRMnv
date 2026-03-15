@@ -18,10 +18,16 @@ class FollowUpPolicy
 
     /**
      * Determine whether the user can view the model.
+     * Admin ve todos; usuario solo los que creó o tiene asignados.
      */
     public function view(User $user, FollowUp $followUp): bool
     {
-        return $user->can('follow-ups.view');
+        if (! $user->can('follow-ups.view')) {
+            return false;
+        }
+        return $user->esAdmin()
+            || $followUp->created_by === $user->id
+            || $followUp->asignado_a === $user->id;
     }
 
     /**
@@ -34,18 +40,30 @@ class FollowUpPolicy
 
     /**
      * Determine whether the user can update the model.
+     * Admin edita todos; usuario solo los que creó o tiene asignados.
      */
     public function update(User $user, FollowUp $followUp): bool
     {
-        return $user->can('follow-ups.edit');
+        if (! $user->can('follow-ups.edit')) {
+            return false;
+        }
+        return $user->esAdmin()
+            || $followUp->created_by === $user->id
+            || $followUp->asignado_a === $user->id;
     }
 
     /**
      * Determine whether the user can delete the model.
+     * Admin elimina cualquiera; usuario solo los que creó o tiene asignados.
      */
     public function delete(User $user, FollowUp $followUp): bool
     {
-        return $user->can('follow-ups.delete');
+        if (! $user->can('follow-ups.delete')) {
+            return false;
+        }
+        return $user->esAdmin()
+            || $followUp->created_by === $user->id
+            || $followUp->asignado_a === $user->id;
     }
 
     /**
