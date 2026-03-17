@@ -82,19 +82,85 @@ class ContactController extends Controller
             }
         }
 
-        $contacts = $query->latest()->paginate(15)->withQueryString();
+        // Filtros avanzados por nombre (operador) y orden
+        if ($request->filled('search')) {
+            $nombre = $request->search;
+            $op = $request->get('nombre_op', 'contiene');
+            if ($op === 'exacto') {
+                $query->where('nombre_completo', $nombre);
+            } elseif ($op === 'empieza') {
+                $query->where('nombre_completo', 'like', "{$nombre}%");
+            } elseif ($op === 'termina') {
+                $query->where('nombre_completo', 'like', "%{$nombre}");
+            } else { // contiene (default)
+                $query->where('nombre_completo', 'like', "%{$nombre}%");
+            }
+        }
 
-        // Lista de nombres de contactos para el autocompletado
+        // Orden por nombre
+        $nombreOrden = $request->get('nombre_orden');
+        if ($nombreOrden === 'az') {
+            $query->orderBy('nombre_completo', 'asc');
+        } elseif ($nombreOrden === 'za') {
+            $query->orderBy('nombre_completo', 'desc');
+        } else {
+            $query->latest();
+        }
+
+        // Contacto disponible: teléfonos, celulares y "no desea correos"
+        if ($request->filled('tiene_telefono')) {
+            if ($request->tiene_telefono === 'si') {
+                $query->whereNotNull('telefono')->where('telefono', '!=', '');
+            } elseif ($request->tiene_telefono === 'no') {
+                $query->where(function ($q) {
+                    $q->whereNull('telefono')->orWhere('telefono', '');
+                });
+            }
+        }
+        if ($request->filled('telefono_exacto')) {
+            $query->where('telefono', $request->telefono_exacto);
+        }
+        if ($request->filled('tiene_celular')) {
+            if ($request->tiene_celular === 'si') {
+                $query->whereNotNull('celular')->where('celular', '!=', '');
+            } elseif ($request->tiene_celular === 'no') {
+                $query->where(function ($q) {
+                    $q->whereNull('celular')->orWhere('celular', '');
+                });
+            }
+        }
+        if ($request->filled('celular_exacto')) {
+            $query->where('celular', $request->celular_exacto);
+        }
+        if ($request->filled('no_desea_correos')) {
+            if ($request->no_desea_correos === 'si') {
+                $query->where('email_activo', false);
+            } elseif ($request->no_desea_correos === 'no') {
+                $query->where('email_activo', true);
+            }
+        }
+
+        $contacts = $query->paginate(15)->withQueryString();
+
+        // Datos auxiliares para filtros (nombres y números)
         $namesQuery = Contact::query();
+        $phonesQuery = Contact::query()->whereNotNull('telefono')->where('telefono', '!=', '');
+        $cellsQuery = Contact::query()->whereNotNull('celular')->where('celular', '!=', '');
         if (! $isAdmin) {
             $namesQuery->where('created_by', $user->id);
+            $phonesQuery->where('created_by', $user->id);
+            $cellsQuery->where('created_by', $user->id);
         }
-        $contactNames = $namesQuery
-            ->orderBy('nombre_completo')
-            ->pluck('nombre_completo')
-            ->unique();
+        $contactNames = $namesQuery->orderBy('nombre_completo')->pluck('nombre_completo')->unique();
+        $telefonos = $phonesQuery->orderBy('telefono')->pluck('telefono')->unique();
+        $celulares = $cellsQuery->orderBy('celular')->pluck('celular')->unique();
 
-        return $this->resolveView('contacts.index', 'user.contacts.index', compact('contacts', 'contactNames'));
+        return $this->resolveView('contacts.index', 'user.contacts.index', compact(
+            'contacts',
+            'contactNames',
+            'telefonos',
+            'celulares'
+        ));
     }
 
     /**
