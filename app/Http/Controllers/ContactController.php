@@ -38,7 +38,8 @@ class ContactController extends Controller
         // Mostrar solo contactos creados por el usuario autenticado (usuarios normales)
         // Los administradores pueden ver todos los contactos.
         if (! $isAdmin) {
-            $query->where('created_by', $user->id);
+            $query->where('created_by', $user->id)
+                ->where('approval_status', 'aprobado');
         }
 
         if ($request->filled('search')) {
@@ -116,6 +117,9 @@ class ContactController extends Controller
     {
         DB::beginTransaction();
         try {
+            $user = auth()->user();
+            $approvalStatus = $user->esAdmin() ? 'aprobado' : 'pendiente';
+
             $contact = Contact::create([
                 'company_id' => $request->company_id,
                 'nombre_completo' => $request->nombre_completo,
@@ -137,7 +141,10 @@ class ContactController extends Controller
                 'regimen_fiscal' => $request->regimen_fiscal,
                 'notas' => $request->notas,
                 'status_color' => $request->input('status_color', 'seguimiento'),
-                'created_by' => auth()->id(),
+                'approval_status' => $approvalStatus,
+                'approved_by' => $approvalStatus === 'aprobado' ? $user->id : null,
+                'approved_at' => $approvalStatus === 'aprobado' ? now() : null,
+                'created_by' => $user->id,
             ]);
 
             $contact->load(['creator', 'company']);

@@ -159,7 +159,7 @@ class CompanyController extends Controller
             $company = Company::create([
                 'nombre_comercial' => $request->nombre_comercial,
                 'rfc' => $request->filled('rfc') ? strtoupper($request->rfc) : null,
-                'sector' => $request->sector,
+                'sector' => is_array($request->sector) ? implode(', ', $request->sector) : $request->sector,
                 'municipio' => $request->municipio,
                 'estado' => $request->estado,
                 'ejecutivo_asignado' => $request->ejecutivo_asignado,
@@ -249,7 +249,7 @@ class CompanyController extends Controller
             $company->update([
                 'nombre_comercial' => $request->nombre_comercial,
                 'rfc' => $request->filled('rfc') ? strtoupper($request->rfc) : null,
-                'sector' => $request->sector,
+                'sector' => is_array($request->sector) ? implode(', ', $request->sector) : $request->sector,
                 'municipio' => $request->municipio,
                 'estado' => $request->estado,
                 'ejecutivo_asignado' => $request->ejecutivo_asignado,

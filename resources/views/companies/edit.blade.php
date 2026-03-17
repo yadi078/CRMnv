@@ -31,8 +31,20 @@
                         </div>
 
                         <div class="md:col-span-2">
-                            <x-input-label for="sector" value="Sector/Giro *" />
-                            <x-text-input id="sector" name="sector" type="text" class="mt-1 block w-full" :value="old('sector', $company->sector)" required />
+                            <x-input-label for="sector" value="Sector/Giro * (puede seleccionar varios)" />
+                            <select id="sector" name="sector[]" multiple
+                                    class="mt-1 block w-full rounded-md border-gray-300 bg-white text-[#1F2937] focus:border-[#FFE600] focus:ring-4 focus:ring-[#FFE600]/40">
+                                @php
+                                    $currentSectors = collect(old('sector', $company->sector ? explode(',', $company->sector) : []))
+                                        ->map(fn($s) => trim((string)$s))
+                                        ->filter()
+                                        ->values();
+                                @endphp
+                                @foreach($currentSectors as $s)
+                                    <option value="{{ $s }}" selected>{{ $s }}</option>
+                                @endforeach
+                            </select>
+                            <p class="mt-1 text-xs text-white/70">Puede asignar múltiples sectores/giro a la empresa.</p>
                             <x-input-error :messages="$errors->get('sector')" class="mt-2" />
                         </div>
 

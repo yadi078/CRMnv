@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Company;
+use App\Models\Contact;
 use App\Models\User;
 use App\Notifications\UserApprovedNotification;
 use Illuminate\Http\Request;
@@ -24,8 +25,10 @@ class ApprovalController extends Controller
         $tab = $request->get('tab', 'empresas');
 
         $companies = collect();
+        $contacts = collect();
         $users = collect();
         $companiesCount = 0;
+        $contactsCount = 0;
         $usersCount = 0;
 
         if ($request->user()->can('companies.approve')) {
@@ -47,9 +50,53 @@ class ApprovalController extends Controller
             }
         }
 
-        $totalPendientes = $companiesCount + $usersCount;
+        // Contactos pendientes (solo admins)
+        if ($request->user()->esAdmin()) {
+            $contactsCount = Contact::pendientes()->count();
+            if ($tab === 'contactos') {
+                $contacts = Contact::pendientes()
+                    ->with(['company', 'creator'])
+                    ->latest()
+                    ->paginate(10, ['*'], 'contacts_page');
+            }
+        }
 
-        return view('approvals.index', compact('tab', 'companies', 'users', 'companiesCount', 'usersCount', 'totalPendientes'));
+        $totalPendientes = $companiesCount + $usersCount + $contactsCount;
+
+        return view('approvals.index', compact(
+            'tab',
+            'companies',
+            'contacts',
+            'users',
+            'companiesCount',
+            'contactsCount',
+            'usersCount',
+            'totalPendientes'
+        ));
+    }
+
+    /**
+     * Aprueba un contacto
+     */
+    public function approveContact(Contact $contact)
+    {
+        abort_unless(auth()->user()->esAdmin(), 403);
+
+        $contact->aprobar(auth()->id());
+
+        return back()->with('success', 'Contacto aprobado exitosamente.');
+    }
+
+    /**
+     * Denega un contacto
+     */
+    public function denyContact(Request $request, Contact $contact)
+    {
+        abort_unless(auth()->user()->esAdmin(), 403);
+
+        $contact->denegar(auth()->id(), $request->input('motivo'));
+
+        return back()->with('success', 'Solicitud de contacto denegada.');
     }
 
     /**

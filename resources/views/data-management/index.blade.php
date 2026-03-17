@@ -152,22 +152,24 @@
                                         </svg>
                                         <span>Ver</span>
                                     </a>
-                                    @can('update', $company)
-                                    <button type="button" @click="openEditCompany({{ $company->id }})" class="inline-flex items-center gap-1 text-green-400 font-medium hover:text-white">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M4 20h4l9.232-9.232a2 2 0 000-2.828l-2.172-2.172a2 2 0 00-2.828 0L4 16v4z" />
-                                        </svg>
-                                        <span>Editar</span>
-                                    </button>
-                                    @endcan
-                                    @can('delete', $company)
-                                    <button type="button" @click="confirmDeleteCompany({{ $company->id }}, '{{ addslashes($company->nombre_comercial) }}')" class="inline-flex items-center gap-1 text-red-400 font-medium hover:text-white">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 5V4a1 1 0 011-1h4a1 1 0 011 1v1m-9 0h10" />
-                                        </svg>
-                                        <span>Eliminar</span>
-                                    </button>
-                                    @endcan
+                                    @if($isAdmin)
+                                        @can('update', $company)
+                                        <button type="button" @click="openEditCompany({{ $company->id }})" class="inline-flex items-center gap-1 text-green-400 font-medium hover:text-white">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M4 20h4l9.232-9.232a2 2 0 000-2.828l-2.172-2.172a2 2 0 00-2.828 0L4 16v4z" />
+                                            </svg>
+                                            <span>Editar</span>
+                                        </button>
+                                        @endcan
+                                        @can('delete', $company)
+                                        <button type="button" @click="confirmDeleteCompany({{ $company->id }}, '{{ addslashes($company->nombre_comercial) }}')" class="inline-flex items-center gap-1 text-red-400 font-medium hover:text-white">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 5V4a1 1 0 011-1h4a1 1 0 011 1v1m-9 0h10" />
+                                            </svg>
+                                            <span>Eliminar</span>
+                                        </button>
+                                        @endcan
+                                    @endif
                                 </div>
                             </td>
                         </tr>
@@ -215,22 +217,24 @@
                                         </svg>
                                         <span>Ver</span>
                                     </a>
-                                    @can('update', $contact)
-                                    <button type="button" @click="openEditContact({{ $contact->id }})" class="inline-flex items-center gap-1 text-green-400 font-medium hover:text-white">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M4 20h4l9.232-9.232a2 2 0 000-2.828l-2.172-2.172a2 2 0 00-2.828 0L4 16v4z" />
-                                        </svg>
-                                        <span>Editar</span>
-                                    </button>
-                                    @endcan
-                                    @can('delete', $contact)
-                                    <button type="button" @click="confirmDeleteContact({{ $contact->id }}, '{{ addslashes($contact->nombre_completo) }}')" class="inline-flex items-center gap-1 text-red-400 font-medium hover:text-white">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 5V4a1 1 0 011-1h4a1 1 0 011 1v1m-9 0h10" />
-                                        </svg>
-                                        <span>Eliminar</span>
-                                    </button>
-                                    @endcan
+                                    @if($isAdmin)
+                                        @can('update', $contact)
+                                        <button type="button" @click="openEditContact({{ $contact->id }})" class="inline-flex items-center gap-1 text-green-400 font-medium hover:text-white">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M4 20h4l9.232-9.232a2 2 0 000-2.828l-2.172-2.172a2 2 0 00-2.828 0L4 16v4z" />
+                                            </svg>
+                                            <span>Editar</span>
+                                        </button>
+                                        @endcan
+                                        @can('delete', $contact)
+                                        <button type="button" @click="confirmDeleteContact({{ $contact->id }}, '{{ addslashes($contact->nombre_completo) }}')" class="inline-flex items-center gap-1 text-red-400 font-medium hover:text-white">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 5V4a1 1 0 011-1h4a1 1 0 011 1v1m-9 0h10" />
+                                            </svg>
+                                            <span>Eliminar</span>
+                                        </button>
+                                        @endcan
+                                    @endif
                                 </div>
                             </td>
                         </tr>
