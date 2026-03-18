@@ -65,7 +65,7 @@ class Contact extends Model
             'email_activo' => 'boolean',
             'fecha_cumpleanos' => 'date',
         ];
-    }
+    } 
 
     /**
      * Relación: Un contacto pertenece a una empresa
