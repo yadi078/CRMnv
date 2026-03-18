@@ -34,6 +34,28 @@ final class FilterSpec
 
     public function isValid(): bool
     {
-        return $this->field !== '' && $this->operator !== '';
+        if ($this->field === '' || $this->operator === '') {
+            return false;
+        }
+
+        // Operadores que NO requieren valor.
+        // Para los demás, si el valor viene vacío/null, el filtro se ignora.
+        $opNoValue = ['is_empty', 'is_not_empty', 'has_value', 'no_value'];
+        if (in_array($this->operator, $opNoValue, true)) {
+            return true;
+        }
+
+        if (is_array($this->value)) {
+            $normalized = array_values(array_filter(
+                array_map(
+                    fn ($v) => is_string($v) ? trim($v) : $v,
+                    $this->value
+                ),
+                fn ($v) => $v !== null && $v !== ''
+            ));
+            return count($normalized) > 0;
+        }
+
+        return $this->value !== null && $this->value !== '';
     }
 }

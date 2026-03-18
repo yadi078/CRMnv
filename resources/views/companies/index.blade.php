@@ -37,6 +37,18 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-3">
+                    @can('companies.create')
+                        <form action="{{ route('companies.import') }}" method="POST" enctype="multipart/form-data" class="flex items-center gap-2">
+                            @csrf
+                            <label class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/30 text-xs text-white/90 cursor-pointer hover:bg-white/15">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4h16v12H4zM4 16l4 4m0 0h8m-8 0l4-4" />
+                                </svg>
+                                <span>Cargar base (Excel)</span>
+                                <input type="file" name="file" class="hidden" accept=".xlsx,.xls,.csv" onchange="this.form.submit()">
+                            </label>
+                        </form>
+                    @endcan
                     <a href="{{ route('companies.index') }}" class="text-xs text-white/70 hover:text-[#FFE600] inline-flex items-center gap-1">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -50,7 +62,8 @@
                 <!-- Datos de empresa -->
                 <div class="bg-white/5 rounded-2xl px-4 py-4">
                     <h4 class="text-sm font-semibold text-white/90 mb-3">Datos de empresa</h4>
-                    <div class="grid grid-cols-1 md:grid-cols-6 gap-3">
+                    <!-- 3 columnas para distribuir mejor los filtros -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
                             <label class="block text-xs font-medium text-white/80 mb-1">Sector</label>
                             <select id="sector" name="sector" class="w-full rounded-xl border border-gray-200 bg-white text-[#1F2937] text-xs py-2 px-2">
@@ -103,7 +116,7 @@
                 <!-- Estado comercial -->
                 <div class="bg-white/5 rounded-2xl px-4 py-4">
                     <h4 class="text-sm font-semibold text-white/90 mb-3">Estado comercial</h4>
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
                             <label class="block text-xs font-medium text-white/80 mb-1">Estado prospecto</label>
                             <select id="status_color" name="status_color" class="w-full rounded-xl border-0 bg-white/15 text-white text-xs py-2 px-3 [&>option]:bg-[#1a3d6b]">
@@ -150,7 +163,7 @@
                 <!-- Responsable -->
                 <div class="bg-white/5 rounded-2xl px-4 py-4">
                     <h4 class="text-sm font-semibold text-white/90 mb-3">Responsable</h4>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
                             <label class="block text-xs font-medium text-white/80 mb-1">Ejecutivo</label>
                             <select id="ejecutivo_asignado" name="ejecutivo_asignado" class="w-full rounded-xl border border-gray-200 bg-white text-[#1F2937] text-xs py-2 px-2">
@@ -186,7 +199,7 @@
                 <!-- Contacto disponible -->
                 <div class="bg-white/5 rounded-2xl px-4 py-4">
                     <h4 class="text-sm font-semibold text-white/90 mb-3">Contacto disponible</h4>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
                             <label class="block text-xs font-medium text-white/80 mb-1">Tiene teléfono</label>
                             <select class="w-full rounded-xl border border-gray-200 bg-white text-[#1F2937] text-xs py-2 px-2">
@@ -374,6 +387,23 @@
                                     </svg>
                                     Editar
                                 </a>
+                                @endcan
+
+                                @can('companies.delete')
+                                <form action="{{ route('companies.destroy', $company) }}" method="POST" class="inline-flex">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button
+                                        type="submit"
+                                        class="text-red-300 hover:text-red-200 mr-3 inline-flex items-center gap-1"
+                                        onclick="return confirm('¿Seguro que deseas eliminar esta empresa?')"
+                                    >
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m-7 0h10a1 1 0 00-1-1h-3V4a1 1 0 00-1-1h-2a1 1 0 00-1 1v2H9a1 1 0 00-1 1z" />
+                                        </svg>
+                                        Eliminar
+                                    </button>
+                                </form>
                                 @endcan
                             </td>
                         </tr>

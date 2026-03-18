@@ -43,18 +43,28 @@ class FilterConfig
         $withValue = array_merge($textAndExistence, ['has_value', 'no_value']);
 
         return [
-            'genero' => ['label' => 'Género', 'column' => 'genero', 'type' => 'select', 'operators' => ['equals', 'not_equals', 'is_empty', 'is_not_empty']],
+            // MULTI (select multiple + IN/OR)
+            'genero' => ['label' => 'Género', 'column' => 'genero', 'type' => 'select', 'multiple' => true, 'operators' => ['equals', 'not_equals', 'is_empty', 'is_not_empty']],
+            'departamento' => ['label' => 'Área de trabajo', 'column' => 'departamento', 'type' => 'select', 'multiple' => true, 'operators' => ['equals', 'not_equals', 'is_empty', 'is_not_empty']],
+            'puesto_de_trabajo' => ['label' => 'Puesto de trabajo', 'column' => 'puesto_de_trabajo', 'type' => 'select', 'multiple' => true, 'operators' => ['equals', 'not_equals', 'is_empty', 'is_not_empty']],
+            'municipio' => ['label' => 'Ciudad', 'column' => 'municipio', 'type' => 'select', 'multiple' => true, 'operators' => ['equals', 'not_equals', 'is_empty', 'is_not_empty']],
+            'estado' => ['label' => 'Estado', 'column' => 'estado', 'type' => 'select', 'multiple' => true, 'operators' => ['equals', 'not_equals', 'is_empty', 'is_not_empty']],
+
+            // RELACIONAL: Comercial (empresa.nombre_comercial)
+            'comercial' => ['label' => 'Comercial', 'column' => null, 'type' => 'select', 'multiple' => true, 'operators' => ['equals', 'not_equals', 'is_empty', 'is_not_empty']],
+
+            // TEXT (LIKE / equals)
             'nombre_completo' => ['label' => 'Nombre', 'column' => 'nombre_completo', 'type' => 'text', 'operators' => $textAndExistence],
             'telefono' => ['label' => 'Teléfono', 'column' => 'telefono', 'type' => 'text', 'operators' => $withValue],
             'celular' => ['label' => 'Celular', 'column' => 'celular', 'type' => 'text', 'operators' => $withValue],
             'email' => ['label' => 'Email', 'column' => 'email', 'type' => 'text', 'operators' => $withValue],
-            'departamento' => ['label' => 'Área de trabajo', 'column' => 'departamento', 'type' => 'text', 'operators' => $textAndExistence],
-            'puesto_de_trabajo' => ['label' => 'Puesto de trabajo', 'column' => 'puesto_de_trabajo', 'type' => 'text', 'operators' => $textAndExistence],
-            'municipio' => ['label' => 'Ciudad', 'column' => 'municipio', 'type' => 'text', 'operators' => $textAndExistence],
-            'estado' => ['label' => 'Estado', 'column' => 'estado', 'type' => 'text', 'operators' => $textAndExistence],
             'notas' => ['label' => 'Notas', 'column' => 'notas', 'type' => 'text', 'operators' => $textAndExistence],
+
+            // RELACIONALES
+            'comercial' => ['label' => 'Comercial', 'column' => null, 'type' => 'select', 'multiple' => true, 'operators' => ['equals', 'not_equals', 'is_empty', 'is_not_empty']],
+
             'domicilio' => ['label' => 'Domicilio', 'column' => null, 'type' => 'existence', 'operators' => self::existenceOperators()],
-            'email_activo' => ['label' => 'No desea recibir correos', 'column' => 'email_activo', 'type' => 'boolean', 'operators' => ['equals'], 'options' => ['1' => 'Sí desea', '0' => 'No desea']],
+            'no_recibir_correos' => ['label' => 'No desea recibir correos', 'column' => 'email_activo', 'type' => 'checkbox', 'operators' => ['equals']],
         ];
     }
 
@@ -63,9 +73,13 @@ class FilterConfig
     {
         $textAndExistence = array_merge(self::textOperators(), self::existenceOperators());
         return [
-            'sector' => ['label' => 'Giro', 'column' => 'sector', 'type' => 'text', 'operators' => $textAndExistence],
-            'municipio' => ['label' => 'Ciudad', 'column' => 'municipio', 'type' => 'text', 'operators' => $textAndExistence],
-            'estado' => ['label' => 'Estado', 'column' => 'estado', 'type' => 'text', 'operators' => $textAndExistence],
+            'sector' => ['label' => 'Giro', 'column' => 'sector', 'type' => 'select', 'multiple' => true, 'operators' => ['equals', 'not_equals', 'is_empty', 'is_not_empty']],
+            'municipio' => ['label' => 'Ciudad', 'column' => 'municipio', 'type' => 'select', 'multiple' => true, 'operators' => ['equals', 'not_equals', 'is_empty', 'is_not_empty']],
+            'estado' => ['label' => 'Estado', 'column' => 'estado', 'type' => 'select', 'multiple' => true, 'operators' => ['equals', 'not_equals', 'is_empty', 'is_not_empty']],
+
+            // Alias unificado: comercial -> companies.nombre_comercial
+            'comercial' => ['label' => 'Comercial', 'column' => 'nombre_comercial', 'type' => 'select', 'multiple' => true, 'operators' => ['equals', 'not_equals', 'is_empty', 'is_not_empty']],
+
             'datos_fiscales' => ['label' => 'Domicilio', 'column' => 'datos_fiscales', 'type' => 'existence', 'operators' => self::existenceOperators()],
             'nombre_comercial' => ['label' => 'Comercial', 'column' => 'nombre_comercial', 'type' => 'text', 'operators' => $textAndExistence],
         ];
@@ -78,7 +92,7 @@ class FilterConfig
 
     public static function contactGeneroOptions(): array
     {
-        return ['' => '—', 'Masculino' => 'Masculino', 'Femenino' => 'Femenino', 'Otro' => 'Otro'];
+        return ['' => 'Todos', 'Masculino' => 'Masculino', 'Femenino' => 'Femenino', 'Otro' => 'Otro'];
     }
 
     /** Operadores por campo para contactos (para uso en vistas). */
@@ -86,7 +100,7 @@ class FilterConfig
     {
         $fields = self::contactFields();
         $fields['genero']['options'] = self::contactGeneroOptions();
-        $fields['email_activo']['options'] = ['1' => 'Sí desea', '0' => 'No desea'];
+        $fields['no_recibir_correos']['options'] = ['1' => 'Sí (no recibir correos)'];
         return $fields;
     }
 

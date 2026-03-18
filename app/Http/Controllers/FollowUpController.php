@@ -48,7 +48,7 @@ class FollowUpController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
+     *  Si se pasa company_id o contact_id, se carga la empresa o contacto respectivamente.
      */
     public function create(Request $request)
     {
@@ -64,7 +64,7 @@ class FollowUpController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * se valida que se haya pasado company_id o contact_id, y se crea el seguimiento con la empresa o contacto respectivamente.
      */
     public function store(Request $request)
     {

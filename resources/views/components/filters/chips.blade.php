@@ -2,7 +2,7 @@
 
 @if(count($filters) > 0)
 <div class="flex flex-wrap items-center gap-2 mb-4">
-    <span class="text-sm text-white/70 mr-1">Filtros activos:</span>
+    <span class="text-sm text-white/70 mr-1">Filtros activos ({{ count($filters) }}):</span>
     @foreach($filters as $filter)
         @if(!empty($filter['field']) && !empty($filter['operator']))
             @php

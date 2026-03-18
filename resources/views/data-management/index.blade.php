@@ -49,7 +49,7 @@
             <h3 class="panel-card-dark__title panel-card-dark__title--accent mb-4 text-center">Gestión de exportación e importación</h3>
 
             <h4 class="text-lg font-bold text-[#FFE600] text-center tracking-wide mb-3">EXPORTAR</h4>
-            <div class="flex flex-wrap justify-center gap-4 mb-10">
+            <div class="flex flex-wrap justify-center gap-4 mb-8">
                 <form action="{{ route('data-management.export') }}" method="POST" class="inline">
                     @csrf
                     <input type="hidden" name="table" value="companies">
@@ -83,21 +83,12 @@
             </div>
 
             <h4 class="text-lg font-bold text-[#FFE600] text-center tracking-wide mt-2 mb-3">IMPORTAR</h4>
-            <p class="text-lg text-white/90 mt-1 text-center">Importar: use la misma estructura de columnas que el CSV exportado.</p>
-            <form action="{{ route('data-management.import') }}" method="POST" enctype="multipart/form-data" class="mt-6 flex flex-wrap items-end justify-center gap-6" x-data="{ fileName: 'Ningún archivo seleccionado' }">
+            <form action="{{ route('companies.import') }}" method="POST" enctype="multipart/form-data" class="mt-6 flex flex-wrap items-end justify-center gap-6" x-data="{ fileName: 'Ningún archivo seleccionado' }">
                 @csrf
                 <div class="flex flex-col items-center">
-                    <label class="block text-base font-semibold text-white/90 mb-2">Tabla</label>
-                    <select name="table" class="min-w-[220px] rounded-xl border-0 bg-white/15 text-white focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-3 px-4 text-base [&>option]:bg-[#1a3d6b] [&>option]:text-white">
-                        <option value="companies">Empresas</option>
-                        <option value="contacts">Contactos</option>
-                        <option value="follow_ups">Seguimientos</option>
-                    </select>
-                </div>
-                <div class="flex flex-col items-center">
-                    <label class="block text-base font-semibold text-white/90 mb-2">Archivo CSV</label>
+                    <label class="block text-base font-semibold text-white/90 mb-2">Archivo Excel</label>
                     <div class="flex flex-wrap items-center gap-3">
-                        <label for="file" class="btn-amber-app cursor-pointer flex items-center gap-2 font-extrabold hover:text-[#003366]" style="color:#003366 !important;">
+                        <label for="file_excel_dm" class="btn-amber-app cursor-pointer flex items-center gap-2 font-extrabold hover:text-[#003366]" style="color:#003366 !important;">
                             <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4h7l5 5v11H4a2 2 0 01-2-2V6a2 2 0 012-2zm8 5v6m0 0l-3-3m3 3l3-3" />
                             </svg>
@@ -105,13 +96,13 @@
                         </label>
                         <span class="text-sm text-white min-w-[260px]" x-text="fileName"></span>
                     </div>
-                    <input id="file" type="file" name="file" accept=".csv,.txt" required class="hidden" @change="fileName = $event.target.files[0]?.name || 'Ningún archivo seleccionado'">
+                    <input id="file_excel_dm" type="file" name="file" accept=".xlsx,.xls,.csv" required class="hidden" @change="fileName = $event.target.files[0]?.name || 'Ningún archivo seleccionado'">
                 </div>
                 <button type="submit" class="btn-amber-app flex items-center gap-2 text-[#003366] font-semibold">
                     <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M8 12l4-4m0 0l4 4m-4-4v12" />
                     </svg>
-                    <span>Importar</span>
+                    <span>Importar base Excel</span>
                 </button>
             </form>
         </div>
