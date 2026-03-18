@@ -45,15 +45,22 @@
                         </div>
 
                         <div class="md:col-span-2">
-                            <x-input-label for="sector" value="Sector/Giro *" class="text-white" />
-                            <x-text-input
-                                id="sector"
-                                name="sector"
-                                type="text"
-                                class="mt-1 block w-full"
-                                :value="old('sector')"
-                                required
-                            />
+                            <x-input-label for="sector" value="Sector/Giro * (puede seleccionar varios)" class="text-white" />
+                            <select id="sector" name="sector[]" multiple
+                                    class="mt-1 block w-full rounded-md border-[#E2E8F0] bg-white text-[#1F2937] focus:border-[#FFE600] focus:ring-4 focus:ring-[#FFE600]/40">
+                                @php
+                                    $oldSectors = collect(old('sector', []))
+                                        ->map(fn($s) => trim((string)$s))
+                                        ->filter()
+                                        ->values();
+                                @endphp
+                                @if($oldSectors->isNotEmpty())
+                                    @foreach($oldSectors as $s)
+                                        <option value="{{ $s }}" selected>{{ $s }}</option>
+                                    @endforeach
+                                @endif
+                            </select>
+                            <p class="mt-1 text-xs text-white/70">Escriba y presione Enter para agregar varios giros (puede manejar más de uno).</p>
                             <x-input-error :messages="$errors->get('sector')" class="mt-2" />
                         </div>
 

@@ -53,6 +53,10 @@ class Contact extends Model
         'regimen_fiscal',
         'notas',
         'status_color',
+        'approval_status',
+        'approved_by',
+        'approved_at',
+        'motivo_rechazo',
         'created_by',
     ];
 
@@ -64,6 +68,7 @@ class Contact extends Model
         return [
             'email_activo' => 'boolean',
             'fecha_cumpleanos' => 'date',
+            'approved_at' => 'datetime',
         ];
     } 
 
@@ -100,6 +105,14 @@ class Contact extends Model
     }
 
     /**
+     * Relación: Administrador que aprobó el contacto
+     */
+    public function approver(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    /**
      * Etiqueta legible del estado de prospecto
      */
     public function getStatusLabelAttribute(): string
@@ -115,4 +128,47 @@ class Contact extends Model
     {
         return $query->where('status_color', $status);
     }
+
+    /**
+     * Scope: contactos pendientes de aprobación
+     */
+    public function scopePendientes($query)
+    {
+        return $query->where('approval_status', 'pendiente');
+    }
+
+    /**
+     * Scope: contactos aprobados
+     */
+    public function scopeAprobados($query)
+    {
+        return $query->where('approval_status', 'aprobado');
+    }
+
+    /**
+     * Aprobar contacto
+     */
+    public function aprobar(int $userId): void
+    {
+        $this->update([
+            'approval_status' => 'aprobado',
+            'approved_by' => $userId,
+            'approved_at' => now(),
+            'motivo_rechazo' => null,
+        ]);
+    }
+
+    /**
+     * Denegar contacto
+     */
+    public function denegar(int $userId, ?string $motivo = null): void
+    {
+        $this->update([
+            'approval_status' => 'rechazado',
+            'approved_by' => $userId,
+            'approved_at' => now(),
+            'motivo_rechazo' => $motivo,
+        ]);
+    }
 }
+
