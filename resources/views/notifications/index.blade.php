@@ -74,7 +74,7 @@
                 <button
                     type="button"
                     @click="showReminderModal = true"
-                    class="hidden md:inline-flex items-center gap-2 rounded-full bg-[#003366] text-[#FFE600] px-4 py-2 text-sm font-semibold shadow hover:bg-[#001b4d] transition-colors"
+                    class="inline-flex items-center gap-2 rounded-full bg-[#003366] text-[#FFE600] px-4 py-2 text-sm font-semibold shadow hover:bg-[#001b4d] transition-colors"
                 >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -223,23 +223,9 @@
                 </div>
                 @empty
                 <div class="px-5 py-4 text-sm text-white/80">
-                    Aún no tienes recordatorios. Crea el primero con el botón <span class="font-semibold text-[#FFE600]">Agregar recordatorio</span>.
+                    Aún no tienes recordatorios. Usa <span class="font-semibold text-[#FFE600]">Agregar recordatorio</span> arriba para crear uno.
                 </div>
                 @endforelse
-                </div>
-
-                {{-- Botón inferior centrado: abre modal --}}
-                <div class="border-t border-[#FFE600]/60 px-4 py-3 flex justify-center">
-                    <button
-                        type="button"
-                        @click="showReminderModal = true"
-                        class="inline-flex items-center gap-2 rounded-full border border-[#FFE600] text-[#FFE600] px-5 py-2 text-sm font-semibold hover:bg-[#FFE600]/10 transition-colors"
-                    >
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                        </svg>
-                        Agregar recordatorio
-                    </button>
                 </div>
             </div>
         </div>
@@ -633,6 +619,9 @@
                     $titulo = $d['titulo'] ?? $d['message'] ?? $d['contact_name'] ?? 'Notificación';
                     $mensaje = $d['mensaje'] ?? $d['message'] ?? '';
                     $tipo = $d['tipo'] ?? 'general';
+                    $previewMensaje = $tipo === 'recordatorio'
+                        ? (\App\Notifications\ReminderDueNotification::reminderSummaryLine($d) ?: ($mensaje ?: 'Sin descripción'))
+                        : ($mensaje ?: 'Sin descripción');
                     $isUnread = !$notification->read_at;
                     $isStarred = !empty($notification->starred);
                 @endphp
@@ -659,6 +648,7 @@
                     <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center
                         @if($tipo === 'registro') bg-indigo-100 text-indigo-700
                         @elseif($tipo === 'contacto') bg-emerald-100 text-emerald-700
+                        @elseif($tipo === 'cumpleanos') bg-pink-100 text-pink-700
                         @elseif($tipo === 'aprobacion') bg-emerald-100 text-emerald-700
                         @elseif($tipo === 'recordatorio') bg-amber-100 text-amber-700
                         @else bg-white/10 text-white @endif">
@@ -666,6 +656,8 @@
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
                         @elseif($tipo === 'contacto')
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                        @elseif($tipo === 'cumpleanos')
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112-2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" /></svg>
                         @elseif($tipo === 'aprobacion')
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                         @elseif($tipo === 'recordatorio')
@@ -677,7 +669,7 @@
                     {{-- Contenido --}}
                     <div class="flex-1 min-w-0">
                         <p class="notification-row-title text-sm {{ $isUnread ? 'font-semibold text-white' : 'text-white' }}">{{ $titulo }}</p>
-                        <p class="text-sm text-white/80 truncate mt-0.5">{{ $mensaje ?: 'Sin descripción' }}</p>
+                        <p class="text-sm text-white/80 truncate mt-0.5">{{ $previewMensaje }}</p>
                         <p class="text-xs text-white/60 mt-1">{{ $notification->created_at->format('d M Y H:i') }}</p>
                     </div>
                     {{-- Acciones rápidas: iconos con color, ojo según estado de lectura --}}
@@ -730,13 +722,15 @@
                  x-transition
                  @keydown.escape.window="detailId = null">
                 <div @click.outside="detailId = null"
-                     class="relative w-full max-w-md bg-[#1a3d6b] rounded-2xl shadow-xl border-4 border-[#FFE600] max-h-[80vh] overflow-hidden flex flex-col">
+                     class="relative w-full max-w-md bg-[#1a3d6b] text-white rounded-2xl shadow-xl border-4 border-[#FFE600] max-h-[80vh] overflow-hidden flex flex-col [color-scheme:dark]">
                     <div class="p-8 text-center">
                         <div class="mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-4 bg-white text-[#FFE600]">
                             @if($tipo === 'registro')
                                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
                             @elseif($tipo === 'contacto')
                                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                            @elseif($tipo === 'cumpleanos')
+                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112-2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" /></svg>
                             @elseif($tipo === 'aprobacion')
                                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                             @elseif($tipo === 'recordatorio')
@@ -749,11 +743,23 @@
                         <p class="text-sm text-white/70 mt-1">{{ $notification->created_at->format('d/m/Y H:i') }}</p>
                     </div>
                     <div class="px-8 pb-6 overflow-y-auto flex-1 text-center">
-                        <p class="text-white/90">{{ $mensaje ?: 'Sin contenido.' }}</p>
+                        @if($tipo === 'recordatorio')
+                            @include('notifications.partials.reminder-notification-detail', ['d' => $d, 'mensaje' => $mensaje])
+                        @elseif($tipo === 'cumpleanos')
+                            <p class="!text-white whitespace-pre-wrap break-words font-medium">{{ $mensaje ?: 'Sin contenido.' }}</p>
+                            @if(!empty($d['fecha_cumpleanos']))
+                                <p class="text-white/80 text-sm mt-4 text-left">Fecha de nacimiento: <span class="text-[#FFE600] font-medium">{{ $d['fecha_cumpleanos'] }}</span></p>
+                            @endif
+                            @if(isset($d['edad']))
+                                <p class="text-white/80 text-sm mt-1 text-left">Edad que cumple hoy: <span class="text-[#FFE600] font-medium">{{ $d['edad'] }} años</span></p>
+                            @endif
+                        @else
+                            <p class="!text-white whitespace-pre-wrap break-words">{{ $mensaje ?: 'Sin contenido.' }}</p>
+                        @endif
                     </div>
                     <div class="p-6 pt-4 flex flex-wrap gap-3 justify-end">
                         @if($entrarUrl)
-                            <a href="{{ $entrarUrl }}" class="px-4 py-2 text-sm rounded-xl font-semibold text-gray-900 bg-[#FFE600] hover:bg-[#E6CF00] transition-colors">Entrar a mi panel</a>
+                            <a href="{{ $entrarUrl }}" class="px-4 py-2 text-sm rounded-xl font-semibold text-gray-900 bg-[#FFE600] hover:bg-[#E6CF00] transition-colors">{{ $tipo === 'cumpleanos' ? 'Ver contacto' : 'Entrar a mi panel' }}</a>
                         @endif
                         @if(!$notification->read_at)
                             <form method="POST" action="{{ route('notifications.mark-read', $notification) }}" class="inline">

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Reminder;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class ReminderController extends Controller
@@ -81,7 +82,20 @@ class ReminderController extends Controller
 
         $deadlineAt = !empty($data['deadline_at']) ? $data['deadline_at'] . ' 00:00:00' : $reminder->deadline_at;
 
-        $reminder->update([
+        $oldStartStr = $reminder->start_at?->format('Y-m-d H:i:s');
+        if (array_key_exists('start_at', $data)) {
+            $newStartStr = ! empty($data['start_at'])
+                ? Carbon::parse($data['start_at'])->format('Y-m-d H:i:s')
+                : null;
+        } else {
+            $newStartStr = $oldStartStr;
+        }
+
+        $newAllDay = $request->boolean('all_day', $reminder->all_day);
+        $resetNotifyState = ($oldStartStr !== $newStartStr)
+            || ((bool) $reminder->all_day !== (bool) $newAllDay);
+
+        $payload = [
             'title' => $data['title'],
             'description' => $data['description'] ?? $reminder->description,
             'extension' => $data['extension'] ?? $reminder->extension,
@@ -93,11 +107,18 @@ class ReminderController extends Controller
             'puesto_trabajo' => $data['puesto_trabajo'] ?? $reminder->puesto_trabajo,
             'start_at' => $data['start_at'] ?? $reminder->start_at,
             'end_at' => $data['end_at'] ?? $reminder->end_at,
-            'all_day' => $request->boolean('all_day', $reminder->all_day),
+            'all_day' => $newAllDay,
             'repeat' => $data['repeat'] ?? $reminder->repeat,
             'deadline_at' => $deadlineAt,
             'scheduled_for' => $data['start_at'] ?? $reminder->scheduled_for,
-        ]);
+        ];
+
+        if ($resetNotifyState) {
+            $payload['notification_sent_at'] = null;
+            $payload['last_recurring_notify_at'] = null;
+        }
+
+        $reminder->update($payload);
 
         return back()->with('success', 'Recordatorio actualizado.');
     }

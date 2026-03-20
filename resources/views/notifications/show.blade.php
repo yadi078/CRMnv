@@ -16,12 +16,19 @@
         $d = is_array($notification->data) ? $notification->data : [];
         $titulo = $d['titulo'] ?? $d['message'] ?? $d['contact_name'] ?? 'Notificación';
         $mensaje = $d['mensaje'] ?? $d['message'] ?? '';
+        $tipo = $d['tipo'] ?? 'general';
     @endphp
 
     <div class="space-y-8">
         <div class="panel-card-dark p-6">
         <h3 class="panel-card-dark__title panel-card-dark__title--accent mb-4">{{ $titulo }}</h3>
-        <div class="mt-4 text-white whitespace-pre-wrap">{{ $mensaje ?: 'Sin contenido.' }}</div>
+        <div class="mt-4 text-white">
+            @if($tipo === 'recordatorio')
+                @include('notifications.partials.reminder-notification-detail', ['d' => $d, 'mensaje' => $mensaje])
+            @else
+                <div class="whitespace-pre-wrap !text-white">{{ $mensaje ?: 'Sin contenido.' }}</div>
+            @endif
+        </div>
         <div class="mt-6 flex flex-wrap gap-2">
             @if(!$notification->read_at)
                 <form method="POST" action="{{ route('notifications.mark-read', $notification) }}" class="inline">

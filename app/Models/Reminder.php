@@ -29,6 +29,7 @@ class Reminder extends Model
         'deadline_at',
         'is_done',
         'notification_sent_at',
+        'last_recurring_notify_at',
     ];
 
     protected $casts = [
@@ -39,6 +40,7 @@ class Reminder extends Model
         'deadline_at' => 'datetime',
         'is_done' => 'boolean',
         'notification_sent_at' => 'datetime',
+        'last_recurring_notify_at' => 'datetime',
     ];
 
     public function user(): BelongsTo

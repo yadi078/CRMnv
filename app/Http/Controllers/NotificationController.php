@@ -5,7 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Contact;
 use App\Models\Reminder;
 use App\Notifications\ReminderDueNotification;
+use App\Services\ContactBirthdayNotifier;
+use App\Services\ReminderDueNotifier;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -37,23 +40,15 @@ class NotificationController extends Controller
     {
         $user = auth()->user();
 
-        // Al abrir Notificaciones: crear notificaciones para recordatorios que vencen en ≤10 min o ya vencieron (por si el scheduler no está activo)
-        $now = now();
-        $limit = $now->copy()->addMinutes(10);
-        $dueReminders = Reminder::where('user_id', $user->id)
-            ->whereNull('notification_sent_at')
-            ->where('is_done', false)
-            ->where(function ($q) use ($limit) {
-                $q->where(function ($q2) use ($limit) {
-                    $q2->whereNotNull('start_at')->where('start_at', '<=', $limit);
-                })->orWhere(function ($q2) use ($limit) {
-                    $q2->whereNull('start_at')->whereNotNull('scheduled_for')->where('scheduled_for', '<=', $limit);
-                });
-            })
-            ->get();
-        foreach ($dueReminders as $reminder) {
-            $user->notify(new ReminderDueNotification($reminder));
-            $reminder->update(['notification_sent_at' => $now]);
+        // Al abrir Notificaciones: mismo criterio que el scheduler (por si no corre el cron)
+        app(ReminderDueNotifier::class)->dispatchDue($user->id);
+
+        // Cumpleaños: si el servidor no ejecuta `schedule:run`, al menos una vez al día al entrar aquí como admin
+        if ($user->esAdmin()) {
+            $todayStr = now()->timezone(config('app.timezone'))->toDateString();
+            if (Cache::add('crm:birthdays:web-run:'.$todayStr, true, now()->endOfDay())) {
+                app(ContactBirthdayNotifier::class)->notifyAdminsForToday();
+            }
         }
 
         $query = $user->notifications();
@@ -85,6 +80,15 @@ class NotificationController extends Controller
         }
 
         $notifications = $query->paginate(20)->withQueryString();
+
+        $notifications->getCollection()->transform(function ($n) use ($user) {
+            $raw = $n->data;
+            $d = is_array($raw) ? $raw : (is_string($raw) ? (json_decode($raw, true) ?: []) : []);
+            $n->data = ReminderDueNotification::enrichStoredData($d, $user->id);
+
+            return $n;
+        });
+
         $unreadCount = $user->unreadNotifications()->count();
         $starredCount = $user->notifications()->where('starred', true)->count();
 
@@ -114,7 +118,7 @@ class NotificationController extends Controller
 
         // IDs de notificaciones no leídas tipo recordatorio ya "vistas" (no disparar alarma al cargar).
         // Excluimos las creadas en los últimos 15 segundos para que las recién creadas sí disparen alarma al hacer el primer poll.
-        $cutoff = $now->copy()->subSeconds(15);
+        $cutoff = now()->subSeconds(15);
         $reminderAlertIds = $user->unreadNotifications()
             ->where('created_at', '<', $cutoff)
             ->get()
@@ -147,12 +151,15 @@ class NotificationController extends Controller
         $items = $all->filter(function ($n) {
             $d = is_array($n->data) ? $n->data : [];
             return ($d['tipo'] ?? '') === 'recordatorio';
-        })->take(20)->map(function ($n) {
+        })->take(20)->map(function ($n) use ($user) {
             $d = is_array($n->data) ? $n->data : [];
+            $d = ReminderDueNotification::enrichStoredData($d, $user->id);
+            $line = ReminderDueNotification::reminderSummaryLine($d);
+
             return [
                 'id' => $n->id,
                 'titulo' => $d['titulo'] ?? 'Recordatorio',
-                'mensaje' => $d['mensaje'] ?? '',
+                'mensaje' => $line !== '' ? $line : ($d['mensaje'] ?? ''),
                 'fecha_prevista' => $d['fecha_prevista'] ?? null,
             ];
         })->values();
@@ -167,6 +174,9 @@ class NotificationController extends Controller
     {
         $user = auth()->user();
         $n = $user->notifications()->findOrFail($notification);
+        $raw = $n->data;
+        $d = is_array($raw) ? $raw : (is_string($raw) ? (json_decode($raw, true) ?: []) : []);
+        $n->data = ReminderDueNotification::enrichStoredData($d, $user->id);
 
         if ($request->wantsJson()) {
             return response()->json($n);
