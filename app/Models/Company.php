@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -173,6 +174,55 @@ class Company extends Model
     }
 
     /**
+     * Alcance para ejecutivos: empresas que registraron o empresas aprobadas donde tienen al menos un contacto propio.
+     * Los administradores no se filtran aquí.
+     */
+    public function scopeAccessibleForExecutive(Builder $query, User $user): Builder
+    {
+        if ($user->esAdmin()) {
+            return $query;
+        }
+
+        return $query->where(function ($q) use ($user) {
+            $q->where('created_by', $user->id)
+                ->orWhere(function ($q2) use ($user) {
+                    $q2->where('approval_status', 'aprobado')
+                        ->whereHas('contacts', fn ($c) => $c->where('created_by', $user->id));
+                });
+        });
+    }
+
+    /**
+     * Empresas disponibles al crear/editar un contacto (ejecutivo: solo las que él dio de alta).
+     */
+    public static function forExecutiveContactForm(User $user): \Illuminate\Database\Eloquent\Collection
+    {
+        if ($user->esAdmin()) {
+            return static::aprobadosOrdenados()->get();
+        }
+
+        return static::query()
+            ->where('created_by', $user->id)
+            ->orderBy('nombre_comercial')
+            ->get();
+    }
+
+    /**
+     * Empresas para seguimientos y ventas: propias o aprobadas con contacto propio.
+     */
+    public static function forExecutiveFollowUpAndSales(User $user): \Illuminate\Database\Eloquent\Collection
+    {
+        if ($user->esAdmin()) {
+            return static::aprobadosOrdenados()->get();
+        }
+
+        return static::query()
+            ->accessibleForExecutive($user)
+            ->orderBy('nombre_comercial')
+            ->get();
+    }
+
+    /**
      * Scope: Filtrar por estado de prospecto (status_color)
      */
     public function scopePorStatus($query, string $status)
@@ -219,5 +269,23 @@ class Company extends Model
             'approved_at' => now(),
             'motivo_rechazo' => $motivo,
         ]);
+    }
+
+    /**
+     * Si el ejecutivo puede usar esta empresa en seguimientos/ventas o verla según reglas de negocio.
+     */
+    public function isAccessibleByExecutive(User $user): bool
+    {
+        if ($user->esAdmin()) {
+            return true;
+        }
+        if ((int) $this->created_by === (int) $user->id) {
+            return true;
+        }
+        if ($this->approval_status !== 'aprobado') {
+            return false;
+        }
+
+        return $this->contacts()->where('created_by', $user->id)->exists();
     }
 }

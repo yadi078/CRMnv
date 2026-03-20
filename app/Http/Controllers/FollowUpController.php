@@ -57,8 +57,12 @@ class FollowUpController extends Controller
         $companyId = $request->company_id;
         $contactId = $request->contact_id;
 
-        $companies = Company::aprobadosOrdenados()->get();
-        $contacts = Contact::with('company')->orderBy('nombre_completo')->get();
+        $user = $request->user();
+        $companies = Company::forExecutiveFollowUpAndSales($user);
+        $contacts = Contact::with('company')
+            ->when(! $user->esAdmin(), fn ($q) => $q->where('created_by', $user->id))
+            ->orderBy('nombre_completo')
+            ->get();
 
         return $this->resolveView('follow-ups.create', 'user.follow-ups.create', compact('companies', 'contacts', 'companyId', 'contactId'));
     }
@@ -78,6 +82,13 @@ class FollowUpController extends Controller
             'bitacora_notas' => 'nullable|string',
             'asignado_a' => 'nullable|exists:users,id',
         ]);
+
+        if (! empty($validated['company_id'])) {
+            $this->authorize('view', Company::findOrFail($validated['company_id']));
+        }
+        if (! empty($validated['contact_id'])) {
+            $this->authorize('view', Contact::findOrFail($validated['contact_id']));
+        }
 
         DB::beginTransaction();
         try {
@@ -122,8 +133,12 @@ class FollowUpController extends Controller
     {
         $this->authorize('update', $followUp);
 
-        $companies = Company::aprobadosOrdenados()->get();
-        $contacts = Contact::with('company')->orderBy('nombre_completo')->get();
+        $user = request()->user();
+        $companies = Company::forExecutiveFollowUpAndSales($user);
+        $contacts = Contact::with('company')
+            ->when(! $user->esAdmin(), fn ($q) => $q->where('created_by', $user->id))
+            ->orderBy('nombre_completo')
+            ->get();
 
         return $this->resolveView('follow-ups.edit', 'user.follow-ups.edit', compact('followUp', 'companies', 'contacts'));
     }
@@ -143,6 +158,13 @@ class FollowUpController extends Controller
             'bitacora_notas' => 'nullable|string',
             'asignado_a' => 'nullable|exists:users,id',
         ]);
+
+        if (! empty($validated['company_id'])) {
+            $this->authorize('view', Company::findOrFail($validated['company_id']));
+        }
+        if (! empty($validated['contact_id'])) {
+            $this->authorize('view', Contact::findOrFail($validated['contact_id']));
+        }
 
         try {
             $followUp->update($validated);

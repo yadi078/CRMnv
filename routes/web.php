@@ -71,6 +71,23 @@ Route::middleware(['auth', 'verified', 'ensure.role'])->group(function () {
     Route::resource('follow-ups', FollowUpController::class);
     Route::post('/follow-ups/{followUp}/complete', [FollowUpController::class, 'complete'])->name('follow-ups.complete');
 
+    // Notificaciones y recordatorios (todos los usuarios autenticados)
+    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
+    Route::get('/notifications/reminder-alerts', [NotificationController::class, 'reminderAlerts'])->name('notifications.reminder-alerts');
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/notifications/{notification}', [NotificationController::class, 'show'])->name('notifications.show');
+    Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
+    Route::post('/notifications/{notification}/star', [NotificationController::class, 'star'])->name('notifications.star');
+    Route::post('/notifications/{notification}/unstar', [NotificationController::class, 'unstar'])->name('notifications.unstar');
+    Route::delete('/notifications/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
+
+    Route::get('/reminders', fn () => redirect()->route('notifications.index'))->name('reminders.index');
+    Route::post('/reminders', [ReminderController::class, 'store'])->name('reminders.store');
+    Route::put('/reminders/{reminder}', [ReminderController::class, 'update'])->name('reminders.update');
+    Route::patch('/reminders/{reminder}/toggle', [ReminderController::class, 'toggle'])->name('reminders.toggle');
+    Route::delete('/reminders/{reminder}', [ReminderController::class, 'destroy'])->name('reminders.destroy');
+
     // Gestión de Datos (visualización para todos, edición con permisos)
     Route::get('/data-management', [DataManagementController::class, 'index'])->name('data-management.index');
     Route::get('/data-management/contacts/{contact}', [DataManagementController::class, 'getContact'])->name('data-management.contacts.show');
@@ -84,23 +101,6 @@ Route::middleware(['auth', 'verified', 'ensure.role'])->group(function () {
 // Rutas exclusivas de Administrador (dashboard global, aprobaciones, descargas)
 Route::middleware(['auth', 'verified', 'ensure.role', 'admin'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-
-    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
-    Route::get('/notifications/reminder-alerts', [NotificationController::class, 'reminderAlerts'])->name('notifications.reminder-alerts');
-    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
-    Route::get('/notifications/{notification}', [NotificationController::class, 'show'])->name('notifications.show');
-    Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
-    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
-    Route::post('/notifications/{notification}/star', [NotificationController::class, 'star'])->name('notifications.star');
-    Route::post('/notifications/{notification}/unstar', [NotificationController::class, 'unstar'])->name('notifications.unstar');
-    Route::delete('/notifications/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
-
-    // Recordatorios (sección dentro de notificaciones)
-    Route::get('/reminders', fn () => redirect()->route('notifications.index'))->name('reminders.index');
-    Route::post('/reminders', [ReminderController::class, 'store'])->name('reminders.store');
-    Route::put('/reminders/{reminder}', [ReminderController::class, 'update'])->name('reminders.update');
-    Route::patch('/reminders/{reminder}/toggle', [ReminderController::class, 'toggle'])->name('reminders.toggle');
-    Route::delete('/reminders/{reminder}', [ReminderController::class, 'destroy'])->name('reminders.destroy');
 
     Route::get('/contacts/{contact}/pdf', [ContactController::class, 'generatePdf'])->name('contacts.pdf');
     Route::get('/contacts/{contact}/word', [ContactController::class, 'generateWord'])->name('contacts.word');

@@ -73,7 +73,7 @@ class ContactController extends Controller
         $this->authorize('create', Contact::class);
 
         $companyId = $request->company_id;
-        $companies = Company::aprobadosOrdenados()->get();
+        $companies = Company::forExecutiveContactForm($request->user());
 
         return $this->resolveView('contacts.create', 'user.contacts.create', compact('companies', 'companyId'));
     }
@@ -180,7 +180,7 @@ class ContactController extends Controller
     {
         $this->authorize('update', $contact);
 
-        $companies = Company::aprobadosOrdenados()->get();
+        $companies = Company::forExecutiveFollowUpAndSales(request()->user());
 
         return $this->resolveView('contacts.edit', 'user.contacts.edit', compact('contact', 'companies'));
     }
@@ -191,6 +191,7 @@ class ContactController extends Controller
     public function update(UpdateContactRequest $request, Contact $contact)
     {
         $this->authorize('update', $contact);
+        $this->authorize('view', Company::findOrFail($request->validated('company_id')));
 
         try {
             $statusAnterior = $contact->status_color;

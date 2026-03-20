@@ -41,8 +41,8 @@ class CompanyController extends Controller
         $user = auth()->user();
         $isAdmin = $user->esAdmin();
 
-        if (!$isAdmin) {
-            $query->aprobados();
+        if (! $isAdmin) {
+            $query->accessibleForExecutive($user);
         }
 
         $companies = $query->latest()->paginate(15);

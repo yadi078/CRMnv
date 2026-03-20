@@ -25,13 +25,13 @@ class DataManagementController extends Controller
 
         $companiesQuery = Company::withCount('contacts');
         if (! $isAdmin) {
-            $companiesQuery->aprobados();
+            $companiesQuery->accessibleForExecutive($user);
         }
         $companies = $companiesQuery->orderBy('nombre_comercial')->paginate(10, ['*'], 'companies_page');
 
         $contactsQuery = Contact::with('company');
         if (! $isAdmin) {
-            $contactsQuery->whereHas('company', fn ($q) => $q->aprobados());
+            $contactsQuery->where('created_by', $user->id);
         }
         $contacts = $contactsQuery->latest()->paginate(10, ['*'], 'contacts_page');
 

@@ -79,7 +79,17 @@
                 <div id="excel-filter-panel" class="hidden absolute z-30 mt-2 w-[360px] max-w-[92vw] rounded-xl border border-[#0B2C66]/20 bg-white p-3 text-[#0B2C66] shadow-2xl">
                     <div class="flex items-center justify-between gap-3 mb-2">
                         <h4 id="excel-panel-title" class="text-base font-semibold">Filtro</h4>
-                        <button type="button" id="excel-panel-close" class="text-sm text-[#0B2C66]/85 hover:text-[#0B2C66]">Cerrar</button>
+                        <button
+                            type="button"
+                            id="excel-panel-apply-header"
+                            class="inline-flex items-center justify-center rounded-lg p-1.5 text-[#0B2C66] border border-[#0B2C66]/30 hover:bg-[#0B2C66]/10 focus:outline-none focus:ring-2 focus:ring-[#0B2C66]/40 shrink-0"
+                            title="Aplicar filtro"
+                            aria-label="Aplicar filtro"
+                        >
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                        </button>
                     </div>
                     <input id="excel-option-search" type="text" placeholder="Buscar" class="w-full rounded-md border border-gray-300 px-2.5 py-1.5 text-sm mb-2 text-[#0B2C66] placeholder:text-[#0B2C66]/45">
                     <label class="inline-flex items-center gap-2 text-sm mb-2 text-[#0B2C66]">
@@ -215,7 +225,7 @@
             const summaryEl = document.getElementById('active-filters-summary');
             const panelEl = document.getElementById('excel-filter-panel');
             const panelTitle = document.getElementById('excel-panel-title');
-            const panelCloseBtn = document.getElementById('excel-panel-close');
+            const panelApplyHeaderBtn = document.getElementById('excel-panel-apply-header');
             const panelAcceptBtn = document.getElementById('excel-panel-accept');
             const searchInput = document.getElementById('excel-option-search');
             const selectAllInput = document.getElementById('excel-select-all');
@@ -340,12 +350,7 @@
                 currentField = null;
             }
 
-            document.querySelectorAll('.excel-filter-btn').forEach((button) => {
-                button.addEventListener('click', () => openPanelFor(button.getAttribute('data-field')));
-            });
-
-            panelCloseBtn?.addEventListener('click', closePanel);
-            panelAcceptBtn?.addEventListener('click', () => {
+            function applyPanelSelections() {
                 if (!currentField) return;
                 const checkedValues = Array.from(optionsList.querySelectorAll('input[type="checkbox"]:checked')).map((cb) => String(cb.value));
                 selectedByField[currentField] = checkedValues;
@@ -353,7 +358,14 @@
                 renderSummary();
                 renderHiddenInputs();
                 closePanel();
+            }
+
+            document.querySelectorAll('.excel-filter-btn').forEach((button) => {
+                button.addEventListener('click', () => openPanelFor(button.getAttribute('data-field')));
             });
+
+            panelApplyHeaderBtn?.addEventListener('click', applyPanelSelections);
+            panelAcceptBtn?.addEventListener('click', applyPanelSelections);
 
             searchInput?.addEventListener('input', renderPanelOptions);
             selectAllInput?.addEventListener('change', () => {

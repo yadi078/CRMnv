@@ -53,7 +53,12 @@ class SalesController extends Controller
         }
 
         $sales = $query->latest('fecha_venta')->paginate(15)->withQueryString();
-        $companies = Company::aprobadosOrdenados()->get(['id', 'nombre_comercial']);
+        $user = $request->user();
+        $companies = Company::query()
+            ->when($user->esAdmin(), fn ($q) => $q->aprobados())
+            ->when(! $user->esAdmin(), fn ($q) => $q->accessibleForExecutive($user))
+            ->orderBy('nombre_comercial')
+            ->get(['id', 'nombre_comercial']);
 
         return view('user.sales.index', compact('sales', 'companies'));
     }
@@ -66,9 +71,13 @@ class SalesController extends Controller
         $this->authorize('create', Sale::class);
 
         $companyId = $request->get('company_id', old('company_id'));
-        $companies = Company::aprobadosOrdenados()->get();
+        $user = $request->user();
+        $companies = Company::forExecutiveFollowUpAndSales($user);
         $contacts = $companyId
-            ? Contact::where('company_id', $companyId)->orderBy('nombre_completo')->get()
+            ? Contact::where('company_id', $companyId)
+                ->when(! $user->esAdmin(), fn ($q) => $q->where('created_by', $user->id))
+                ->orderBy('nombre_completo')
+                ->get()
             : collect();
         $company = $companyId ? Company::find($companyId) : null;
         $contact = (old('contact_id') && $companyId) ? Contact::find(old('contact_id')) : null;
@@ -85,10 +94,7 @@ class SalesController extends Controller
 
         $validated = $request->validate([
             'company_id' => 'required|exists:companies,id',
-            'contact_id' => [
-                'nullable',
-                Rule::exists('contacts', 'id')->where('company_id', $request->company_id),
-            ],
+            'contact_id' => $this->contactIdRules($request),
             'nombre_servicio' => 'required|string|max:255',
             'fecha_venta' => 'required|date|after_or_equal:today',
             'monto' => 'nullable|numeric|min:0',
@@ -118,6 +124,12 @@ class SalesController extends Controller
             'required' => 'Este campo es obligatorio.',
             'email' => 'Ingrese un correo electrónico válido.',
         ]);
+
+        $company = Company::findOrFail($validated['company_id']);
+        $this->authorize('view', $company);
+        if (! empty($validated['contact_id'])) {
+            $this->authorize('view', Contact::findOrFail($validated['contact_id']));
+        }
 
         $sale = Sale::create([
             ...collect($validated)->except(['participantes_nombres', 'participantes_emails'])->all(),
@@ -158,8 +170,12 @@ class SalesController extends Controller
     public function edit(Sale $sale)
     {
         $this->authorize('update', $sale);
-        $companies = Company::aprobadosOrdenados()->get();
-        $contacts = Contact::where('company_id', $sale->company_id)->orderBy('nombre_completo')->get();
+        $user = request()->user();
+        $companies = Company::forExecutiveFollowUpAndSales($user);
+        $contacts = Contact::where('company_id', $sale->company_id)
+            ->when(! $user->esAdmin(), fn ($q) => $q->where('created_by', $user->id))
+            ->orderBy('nombre_completo')
+            ->get();
 
         // Incluir el contacto comprador en la lista si existe y no está (p. ej. soft-deleted)
         if ($sale->contact_id) {
@@ -182,10 +198,7 @@ class SalesController extends Controller
 
         $validated = $request->validate([
             'company_id' => 'required|exists:companies,id',
-            'contact_id' => [
-                'nullable',
-                Rule::exists('contacts', 'id')->where('company_id', $request->company_id),
-            ],
+            'contact_id' => $this->contactIdRules($request),
             'nombre_servicio' => 'required|string|max:255',
             'fecha_venta' => 'required|date|after_or_equal:today',
             'monto' => 'nullable|numeric|min:0',
@@ -215,6 +228,12 @@ class SalesController extends Controller
             'required' => 'Este campo es obligatorio.',
             'email' => 'Ingrese un correo electrónico válido.',
         ]);
+
+        $company = Company::findOrFail($validated['company_id']);
+        $this->authorize('view', $company);
+        if (! empty($validated['contact_id'])) {
+            $this->authorize('view', Contact::findOrFail($validated['contact_id']));
+        }
 
         $sale->update([
             ...collect($validated)->except(['participantes_nombres', 'participantes_emails'])->all(),
@@ -282,5 +301,19 @@ class SalesController extends Controller
         return response($html)
             ->header('Content-Type', 'application/msword; charset=UTF-8')
             ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
+    }
+
+    /**
+     * @return array<int, \Illuminate\Validation\Rules\Exists|string>
+     */
+    protected function contactIdRules(Request $request): array
+    {
+        $exists = Rule::exists('contacts', 'id')->where('company_id', $request->company_id);
+        $user = $request->user();
+        if ($user && ! $user->esAdmin()) {
+            $exists->where('created_by', $user->id);
+        }
+
+        return ['nullable', $exists];
     }
 }

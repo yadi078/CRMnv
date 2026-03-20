@@ -4,7 +4,6 @@ namespace App\Policies;
 
 use App\Models\Company;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
 class CompanyPolicy
 {
@@ -17,15 +16,19 @@ class CompanyPolicy
     }
 
     /**
-     * Determine whether the user can view the model.
+     * Admin ve todas (con permisos). Ejecutivo: la que creó o aprobada con al menos un contacto propio.
      */
     public function view(User $user, Company $company): bool
     {
-        // Usuarios normales solo pueden ver empresas aprobadas
-        if (!$user->can('companies.approve') && $company->approval_status === 'pendiente') {
+        if (! $user->can('companies.view')) {
             return false;
         }
-        return $user->can('companies.view');
+
+        if ($user->esAdmin()) {
+            return true;
+        }
+
+        return $company->isAccessibleByExecutive($user);
     }
 
     /**
@@ -37,15 +40,23 @@ class CompanyPolicy
     }
 
     /**
-     * Determine whether the user can update the model.
+     * Admin edita todas. Ejecutivo solo las que registró.
      */
     public function update(User $user, Company $company): bool
     {
-        return $user->can('companies.edit');
+        if (! $user->can('companies.edit')) {
+            return false;
+        }
+
+        if ($user->esAdmin()) {
+            return true;
+        }
+
+        return (int) $company->created_by === (int) $user->id;
     }
 
     /**
-     * Determine whether the user can delete the model.
+     * Borrado directo: normalmente solo administradores con permiso.
      */
     public function delete(User $user, Company $company): bool
     {
@@ -53,21 +64,24 @@ class CompanyPolicy
     }
 
     /**
-     * Usuario sin permiso de borrado directo puede pedir que un admin autorice la eliminación.
+     * Solicitud de baja (ejecutivo dueño de empresa aprobada).
      */
     public function requestDeletion(User $user, Company $company): bool
     {
-        if (! $user->can('companies.edit') || $user->can('companies.delete')) {
+        if ($user->esAdmin()) {
             return false;
         }
-        if ($company->approval_status !== 'aprobado' || $company->deletion_pending) {
+        if (! $user->can('companies.edit')) {
             return false;
         }
-        if ((int) $company->created_by !== (int) $user->id) {
+        if ($company->deletion_pending) {
+            return false;
+        }
+        if ($company->approval_status !== 'aprobado') {
             return false;
         }
 
-        return true;
+        return (int) $company->created_by === (int) $user->id;
     }
 
     /**

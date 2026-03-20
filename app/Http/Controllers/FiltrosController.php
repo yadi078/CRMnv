@@ -64,8 +64,8 @@ class FiltrosController extends Controller
         }
 
         $baseCompanies = Company::query();
-        if (! $isAdmin) {
-            $baseCompanies->aprobados();
+        if (! $isAdmin && $userId) {
+            $baseCompanies->accessibleForExecutive($user);
         }
 
         $distinctToOptions = function ($query, string $col, int $limit = 200) {
@@ -114,6 +114,9 @@ class FiltrosController extends Controller
         $comercialQuery = Company::query()
             ->whereNotNull('nombre_comercial')
             ->where('nombre_comercial', '!=', '');
+        if (! $isAdmin && $userId) {
+            $comercialQuery->accessibleForExecutive($user);
+        }
 
         $comercialValues = $comercialQuery
             ->orderBy('nombre_comercial')
@@ -173,8 +176,8 @@ class FiltrosController extends Controller
         };
         if ($shouldQueryCompanies) {
             $companiesQuery = Company::with('contacts');
-            if (! $isAdmin) {
-                $companiesQuery->aprobados();
+            if (! $isAdmin && $userId) {
+                $companiesQuery->accessibleForExecutive($user);
             }
             $filterService->applyToCompanyQuery($companiesQuery, $companyFilterSpecs, $filterLogic);
             $companies = $companiesQuery->latest()->paginate(20)->appends($request->except('_token'));
@@ -280,8 +283,8 @@ class FiltrosController extends Controller
         };
         if ($shouldQueryCompanies) {
             $companiesQuery = Company::with('contacts');
-            if (! $isAdmin) {
-                $companiesQuery->aprobados();
+            if (! $isAdmin && $userId) {
+                $companiesQuery->accessibleForExecutive($user);
             }
             $filterService->applyToCompanyQuery($companiesQuery, $companyFilterSpecs, $filterLogic);
             $companies = $companiesQuery->latest()->paginate(20)->appends($request->except('_token'));
@@ -521,8 +524,9 @@ class FiltrosController extends Controller
     {
         $query = Company::with('creator');
 
-        if (!auth()->user()->esAdmin()) {
-            $query->aprobados();
+        $u = auth()->user();
+        if ($u && ! $u->esAdmin()) {
+            $query->accessibleForExecutive($u);
         }
 
         if ($request->filled('search')) {

@@ -50,12 +50,20 @@ class UserDashboardController extends Controller
             })
             ->count();
 
-        // Mis empresas: las creadas por el usuario (aprobadas + pendientes), con primer contacto
-        $misEmpresasQuery = Company::where('created_by', $user->id)
-            ->with(['contacts' => fn ($q) => $q->orderBy('id')->limit(1)]);
-        if (request()->filled('q_empresas')) {
-            $q = request('q_empresas');
-            $misEmpresasQuery->where('nombre_comercial', 'like', "%{$q}%");
+        // Mis empresas: mismo alcance que en el listado (propias + aprobadas con contacto propio)
+        $misEmpresasQuery = Company::query()
+            ->accessibleForExecutive($user)
+            ->with(['contacts' => function ($q) use ($user) {
+                $q->orderByRaw('CASE WHEN created_by = ? THEN 0 ELSE 1 END', [$user->id])
+                    ->orderBy('id')
+                    ->limit(1);
+            }]);
+        $busqueda = trim((string) request('q_empresas', ''));
+        if ($busqueda !== '') {
+            $misEmpresasQuery->where(function ($query) use ($busqueda) {
+                $query->where('nombre_comercial', 'like', '%'.$busqueda.'%')
+                    ->orWhere('rfc', 'like', '%'.$busqueda.'%');
+            });
         }
         $misEmpresas = $misEmpresasQuery->latest()->limit(20)->get();
 

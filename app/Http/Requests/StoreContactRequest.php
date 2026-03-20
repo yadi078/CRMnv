@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 /**
  * Request de validación para crear contactos
@@ -16,8 +17,13 @@ class StoreContactRequest extends FormRequest
 
     public function rules(): array
     {
+        $companyRules = ['required'];
+        $companyRules[] = $this->user()->esAdmin()
+            ? 'exists:companies,id'
+            : Rule::exists('companies', 'id')->where('created_by', $this->user()->id);
+
         return [
-            'company_id' => 'required|exists:companies,id',
+            'company_id' => $companyRules,
             'nombre_completo' => 'required|string|max:255',
             'genero' => 'nullable|string|max:50',
             'puesto_de_trabajo' => 'nullable|string|max:255',
