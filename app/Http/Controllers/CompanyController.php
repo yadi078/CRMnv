@@ -8,6 +8,7 @@ use App\Models\Contact;
 use App\Models\Sale;
 use App\Http\Requests\StoreCompanyRequest;
 use App\Http\Requests\UpdateCompanyRequest;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -32,37 +33,13 @@ class CompanyController extends Controller
 
         $query = Company::with(['creator', 'approver', 'contacts']);
 
-        // Filtros
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('nombre_comercial', 'like', "%{$search}%")
-                  ->orWhere('rfc', 'like', "%{$search}%")
-                  ->orWhere('ejecutivo_asignado', 'like', "%{$search}%");
-            });
-        }
-
-        if ($request->filled('status_color')) {
-            $query->porColor($request->status_color);
-        }
-
-        if ($request->filled('sector')) {
-            $query->where('sector', $request->sector);
-        }
-
-        if ($request->filled('estado')) {
-            $query->where('estado', $request->estado);
-        }
-
-        if ($request->filled('ejecutivo_asignado')) {
-            $query->where('ejecutivo_asignado', $request->ejecutivo_asignado);
+            $query->where('nombre_comercial', 'like', "%{$search}%");
         }
 
         $user = auth()->user();
         $isAdmin = $user->esAdmin();
-        if ($isAdmin && $request->filled('approval_status')) {
-            $query->where('approval_status', $request->approval_status);
-        }
 
         if (!$isAdmin) {
             $query->aprobados();
@@ -70,69 +47,33 @@ class CompanyController extends Controller
 
         $companies = $query->latest()->paginate(15);
 
-        // Si el resultado del filtro devuelve solo una empresa,
-        // la usaremos para mostrar una ficha con sus contactos (filtrados por estado prospecto si aplica).
         $companyContactsCard = null;
         if ($companies->count() === 1) {
             $companyContactsCard = $companies->first();
-            if ($request->filled('status_color')) {
-                $companyContactsCard->setRelation('contacts',
-                    $companyContactsCard->contacts->where('status_color', $request->status_color)->values()
-                );
-            }
         }
 
-        // Lista de nombres de empresas para autocompletar en el buscador (solo admin)
         $companyNames = collect();
-        $sectorOptions = collect();
-        $estadoOptions = collect();
-        $ejecutivoOptions = collect();
-
-        // Opciones para selects de filtros (admin y usuario)
-        $baseQueryForOptions = Company::query();
-        $sectorOptions = (clone $baseQueryForOptions)
-            ->whereNotNull('sector')
-            ->orderBy('sector')
-            ->pluck('sector')
-            ->unique()
-            ->values();
-        $estadoOptions = (clone $baseQueryForOptions)
-            ->whereNotNull('estado')
-            ->orderBy('estado')
-            ->pluck('estado')
-            ->unique()
-            ->values();
-        $ejecutivoOptions = (clone $baseQueryForOptions)
-            ->whereNotNull('ejecutivo_asignado')
-            ->orderBy('ejecutivo_asignado')
-            ->pluck('ejecutivo_asignado')
-            ->unique()
-            ->values();
-
         if ($isAdmin) {
             $companyNames = Company::orderBy('nombre_comercial')
                 ->pluck('nombre_comercial')
                 ->unique();
         }
 
-        // Usuario normal (rol usuario o no admin): vista limitada operativa
         if (!$isAdmin) {
             $misPendientes = Company::where('created_by', $user->id)->pendientes()->count();
+            $misEliminacionesPendientes = Company::where('created_by', $user->id)->where('deletion_pending', true)->count();
+
             return view('user.companies.index', [
                 'companies' => $companies,
                 'misPendientes' => $misPendientes,
-                'sectorOptions' => $sectorOptions,
-                'estadoOptions' => $estadoOptions,
-                'ejecutivoOptions' => $ejecutivoOptions,
+                'misEliminacionesPendientes' => $misEliminacionesPendientes,
             ]);
         }
+
         return view('companies.index', [
             'companies' => $companies,
             'companyContactsCard' => $companyContactsCard,
             'companyNames' => $companyNames,
-            'sectorOptions' => $sectorOptions,
-            'estadoOptions' => $estadoOptions,
-            'ejecutivoOptions' => $ejecutivoOptions,
         ]);
     }
 
@@ -232,9 +173,12 @@ class CompanyController extends Controller
     /**
      * Importar empresas y contactos desde un archivo Excel.
      *
-     * Cada fila del archivo representa una empresa y, opcionalmente,
-     * un contacto asociado. El usuario sube un solo archivo y el sistema
-     * se encarga de separar empresas y contactos.
+     * Reglas: columna "Área de trabajo" = EMPRESA define fila de empresa; cualquier otro valor, fila de contacto.
+     * Obligatorio: "Nombre de empresa" en todas las filas; en filas que no son EMPRESA, también "Nombre completo".
+     * Celdas vacías no sobrescriben datos ya guardados (solo se aplican valores presentes en el Excel).
+     * Duplicado de contacto: mismo email/teléfono/celular/nombre en la empresa solo si además coinciden
+     * área de trabajo (departamento) y puesto; si difieren, se crea otro contacto (misma persona, distinto rol).
+     * Las empresas se procesan primero para que cada contacto resuelva su company_id.
      */
     public function import(Request $request)
     {
@@ -263,32 +207,28 @@ class CompanyController extends Controller
                 if ($headerValue === null) {
                     continue;
                 }
-                $normalized = Str::of($headerValue)->lower()->trim()->replace(['á','é','í','ó','ú','ñ'], ['a','e','i','o','u','n']);
+                $normalized = Str::of($headerValue)->lower()->trim()->replace(['á', 'é', 'í', 'ó', 'ú', 'ñ'], ['a', 'e', 'i', 'o', 'u', 'n']);
                 $normalizedHeaders[(string) $normalized] = $column;
             }
 
             // Helper para obtener el valor de una columna por nombre lógico
             $getValue = function (array $row, array $candidates) use ($normalizedHeaders) {
                 foreach ($candidates as $candidate) {
-                    $key = Str::of($candidate)->lower()->trim()->replace(['á','é','í','ó','ú','ñ'], ['a','e','i','o','u','n'])->toString();
+                    $key = Str::of($candidate)->lower()->trim()->replace(['á', 'é', 'í', 'ó', 'ú', 'ñ'], ['a', 'e', 'i', 'o', 'u', 'n'])->toString();
                     if (isset($normalizedHeaders[$key])) {
                         $col = $normalizedHeaders[$key];
+
                         return $row[$col] ?? null;
                     }
                 }
+
                 return null;
             };
 
-            $createdCompanies = 0;
-            $updatedCompanies = 0;
-            $createdContacts = 0;
-
-            DB::beginTransaction();
-
+            $parsedRows = [];
             foreach ($rows as $row) {
-                // Saltar filas completamente vacías
                 $isEmpty = collect($row)->filter(function ($value) {
-                    return !is_null($value) && trim((string) $value) !== '';
+                    return ! is_null($value) && trim((string) $value) !== '';
                 })->isEmpty();
 
                 if ($isEmpty) {
@@ -296,6 +236,7 @@ class CompanyController extends Controller
                 }
 
                 $companyName = trim((string) $getValue($row, [
+                    'nombre de empresa',
                     'nombre empresa',
                     'nombre de la empresa',
                     'empresa',
@@ -304,7 +245,6 @@ class CompanyController extends Controller
                 ]));
 
                 if ($companyName === '') {
-                    // Si no hay nombre de empresa, no podemos relacionar la fila
                     continue;
                 }
 
@@ -321,52 +261,89 @@ class CompanyController extends Controller
                 $datosFiscales = $domicilio;
                 if ($notasEmpresa !== '') {
                     $datosFiscales = $datosFiscales !== ''
-                        ? $datosFiscales . ' | Notas: ' . $notasEmpresa
-                        : 'Notas: ' . $notasEmpresa;
+                        ? $datosFiscales.' | Notas: '.$notasEmpresa
+                        : 'Notas: '.$notasEmpresa;
                 }
 
-                $approvalStatus = $user->can('companies.approve') ? 'aprobado' : 'pendiente';
+                $parsedRows[] = [
+                    'row' => $row,
+                    'company_name' => $companyName,
+                    'area_trabajo' => $areaTrabajoValor,
+                    'is_empresa' => $isEmpresaRow,
+                    'municipio' => $municipio,
+                    'estado' => $estado,
+                    'sector' => $sector,
+                    'ejecutivo' => $ejecutivo,
+                    'datos_fiscales' => $datosFiscales,
+                ];
+            }
 
-                // Buscar empresa por nombre (en tu Excel el "Nombre" es el de la empresa).
-                // Si existen varias coincidencias por estado, preferimos la que coincida con el estado del renglón;
-                // si no, usamos la primera.
-                // Incluir soft-deleted para evitar violar el UNIQUE al crear de nuevo
+            $createdCompanies = 0;
+            $updatedCompanies = 0;
+            $createdContacts = 0;
+            $updatedContacts = 0;
+            /** @var int Filas EMPRESA que apuntan a una empresa ya existente y no aportan campos nuevos (duplicado en el Excel o sin datos opcionales). */
+            $redundantEmpresaRows = 0;
+            $skippedContactsNoCompany = 0;
+            $skippedContactsNoName = 0;
+
+            $approvalStatus = $user->can('companies.approve') ? 'aprobado' : 'pendiente';
+
+            /** @var array<int, array{name: string, canonical: string, company: Company}> $empresaRegistry */
+            $empresaRegistry = [];
+
+            DB::beginTransaction();
+
+            // --- Paso 1: solo filas EMPRESA (crear/actualizar y registrar para vincular contactos) ---
+            foreach ($parsedRows as $p) {
+                if (! $p['is_empresa']) {
+                    continue;
+                }
+
+                $companyName = $p['company_name'];
+                $municipio = $p['municipio'];
+                $estado = $p['estado'];
+                $sector = $p['sector'];
+                $ejecutivo = $p['ejecutivo'];
+                $datosFiscales = $p['datos_fiscales'];
+
                 $companyCandidates = Company::withTrashed()->where('nombre_comercial', $companyName)->get();
                 $company = null;
                 if ($companyCandidates->isNotEmpty()) {
                     $company = $companyCandidates->firstWhere('estado', $estado) ?? $companyCandidates->first();
                 }
 
-                // Si la fila es de CONTACTO (Area de trabajo != EMPRESA) y no existe la empresa,
-                // NO creamos nuevas empresas desde estas filas; esperamos que exista en el Excel.
-                if (! $company && ! $isEmpresaRow) {
-                    continue;
-                }
-
                 if ($company) {
-                    // Si estaba borrada (soft delete), la restauramos para poder actualizar sin chocar el UNIQUE.
                     if (method_exists($company, 'trashed') && $company->trashed()) {
                         $company->restore();
                     }
 
-                    // Para filas de EMPRESA actualizamos normalmente.
-                    // Para filas de CONTACTO solo llenamos campos que estén vacíos en BD.
-                    $fillSector = $sector !== '' && ($company->sector === null || trim((string) $company->sector) === '');
-                    $fillMunicipio = $municipio !== '' && ($company->municipio === null || trim((string) $company->municipio) === '');
-                    $fillEstado = $estado !== '' && ($company->estado === null || trim((string) $company->estado) === '');
-                    $fillEjecutivo = $ejecutivo !== '' && ($company->ejecutivo_asignado === null || trim((string) $company->ejecutivo_asignado) === '');
-                    $fillDatosFiscales = $isEmpresaRow && $datosFiscales !== '' && ($company->datos_fiscales === null || trim((string) $company->datos_fiscales) === '');
-
-                    $company->fill([
-                        'sector' => $isEmpresaRow ? ($sector !== '' ? $sector : $company->sector) : ($fillSector ? $sector : $company->sector),
-                        'municipio' => $isEmpresaRow ? ($municipio !== '' ? $municipio : $company->municipio) : ($fillMunicipio ? $municipio : $company->municipio),
-                        'estado' => $isEmpresaRow ? ($estado !== '' ? $estado : $company->estado) : ($fillEstado ? $estado : $company->estado),
-                        'ejecutivo_asignado' => $isEmpresaRow ? ($ejecutivo !== '' ? $ejecutivo : $company->ejecutivo_asignado) : ($fillEjecutivo ? $ejecutivo : $company->ejecutivo_asignado),
-                        'datos_fiscales' => $fillDatosFiscales ? $datosFiscales : $company->datos_fiscales,
-                    ]);
-                    $company->save();
-                    if ($isEmpresaRow) {
-                        $updatedCompanies++;
+                    $updates = [];
+                    if ($sector !== '') {
+                        $updates['sector'] = $sector;
+                    }
+                    if ($municipio !== '') {
+                        $updates['municipio'] = $municipio;
+                    }
+                    if ($estado !== '') {
+                        $updates['estado'] = $estado;
+                    }
+                    if ($ejecutivo !== '') {
+                        $updates['ejecutivo_asignado'] = $ejecutivo;
+                    }
+                    if ($datosFiscales !== '') {
+                        $updates['datos_fiscales'] = $datosFiscales;
+                    }
+                    if ($updates !== []) {
+                        $company->fill($updates);
+                        if ($company->isDirty()) {
+                            $company->save();
+                            $updatedCompanies++;
+                        } else {
+                            $redundantEmpresaRows++;
+                        }
+                    } else {
+                        $redundantEmpresaRows++;
                     }
                 } else {
                     $company = Company::create([
@@ -376,8 +353,7 @@ class CompanyController extends Controller
                         'municipio' => $municipio !== '' ? $municipio : null,
                         'estado' => $estado !== '' ? $estado : null,
                         'ejecutivo_asignado' => $ejecutivo !== '' ? $ejecutivo : null,
-                        // Solo guardamos domicilio/notas detalladas cuando la fila es de tipo EMPRESA
-                        'datos_fiscales' => $isEmpresaRow && $datosFiscales !== '' ? $datosFiscales : null,
+                        'datos_fiscales' => $datosFiscales !== '' ? $datosFiscales : null,
                         'status_color' => 'seguimiento',
                         'approval_status' => $approvalStatus,
                         'created_by' => $user->id,
@@ -387,13 +363,39 @@ class CompanyController extends Controller
                     $createdCompanies++;
                 }
 
-                // Datos del contacto (si existen)
-                // Las filas cuyo "Área de trabajo" es EMPRESA se consideran solo de empresa, sin contacto.
-                if ($isEmpresaRow) {
+                $empresaRegistry[] = [
+                    'name' => $companyName,
+                    'canonical' => $this->canonicalCompanyNameForImport($companyName),
+                    'company' => $company->fresh(),
+                ];
+            }
+
+            // --- Paso 2: filas de contacto ---
+            foreach ($parsedRows as $p) {
+                if ($p['is_empresa']) {
+                    continue;
+                }
+
+                $row = $p['row'];
+                $companyName = $p['company_name'];
+                $areaTrabajoValor = $p['area_trabajo'];
+                $municipio = $p['municipio'];
+                $estado = $p['estado'];
+
+                $company = $this->resolveCompanyForImportedContact($companyName, $p['estado'], $empresaRegistry);
+                if (! $company) {
+                    $skippedContactsNoCompany++;
+
                     continue;
                 }
 
                 $contactName = trim((string) ($getValue($row, ['nombre contacto', 'nombre del contacto', 'nombre completo']) ?? ''));
+                if ($contactName === '') {
+                    $skippedContactsNoName++;
+
+                    continue;
+                }
+
                 $puesto = trim((string) ($getValue($row, ['puesto de trabajo', 'puesto']) ?? ''));
                 $departamento = $areaTrabajoValor !== ''
                     ? $areaTrabajoValor
@@ -401,23 +403,10 @@ class CompanyController extends Controller
                 $telefono = trim((string) ($getValue($row, ['telefono', 'teléfono']) ?? ''));
                 $celular = trim((string) ($getValue($row, ['celular', 'movil', 'móvil']) ?? ''));
                 $email = trim((string) ($getValue($row, ['email', 'correo', 'correo electronico', 'correo electrónico']) ?? ''));
-                $notasContacto = trim((string) ($getValue($row, ['notas contacto']) ?? ''));
+                $notasContacto = trim((string) ($getValue($row, ['notas contacto', 'notas']) ?? ''));
+                $genero = trim((string) ($getValue($row, ['genero', 'género']) ?? ''));
                 $noDeseaCorreos = trim((string) ($getValue($row, ['no desea recibir correos']) ?? ''));
 
-                // Si no hay datos relevantes de contacto, lo omitimos
-                if ($contactName === '' && $puesto === '' && $departamento === '' && $telefono === '' && $celular === '' && $email === '') {
-                    continue;
-                }
-
-                $emailActivo = true;
-                if ($noDeseaCorreos !== '') {
-                    $value = Str::lower($noDeseaCorreos);
-                    if (in_array($value, ['si', 'sí', 'yes', '1', 'true'])) {
-                        $emailActivo = false;
-                    }
-                }
-
-                // Evitar duplicados de contacto dentro de la misma empresa: usamos company + email (si existe) o teléfono
                 $contactQuery = Contact::withTrashed()->where('company_id', $company->id);
                 if ($email !== '') {
                     $contactQuery->where('email', $email);
@@ -425,40 +414,107 @@ class CompanyController extends Controller
                     $contactQuery->where('celular', $celular);
                 } elseif ($telefono !== '') {
                     $contactQuery->where('telefono', $telefono);
+                } else {
+                    $contactQuery->where('nombre_completo', $contactName);
                 }
+
+                $this->applyImportContactDuplicateRoleFilters($contactQuery, $departamento, $puesto);
 
                 $contact = $contactQuery->first();
 
-                // Si el email ya existe en otra empresa y la BD tiene índice UNIQUE,
-                // lo vaciamos para no violar la restricción. A ti no te afecta porque
-                // aceptas campos vacíos y sin límite.
                 if ($email !== '' && Contact::where('email', $email)
-                        ->when($contact, fn ($q) => $q->where('id', '!=', $contact->id))
-                        ->where('company_id', '!=', $company->id)
-                        ->exists()) {
-                    $email = null;
+                    ->when($contact, fn ($q) => $q->where('id', '!=', $contact->id))
+                    ->where('company_id', '!=', $company->id)
+                    ->exists()) {
+                    $email = '';
                 }
 
-                $contactData = [
-                    'company_id' => $company->id,
-                    'nombre_completo' => $contactName !== '' ? $contactName : ($contact->nombre_completo ?? $companyName),
-                    'puesto_de_trabajo' => $puesto !== '' ? $puesto : ($contact->puesto_de_trabajo ?? null),
-                    'departamento' => $departamento !== '' ? $departamento : ($contact->departamento ?? null),
-                    'celular' => $celular !== '' ? $celular : ($contact->celular ?? null),
-                    'telefono' => $telefono !== '' ? $telefono : ($contact->telefono ?? null),
-                    'email' => $email !== '' ? $email : ($contact->email ?? null),
-                    'email_activo' => $emailActivo,
-                    'municipio' => $municipio !== '' ? $municipio : ($contact->municipio ?? null),
-                    'estado' => $estado !== '' ? $estado : ($contact->estado ?? null),
-                    'notas' => $notasContacto !== '' ? $notasContacto : ($contact->notas ?? null),
-                    'status_color' => $contact->status_color ?? 'seguimiento',
-                    'created_by' => $contact->created_by ?? $user->id,
-                ];
-
                 if ($contact) {
+                    if (method_exists($contact, 'trashed') && $contact->trashed()) {
+                        $contact->restore();
+                    }
+
+                    $contactData = ['nombre_completo' => $contactName];
+                    if ($genero !== '') {
+                        $contactData['genero'] = $genero;
+                    }
+                    if ($puesto !== '') {
+                        $contactData['puesto_de_trabajo'] = $puesto;
+                    }
+                    if ($departamento !== '') {
+                        $contactData['departamento'] = $departamento;
+                    }
+                    if ($celular !== '') {
+                        $contactData['celular'] = $celular;
+                    }
+                    if ($telefono !== '') {
+                        $contactData['telefono'] = $telefono;
+                    }
+                    if ($email !== '') {
+                        $contactData['email'] = $email;
+                    }
+                    if ($municipio !== '') {
+                        $contactData['municipio'] = $municipio;
+                    }
+                    if ($estado !== '') {
+                        $contactData['estado'] = $estado;
+                    }
+                    if ($notasContacto !== '') {
+                        $contactData['notas'] = $notasContacto;
+                    }
+                    if ($noDeseaCorreos !== '') {
+                        $value = Str::lower($noDeseaCorreos);
+                        $contactData['email_activo'] = ! in_array($value, ['si', 'sí', 'yes', '1', 'true'], true);
+                    }
+
                     $contact->fill($contactData);
-                    $contact->save();
+                    if ($contact->isDirty()) {
+                        $contact->save();
+                        $updatedContacts++;
+                    }
                 } else {
+                    $contactData = [
+                        'company_id' => $company->id,
+                        'nombre_completo' => $contactName,
+                        'email_activo' => true,
+                        'status_color' => 'seguimiento',
+                        'approval_status' => 'aprobado',
+                        'approved_by' => $user->id,
+                        'approved_at' => now(),
+                        'created_by' => $user->id,
+                    ];
+                    if ($genero !== '') {
+                        $contactData['genero'] = $genero;
+                    }
+                    if ($puesto !== '') {
+                        $contactData['puesto_de_trabajo'] = $puesto;
+                    }
+                    if ($departamento !== '') {
+                        $contactData['departamento'] = $departamento;
+                    }
+                    if ($celular !== '') {
+                        $contactData['celular'] = $celular;
+                    }
+                    if ($telefono !== '') {
+                        $contactData['telefono'] = $telefono;
+                    }
+                    if ($email !== '') {
+                        $contactData['email'] = $email;
+                    }
+                    if ($municipio !== '') {
+                        $contactData['municipio'] = $municipio;
+                    }
+                    if ($estado !== '') {
+                        $contactData['estado'] = $estado;
+                    }
+                    if ($notasContacto !== '') {
+                        $contactData['notas'] = $notasContacto;
+                    }
+                    if ($noDeseaCorreos !== '') {
+                        $value = Str::lower($noDeseaCorreos);
+                        $contactData['email_activo'] = ! in_array($value, ['si', 'sí', 'yes', '1', 'true'], true);
+                    }
+
                     Contact::create($contactData);
                     $createdContacts++;
                 }
@@ -466,7 +522,17 @@ class CompanyController extends Controller
 
             DB::commit();
 
-            $message = "Importación completada. Empresas nuevas: {$createdCompanies}, empresas actualizadas: {$updatedCompanies}, contactos nuevos: {$createdContacts}.";
+            $message = "Importación completada. Empresas nuevas: {$createdCompanies}, empresas actualizadas: {$updatedCompanies}";
+            if ($redundantEmpresaRows > 0) {
+                $message .= ", filas EMPRESA duplicadas/sin cambios (mismo nombre comercial, sin datos nuevos): {$redundantEmpresaRows}";
+            }
+            $message .= ". Contactos nuevos: {$createdContacts}, contactos actualizados (mismo criterio de duplicado): {$updatedContacts}.";
+            if ($skippedContactsNoCompany > 0) {
+                $message .= " Filas de contacto sin empresa coincidente (revisa nombres y que exista una fila con Área de trabajo = EMPRESA): {$skippedContactsNoCompany}.";
+            }
+            if ($skippedContactsNoName > 0) {
+                $message .= " Filas de contacto omitidas sin nombre completo: {$skippedContactsNoName}.";
+            }
 
             return back()->with('success', $message);
         } catch (\Throwable $e) {
@@ -552,8 +618,25 @@ class CompanyController extends Controller
     }
 
     /**
+     * Solicitud de eliminación (usuario sin permiso companies.delete).
+     */
+    public function requestDeletion(Company $company)
+    {
+        $this->authorize('requestDeletion', $company);
+
+        $company->update([
+            'deletion_pending' => true,
+            'deletion_requested_by' => auth()->id(),
+            'deletion_requested_at' => now(),
+        ]);
+
+        return redirect()->route('companies.index')
+            ->with('success', 'Solicitud de eliminación enviada. Un administrador la revisará en Solicitudes pendientes.');
+    }
+
+    /**
      * Eliminar el recurso especificado del almacenamiento.
-     * Solo administradores pueden borrar definitivamente.
+     * Solo quien tiene permiso de borrado directo (p. ej. administradores).
      */
     public function destroy(Company $company)
     {
@@ -604,5 +687,86 @@ class CompanyController extends Controller
             'has_duplicates' => !empty($duplicates),
             'duplicates' => $duplicates
         ]);
+    }
+
+    /**
+     * Normaliza el nombre de empresa para comparar variantes (mayúsculas, espacios, acentos).
+     */
+    private function canonicalCompanyNameForImport(string $name): string
+    {
+        $s = Str::lower(trim(preg_replace('/\s+/u', ' ', $name)));
+        $s = str_replace(['á', 'é', 'í', 'ó', 'ú', 'ñ'], ['a', 'e', 'i', 'o', 'u', 'n'], $s);
+
+        return $s;
+    }
+
+    /**
+     * Resuelve la empresa de un contacto: nombre exacto en BD, coincidencia con filas EMPRESA del archivo
+     * o similitud de texto (p. ej. typo entre columnas).
+     *
+     * @param  array<int, array{name: string, canonical: string, company: Company}>  $empresaRegistry
+     */
+    private function resolveCompanyForImportedContact(string $nameFromExcel, string $estadoFromRow, array $empresaRegistry): ?Company
+    {
+        $trimmed = trim($nameFromExcel);
+        if ($trimmed === '') {
+            return null;
+        }
+
+        $companyCandidates = Company::withTrashed()->where('nombre_comercial', $trimmed)->get();
+        if ($companyCandidates->isNotEmpty()) {
+            return $companyCandidates->firstWhere('estado', $estadoFromRow) ?? $companyCandidates->first();
+        }
+
+        foreach ($empresaRegistry as $entry) {
+            if (strcasecmp($trimmed, $entry['name']) === 0) {
+                return $entry['company'];
+            }
+        }
+
+        $canon = $this->canonicalCompanyNameForImport($trimmed);
+        foreach ($empresaRegistry as $entry) {
+            if ($canon === $entry['canonical']) {
+                return $entry['company'];
+            }
+        }
+
+        $best = null;
+        $bestPct = 0.0;
+        foreach ($empresaRegistry as $entry) {
+            similar_text($canon, $entry['canonical'], $pct);
+            if ($pct > $bestPct) {
+                $bestPct = $pct;
+                $best = $entry['company'];
+            }
+        }
+        if ($best !== null && $bestPct >= 86.0) {
+            return $best;
+        }
+
+        return null;
+    }
+
+    /**
+     * Restringe la búsqueda de “mismo contacto” al mismo rol: área de trabajo y puesto deben coincidir
+     * (vacío/null se trata como equivalente a vacío en ambos lados).
+     */
+    private function applyImportContactDuplicateRoleFilters(Builder $query, string $departamento, string $puesto): void
+    {
+        if (trim($departamento) === '') {
+            $query->where(function (Builder $q) {
+                $q->whereNull('departamento')->orWhere('departamento', '');
+            });
+        } else {
+            $query->where('departamento', $departamento);
+        }
+
+        if (trim($puesto) === '') {
+            $query->where(function (Builder $q) {
+                $q->whereNull('puesto_de_trabajo')->orWhere('puesto_de_trabajo', '');
+            });
+        } else {
+            $query->where('puesto_de_trabajo', $puesto);
+        }
     }
 }

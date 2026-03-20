@@ -15,227 +15,193 @@
         </a>
     </x-slot>
 
-    <div class="space-y-6">
-        {{-- Chips de filtros activos --}}
+    <div class="space-y-8">
         @php
-            // UI tipo Excel: mantenemos filas fijas (menos Género, que lo movemos arriba).
-            $visibleRequiredFields = [
-                'nombre_completo' => 'contains',
-                'telefono' => 'contains',
-                'celular' => 'contains',
-                'email' => 'contains',
+            $excelHeaders = [
+                'genero' => 'Género',
+                'nombre_completo' => 'Nombre',
+                'telefono' => 'Teléfono',
+                'celular' => 'Celular',
+                'email' => 'Email',
+                'departamento' => 'Área de trabajo',
+                'puesto_de_trabajo' => 'Puesto de trabajo',
+                'municipio' => 'Ciudad',
+                'estado' => 'Estado',
+                'comercial' => 'Comercial',
+                'sector' => 'Giro',
+                'notas' => 'Notas',
+                'domicilio' => 'Domicilio',
+                'no_recibir_correos' => 'No desea recibir correos',
             ];
 
-            // Campos que deben aparecer en el select "Campo" (lado izquierdo).
-            // Mapeos: area_trabajo -> departamento, ciudad -> municipio, giro -> sector.
-            $fieldsToShow = [
-                'genero',
-                'nombre_completo',
-                'telefono',
-                'celular',
-                'email',
-                'departamento',
-                'puesto_de_trabajo',
-                'municipio',
-                'estado',
-                'comercial',
-                'sector',
-                'no_recibir_correos',
-            ];
+            $fieldOptions = [];
+            foreach ($excelHeaders as $key => $label) {
+                $options = $fields[$key]['options'] ?? [];
+                if (is_array($options) && !empty($options)) {
+                    $fieldOptions[$key] = $options;
+                }
+            }
 
-            $fieldsForRows = collect($fields ?? [])->only($fieldsToShow)->all();
-
-            $specMap = collect($filterSpecs ?? [])
-                ->map(fn ($s) => $s instanceof \App\DataTransferObjects\FilterSpec ? $s->toArray() : $s)
-                ->keyBy(fn ($row) => $row['field'] ?? '')
-                ->all();
-
-            // Género: se toma desde filterSpecs para seleccionar M/F/O/Todos.
-            $generoSpec = $specMap['genero'] ?? null;
-            $generoValue = $generoSpec['value'] ?? '';
-            $generoRadioTodosChecked = empty($generoValue);
-            $generoRadioMasculinoChecked = (string)$generoValue === 'Masculino';
-            $generoRadioFemeninoChecked = (string)$generoValue === 'Femenino';
-            $generoRadioOtroChecked = (string)$generoValue === 'Otro';
-
-            $filterRows = [];
-            foreach ($visibleRequiredFields as $fieldKey => $defaultOp) {
-                $spec = $specMap[$fieldKey] ?? null;
-                $filterRows[] = [
-                    'field' => $fieldKey,
-                    'operator' => $spec['operator'] ?? $defaultOp,
-                    'value' => $spec['value'] ?? null,
-                ];
+            $selectedByField = [];
+            foreach (($filterSpecs ?? []) as $spec) {
+                $item = $spec instanceof \App\DataTransferObjects\FilterSpec ? $spec->toArray() : $spec;
+                $field = $item['field'] ?? null;
+                if ($field === 'datos_fiscales') {
+                    $field = 'domicilio';
+                }
+                if (! $field || ! array_key_exists($field, $excelHeaders)) {
+                    continue;
+                }
+                $value = $item['value'] ?? null;
+                $selectedByField[$field] = is_array($value) ? array_values($value) : [$value];
             }
         @endphp
-        <div id="filtros-chips">
-            <x-filters.chips :filters="$filtersForChips ?? []" :clearUrl="route('filtros.index')" />
-        </div>
 
-        <form method="GET" action="{{ route('filtros.index') }}" id="form-filtros" class="space-y-4">
+        <form method="GET" action="{{ route('filtros.index') }}" id="form-filtros" class="space-y-5">
             @csrf
-            <div class="panel-card-dark p-6">
-                <h3 class="panel-card-dark__title panel-card-dark__title--accent mb-4">
-                    Filtrar contactos y empresas
-                </h3>
-
-                {{-- Género: selección única (M/F/O/Todos) --}}
-                <div class="flex flex-wrap items-center gap-4 mb-4">
-                    <span class="text-sm font-medium text-white/90">Género:</span>
-                    <label class="inline-flex items-center gap-2 cursor-pointer text-sm text-white/90">
-                        <input
-                            type="radio"
-                            name="genero_radio"
-                            value=""
-                            {{ $generoRadioTodosChecked ? 'checked' : '' }}
-                            class="rounded border-white/30 bg-white/10 text-[#FFE600] focus:ring-[#FFE600]"
+            <div class="panel-card-dark p-5 md:p-6 space-y-6 shadow-lg shadow-black/25 border border-white/10">
+                <div id="header-filter-buttons-wrap" class="relative">
+                <p class="text-sm text-white/75 mb-3">Elija campos y valores; luego aplique o limpie los filtros.</p>
+                <div id="header-filter-buttons" class="flex flex-wrap gap-2.5">
+                    @foreach($excelHeaders as $fieldKey => $label)
+                        <button
+                            type="button"
+                            class="excel-filter-btn inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#FFD700]/80 bg-[#FFE600] text-[#0B2C66] text-xs font-semibold hover:bg-[#FFE600]/90"
+                            data-field="{{ $fieldKey }}"
                         >
-                        <span>Todos</span>
-                    </label>
-                    <label class="inline-flex items-center gap-2 cursor-pointer text-sm text-white/90">
-                        <input
-                            type="radio"
-                            name="genero_radio"
-                            value="Masculino"
-                            {{ $generoRadioMasculinoChecked ? 'checked' : '' }}
-                            class="rounded border-white/30 bg-white/10 text-[#FFE600] focus:ring-[#FFE600]"
-                        >
-                        <span>M</span>
-                    </label>
-                    <label class="inline-flex items-center gap-2 cursor-pointer text-sm text-white/90">
-                        <input
-                            type="radio"
-                            name="genero_radio"
-                            value="Femenino"
-                            {{ $generoRadioFemeninoChecked ? 'checked' : '' }}
-                            class="rounded border-white/30 bg-white/10 text-[#FFE600] focus:ring-[#FFE600]"
-                        >
-                        <span>F</span>
-                    </label>
-                    <label class="inline-flex items-center gap-2 cursor-pointer text-sm text-white/90">
-                        <input
-                            type="radio"
-                            name="genero_radio"
-                            value="Otro"
-                            {{ $generoRadioOtroChecked ? 'checked' : '' }}
-                            class="rounded border-white/30 bg-white/10 text-[#FFE600] focus:ring-[#FFE600]"
-                        >
-                        <span>Otro</span>
-                    </label>
-                </div>
-
-                {{-- Hidden inputs para que el backend reciba filters[0] como Género --}}
-                <input type="hidden" name="filters[0][field]" value="genero">
-                <input type="hidden" name="filters[0][operator]" value="equals">
-                <input type="hidden" name="filters[0][value]" id="filters-0-value-genero" value="{{ $generoValue }}">
-
-                {{-- Lógica AND / OR --}}
-                <div class="flex flex-wrap items-center gap-4 mb-4">
-                    <span class="text-sm font-medium text-white/90">Combinar filtros:</span>
-                    <label class="inline-flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="filter_logic" value="and" {{ ($filterLogic ?? 'and') === 'and' ? 'checked' : '' }} class="rounded border-white/30 bg-white/10 text-[#FFE600] focus:ring-[#FFE600]">
-                        <span class="text-sm text-white/90">Y (AND)</span>
-                    </label>
-                    <label class="inline-flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="filter_logic" value="or" {{ ($filterLogic ?? '') === 'or' ? 'checked' : '' }} class="rounded border-white/30 bg-white/10 text-[#FFE600] focus:ring-[#FFE600]">
-                        <span class="text-sm text-white/90">O (OR)</span>
-                    </label>
-                </div>
-
-                <div class="space-y-3" id="filter-rows">
-                    @foreach($filterRows as $idx => $row)
-                        @php $realIndex = $idx + 1; @endphp
-                        <x-filters.row
-                            :index="$realIndex"
-                            :fields="$fieldsForRows ?? []"
-                            :operatorLabels="$operatorLabels ?? []"
-                            :suggestions="$fieldSuggestions ?? []"
-                            :showRemove="false"
-                            :currentField="$row['field'] ?? ''"
-                            :currentOperator="$row['operator'] ?? 'equals'"
-                            :currentValue="$row['value'] ?? ''"
-                        />
+                            <span>{{ $label }}</span>
+                            <span class="text-[11px] opacity-80" data-count-for="{{ $fieldKey }}">(0)</span>
+                        </button>
                     @endforeach
                 </div>
 
-                <p class="text-xs text-white/60 mt-2">Puedes escribir y seleccionar sugerencias en Tel/Cel/Email/Nombre.</p>
+                <div id="excel-filter-panel" class="hidden absolute z-30 mt-2 w-[360px] max-w-[92vw] rounded-xl border border-[#0B2C66]/20 bg-white p-3 text-[#0B2C66] shadow-2xl">
+                    <div class="flex items-center justify-between gap-3 mb-2">
+                        <h4 id="excel-panel-title" class="text-base font-semibold">Filtro</h4>
+                        <button type="button" id="excel-panel-close" class="text-sm text-[#0B2C66]/85 hover:text-[#0B2C66]">Cerrar</button>
+                    </div>
+                    <input id="excel-option-search" type="text" placeholder="Buscar" class="w-full rounded-md border border-gray-300 px-2.5 py-1.5 text-sm mb-2 text-[#0B2C66] placeholder:text-[#0B2C66]/45">
+                    <label class="inline-flex items-center gap-2 text-sm mb-2 text-[#0B2C66]">
+                        <input id="excel-select-all" type="checkbox" class="rounded border-gray-300 text-[#0B2C66] focus:ring-[#0B2C66]">
+                        <span style="color:#0B2C66;">(Seleccionar todo)</span>
+                    </label>
+                    <div id="excel-options-list" class="max-h-52 overflow-auto rounded border border-gray-200 bg-white p-2 space-y-1"></div>
+                    <div class="mt-2 flex justify-end gap-2">
+                        <button type="button" id="excel-panel-accept" class="px-3 py-1.5 rounded-md bg-[#0B2C66] text-white text-sm">Aceptar</button>
+                    </div>
+                </div>
+                </div>
 
-                <div class="mt-4 flex flex-wrap gap-3">
+                <div class="rounded-xl border border-white/20 bg-white/10 p-3.5 space-y-2">
+                    <p class="text-[11px] uppercase tracking-wide text-white/70">Se está filtrando por</p>
+                    <div id="active-filters-summary" class="flex flex-wrap gap-1.5 text-xs text-white/90">
+                        <span class="text-white/60">Sin filtros seleccionados</span>
+                    </div>
+                </div>
+
+                <div class="rounded-xl border border-white/20 bg-white/10 p-3.5 space-y-3">
+                    <p class="text-xs font-medium text-white/90">Alcance de resultados</p>
+                    <div class="flex flex-wrap gap-6">
+                        <label class="inline-flex items-center gap-2 text-xs text-white/90">
+                            <input type="radio" name="result_scope" value="empresa" {{ ($resultScope ?? 'ambos') === 'empresa' ? 'checked' : '' }} class="rounded border-white/30 bg-white/10 text-[#FFE600] focus:ring-[#FFE600]">
+                            <span>Empresa</span>
+                        </label>
+                        <label class="inline-flex items-center gap-2 text-xs text-white/90">
+                            <input type="radio" name="result_scope" value="contacto" {{ ($resultScope ?? 'ambos') === 'contacto' ? 'checked' : '' }} class="rounded border-white/30 bg-white/10 text-[#FFE600] focus:ring-[#FFE600]">
+                            <span>Contacto</span>
+                        </label>
+                        <label class="inline-flex items-center gap-2 text-xs text-white/90">
+                            <input type="radio" name="result_scope" value="ambos" {{ ($resultScope ?? 'ambos') === 'ambos' ? 'checked' : '' }} class="rounded border-white/30 bg-white/10 text-[#FFE600] focus:ring-[#FFE600]">
+                            <span>Ambos</span>
+                        </label>
+                    </div>
+                </div>
+
+                <input type="hidden" name="filter_logic" value="and">
+                <div id="dynamic-filters-container"></div>
+
+                <div class="flex flex-wrap gap-3 pt-1 border-t border-white/10">
                     <button type="submit" class="btn-amber-app">Aplicar filtros</button>
-                    <a href="{{ route('filtros.index') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/40 text-white/90 text-sm font-medium hover:bg-white/10">Limpiar</a>
+                    <a href="{{ route('filtros.index') }}" class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-white/40 text-white/90 text-sm font-medium hover:bg-white/10">Limpiar</a>
                 </div>
             </div>
         </form>
 
-        <div id="filtros-results">
+        <div id="filtros-results" class="space-y-10">
         {{-- Resultados contactos --}}
         @if(isset($contacts) && $contacts->isNotEmpty())
-            <div class="panel-card-dark overflow-hidden">
-                <h3 class="panel-card-dark__title panel-card-dark__title--accent mb-4">Resultados ({{ $contacts->total() }})</h3>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-white/20">
+            <div class="panel-card-dark overflow-hidden border border-white/12 ring-1 ring-[#FFE600]/10 shadow-xl shadow-black/30">
+                <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 pb-4 mb-1 border-b border-white/15">
+                    <h3 class="panel-card-dark__title panel-card-dark__title--accent !mb-0 text-xl md:text-2xl font-bold tracking-tight">Contactos</h3>
+                    <span class="text-sm text-white/60 font-medium tabular-nums">{{ $contacts->total() }} {{ $contacts->total() === 1 ? 'registro' : 'registros' }}</span>
+                </div>
+                <div class="overflow-x-auto -mx-1 px-1">
+                    <table class="min-w-full divide-y divide-white/15">
                         <thead>
                             <tr class="table-header-panel-dark">
-                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase">Nombre</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase">Empresa</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase">Tel / Cel</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase">Email</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase">Estado</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase">Acción</th>
+                                <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Nombre</th>
+                                <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Empresa</th>
+                                <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Tel / Cel</th>
+                                <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Email</th>
+                                <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Estado</th>
+                                <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Acción</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-white/10">
                             @foreach($contacts as $contact)
-                                <tr class="panel-card-dark__row hover:bg-white/5">
-                                    <td class="px-4 py-3 text-sm text-white">{{ $contact->nombre_completo }}</td>
-                                    <td class="px-4 py-3 text-sm text-white/90">{{ $contact->company?->nombre_comercial ?? '—' }}</td>
-                                    <td class="px-4 py-3 text-sm text-white/90">{{ $contact->telefono ?? $contact->celular ?? '—' }}</td>
-                                    <td class="px-4 py-3 text-sm text-white/90">{{ $contact->email ?? '—' }}</td>
-                                    <td class="px-4 py-3"><span class="px-2 py-0.5 text-xs rounded-lg badge-prospect-{{ $contact->status_color ?? 'seguimiento' }}">{{ $contact->status_label ?? '—' }}</span></td>
-                                    <td class="px-4 py-3"><a href="{{ route('contacts.show', $contact) }}" class="text-[#FFE600] hover:text-white text-sm">Ver</a></td>
+                                <tr class="panel-card-dark__row odd:bg-white/5 even:bg-white/[0.02] hover:bg-white/10 transition-colors duration-150">
+                                    <td class="px-4 py-3.5 text-sm text-white">{{ $contact->nombre_completo }}</td>
+                                    <td class="px-4 py-3.5 text-sm text-white/90">{{ $contact->company?->nombre_comercial ?? '—' }}</td>
+                                    <td class="px-4 py-3.5 text-sm text-white/90">{{ $contact->telefono ?? $contact->celular ?? '—' }}</td>
+                                    <td class="px-4 py-3.5 text-sm text-white/90">{{ $contact->email ?? '—' }}</td>
+                                    <td class="px-4 py-3.5"><span class="px-2 py-0.5 text-xs rounded-lg badge-prospect-{{ $contact->status_color ?? 'seguimiento' }}">{{ $contact->status_label ?? '—' }}</span></td>
+                                    <td class="px-4 py-3.5"><a href="{{ route('contacts.show', $contact) }}" class="text-[#FFE600] hover:text-white text-sm font-medium">Ver</a></td>
                                 </tr>
                             @endforeach
                         </tbody>
                     </table>
                 </div>
-                <div class="mt-4 pt-4 border-t border-white/20">{{ $contacts->links() }}</div>
+                <div class="mt-5 pt-5 border-t border-white/20">{{ $contacts->links() }}</div>
             </div>
         @elseif(isset($contacts) && $contacts->isEmpty() && !empty($filterSpecs))
-            <div class="panel-card-dark p-6 text-center text-white/70">No hay contactos con los filtros aplicados. Ajuste los criterios o limpie filtros.</div>
+            <div class="panel-card-dark p-8 text-center text-white/70 border border-white/10 rounded-2xl">No hay contactos con los filtros aplicados. Ajuste los criterios o limpie filtros.</div>
         @endif
 
         {{-- Resultados empresas --}}
         @if(isset($companies) && $companies->isNotEmpty())
-            <div class="panel-card-dark overflow-hidden">
-                <h3 class="panel-card-dark__title panel-card-dark__title--accent mb-4">Resultados ({{ $companies->total() }})</h3>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-white/20">
+            <div class="panel-card-dark overflow-hidden border border-white/12 ring-1 ring-[#FFE600]/10 shadow-xl shadow-black/30">
+                <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 pb-4 mb-1 border-b border-white/15">
+                    <h3 class="panel-card-dark__title panel-card-dark__title--accent !mb-0 text-xl md:text-2xl font-bold tracking-tight">Empresas</h3>
+                    <span class="text-sm text-white/60 font-medium tabular-nums">{{ $companies->total() }} {{ $companies->total() === 1 ? 'registro' : 'registros' }}</span>
+                </div>
+                <div class="overflow-x-auto -mx-1 px-1">
+                    <table class="min-w-full divide-y divide-white/15">
                         <thead>
                             <tr class="table-header-panel-dark">
-                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase">Nombre</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase">RFC</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase">Estado</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase">Ejecutivo</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase">Acción</th>
+                                <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Nombre</th>
+                                <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">RFC</th>
+                                <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Estado</th>
+                                <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Ejecutivo</th>
+                                <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Acción</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-white/10">
                             @foreach($companies as $company)
-                                <tr class="panel-card-dark__row hover:bg-white/5">
-                                    <td class="px-4 py-3 text-sm text-white">{{ $company->nombre_comercial }}</td>
-                                    <td class="px-4 py-3 text-sm text-white/90">{{ $company->rfc ?? '—' }}</td>
-                                    <td class="px-4 py-3"><span class="px-2 py-0.5 text-xs rounded-lg badge-prospect-{{ $company->status_color }}">{{ $company->status_label }}</span></td>
-                                    <td class="px-4 py-3 text-sm text-white/90">{{ $company->ejecutivo_asignado ?? '—' }}</td>
-                                    <td class="px-4 py-3"><a href="{{ route('companies.show', $company) }}" class="text-[#FFE600] hover:text-white text-sm">Ver</a></td>
+                                <tr class="panel-card-dark__row odd:bg-white/5 even:bg-white/[0.02] hover:bg-white/10 transition-colors duration-150">
+                                    <td class="px-4 py-3.5 text-sm text-white">{{ $company->nombre_comercial }}</td>
+                                    <td class="px-4 py-3.5 text-sm text-white/90">{{ $company->rfc ?? '—' }}</td>
+                                    <td class="px-4 py-3.5"><span class="px-2 py-0.5 text-xs rounded-lg badge-prospect-{{ $company->status_color }}">{{ $company->status_label }}</span></td>
+                                    <td class="px-4 py-3.5 text-sm text-white/90">{{ $company->ejecutivo_asignado ?? '—' }}</td>
+                                    <td class="px-4 py-3.5"><a href="{{ route('companies.show', $company) }}" class="text-[#FFE600] hover:text-white text-sm font-medium">Ver</a></td>
                                 </tr>
                             @endforeach
                         </tbody>
                     </table>
                 </div>
-                <div class="mt-4 pt-4 border-t border-white/20">{{ $companies->links() }}</div>
+                <div class="mt-5 pt-5 border-t border-white/20">{{ $companies->links() }}</div>
             </div>
         @elseif(isset($companies) && $companies->isEmpty() && !empty($filterSpecs))
-            <div class="panel-card-dark p-6 text-center text-white/70">No hay empresas con los filtros aplicados. Ajuste los criterios o limpie filtros.</div>
+            <div class="panel-card-dark p-8 text-center text-white/70 border border-white/10 rounded-2xl">No hay empresas con los filtros aplicados. Ajuste los criterios o limpie filtros.</div>
         @endif
         </div>
     </div>
@@ -243,244 +209,165 @@
     <script>
         (function () {
             const form = document.getElementById('form-filtros');
-            const chipsEl = document.getElementById('filtros-chips');
             const resultsEl = document.getElementById('filtros-results');
+            const dynamicFiltersContainer = document.getElementById('dynamic-filters-container');
+            const summaryEl = document.getElementById('active-filters-summary');
+            const panelEl = document.getElementById('excel-filter-panel');
+            const panelTitle = document.getElementById('excel-panel-title');
+            const panelCloseBtn = document.getElementById('excel-panel-close');
+            const panelAcceptBtn = document.getElementById('excel-panel-accept');
+            const searchInput = document.getElementById('excel-option-search');
+            const selectAllInput = document.getElementById('excel-select-all');
+            const optionsList = document.getElementById('excel-options-list');
+            const buttonsWrap = document.getElementById('header-filter-buttons-wrap');
             if (!form) return;
 
-            // +1 porque el filtro de Género va como hidden en index 0.
-            const rowCount = {{ count($filterRows) + 1 }};
-            const fieldConfigs = @json($fieldsForRows ?? []);
-            const fieldSuggestions = @json($fieldSuggestions ?? []);
-            const operatorLabelsJs = @json($operatorLabels ?? []);
+            const headerLabels = @json($excelHeaders ?? []);
+            const fieldOptions = @json($fieldOptions ?? []);
+            const selectedByField = @json($selectedByField ?? []);
+            let currentField = null;
 
-            // Sincronizar Género (radio arriba) con hidden filters[0][value]
-            const generoHidden = document.getElementById('filters-0-value-genero');
-            if (generoHidden) {
-                const radios = form.querySelectorAll('input[name="genero_radio"]');
-                radios.forEach(r => {
-                    r.addEventListener('change', () => {
-                        generoHidden.value = r.value || '';
-                    });
+            Object.keys(headerLabels).forEach((field) => {
+                if (!Array.isArray(selectedByField[field])) selectedByField[field] = [];
+                selectedByField[field] = selectedByField[field].map(String);
+            });
+
+            function renderCounts() {
+                document.querySelectorAll('[data-count-for]').forEach((el) => {
+                    const field = el.getAttribute('data-count-for');
+                    const count = (selectedByField[field] || []).length;
+                    el.textContent = `(${count})`;
                 });
             }
 
-            // Operadores donde el valor no es requerido.
-            const valueHiddenOps = new Set(['is_empty', 'is_not_empty', 'has_value', 'no_value']);
-            const defaultOperatorsJs = [
-                'contains',
-                'not_contains',
-                'starts_with',
-                'ends_with',
-                'equals',
-                'not_equals',
-                'is_empty',
-                'is_not_empty',
-                'has_value',
-                'no_value'
-            ];
-
-            function getExistingValueFromWrap(valueWrap, rowIdx) {
-                const checkbox = valueWrap.querySelector(`input[name="filters[${rowIdx}][value]"][type="checkbox"]`);
-                if (checkbox) {
-                    return checkbox.checked ? '1' : null;
+            function renderSummary() {
+                const entries = Object.entries(selectedByField).filter(([, values]) => Array.isArray(values) && values.length > 0);
+                summaryEl.innerHTML = '';
+                if (entries.length === 0) {
+                    summaryEl.innerHTML = '<span class="text-white/60">Sin filtros seleccionados</span>';
+                    return;
                 }
-
-                const text = valueWrap.querySelector(`input[name="filters[${rowIdx}][value]"][type="text"]`);
-                if (text) {
-                    return text.value || null;
-                }
-
-                const singleSelect = valueWrap.querySelector(`select[name="filters[${rowIdx}][value]"]`);
-                if (singleSelect) {
-                    return singleSelect.value || null;
-                }
-
-                const multiSelect = valueWrap.querySelector(`select[name="filters[${rowIdx}][value][]"]`);
-                if (multiSelect) {
-                    return Array.from(multiSelect.selectedOptions).map(o => o.value);
-                }
-
-                return null;
+                entries.forEach(([field, values]) => {
+                    const chip = document.createElement('span');
+                    chip.className = 'inline-flex items-center rounded-lg border border-[#FFE600]/40 bg-[#FFE600]/20 px-2.5 py-1 text-xs text-[#FFE600]';
+                    chip.textContent = `${headerLabels[field]}: ${values.join(', ')}`;
+                    summaryEl.appendChild(chip);
+                });
             }
 
-            function syncOperatorsAndValue(rowIdx) {
-                const fieldSelect = form.querySelector(`select[name="filters[${rowIdx}][field]"]`);
-                const operatorSelect = form.querySelector(`select[name="filters[${rowIdx}][operator]"]`);
-                const valueWrap = form.querySelector(`[data-value-wrap="${rowIdx}"]`);
-                if (!fieldSelect || !operatorSelect || !valueWrap) return;
+            function renderHiddenInputs() {
+                dynamicFiltersContainer.innerHTML = '';
+                let idx = 0;
+                Object.entries(selectedByField).forEach(([field, values]) => {
+                    if (!Array.isArray(values) || values.length === 0) return;
 
-                const selectedField = fieldSelect.value;
-                const cfg = fieldConfigs[selectedField] ?? null;
-                const ops = (cfg && Array.isArray(cfg.operators) && cfg.operators.length > 0) ? cfg.operators : defaultOperatorsJs;
+                    const fieldInput = document.createElement('input');
+                    fieldInput.type = 'hidden';
+                    fieldInput.name = `filters[${idx}][field]`;
+                    fieldInput.value = field;
+                    dynamicFiltersContainer.appendChild(fieldInput);
 
-                // Guardar valores existentes (para conservar si el filtro ya venía aplicado).
-                const existingValue = getExistingValueFromWrap(valueWrap, rowIdx);
+                    const operatorInput = document.createElement('input');
+                    operatorInput.type = 'hidden';
+                    operatorInput.name = `filters[${idx}][operator]`;
+                    operatorInput.value = 'equals';
+                    dynamicFiltersContainer.appendChild(operatorInput);
 
-                // Actualizar operadores
-                const currentOp = operatorSelect.value;
-                operatorSelect.innerHTML = '';
-                ops.forEach(op => {
-                    const opt = document.createElement('option');
-                    opt.value = op;
-                    opt.textContent = operatorLabelsJs[op] ?? op;
-                    operatorSelect.appendChild(opt);
+                    values.forEach((value) => {
+                        const valueInput = document.createElement('input');
+                        valueInput.type = 'hidden';
+                        valueInput.name = `filters[${idx}][value][]`;
+                        valueInput.value = String(value);
+                        dynamicFiltersContainer.appendChild(valueInput);
+                    });
+                    idx += 1;
+                });
+            }
+
+            function renderPanelOptions() {
+                if (!currentField) return;
+                const search = (searchInput.value || '').trim().toLowerCase();
+                const options = Object.entries(fieldOptions[currentField] || {});
+                const selected = new Set((selectedByField[currentField] || []).map(String));
+                const filtered = options.filter(([value, label]) => {
+                    const txt = `${value} ${label}`.toLowerCase();
+                    return txt.includes(search);
                 });
 
-                if (ops.includes(currentOp)) {
-                    operatorSelect.value = currentOp;
-                } else {
-                    operatorSelect.value = ops[0] ?? 'equals';
-                }
+                optionsList.innerHTML = '';
+                filtered.forEach(([value, label]) => {
+                    const id = `opt-${currentField}-${String(value).replace(/[^a-zA-Z0-9_-]/g, '_')}`;
+                    const row = document.createElement('label');
+                    row.className = 'flex items-center gap-2 px-2 py-1 rounded hover:bg-gray-100 text-sm cursor-pointer';
+                    row.innerHTML = `
+                        <input id="${id}" type="checkbox" value="${String(value).replace(/"/g, '&quot;')}" ${selected.has(String(value)) ? 'checked' : ''} class="rounded border-gray-300 text-[#0B2C66] focus:ring-[#0B2C66]">
+                        <span style="color:#0B2C66; font-weight:500;">${String(label)}</span>
+                    `;
+                    optionsList.appendChild(row);
+                });
 
-                const operator = operatorSelect.value;
-                const hideValue = valueHiddenOps.has(operator);
-
-                valueWrap.style.display = hideValue ? 'none' : 'block';
-                if (hideValue) return;
-
-                // Renderizar control de valor según tipo del campo
-                const type = (cfg && cfg.type) ? cfg.type : 'text';
-                const options = (cfg && cfg.options) ? cfg.options : {};
-
-                valueWrap.innerHTML = '';
-
-                const baseClasses = 'w-full rounded-xl border border-gray-200 bg-white text-[#0B2C66] py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#FFE600]/40';
-
-                if (type === 'select') {
-                    const isMultiple = !!cfg.multiple;
-                    const select = document.createElement('select');
-                    if (isMultiple) {
-                        select.name = `filters[${rowIdx}][value][]`;
-                        select.multiple = true;
-                        select.className = `${baseClasses} h-28`;
-                    } else {
-                        select.name = `filters[${rowIdx}][value]`;
-                        select.className = baseClasses;
-                    }
-
-                    const entries = Object.entries(options);
-                    entries.forEach(([val, label]) => {
-                        const opt = document.createElement('option');
-                        opt.value = String(val);
-                        opt.textContent = String(label);
-                        select.appendChild(opt);
-                    });
-
-                    // Restaurar selección existente si aplica.
-                    if (existingValue != null) {
-                        if (isMultiple && Array.isArray(existingValue)) {
-                            const set = new Set(existingValue.map(v => String(v)));
-                            Array.from(select.options).forEach(o => {
-                                o.selected = set.has(String(o.value));
-                            });
-                        } else if (!isMultiple) {
-                            select.value = String(existingValue);
-                        }
-                    }
-
-                    valueWrap.appendChild(select);
-                    return;
-                }
-
-                if (type === 'checkbox') {
-                    const labelText = options['1'] ?? options[1] ?? 'Sí';
-                    const wrapper = document.createElement('label');
-                    wrapper.className = 'inline-flex items-center gap-2 text-sm text-white/90 cursor-pointer';
-
-                    const input = document.createElement('input');
-                    input.type = 'checkbox';
-                    input.name = `filters[${rowIdx}][value]`;
-                    input.value = '1';
-                    input.className = 'rounded border-gray-300 bg-white text-[#0B2C66] focus:ring-[#FFE600]';
-
-                    if (existingValue === '1' || existingValue === 1) {
-                        input.checked = true;
-                    }
-
-                    const span = document.createElement('span');
-                    span.textContent = labelText;
-
-                    wrapper.appendChild(input);
-                    wrapper.appendChild(span);
-                    valueWrap.appendChild(wrapper);
-                    return;
-                }
-
-                // Texto (con datalist sugerencias)
-                const input = document.createElement('input');
-                input.type = 'text';
-                input.name = `filters[${rowIdx}][value]`;
-                input.placeholder = 'Valor...';
-                input.autocomplete = 'off';
-                input.className = baseClasses + ' placeholder-gray-400';
-
-                const suggestions = fieldSuggestions[selectedField] ?? [];
-                if (Array.isArray(suggestions) && suggestions.length > 0) {
-                    const listId = `datalist-${rowIdx}-${selectedField}`;
-                    input.setAttribute('list', listId);
-
-                    const datalist = document.createElement('datalist');
-                    datalist.id = listId;
-                    suggestions.forEach(v => {
-                        const opt = document.createElement('option');
-                        opt.value = String(v);
-                        datalist.appendChild(opt);
-                    });
-                    valueWrap.appendChild(input);
-                    valueWrap.appendChild(datalist);
-                } else {
-                    valueWrap.appendChild(input);
-                }
-
-                if (existingValue != null && typeof existingValue === 'string') {
-                    input.value = existingValue;
-                }
+                const visibleCheckboxes = Array.from(optionsList.querySelectorAll('input[type="checkbox"]'));
+                const allChecked = visibleCheckboxes.length > 0 && visibleCheckboxes.every((cb) => cb.checked);
+                selectAllInput.checked = allChecked;
             }
 
-            for (let i = 0; i < rowCount; i++) {
-                const fieldSelect = form.querySelector(`select[name="filters[${i}][field]"]`);
-                const operatorSelect = form.querySelector(`select[name="filters[${i}][operator]"]`);
-                if (fieldSelect) {
-                    fieldSelect.addEventListener('change', () => syncOperatorsAndValue(i));
+            function openPanelFor(field) {
+                currentField = field;
+                panelTitle.textContent = headerLabels[field] || 'Filtro';
+                searchInput.value = '';
+                const trigger = document.querySelector(`.excel-filter-btn[data-field="${field}"]`);
+                if (trigger && buttonsWrap) {
+                    const wrapRect = buttonsWrap.getBoundingClientRect();
+                    const btnRect = trigger.getBoundingClientRect();
+                    panelEl.style.left = `${Math.max(0, btnRect.left - wrapRect.left)}px`;
+                    panelEl.style.top = `${btnRect.bottom - wrapRect.top + 6}px`;
                 }
-                if (operatorSelect) {
-                    operatorSelect.addEventListener('change', () => syncOperatorsAndValue(i));
-                }
-                syncOperatorsAndValue(i);
+                panelEl.classList.remove('hidden');
+                renderPanelOptions();
             }
+
+            function closePanel() {
+                panelEl.classList.add('hidden');
+                currentField = null;
+            }
+
+            document.querySelectorAll('.excel-filter-btn').forEach((button) => {
+                button.addEventListener('click', () => openPanelFor(button.getAttribute('data-field')));
+            });
+
+            panelCloseBtn?.addEventListener('click', closePanel);
+            panelAcceptBtn?.addEventListener('click', () => {
+                if (!currentField) return;
+                const checkedValues = Array.from(optionsList.querySelectorAll('input[type="checkbox"]:checked')).map((cb) => String(cb.value));
+                selectedByField[currentField] = checkedValues;
+                renderCounts();
+                renderSummary();
+                renderHiddenInputs();
+                closePanel();
+            });
+
+            searchInput?.addEventListener('input', renderPanelOptions);
+            selectAllInput?.addEventListener('change', () => {
+                Array.from(optionsList.querySelectorAll('input[type="checkbox"]')).forEach((cb) => {
+                    cb.checked = selectAllInput.checked;
+                });
+            });
+
+            document.addEventListener('click', (event) => {
+                if (panelEl.classList.contains('hidden')) return;
+                const target = event.target;
+                if (!(target instanceof Element)) return;
+                if (panelEl.contains(target)) return;
+                if (target.closest('.excel-filter-btn')) return;
+                closePanel();
+            });
+
+            renderCounts();
+            renderSummary();
+            renderHiddenInputs();
 
             form.addEventListener('submit', async function (e) {
                 e.preventDefault();
-
-                // Evitar doble filtro de Género:
-                // Si el usuario eligió "genero" en alguna fila adicional, la invalidamos limpiando su valor.
-                for (let i = 1; i < rowCount; i++) {
-                    const fieldSelect = form.querySelector(`select[name="filters[${i}][field]"]`);
-                    if (!fieldSelect || fieldSelect.value !== 'genero') continue;
-
-                    const operatorSelect = form.querySelector(`select[name="filters[${i}][operator]"]`);
-                    if (operatorSelect) operatorSelect.value = 'equals';
-
-                    const valueWrap = form.querySelector(`[data-value-wrap="${i}"]`);
-                    if (!valueWrap) continue;
-
-                    const checkbox = valueWrap.querySelector(`input[name="filters[${i}][value]"][type="checkbox"]`);
-                    if (checkbox) checkbox.checked = false;
-
-                    const text = valueWrap.querySelector(`input[name="filters[${i}][value]"][type="text"]`);
-                    if (text) text.value = '';
-
-                    const singleSelect = valueWrap.querySelector(`select[name="filters[${i}][value]"]`);
-                    if (singleSelect) {
-                        singleSelect.value = '';
-                        if (singleSelect.value !== '') singleSelect.selectedIndex = 0;
-                    }
-
-                    const multiSelect = valueWrap.querySelector(`select[name="filters[${i}][value][]"]`);
-                    if (multiSelect) {
-                        Array.from(multiSelect.options).forEach(o => (o.selected = false));
-                    }
-                }
 
                 const url = @json(route('filtros.ajax'));
                 const fd = new FormData(form);
@@ -502,7 +389,6 @@
                     }
 
                     const data = await res.json();
-                    if (data.chipsHtml && chipsEl) chipsEl.innerHTML = data.chipsHtml;
                     if (data.resultsHtml && resultsEl) resultsEl.innerHTML = data.resultsHtml;
                 } catch (err) {
                     console.error(err);

@@ -7,7 +7,7 @@
         </div>
         <div>
             <h2 class="page-header-card__title">Aprobaciones Pendientes - Empresas</h2>
-            <p class="page-header-card__subtitle">Empresas en espera de aprobación</p>
+            <p class="page-header-card__subtitle">Altas pendientes y eliminaciones solicitadas</p>
         </div>
         @can('users.approve')
         <a href="{{ route('approvals.users') }}" class="btn-panel-dark ml-auto">
@@ -27,9 +27,27 @@
                         <div class="flex-1 min-w-0">
                             <h3 class="font-semibold text-white">{{ $company->nombre_comercial }}</h3>
                             <p class="text-sm text-white/80">RFC: {{ $company->rfc ?? '-' }}</p>
-                            <p class="text-sm text-white/70">Creado por: <strong class="text-[#FFE600]">{{ $company->creator?->name ?? 'N/D' }}</strong> el {{ $company->created_at->format('d/m/Y H:i') }}</p>
+                            @if($company->deletion_pending)
+                                <p class="text-sm text-white/70 mt-1"><span class="text-[#FFE600] font-semibold">Eliminación solicitada</span> por <strong class="text-[#FFE600]">{{ $company->deletionRequester?->name ?? 'N/D' }}</strong> el {{ $company->deletion_requested_at?->format('d/m/Y H:i') ?? '—' }}</p>
+                            @else
+                                <p class="text-sm text-white/70">Creado por: <strong class="text-[#FFE600]">{{ $company->creator?->name ?? 'N/D' }}</strong> el {{ $company->created_at->format('d/m/Y H:i') }}</p>
+                            @endif
                         </div>
-                        <div class="flex gap-2">
+                        <div class="flex gap-2 flex-wrap">
+                            @if($company->deletion_pending)
+                            <form method="POST" action="{{ route('approvals.companies.approve-deletion', $company) }}" class="inline">
+                                @csrf
+                                <button type="submit" class="btn-panel-dark bg-emerald-600 hover:bg-emerald-500 text-white border-0" onclick="return confirm('¿Confirmar eliminación?');">
+                                    Aprobar eliminación
+                                </button>
+                            </form>
+                            <form method="POST" action="{{ route('approvals.companies.deny-deletion', $company) }}" class="inline">
+                                @csrf
+                                <button type="submit" class="px-4 py-2 rounded-xl font-semibold bg-red-600 text-white hover:bg-red-500 transition" onclick="return confirm('¿Rechazar la eliminación?');">
+                                    Denegar eliminación
+                                </button>
+                            </form>
+                            @else
                             <form method="POST" action="{{ route('approvals.companies.approve', $company) }}" class="inline">
                                 @csrf
                                 <button type="submit" class="btn-panel-dark bg-emerald-600 hover:bg-emerald-500 text-white border-0">
@@ -43,6 +61,7 @@
                                     Denegar
                                 </button>
                             </form>
+                            @endif
                         </div>
                     </div>
                     @endforeach
@@ -51,7 +70,7 @@
                     {{ $companies->links() }}
                 </div>
                 @else
-                <p class="text-center text-white py-12 px-4">No hay empresas pendientes de aprobación</p>
+                <p class="text-center text-white py-12 px-4">No hay solicitudes de empresas pendientes</p>
                 @endif
         </div>
     </div>

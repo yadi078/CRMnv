@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Company;
-use App\Models\Contact;
 use App\Models\User;
 use App\Notifications\UserApprovedNotification;
 use Illuminate\Http\Request;
@@ -12,8 +11,7 @@ use Illuminate\Support\Facades\URL;
 /**
  * Controlador de Aprobaciones (Solicitudes pendientes)
  *
- * Centro único: usuarios y empresas que requieren autorización del admin.
- * Acciones: Aprobar y Denegar.
+ * Centro único: altas de empresas, bajas solicitadas por usuarios, y registro de usuarios.
  */
 class ApprovalController extends Controller
 {
@@ -23,20 +21,21 @@ class ApprovalController extends Controller
     public function index(Request $request)
     {
         $tab = $request->get('tab', 'empresas');
+        if (! in_array($tab, ['empresas', 'usuarios'], true)) {
+            $tab = 'empresas';
+        }
 
         $companies = collect();
-        $contacts = collect();
         $users = collect();
         $companiesCount = 0;
-        $contactsCount = 0;
         $usersCount = 0;
 
         if ($request->user()->can('companies.approve')) {
-            $companiesCount = Company::pendientes()->count();
+            $companiesCount = Company::pendientesAprobacion()->count();
             if ($tab === 'empresas') {
-                $companies = Company::pendientes()
-                    ->with(['creator'])
-                    ->latest()
+                $companies = Company::pendientesAprobacion()
+                    ->with(['creator', 'deletionRequester'])
+                    ->latest('updated_at')
                     ->paginate(10, ['*'], 'companies_page');
             }
         }
@@ -50,53 +49,95 @@ class ApprovalController extends Controller
             }
         }
 
-        // Contactos pendientes (solo admins)
-        if ($request->user()->esAdmin()) {
-            $contactsCount = Contact::pendientes()->count();
-            if ($tab === 'contactos') {
-                $contacts = Contact::pendientes()
-                    ->with(['company', 'creator'])
-                    ->latest()
-                    ->paginate(10, ['*'], 'contacts_page');
-            }
-        }
-
-        $totalPendientes = $companiesCount + $usersCount + $contactsCount;
+        $totalPendientes = $companiesCount + $usersCount;
 
         return view('approvals.index', compact(
             'tab',
             'companies',
-            'contacts',
             'users',
             'companiesCount',
-            'contactsCount',
             'usersCount',
             'totalPendientes'
         ));
     }
 
     /**
-     * Aprueba un contacto
+     * Aprueba el alta de una empresa (no confundir con aprobar una eliminación).
      */
-    public function approveContact(Contact $contact)
+    public function approveCompany(Company $company)
     {
-        abort_unless(auth()->user()->esAdmin(), 403);
+        $this->authorize('companies.approve');
 
-        $contact->aprobar(auth()->id());
+        if ($company->deletion_pending) {
+            return back()->with('error', 'Esta empresa tiene una solicitud de eliminación. Use «Aprobar eliminación» o «Denegar eliminación».');
+        }
+        if ($company->approval_status !== 'pendiente') {
+            return back()->with('error', 'Esta empresa no está pendiente de alta.');
+        }
 
-        return back()->with('success', 'Contacto aprobado exitosamente.');
+        $company->aprobar(auth()->id());
+
+        return back()->with('success', 'Empresa aprobada exitosamente.');
     }
 
     /**
-     * Denega un contacto
+     * Denega el alta de una empresa.
      */
-    public function denyContact(Request $request, Contact $contact)
+    public function denyCompany(Request $request, Company $company)
     {
-        abort_unless(auth()->user()->esAdmin(), 403);
+        $this->authorize('companies.approve');
 
-        $contact->denegar(auth()->id(), $request->input('motivo'));
+        if ($company->deletion_pending) {
+            return back()->with('error', 'Esta empresa tiene una solicitud de eliminación. Use las acciones de eliminación en su lugar.');
+        }
+        if ($company->approval_status !== 'pendiente') {
+            return back()->with('error', 'Solo se pueden denegar empresas pendientes de alta.');
+        }
 
-        return back()->with('success', 'Solicitud de contacto denegada.');
+        $company->denegar(auth()->id(), $request->input('motivo'));
+
+        return back()->with('success', 'Solicitud de empresa denegada.');
+    }
+
+    /**
+     * Aprueba la eliminación solicitada por un usuario (borrado lógico).
+     */
+    public function approveCompanyDeletion(Company $company)
+    {
+        $this->authorize('companies.approve');
+
+        if (! $company->deletion_pending) {
+            return back()->with('error', 'No hay solicitud de eliminación pendiente para esta empresa.');
+        }
+
+        $company->update([
+            'deletion_pending' => false,
+            'deletion_requested_by' => null,
+            'deletion_requested_at' => null,
+        ]);
+        $company->delete();
+
+        return back()->with('success', 'Eliminación aprobada. La empresa se ha dado de baja.');
+    }
+
+    /**
+     * Rechaza la solicitud de eliminación; la empresa permanece activa.
+     */
+    public function denyCompanyDeletion(Company $company)
+    {
+        $this->authorize('companies.approve');
+
+        if (! $company->deletion_pending) {
+            return back()->with('error', 'No hay solicitud de eliminación pendiente para esta empresa.');
+        }
+
+        $company->update([
+            'deletion_pending' => false,
+            'deletion_requested_by' => null,
+            'deletion_requested_at' => null,
+        ]);
+
+        return back()->with('success', 'Solicitud de eliminación rechazada. La empresa sigue activa.');
     }
 
     /**
@@ -106,36 +147,12 @@ class ApprovalController extends Controller
     {
         $this->authorize('companies.approve');
 
-        $companies = Company::pendientes()
-            ->with(['creator'])
-            ->latest()
+        $companies = Company::pendientesAprobacion()
+            ->with(['creator', 'deletionRequester'])
+            ->latest('updated_at')
             ->paginate(15);
 
         return view('approvals.companies', compact('companies'));
-    }
-
-    /**
-     * Aprueba una empresa
-     */
-    public function approveCompany(Company $company)
-    {
-        $this->authorize('companies.approve');
-
-        $company->aprobar(auth()->id());
-
-        return back()->with('success', 'Empresa aprobada exitosamente.');
-    }
-
-    /**
-     * Denega una empresa
-     */
-    public function denyCompany(Request $request, Company $company)
-    {
-        $this->authorize('companies.approve');
-
-        $company->denegar(auth()->id(), $request->input('motivo'));
-
-        return back()->with('success', 'Solicitud de empresa denegada.');
     }
 
     /**

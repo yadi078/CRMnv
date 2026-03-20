@@ -18,6 +18,20 @@
                 Editar
             </a>
             @endcan
+            @can('requestDeletion', $company)
+            <form method="POST" action="{{ route('companies.request-deletion', $company) }}" class="inline" onsubmit="return confirm('¿Enviar solicitud para eliminar esta empresa? Un administrador deberá aprobarlo.');">
+                @csrf
+                <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl font-semibold bg-red-600/90 text-white hover:bg-red-500 border border-red-400/50">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    Solicitar eliminación
+                </button>
+            </form>
+            @endcan
+            @if($company->deletion_pending ?? false)
+            <span class="inline-flex items-center px-3 py-2 rounded-xl text-sm font-semibold bg-amber-500/20 text-amber-200 border border-amber-400/40">
+                Eliminación pendiente de aprobación
+            </span>
+            @endif
             <a href="{{ route('companies.index') }}" class="btn-panel-dark bg-white/10 text-white border-2 border-[#FFE600] hover:bg-white/20">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />

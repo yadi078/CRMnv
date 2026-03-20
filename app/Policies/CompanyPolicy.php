@@ -53,6 +53,24 @@ class CompanyPolicy
     }
 
     /**
+     * Usuario sin permiso de borrado directo puede pedir que un admin autorice la eliminación.
+     */
+    public function requestDeletion(User $user, Company $company): bool
+    {
+        if (! $user->can('companies.edit') || $user->can('companies.delete')) {
+            return false;
+        }
+        if ($company->approval_status !== 'aprobado' || $company->deletion_pending) {
+            return false;
+        }
+        if ((int) $company->created_by !== (int) $user->id) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Determine whether the user can restore the model.
      */
     public function restore(User $user, Company $company): bool

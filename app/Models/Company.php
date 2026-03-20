@@ -34,6 +34,9 @@ class Company extends Model
         'approved_by',
         'approved_at',
         'motivo_rechazo',
+        'deletion_pending',
+        'deletion_requested_by',
+        'deletion_requested_at',
     ];
 
     /**
@@ -43,6 +46,8 @@ class Company extends Model
     {
         return [
             'approved_at' => 'datetime',
+            'deletion_pending' => 'boolean',
+            'deletion_requested_at' => 'datetime',
         ];
     }
 
@@ -95,6 +100,14 @@ class Company extends Model
     }
 
     /**
+     * Usuario que solicitó eliminar la empresa (pendiente de decisión del admin).
+     */
+    public function deletionRequester(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'deletion_requested_by');
+    }
+
+    /**
      * Estados de prospecto disponibles
      */
     public const PROSPECT_STATUSES = [
@@ -130,6 +143,17 @@ class Company extends Model
     public function scopePendientes($query)
     {
         return $query->where('approval_status', 'pendiente');
+    }
+
+    /**
+     * Cola de solicitudes para el panel de aprobaciones: altas pendientes o bajas solicitadas.
+     */
+    public function scopePendientesAprobacion($query)
+    {
+        return $query->where(function ($q) {
+            $q->where('approval_status', 'pendiente')
+                ->orWhere('deletion_pending', true);
+        });
     }
 
     /**

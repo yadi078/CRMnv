@@ -42,8 +42,13 @@ class UserDashboardController extends Controller
             ->limit(10)
             ->get();
 
-        // Solicitudes pendientes (empresas del usuario en estado pendiente de aprobación)
-        $solicitudesPendientes = Company::where('created_by', $user->id)->pendientes()->count();
+        // Solicitudes: altas de empresa pendientes + eliminaciones enviadas a revisión
+        $solicitudesPendientes = Company::where('created_by', $user->id)
+            ->where(function ($q) {
+                $q->where('approval_status', 'pendiente')
+                    ->orWhere('deletion_pending', true);
+            })
+            ->count();
 
         // Mis empresas: las creadas por el usuario (aprobadas + pendientes), con primer contacto
         $misEmpresasQuery = Company::where('created_by', $user->id)

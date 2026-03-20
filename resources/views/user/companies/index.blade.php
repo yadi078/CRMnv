@@ -27,71 +27,37 @@
                 </p>
             </div>
             @endif
+            @if(isset($misEliminacionesPendientes) && $misEliminacionesPendientes > 0)
+            <div class="panel-card-dark rounded-lg border-2 border-red-500/40 p-4">
+                <p class="text-sm text-white">
+                    <strong>{{ $misEliminacionesPendientes }}</strong> solicitud(es) de <strong>eliminación de empresa</strong> en revisión por un administrador.
+                </p>
+            </div>
+            @endif
             <div class="panel-card-dark overflow-hidden p-6">
                 <p class="text-white/90 text-sm mb-4">Las empresas que agregue quedarán en estado <span class="font-semibold text-[#FFE600]">Pendiente</span> hasta que un administrador las apruebe. Cada empresa tiene un estado de prospecto (Seguimiento, Interesado, Vendido, etc.) para llevar el avance en el proceso comercial.</p>
-                <form method="GET" action="{{ route('companies.index') }}" class="mb-6 grid grid-cols-1 md:grid-cols-12 gap-4">
-                    <!-- Fila 1: buscador ancho -->
-                    <div class="md:col-span-12">
-                        <label for="search" class="block text-sm font-medium text-white/90 mb-1">Buscar</label>
+                <form method="GET" action="{{ route('companies.index') }}" class="mb-6 flex flex-col sm:flex-row sm:items-end gap-3">
+                    <div class="flex-1 min-w-0">
+                        <label for="search" class="block text-sm font-medium text-white/90 mb-1">Buscar por nombre de empresa</label>
                         <input
                             id="search"
                             type="text"
                             name="search"
                             value="{{ request('search') }}"
-                            placeholder="Buscar por nombre, RFC o ejecutivo..."
+                            placeholder="Nombre de la empresa..."
                             class="w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3"
                         >
                     </div>
-
-                    <!-- Fila 2: cuatro selects -->
-                    <div class="md:col-span-3">
-                        <label for="status_color" class="block text-sm font-medium text-white/90 mb-1">Estado prospecto</label>
-                        <select name="status_color" id="status_color" class="w-full rounded-xl border-0 bg-white/15 text-white focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3 [&>option]:bg-[#1a3d6b] [&>option]:text-white">
-                            <option value="">Todos los estados</option>
-                            @foreach(\App\Models\Company::PROSPECT_STATUS_LABELS as $value => $label)
-                                <option value="{{ $value }}" {{ request('status_color') === $value ? 'selected' : '' }}>{{ $label }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="md:col-span-3">
-                        <label for="sector" class="block text-sm font-medium text-white/90 mb-1">Sector</label>
-                        <select name="sector" id="sector" class="w-full rounded-xl border border-gray-200 bg-white text-[#1F2937] focus:border-[#FFE600] focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3">
-                            <option value="">Todos los sectores</option>
-                            @foreach($sectorOptions as $sector)
-                                <option value="{{ $sector }}" {{ request('sector') === $sector ? 'selected' : '' }}>{{ $sector }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="md:col-span-3">
-                        <label for="estado" class="block text-sm font-medium text-white/90 mb-1">Estado</label>
-                        <select name="estado" id="estado" class="w-full rounded-xl border border-gray-200 bg-white text-[#1F2937] focus:border-[#FFE600] focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3">
-                            <option value="">Todos los estados</option>
-                            @foreach($estadoOptions as $estado)
-                                <option value="{{ $estado }}" {{ request('estado') === $estado ? 'selected' : '' }}>{{ $estado }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="md:col-span-3">
-                        <label for="ejecutivo_asignado" class="block text-sm font-medium text-white/90 mb-1">Ejecutivo</label>
-                        <select name="ejecutivo_asignado" id="ejecutivo_asignado" class="w-full rounded-xl border border-gray-200 bg-white text-[#1F2937] focus:border-[#FFE600] focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3">
-                            <option value="">Todos los ejecutivos</option>
-                            @foreach($ejecutivoOptions as $ejecutivo)
-                                <option value="{{ $ejecutivo }}" {{ request('ejecutivo_asignado') === $ejecutivo ? 'selected' : '' }}>{{ $ejecutivo }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <!-- Fila 3: solo botón filtrar alineado a la derecha -->
-                    <div class="md:col-span-12 flex justify-end gap-3 pt-1">
+                    <div class="flex flex-wrap gap-3">
                         <a href="{{ route('companies.index') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/40 text-white/90 text-sm font-medium hover:bg-white/10 transition-all">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                            Limpiar filtros
+                            Limpiar
                         </a>
                         <button type="submit" class="btn-primary-app">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z" />
                             </svg>
-                            Filtrar
+                            Buscar
                         </button>
                     </div>
                 </form>

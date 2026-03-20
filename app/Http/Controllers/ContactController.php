@@ -35,8 +35,6 @@ class ContactController extends Controller
 
         $query = Contact::with(['company', 'creator']);
 
-        // Mostrar solo contactos creados por el usuario autenticado (usuarios normales)
-        // Los administradores pueden ver todos los contactos.
         if (! $isAdmin) {
             $query->where('created_by', $user->id)
                 ->where('approval_status', 'aprobado');
@@ -44,122 +42,28 @@ class ContactController extends Controller
 
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where('nombre_completo', 'like', "%{$search}%");
-        }
-
-        if ($request->filled('empresa')) {
-            $empresa = $request->empresa;
-            $query->whereHas('company', function ($q) use ($empresa) {
-                $q->where('nombre_comercial', 'like', "%{$empresa}%");
+            $query->whereHas('company', function ($q) use ($search) {
+                $q->where('nombre_comercial', 'like', "%{$search}%");
             });
         }
 
-        if ($request->filled('company_id')) {
-            $query->where('company_id', $request->company_id);
-        }
-
-        if ($request->filled('status_color')) {
-            $query->porStatus($request->status_color);
-        }
-
-        if ($request->filled('genero')) {
-            $query->where('genero', $request->genero);
-        }
-
-        if ($request->filled('municipio')) {
-            $query->where('municipio', 'like', "%{$request->municipio}%");
-        }
-
-        if ($request->filled('estado')) {
-            $query->where('estado', 'like', "%{$request->estado}%");
-        }
-
-        if ($request->filled('email_activo')) {
-            if ($request->email_activo === '1') {
-                $query->where('email_activo', true);
-            } elseif ($request->email_activo === '0') {
-                $query->where('email_activo', false);
-            }
-        }
-
-        // Filtros avanzados por nombre (operador) y orden
-        if ($request->filled('search')) {
-            $nombre = $request->search;
-            $op = $request->get('nombre_op', 'contiene');
-            if ($op === 'exacto') {
-                $query->where('nombre_completo', $nombre);
-            } elseif ($op === 'empieza') {
-                $query->where('nombre_completo', 'like', "{$nombre}%");
-            } elseif ($op === 'termina') {
-                $query->where('nombre_completo', 'like', "%{$nombre}");
-            } else { // contiene (default)
-                $query->where('nombre_completo', 'like', "%{$nombre}%");
-            }
-        }
-
-        // Orden por nombre
-        $nombreOrden = $request->get('nombre_orden');
-        if ($nombreOrden === 'az') {
-            $query->orderBy('nombre_completo', 'asc');
-        } elseif ($nombreOrden === 'za') {
-            $query->orderBy('nombre_completo', 'desc');
-        } else {
-            $query->latest();
-        }
-
-        // Contacto disponible: teléfonos, celulares y "no desea correos"
-        if ($request->filled('tiene_telefono')) {
-            if ($request->tiene_telefono === 'si') {
-                $query->whereNotNull('telefono')->where('telefono', '!=', '');
-            } elseif ($request->tiene_telefono === 'no') {
-                $query->where(function ($q) {
-                    $q->whereNull('telefono')->orWhere('telefono', '');
-                });
-            }
-        }
-        if ($request->filled('telefono_exacto')) {
-            $query->where('telefono', $request->telefono_exacto);
-        }
-        if ($request->filled('tiene_celular')) {
-            if ($request->tiene_celular === 'si') {
-                $query->whereNotNull('celular')->where('celular', '!=', '');
-            } elseif ($request->tiene_celular === 'no') {
-                $query->where(function ($q) {
-                    $q->whereNull('celular')->orWhere('celular', '');
-                });
-            }
-        }
-        if ($request->filled('celular_exacto')) {
-            $query->where('celular', $request->celular_exacto);
-        }
-        if ($request->filled('no_desea_correos')) {
-            if ($request->no_desea_correos === 'si') {
-                $query->where('email_activo', false);
-            } elseif ($request->no_desea_correos === 'no') {
-                $query->where('email_activo', true);
-            }
-        }
+        $query->latest();
 
         $contacts = $query->paginate(15)->withQueryString();
 
-        // Datos auxiliares para filtros (nombres y números)
-        $namesQuery = Contact::query();
-        $phonesQuery = Contact::query()->whereNotNull('telefono')->where('telefono', '!=', '');
-        $cellsQuery = Contact::query()->whereNotNull('celular')->where('celular', '!=', '');
+        $companyNamesQuery = Company::query();
         if (! $isAdmin) {
-            $namesQuery->where('created_by', $user->id);
-            $phonesQuery->where('created_by', $user->id);
-            $cellsQuery->where('created_by', $user->id);
+            $companyNamesQuery->aprobados();
         }
-        $contactNames = $namesQuery->orderBy('nombre_completo')->pluck('nombre_completo')->unique();
-        $telefonos = $phonesQuery->orderBy('telefono')->pluck('telefono')->unique();
-        $celulares = $cellsQuery->orderBy('celular')->pluck('celular')->unique();
+        $companyNames = $companyNamesQuery
+            ->orderBy('nombre_comercial')
+            ->pluck('nombre_comercial')
+            ->unique()
+            ->values();
 
         return $this->resolveView('contacts.index', 'user.contacts.index', compact(
             'contacts',
-            'contactNames',
-            'telefonos',
-            'celulares'
+            'companyNames'
         ));
     }
 
@@ -184,7 +88,8 @@ class ContactController extends Controller
         DB::beginTransaction();
         try {
             $user = auth()->user();
-            $approvalStatus = $user->esAdmin() ? 'aprobado' : 'pendiente';
+            // Los contactos no pasan por cola de aprobación; solo las empresas nuevas de usuarios sin permiso de aprobar.
+            $approvalStatus = 'aprobado';
 
             $contact = Contact::create([
                 'company_id' => $request->company_id,

@@ -55,6 +55,7 @@ Route::middleware(['auth', 'verified', 'ensure.role'])->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // Empresas, Contactos y Seguimientos (usuario: captura, consulta, seguimiento; admin: además aprobaciones)
+    Route::post('/companies/{company}/request-deletion', [CompanyController::class, 'requestDeletion'])->name('companies.request-deletion');
     Route::resource('companies', CompanyController::class);
     Route::post('/companies/import', [CompanyController::class, 'import'])->name('companies.import');
     Route::get('/filtros', [FiltrosController::class, 'index'])->name('filtros.index');
@@ -108,11 +109,11 @@ Route::middleware(['auth', 'verified', 'ensure.role', 'admin'])->group(function 
         Route::get('/companies', [ApprovalController::class, 'companies'])->name('companies');
         Route::post('/companies/{company}/approve', [ApprovalController::class, 'approveCompany'])->name('companies.approve');
         Route::post('/companies/{company}/deny', [ApprovalController::class, 'denyCompany'])->name('companies.deny');
+        Route::post('/companies/{company}/approve-deletion', [ApprovalController::class, 'approveCompanyDeletion'])->name('companies.approve-deletion');
+        Route::post('/companies/{company}/deny-deletion', [ApprovalController::class, 'denyCompanyDeletion'])->name('companies.deny-deletion');
         Route::get('/users', [ApprovalController::class, 'users'])->name('users');
         Route::post('/users/{user}/approve', [ApprovalController::class, 'approveUser'])->name('users.approve');
         Route::post('/users/{user}/deny', [ApprovalController::class, 'denyUser'])->name('users.deny');
-        Route::post('/contacts/{contact}/approve', [ApprovalController::class, 'approveContact'])->name('contacts.approve');
-        Route::post('/contacts/{contact}/deny', [ApprovalController::class, 'denyContact'])->name('contacts.deny');
     });
 
     // Gestión de Datos - Funciones exclusivas de Admin (Exportar/Importar)

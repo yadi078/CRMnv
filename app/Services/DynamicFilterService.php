@@ -148,6 +148,21 @@ class DynamicFilterService
 
         // Domicilio: calle_numero o colonia_cp
         if ($col === 'domicilio') {
+            if ($op === 'equals') {
+                $values = is_array($val) ? $val : [$val];
+                $values = array_values(array_filter(array_map(fn ($v) => is_string($v) ? trim($v) : $v, $values), fn ($v) => $v !== null && $v !== ''));
+                $hasCon = in_array('con_domicilio', $values, true);
+                $hasSin = in_array('sin_domicilio', $values, true);
+                if ($hasCon && $hasSin) {
+                    return;
+                }
+                if ($hasCon) {
+                    $op = 'is_not_empty';
+                } elseif ($hasSin) {
+                    $op = 'is_empty';
+                }
+            }
+
             if ($op === 'is_empty') {
                 $q->{$method}(function (Builder $b) {
                     $b->where(function ($b2) {
@@ -167,7 +182,9 @@ class DynamicFilterService
 
         // Checkbox: no_recibir_correos -> email_activo = false
         if ($col === 'no_recibir_correos') {
-            $wantNoRecibir = $val === '1' || $val === 1 || $val === true;
+            $rawValue = is_array($val) ? reset($val) : $val;
+            $normalized = is_string($rawValue) ? strtolower(trim($rawValue)) : $rawValue;
+            $wantNoRecibir = in_array($normalized, ['1', 1, true, 'si', 'sí'], true);
             $q->{$method}('email_activo', $wantNoRecibir ? false : true);
             return;
         }
@@ -245,6 +262,31 @@ class DynamicFilterService
                 });
             }
             return;
+        }
+
+        if ($col === 'datos_fiscales' && $op === 'equals') {
+            $values = is_array($val) ? $val : [$val];
+            $values = array_values(array_filter(array_map(fn ($v) => is_string($v) ? trim($v) : $v, $values), fn ($v) => $v !== null && $v !== ''));
+            $hasCon = in_array('con_domicilio', $values, true);
+            $hasSin = in_array('sin_domicilio', $values, true);
+
+            if ($hasCon && $hasSin) {
+                return;
+            }
+
+            if ($hasCon) {
+                $q->{$method}(function (Builder $b) {
+                    $b->whereNotNull('datos_fiscales')->where('datos_fiscales', '!=', '');
+                });
+                return;
+            }
+
+            if ($hasSin) {
+                $q->{$method}(function (Builder $b) {
+                    $b->whereNull('datos_fiscales')->orWhere('datos_fiscales', '');
+                });
+                return;
+            }
         }
 
         $this->applyGenericOperator($q, $col, $op, $val, $method);

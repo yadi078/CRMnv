@@ -43,7 +43,7 @@ class DashboardController extends Controller
         $empresasPendientes = 0;
         $usuariosPendientes = 0;
         if ($user->can('companies.approve')) {
-            $empresasPendientes = Company::pendientes()->count();
+            $empresasPendientes = Company::pendientesAprobacion()->count();
         }
         if ($user->can('users.approve')) {
             $usuariosPendientes = \App\Models\User::where('approval_status', 'pendiente')->count();

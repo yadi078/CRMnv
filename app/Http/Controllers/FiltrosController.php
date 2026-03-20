@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\DataTransferObjects\FilterSpec;
 use App\Models\Contact;
 use App\Models\Company;
 use App\Services\DynamicFilterService;
@@ -23,6 +24,7 @@ class FiltrosController extends Controller
 
         $filterLogic = DynamicFilterService::logicFromRequest($request);
         $filterSpecs = DynamicFilterService::parseFromRequest($request);
+        $resultScope = $this->resolveResultScope($request->input('result_scope'));
         $filterService = app(DynamicFilterService::class);
 
         $contactFields = FilterConfig::contactFieldsWithOptions();
@@ -37,9 +39,23 @@ class FiltrosController extends Controller
         $contactFieldKeys = array_merge(array_keys($contactFields), ['sector']);
         $companyFieldKeys = array_keys($companyFields);
         $contactFilterSpecs = array_values(array_filter($filterSpecs, fn ($s) => in_array($s->field, $contactFieldKeys, true)));
-        $companyFilterSpecs = array_values(array_filter($filterSpecs, fn ($s) => in_array($s->field, $companyFieldKeys, true)));
+        $companyFilterSpecs = array_values(array_map(function ($spec) {
+            if ($spec->field === 'domicilio') {
+                return new FilterSpec('datos_fiscales', $spec->operator, $spec->value);
+            }
+            return $spec;
+        }, array_filter($filterSpecs, fn ($s) => in_array($s->field, array_merge($companyFieldKeys, ['domicilio']), true))));
+        $hasAnyFilters = count($filterSpecs) > 0;
+        $hasContactFilters = count($contactFilterSpecs) > 0;
+        $hasCompanyFilters = count($companyFilterSpecs) > 0;
 
-        // Queries base para construir opciones (multi-select)
+        // Queries base para construir opciones (multi-select) tipo Excel:
+        // deben mostrar todos los valores existentes en cada columna.
+        // Incluimos soft-deleted para poblar catálogos completos tipo Excel.
+        $baseContactsForOptions = Contact::withTrashed();
+        $baseCompaniesForOptions = Company::query();
+
+        // Queries base con alcance de usuario para resultados/sugerencias operativas.
         $baseContacts = Contact::query();
         if (! $isAdmin && $userId) {
             $baseContacts->where('created_by', $userId)
@@ -65,20 +81,25 @@ class FiltrosController extends Controller
         };
 
         // Opciones (contactos)
-        $contactFields['departamento']['options'] = $distinctToOptions((clone $baseContacts), 'departamento', 200);
-        $contactFields['puesto_de_trabajo']['options'] = $distinctToOptions((clone $baseContacts), 'puesto_de_trabajo', 200);
+        $contactFields['nombre_completo']['options'] = $distinctToOptions((clone $baseContactsForOptions), 'nombre_completo', 5000);
+        $contactFields['telefono']['options'] = $distinctToOptions((clone $baseContactsForOptions), 'telefono', 5000);
+        $contactFields['celular']['options'] = $distinctToOptions((clone $baseContactsForOptions), 'celular', 5000);
+        $contactFields['email']['options'] = $distinctToOptions((clone $baseContactsForOptions), 'email', 5000);
+        $contactFields['notas']['options'] = $distinctToOptions((clone $baseContactsForOptions), 'notas', 5000);
+        $contactFields['departamento']['options'] = $distinctToOptions((clone $baseContactsForOptions), 'departamento', 5000);
+        $contactFields['puesto_de_trabajo']['options'] = $distinctToOptions((clone $baseContactsForOptions), 'puesto_de_trabajo', 5000);
 
         // municipio/estado: unimos opciones de contactos y empresas para que "sea por igual"
-        $municipioOptsContacts = array_keys($distinctToOptions((clone $baseContacts), 'municipio', 200));
-        $municipioOptsCompanies = array_keys($distinctToOptions((clone $baseCompanies), 'municipio', 200));
+        $municipioOptsContacts = array_keys($distinctToOptions((clone $baseContactsForOptions), 'municipio', 5000));
+        $municipioOptsCompanies = array_keys($distinctToOptions((clone $baseCompaniesForOptions), 'municipio', 5000));
         $municipioOpts = collect(array_merge($municipioOptsContacts, $municipioOptsCompanies))
             ->unique()
             ->values()
             ->mapWithKeys(fn ($v) => [(string)$v => (string)$v])
             ->toArray();
 
-        $estadoOptsContacts = array_keys($distinctToOptions((clone $baseContacts), 'estado', 200));
-        $estadoOptsCompanies = array_keys($distinctToOptions((clone $baseCompanies), 'estado', 200));
+        $estadoOptsContacts = array_keys($distinctToOptions((clone $baseContactsForOptions), 'estado', 5000));
+        $estadoOptsCompanies = array_keys($distinctToOptions((clone $baseCompaniesForOptions), 'estado', 5000));
         $estadoOpts = collect(array_merge($estadoOptsContacts, $estadoOptsCompanies))
             ->unique()
             ->values()
@@ -93,16 +114,6 @@ class FiltrosController extends Controller
             ->whereNotNull('nombre_comercial')
             ->where('nombre_comercial', '!=', '');
 
-        if (! $isAdmin && $userId) {
-            $comercialQuery->whereHas('contacts', function ($q) use ($userId) {
-                $q->where('created_by', $userId)
-                    ->where('approval_status', 'aprobado');
-            });
-        } elseif (! $isAdmin) {
-            // Si no es admin, respetar que solo existan empresas aprobadas (ya lo contempla baseCompanies)
-            $comercialQuery->whereIn('id', $baseCompanies->pluck('id'));
-        }
-
         $comercialValues = $comercialQuery
             ->orderBy('nombre_comercial')
             ->distinct()
@@ -114,8 +125,22 @@ class FiltrosController extends Controller
             ->mapWithKeys(fn ($v) => [(string)$v => (string)$v])
             ->toArray();
 
+        $contactFields['domicilio']['options'] = [
+            'con_domicilio' => 'Con domicilio',
+            'sin_domicilio' => 'Sin domicilio',
+        ];
+        $contactFields['no_recibir_correos']['options'] = [
+            '1' => 'Sí',
+            '0' => 'No',
+        ];
+
         // Opciones (empresas)
-        $companyFields['sector']['options'] = $distinctToOptions((clone $baseCompanies), 'sector', 200);
+        $companyFields['sector']['options'] = $distinctToOptions((clone $baseCompaniesForOptions), 'sector', 5000);
+        $companyFields['comercial']['options'] = $distinctToOptions((clone $baseCompaniesForOptions), 'nombre_comercial', 5000);
+        $companyFields['datos_fiscales']['options'] = [
+            'con_domicilio' => 'Con domicilio',
+            'sin_domicilio' => 'Sin domicilio',
+        ];
 
         // Recálculo de referencia para que el formulario use las opciones actualizadas.
         $fields = array_merge($companyFields, $contactFields);
@@ -134,20 +159,36 @@ class FiltrosController extends Controller
         })->all();
 
         // Ejecutar filtros sobre ambas entidades (mismo set de specs, pero filtrados por entidad)
-        $contactsQuery = Contact::query()->with('company');
-        if (! $isAdmin && $userId) {
-            $contactsQuery->where('created_by', $userId)
-                ->where('approval_status', 'aprobado');
+        $contacts = null;
+        $shouldQueryContacts = match ($resultScope) {
+            'contacto' => ! $hasAnyFilters || $hasContactFilters,
+            'ambos' => ! $hasAnyFilters || $hasContactFilters,
+            default => false,
+        };
+        if ($shouldQueryContacts) {
+            $contactsQuery = Contact::query()->with('company');
+            if (! $isAdmin && $userId) {
+                $contactsQuery->where('created_by', $userId)
+                    ->where('approval_status', 'aprobado');
+            }
+            $filterService->applyToContactQuery($contactsQuery, $contactFilterSpecs, $filterLogic);
+            $contacts = $contactsQuery->latest()->paginate(20)->appends($request->except('_token'));
         }
-        $filterService->applyToContactQuery($contactsQuery, $contactFilterSpecs, $filterLogic);
-        $contacts = $contactsQuery->latest()->paginate(20)->appends($request->except('_token'));
 
-        $companiesQuery = Company::with('contacts');
-        if (! $isAdmin) {
-            $companiesQuery->aprobados();
+        $companies = null;
+        $shouldQueryCompanies = match ($resultScope) {
+            'empresa' => ! $hasAnyFilters || $hasCompanyFilters,
+            'ambos' => ! $hasAnyFilters || $hasCompanyFilters,
+            default => false,
+        };
+        if ($shouldQueryCompanies) {
+            $companiesQuery = Company::with('contacts');
+            if (! $isAdmin) {
+                $companiesQuery->aprobados();
+            }
+            $filterService->applyToCompanyQuery($companiesQuery, $companyFilterSpecs, $filterLogic);
+            $companies = $companiesQuery->latest()->paginate(20)->appends($request->except('_token'));
         }
-        $filterService->applyToCompanyQuery($companiesQuery, $companyFilterSpecs, $filterLogic);
-        $companies = $companiesQuery->latest()->paginate(20)->appends($request->except('_token'));
 
         // Sugerencias para autocompletar en inputs de texto (datalist).
         // Usamos el alcance del usuario (admin o creador) definido en $baseContacts.
@@ -182,6 +223,7 @@ class FiltrosController extends Controller
             'contactFields' => $contactFields,
             'companyFields' => $companyFields,
             'fieldSuggestions' => $fieldSuggestions,
+            'resultScope' => $resultScope,
         ]);
     }
 
@@ -198,6 +240,7 @@ class FiltrosController extends Controller
 
         $filterLogic = DynamicFilterService::logicFromRequest($request);
         $filterSpecs = DynamicFilterService::parseFromRequest($request);
+        $resultScope = $this->resolveResultScope($request->input('result_scope'));
         $filterService = app(DynamicFilterService::class);
 
         $contactFields = FilterConfig::contactFieldsWithOptions();
@@ -209,7 +252,15 @@ class FiltrosController extends Controller
         $contactFieldKeys = array_merge(array_keys($contactFields), ['sector']);
         $companyFieldKeys = array_keys($companyFields);
         $contactFilterSpecs = array_values(array_filter($filterSpecs, fn ($s) => in_array($s->field, $contactFieldKeys, true)));
-        $companyFilterSpecs = array_values(array_filter($filterSpecs, fn ($s) => in_array($s->field, $companyFieldKeys, true)));
+        $companyFilterSpecs = array_values(array_map(function ($spec) {
+            if ($spec->field === 'domicilio') {
+                return new FilterSpec('datos_fiscales', $spec->operator, $spec->value);
+            }
+            return $spec;
+        }, array_filter($filterSpecs, fn ($s) => in_array($s->field, array_merge($companyFieldKeys, ['domicilio']), true))));
+        $hasAnyFilters = count($filterSpecs) > 0;
+        $hasContactFilters = count($contactFilterSpecs) > 0;
+        $hasCompanyFilters = count($companyFilterSpecs) > 0;
 
         $filtersForChips = collect($filterSpecs)->map(function ($spec) use ($fields, $operatorLabels) {
             $specArray = $spec instanceof \App\DataTransferObjects\FilterSpec ? $spec->toArray() : $spec;
@@ -225,20 +276,36 @@ class FiltrosController extends Controller
             ];
         })->all();
 
-        $contactsQuery = Contact::query()->with('company');
-        if (! $isAdmin && $userId) {
-            $contactsQuery->where('created_by', $userId)
-                ->where('approval_status', 'aprobado');
+        $contacts = null;
+        $shouldQueryContacts = match ($resultScope) {
+            'contacto' => ! $hasAnyFilters || $hasContactFilters,
+            'ambos' => ! $hasAnyFilters || $hasContactFilters,
+            default => false,
+        };
+        if ($shouldQueryContacts) {
+            $contactsQuery = Contact::query()->with('company');
+            if (! $isAdmin && $userId) {
+                $contactsQuery->where('created_by', $userId)
+                    ->where('approval_status', 'aprobado');
+            }
+            $filterService->applyToContactQuery($contactsQuery, $contactFilterSpecs, $filterLogic);
+            $contacts = $contactsQuery->latest()->paginate(20)->appends($request->except('_token'));
         }
-        $filterService->applyToContactQuery($contactsQuery, $contactFilterSpecs, $filterLogic);
-        $contacts = $contactsQuery->latest()->paginate(20)->appends($request->except('_token'));
 
-        $companiesQuery = Company::with('contacts');
-        if (! $isAdmin) {
-            $companiesQuery->aprobados();
+        $companies = null;
+        $shouldQueryCompanies = match ($resultScope) {
+            'empresa' => ! $hasAnyFilters || $hasCompanyFilters,
+            'ambos' => ! $hasAnyFilters || $hasCompanyFilters,
+            default => false,
+        };
+        if ($shouldQueryCompanies) {
+            $companiesQuery = Company::with('contacts');
+            if (! $isAdmin) {
+                $companiesQuery->aprobados();
+            }
+            $filterService->applyToCompanyQuery($companiesQuery, $companyFilterSpecs, $filterLogic);
+            $companies = $companiesQuery->latest()->paginate(20)->appends($request->except('_token'));
         }
-        $filterService->applyToCompanyQuery($companiesQuery, $companyFilterSpecs, $filterLogic);
-        $companies = $companiesQuery->latest()->paginate(20)->appends($request->except('_token'));
 
         $clearUrl = route('filtros.index');
 
@@ -251,8 +318,18 @@ class FiltrosController extends Controller
                 'contacts' => $contacts,
                 'companies' => $companies,
                 'filterSpecs' => $filterSpecs,
+                'resultScope' => $resultScope,
             ])->render(),
         ]);
+    }
+
+    private function resolveResultScope(?string $rawScope): string
+    {
+        return match (strtolower((string) $rawScope)) {
+            'empresa' => 'empresa',
+            'contacto' => 'contacto',
+            default => 'ambos',
+        };
     }
 
     protected function buildContactsQuery(Request $request)
