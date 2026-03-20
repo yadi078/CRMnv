@@ -29,6 +29,7 @@ class FiltrosController extends Controller
 
         $contactFields = FilterConfig::contactFieldsWithOptions();
         $companyFields = FilterConfig::companyFields();
+        $companyFields['status_color']['options'] = FilterConfig::prospectStatusColorOptions();
         $operatorLabels = FilterConfig::allOperatorLabels();
 
         // Unificamos campos para que el constructor muestre filtros "para todo".
@@ -145,18 +146,7 @@ class FiltrosController extends Controller
         // Recálculo de referencia para que el formulario use las opciones actualizadas.
         $fields = array_merge($companyFields, $contactFields);
 
-        $filtersForChips = collect($filterSpecs)->map(function ($spec) use ($fields, $operatorLabels) {
-            $specArray = $spec instanceof \App\DataTransferObjects\FilterSpec ? $spec->toArray() : $spec;
-            $fieldKey = $specArray['field'] ?? '';
-            $cfg = $fields[$fieldKey] ?? null;
-            return [
-                'field' => $fieldKey,
-                'operator' => $specArray['operator'] ?? '',
-                'value' => $specArray['value'] ?? null,
-                'field_label' => $cfg['label'] ?? $fieldKey,
-                'operator_label' => $operatorLabels[$specArray['operator'] ?? ''] ?? $specArray['operator'] ?? '',
-            ];
-        })->all();
+        $filtersForChips = $this->mapFilterSpecsToChips($filterSpecs, $fields, $operatorLabels);
 
         // Ejecutar filtros sobre ambas entidades (mismo set de specs, pero filtrados por entidad)
         $contacts = null;
@@ -224,6 +214,7 @@ class FiltrosController extends Controller
             'companyFields' => $companyFields,
             'fieldSuggestions' => $fieldSuggestions,
             'resultScope' => $resultScope,
+            'prospectStatusLabels' => FilterConfig::prospectStatusColorOptions(),
         ]);
     }
 
@@ -245,6 +236,7 @@ class FiltrosController extends Controller
 
         $contactFields = FilterConfig::contactFieldsWithOptions();
         $companyFields = FilterConfig::companyFields();
+        $companyFields['status_color']['options'] = FilterConfig::prospectStatusColorOptions();
         $operatorLabels = FilterConfig::allOperatorLabels();
 
         $fields = array_merge($companyFields, $contactFields);
@@ -262,19 +254,7 @@ class FiltrosController extends Controller
         $hasContactFilters = count($contactFilterSpecs) > 0;
         $hasCompanyFilters = count($companyFilterSpecs) > 0;
 
-        $filtersForChips = collect($filterSpecs)->map(function ($spec) use ($fields, $operatorLabels) {
-            $specArray = $spec instanceof \App\DataTransferObjects\FilterSpec ? $spec->toArray() : $spec;
-            $fieldKey = $specArray['field'] ?? '';
-            $cfg = $fields[$fieldKey] ?? null;
-
-            return [
-                'field' => $fieldKey,
-                'operator' => $specArray['operator'] ?? '',
-                'value' => $specArray['value'] ?? null,
-                'field_label' => $cfg['label'] ?? $fieldKey,
-                'operator_label' => $operatorLabels[$specArray['operator'] ?? ''] ?? $specArray['operator'] ?? '',
-            ];
-        })->all();
+        $filtersForChips = $this->mapFilterSpecsToChips($filterSpecs, $fields, $operatorLabels);
 
         $contacts = null;
         $shouldQueryContacts = match ($resultScope) {
@@ -330,6 +310,39 @@ class FiltrosController extends Controller
             'contacto' => 'contacto',
             default => 'ambos',
         };
+    }
+
+    /**
+     * @param  array<int, FilterSpec>  $filterSpecs
+     * @return array<int, array<string, mixed>>
+     */
+    private function mapFilterSpecsToChips(array $filterSpecs, array $fields, array $operatorLabels): array
+    {
+        $statusLabels = FilterConfig::prospectStatusColorOptions();
+
+        return collect($filterSpecs)->map(function ($spec) use ($fields, $operatorLabels, $statusLabels) {
+            $specArray = $spec instanceof FilterSpec ? $spec->toArray() : $spec;
+            $fieldKey = $specArray['field'] ?? '';
+            $value = $specArray['value'] ?? null;
+
+            if ($fieldKey === 'status_color' && $value !== null) {
+                if (is_array($value)) {
+                    $value = array_map(fn ($v) => $statusLabels[(string) $v] ?? $v, $value);
+                } else {
+                    $value = $statusLabels[(string) $value] ?? $value;
+                }
+            }
+
+            $cfg = $fields[$fieldKey] ?? null;
+
+            return [
+                'field' => $fieldKey,
+                'operator' => $specArray['operator'] ?? '',
+                'value' => $value,
+                'field_label' => $cfg['label'] ?? $fieldKey,
+                'operator_label' => $operatorLabels[$specArray['operator'] ?? ''] ?? $specArray['operator'] ?? '',
+            ];
+        })->all();
     }
 
     protected function buildContactsQuery(Request $request)

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Company;
+use App\Models\Contact;
 use App\Models\User;
 use App\Notifications\UserApprovedNotification;
 use Illuminate\Http\Request;
@@ -16,18 +17,20 @@ use Illuminate\Support\Facades\URL;
 class ApprovalController extends Controller
 {
     /**
-     * Centro único de solicitudes pendientes (pestañas Empresas | Usuarios)
+     * Centro único de solicitudes pendientes (pestañas Empresas | Contactos | Usuarios)
      */
     public function index(Request $request)
     {
         $tab = $request->get('tab', 'empresas');
-        if (! in_array($tab, ['empresas', 'usuarios'], true)) {
+        if (! in_array($tab, ['empresas', 'contactos', 'usuarios'], true)) {
             $tab = 'empresas';
         }
 
         $companies = collect();
+        $contacts = collect();
         $users = collect();
         $companiesCount = 0;
+        $contactsCount = 0;
         $usersCount = 0;
 
         if ($request->user()->can('companies.approve')) {
@@ -49,13 +52,25 @@ class ApprovalController extends Controller
             }
         }
 
-        $totalPendientes = $companiesCount + $usersCount;
+        if ($request->user()->can('companies.approve')) {
+            $contactsCount = Contact::pendientesAprobacion()->count();
+            if ($tab === 'contactos') {
+                $contacts = Contact::pendientesAprobacion()
+                    ->with(['company', 'creator', 'deletionRequester'])
+                    ->latest()
+                    ->paginate(10, ['*'], 'contacts_page');
+            }
+        }
+
+        $totalPendientes = $companiesCount + $contactsCount + $usersCount;
 
         return view('approvals.index', compact(
             'tab',
             'companies',
+            'contacts',
             'users',
             'companiesCount',
+            'contactsCount',
             'usersCount',
             'totalPendientes'
         ));
@@ -203,5 +218,86 @@ class ApprovalController extends Controller
         $user->delete();
 
         return back()->with('success', 'Registro denegado. El usuario ha sido eliminado y deberá registrarse nuevamente si desea intentarlo.');
+    }
+
+    /**
+     * Aprueba un contacto pendiente.
+     */
+    public function approveContact(Contact $contact)
+    {
+        $this->authorize('companies.approve');
+
+        if ($contact->deletion_pending) {
+            return back()->with('error', 'Este contacto tiene una solicitud de eliminación. Use «Aprobar eliminación» o «Denegar eliminación».');
+        }
+        if ($contact->approval_status !== 'pendiente') {
+            return back()->with('error', 'Este contacto no está pendiente de aprobación.');
+        }
+
+        $contact->aprobar(auth()->id());
+
+        return back()->with('success', 'Contacto aprobado exitosamente.');
+    }
+
+    /**
+     * Deniega un contacto pendiente.
+     */
+    public function denyContact(Request $request, Contact $contact)
+    {
+        $this->authorize('companies.approve');
+
+        if ($contact->deletion_pending) {
+            return back()->with('error', 'Este contacto tiene una solicitud de eliminación. Use las acciones de eliminación en su lugar.');
+        }
+        if ($contact->approval_status !== 'pendiente') {
+            return back()->with('error', 'Solo se pueden denegar contactos pendientes de aprobación.');
+        }
+
+        $contact->denegar(auth()->id(), $request->input('motivo'));
+
+        return back()->with('success', 'Solicitud de contacto denegada.');
+    }
+
+    /**
+     * Aprueba la eliminación solicitada por un usuario para un contacto.
+     */
+    public function approveContactDeletion(Contact $contact)
+    {
+        $this->authorize('companies.approve');
+
+        if (! $contact->deletion_pending) {
+            return back()->with('error', 'No hay solicitud de eliminación pendiente para este contacto.');
+        }
+
+        $contact->update([
+            'deletion_pending' => false,
+            'deletion_requested_by' => null,
+            'deletion_requested_at' => null,
+            'deletion_reason' => null,
+        ]);
+        $contact->delete();
+
+        return back()->with('success', 'Eliminación aprobada. El contacto se ha dado de baja.');
+    }
+
+    /**
+     * Rechaza la solicitud de eliminación y mantiene activo el contacto.
+     */
+    public function denyContactDeletion(Contact $contact)
+    {
+        $this->authorize('companies.approve');
+
+        if (! $contact->deletion_pending) {
+            return back()->with('error', 'No hay solicitud de eliminación pendiente para este contacto.');
+        }
+
+        $contact->update([
+            'deletion_pending' => false,
+            'deletion_requested_by' => null,
+            'deletion_requested_at' => null,
+            'deletion_reason' => null,
+        ]);
+
+        return back()->with('success', 'Solicitud de eliminación rechazada. El contacto sigue activo.');
     }
 }

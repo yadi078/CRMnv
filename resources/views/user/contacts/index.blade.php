@@ -18,14 +18,14 @@
         <div class="panel-card-dark overflow-hidden p-6">
             <form method="GET" action="{{ route('contacts.index') }}" class="mb-6 flex flex-col sm:flex-row sm:items-end gap-3">
                 <div class="flex-1 min-w-0">
-                    <label for="search" class="block text-sm font-medium text-white/90 mb-1">Buscar por nombre de empresa</label>
+                    <label for="search" class="block text-sm font-medium text-white/90 mb-1">Buscar por nombre de contacto</label>
                     <input
                         id="search"
                         type="text"
                         name="search"
                         value="{{ request('search') }}"
-                        placeholder="Nombre de la empresa..."
-                        list="company_names_list"
+                        placeholder="Nombre del contacto..."
+                        list="contact_names_list"
                         class="w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3"
                     >
                 </div>
@@ -37,9 +37,9 @@
                     <button type="submit" class="btn-primary-app">Buscar</button>
                 </div>
             </form>
-            @if(isset($companyNames) && $companyNames->isNotEmpty())
-                <datalist id="company_names_list">
-                    @foreach($companyNames as $name)
+            @if(isset($contactNames) && $contactNames->isNotEmpty())
+                <datalist id="contact_names_list">
+                    @foreach($contactNames as $name)
                         <option value="{{ $name }}"></option>
                     @endforeach
                 </datalist>

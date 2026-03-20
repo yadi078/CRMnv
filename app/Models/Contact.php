@@ -57,6 +57,10 @@ class Contact extends Model
         'approved_by',
         'approved_at',
         'motivo_rechazo',
+        'deletion_pending',
+        'deletion_requested_by',
+        'deletion_requested_at',
+        'deletion_reason',
         'created_by',
     ];
 
@@ -69,6 +73,8 @@ class Contact extends Model
             'email_activo' => 'boolean',
             'fecha_cumpleanos' => 'date',
             'approved_at' => 'datetime',
+            'deletion_pending' => 'boolean',
+            'deletion_requested_at' => 'datetime',
         ];
     } 
 
@@ -113,6 +119,14 @@ class Contact extends Model
     }
 
     /**
+     * Relación: Usuario que solicitó la eliminación del contacto.
+     */
+    public function deletionRequester(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'deletion_requested_by');
+    }
+
+    /**
      * Etiqueta legible del estado de prospecto
      */
     public function getStatusLabelAttribute(): string
@@ -138,6 +152,17 @@ class Contact extends Model
     }
 
     /**
+     * Scope: contactos pendientes por alta o eliminación solicitada.
+     */
+    public function scopePendientesAprobacion($query)
+    {
+        return $query->where(function ($q) {
+            $q->where('approval_status', 'pendiente')
+                ->orWhere('deletion_pending', true);
+        });
+    }
+
+    /**
      * Scope: contactos aprobados
      */
     public function scopeAprobados($query)
@@ -155,6 +180,10 @@ class Contact extends Model
             'approved_by' => $userId,
             'approved_at' => now(),
             'motivo_rechazo' => null,
+            'deletion_pending' => false,
+            'deletion_requested_by' => null,
+            'deletion_requested_at' => null,
+            'deletion_reason' => null,
         ]);
     }
 

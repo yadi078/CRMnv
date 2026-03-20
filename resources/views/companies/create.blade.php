@@ -45,23 +45,37 @@
                         </div>
 
                         <div class="md:col-span-2">
-                            <x-input-label for="sector" value="Sector/Giro * (puede seleccionar varios)" class="text-white" />
-                            <select id="sector" name="sector[]" multiple
-                                    class="mt-1 block w-full rounded-md border-[#E2E8F0] bg-white text-[#1F2937] focus:border-[#FFE600] focus:ring-4 focus:ring-[#FFE600]/40">
-                                @php
-                                    $oldSectors = collect(old('sector', []))
-                                        ->map(fn($s) => trim((string)$s))
-                                        ->filter()
-                                        ->values();
-                                @endphp
-                                @if($oldSectors->isNotEmpty())
-                                    @foreach($oldSectors as $s)
-                                        <option value="{{ $s }}" selected>{{ $s }}</option>
-                                    @endforeach
-                                @endif
-                            </select>
-                            <p class="mt-1 text-xs text-white/70">Escriba y presione Enter para agregar varios giros (puede manejar más de uno).</p>
+                            <x-input-label for="sector_input" value="Sector/Giro * (puede seleccionar varios)" class="text-white" />
+                            @php
+                                $oldSectors = collect(old('sector', []))
+                                    ->map(fn($s) => trim((string)$s))
+                                    ->filter()
+                                    ->values();
+                            @endphp
+                            <div class="mt-1 rounded-md border border-[#E2E8F0] bg-white p-2 focus-within:border-[#FFE600] focus-within:ring-4 focus-within:ring-[#FFE600]/40">
+                                <div class="flex flex-wrap gap-2 mb-2" x-show="sectors.length > 0">
+                                    <template x-for="(item, idx) in sectors" :key="idx">
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-[#1a3d6b] text-white text-xs px-2 py-1">
+                                            <span x-text="item"></span>
+                                            <button type="button" @click="removeSector(idx)" class="text-[#FFE600] hover:text-white" aria-label="Quitar sector">x</button>
+                                        </span>
+                                    </template>
+                                </div>
+                                <input id="sector_input"
+                                       type="text"
+                                       x-model.trim="sectorInput"
+                                       @keydown.enter.prevent="addSector()"
+                                       @blur="addSector()"
+                                       class="block w-full border-0 p-0 text-[#1F2937] focus:ring-0"
+                                       placeholder="Escriba un giro y presione Enter" />
+                                <template x-for="(item, idx) in sectors" :key="'hidden-' + idx">
+                                    <input type="hidden" name="sector[]" :value="item">
+                                </template>
+                            </div>
+                            <p class="mt-1 text-xs text-white/70">Escriba y presione Enter (o pase al siguiente campo) para agregar varios giros.</p>
                             <x-input-error :messages="$errors->get('sector')" class="mt-2" />
+                            <x-input-error :messages="$errors->get('sector.*')" class="mt-2" />
+                            <script type="application/json" id="old-sectors-data">{!! json_encode($oldSectors->all(), JSON_UNESCAPED_UNICODE) !!}</script>
                         </div>
 
                         <div>
@@ -219,40 +233,79 @@
                 sending: false,
                 successMessage: 'La empresa se ha registrado correctamente.',
                 errorMessage: '',
+                sectorInput: '',
+                sectors: [],
+
+                init() {
+                    this.initSectors();
+                },
+
+                initSectors() {
+                    const node = document.getElementById('old-sectors-data');
+                    if (!node) return;
+                    try {
+                        const parsed = JSON.parse(node.textContent || '[]');
+                        if (Array.isArray(parsed)) {
+                            this.sectors = parsed
+                                .map(v => String(v).trim())
+                                .filter(v => v.length > 0);
+                        }
+                    } catch (_) {}
+                },
+
+                addSector() {
+                    const value = (this.sectorInput || '').trim();
+                    if (!value) return;
+                    if (!this.sectors.some(s => s.toLowerCase() === value.toLowerCase())) {
+                        this.sectors.push(value);
+                    }
+                    this.sectorInput = '';
+                },
+
+                removeSector(index) {
+                    this.sectors.splice(index, 1);
+                },
 
                 submitForm() {
+                    this.addSector();
+                    if (this.sectors.length === 0) {
+                        this.showFormErrors(['Agregue al menos un sector o giro (escriba y presione Enter).']);
+                        return;
+                    }
                     this.sending = true;
                     this.showErrorModal = false;
-                    const form = document.getElementById('form-nueva-empresa');
-                    const formData = new FormData(form);
-                    const url = form.getAttribute('action');
-                    const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                    this.$nextTick(() => {
+                        const form = document.getElementById('form-nueva-empresa');
+                        const formData = new FormData(form);
+                        const url = form.getAttribute('action');
+                        const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-                    fetch(url, {
-                        method: 'POST',
-                        body: formData,
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest',
-                            'Accept': 'application/json',
-                            'X-CSRF-TOKEN': token
-                        }
-                    })
-                    .then(res => {
-                        return res.json().then(data => ({ ok: res.ok, status: res.status, data }));
-                    })
-                    .then(({ ok, data }) => {
-                        this.sending = false;
-                        if (ok && data.success) {
-                            this.successMessage = data.message || 'La empresa se ha registrado correctamente.';
-                            this.showSuccessModal = true;
-                        } else {
-                            const err = data.errors || (data.message ? [data.message] : ['Error al procesar el formulario.']);
-                            this.showFormErrors(Array.isArray(err) ? err : (typeof err === 'object' ? Object.values(err).flat() : [err]));
-                        }
-                    })
-                    .catch(err => {
-                        this.sending = false;
-                        this.showFormErrors(['Error de conexión. Intente de nuevo.']);
+                        fetch(url, {
+                            method: 'POST',
+                            body: formData,
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': token
+                            }
+                        })
+                        .then(res => {
+                            return res.json().then(data => ({ ok: res.ok, status: res.status, data }));
+                        })
+                        .then(({ ok, data }) => {
+                            this.sending = false;
+                            if (ok && data.success) {
+                                this.successMessage = data.message || 'La empresa se ha registrado correctamente.';
+                                this.showSuccessModal = true;
+                            } else {
+                                const err = data.errors || (data.message ? [data.message] : ['Error al procesar el formulario.']);
+                                this.showFormErrors(Array.isArray(err) ? err : (typeof err === 'object' ? Object.values(err).flat() : [err]));
+                            }
+                        })
+                        .catch(err => {
+                            this.sending = false;
+                            this.showFormErrors(['Error de conexión. Intente de nuevo.']);
+                        });
                     });
                 },
 
@@ -269,6 +322,8 @@
                 closeSuccessModal() {
                     this.showSuccessModal = false;
                     document.getElementById('form-nueva-empresa').reset();
+                    this.sectors = [];
+                    this.sectorInput = '';
                 }
             };
         }

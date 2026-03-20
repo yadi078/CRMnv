@@ -64,6 +64,7 @@ Route::middleware(['auth', 'verified', 'ensure.role'])->group(function () {
     Route::post('/companies/check-duplicates', [CompanyController::class, 'checkDuplicates'])->name('companies.check-duplicates');
 
     Route::resource('contacts', ContactController::class);
+    Route::post('/contacts/{contact}/request-deletion', [ContactController::class, 'requestDeletion'])->name('contacts.request-deletion');
     Route::patch('/contacts/{contact}/email-status', [ContactController::class, 'updateEmailStatus'])->name('contacts.email-status');
     Route::patch('/contacts/{contact}/notes', [ContactController::class, 'updateNotes'])->name('contacts.notes');
 
@@ -111,6 +112,10 @@ Route::middleware(['auth', 'verified', 'ensure.role', 'admin'])->group(function 
         Route::post('/companies/{company}/deny', [ApprovalController::class, 'denyCompany'])->name('companies.deny');
         Route::post('/companies/{company}/approve-deletion', [ApprovalController::class, 'approveCompanyDeletion'])->name('companies.approve-deletion');
         Route::post('/companies/{company}/deny-deletion', [ApprovalController::class, 'denyCompanyDeletion'])->name('companies.deny-deletion');
+        Route::post('/contacts/{contact}/approve', [ApprovalController::class, 'approveContact'])->name('contacts.approve');
+        Route::post('/contacts/{contact}/deny', [ApprovalController::class, 'denyContact'])->name('contacts.deny');
+        Route::post('/contacts/{contact}/approve-deletion', [ApprovalController::class, 'approveContactDeletion'])->name('contacts.approve-deletion');
+        Route::post('/contacts/{contact}/deny-deletion', [ApprovalController::class, 'denyContactDeletion'])->name('contacts.deny-deletion');
         Route::get('/users', [ApprovalController::class, 'users'])->name('users');
         Route::post('/users/{user}/approve', [ApprovalController::class, 'approveUser'])->name('users.approve');
         Route::post('/users/{user}/deny', [ApprovalController::class, 'denyUser'])->name('users.deny');

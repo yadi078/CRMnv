@@ -473,14 +473,16 @@ class CompanyController extends Controller
                         $updatedContacts++;
                     }
                 } else {
+                    $contactApprovalStatus = $user->can('contacts.approve') ? 'aprobado' : 'pendiente';
+
                     $contactData = [
                         'company_id' => $company->id,
                         'nombre_completo' => $contactName,
                         'email_activo' => true,
                         'status_color' => 'seguimiento',
-                        'approval_status' => 'aprobado',
-                        'approved_by' => $user->id,
-                        'approved_at' => now(),
+                        'approval_status' => $contactApprovalStatus,
+                        'approved_by' => $contactApprovalStatus === 'aprobado' ? $user->id : null,
+                        'approved_at' => $contactApprovalStatus === 'aprobado' ? now() : null,
                         'created_by' => $user->id,
                     ];
                     if ($genero !== '') {

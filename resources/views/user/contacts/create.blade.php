@@ -25,7 +25,7 @@
                                 $preselectedName = $preselectedId ? ($companies->firstWhere('id', (int)$preselectedId)?->nombre_comercial ?? '') : '';
                             @endphp
                             <input type="text" id="company_autocomplete" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3 focus:ring-2 focus:ring-[#FFE600]/50" placeholder="Escriba o seleccione una empresa" value="{{ $preselectedName }}" autocomplete="off" />
-                            <div id="company_autocomplete_list" class="absolute left-0 right-0 top-full z-10 mt-1 max-h-56 overflow-auto rounded-xl border border-white/20 bg-[#1a3d6b] shadow-lg hidden"></div>
+                            <div id="company_autocomplete_list" role="listbox" class="absolute left-0 right-0 top-full z-[100] mt-1 max-h-56 overflow-auto rounded-xl border border-white/20 bg-[#1a3d6b] shadow-lg hidden"></div>
                             <x-input-error :messages="$errors->get('company_id')" class="mt-2 text-red-300" />
                         </div>
                         <div>
@@ -184,14 +184,17 @@
             items.forEach(function(c) {
                 var div = document.createElement('div');
                 div.className = 'px-3 py-2.5 text-white/90 hover:bg-white/15 cursor-pointer text-sm';
+                div.setAttribute('role', 'option');
                 div.textContent = c.nombre_comercial;
                 div.dataset.id = c.id;
                 div.dataset.name = c.nombre_comercial;
-                div.addEventListener('click', function() {
-                    companyIdInput.value = c.id;
+                // mousedown + preventDefault: evita que el input pierda el foco antes del click
+                // (sin esto el blur oculta la lista y la selección no se aplica).
+                div.addEventListener('mousedown', function(e) {
+                    e.preventDefault();
+                    companyIdInput.value = String(c.id);
                     companyInput.value = c.nombre_comercial;
                     companyList.classList.add('hidden');
-                    companyInput.blur();
                 });
                 companyList.appendChild(div);
             });
@@ -205,10 +208,13 @@
                 renderCompanyList(filterCompanies(companyInput.value));
             });
             companyInput.addEventListener('blur', function() {
-                setTimeout(function() { companyList.classList.add('hidden'); }, 200);
+                setTimeout(function() { companyList.classList.add('hidden'); }, 150);
             });
             document.addEventListener('click', function(e) {
-                if (!companyList.contains(e.target) && e.target !== companyInput) companyList.classList.add('hidden');
+                if (companyList.classList.contains('hidden')) return;
+                if (!companyList.contains(e.target) && e.target !== companyInput) {
+                    companyList.classList.add('hidden');
+                }
             });
         }
 

@@ -8,8 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('companies', function (Blueprint $table) {
-            // Tras approved_at: compatible con BDs sin columna motivo_rechazo
+        Schema::table('contacts', function (Blueprint $table) {
             $table->boolean('deletion_pending')->default(false)->after('approved_at');
             $table->foreignId('deletion_requested_by')
                 ->nullable()
@@ -17,14 +16,20 @@ return new class extends Migration
                 ->constrained('users')
                 ->nullOnDelete();
             $table->timestamp('deletion_requested_at')->nullable()->after('deletion_requested_by');
+            $table->text('deletion_reason')->nullable()->after('deletion_requested_at');
         });
     }
 
     public function down(): void
     {
-        Schema::table('companies', function (Blueprint $table) {
+        Schema::table('contacts', function (Blueprint $table) {
             $table->dropForeign(['deletion_requested_by']);
-            $table->dropColumn(['deletion_pending', 'deletion_requested_by', 'deletion_requested_at']);
+            $table->dropColumn([
+                'deletion_pending',
+                'deletion_requested_by',
+                'deletion_requested_at',
+                'deletion_reason',
+            ]);
         });
     }
 };

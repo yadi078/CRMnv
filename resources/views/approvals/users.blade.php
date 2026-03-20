@@ -42,9 +42,14 @@
                                 @csrf
                                 <button type="submit" class="btn-panel-dark bg-emerald-600 hover:bg-emerald-500 text-white border-0">Aceptar</button>
                             </form>
-                            <form method="POST" action="{{ route('approvals.users.deny', $user) }}" class="inline" onsubmit="return confirm('¿Denegar y eliminar este registro? El usuario deberá registrarse nuevamente si desea intentarlo.');">
+                            <form method="POST" id="approval-legacy-us-den-{{ $user->id }}" action="{{ route('approvals.users.deny', $user) }}" class="inline">
                                 @csrf
-                                <button type="submit" class="px-4 py-2 rounded-xl font-semibold bg-red-600 text-white hover:bg-red-500 transition">Denegar</button>
+                                <button type="button" class="px-4 py-2 rounded-xl font-semibold bg-red-600 text-white hover:bg-red-500 transition js-approval-confirm-trigger"
+                                    data-form-id="approval-legacy-us-den-{{ $user->id }}"
+                                    data-title="Denegar registro"
+                                    data-message="¿Denegar y eliminar este registro? El usuario deberá registrarse nuevamente si desea intentarlo."
+                                    data-variant="danger"
+                                    data-confirm-text="Sí, denegar">Denegar</button>
                             </form>
                         </div>
                     </div>
@@ -58,4 +63,6 @@
                 @endif
         </div>
     </div>
+
+    @include('approvals.partials.approval-confirm-modal')
 </x-app-layout>

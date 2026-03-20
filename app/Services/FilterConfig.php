@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\Contact;
+
 /**
  * Configuración de campos y operadores para filtros dinámicos.
  */
@@ -50,6 +52,9 @@ class FilterConfig
             'municipio' => ['label' => 'Ciudad', 'column' => 'municipio', 'type' => 'select', 'multiple' => true, 'operators' => ['equals', 'not_equals', 'is_empty', 'is_not_empty']],
             'estado' => ['label' => 'Estado', 'column' => 'estado', 'type' => 'select', 'multiple' => true, 'operators' => ['equals', 'not_equals', 'is_empty', 'is_not_empty']],
 
+            // Semáforo de prospecto (mismo status_color que en listados / badges)
+            'status_color' => ['label' => 'Estado de prospecto (color)', 'column' => 'status_color', 'type' => 'select', 'multiple' => true, 'operators' => ['equals', 'not_equals', 'is_empty', 'is_not_empty']],
+
             // RELACIONAL: Comercial (empresa.nombre_comercial)
             'comercial' => ['label' => 'Comercial', 'column' => null, 'type' => 'select', 'multiple' => true, 'operators' => ['equals', 'not_equals', 'is_empty', 'is_not_empty']],
 
@@ -76,6 +81,7 @@ class FilterConfig
             'sector' => ['label' => 'Giro', 'column' => 'sector', 'type' => 'select', 'multiple' => true, 'operators' => ['equals', 'not_equals', 'is_empty', 'is_not_empty']],
             'municipio' => ['label' => 'Ciudad', 'column' => 'municipio', 'type' => 'select', 'multiple' => true, 'operators' => ['equals', 'not_equals', 'is_empty', 'is_not_empty']],
             'estado' => ['label' => 'Estado', 'column' => 'estado', 'type' => 'select', 'multiple' => true, 'operators' => ['equals', 'not_equals', 'is_empty', 'is_not_empty']],
+            'status_color' => ['label' => 'Estado de prospecto (color)', 'column' => 'status_color', 'type' => 'select', 'multiple' => true, 'operators' => ['equals', 'not_equals', 'is_empty', 'is_not_empty']],
 
             // Alias unificado: comercial -> companies.nombre_comercial
             'comercial' => ['label' => 'Comercial', 'column' => 'nombre_comercial', 'type' => 'select', 'multiple' => true, 'operators' => ['equals', 'not_equals', 'is_empty', 'is_not_empty']],
@@ -95,12 +101,34 @@ class FilterConfig
         return ['' => 'Todos', 'Masculino' => 'Masculino', 'Femenino' => 'Femenino', 'Otro' => 'Otro'];
     }
 
+    /**
+     * Valores status_color (contactos y empresas) con etiqueta + color del semáforo en UI.
+     */
+    public static function prospectStatusColorOptions(): array
+    {
+        $hints = [
+            'seguimiento' => 'verde',
+            'interesado' => 'rojo',
+            'si_le_interesa_nos_llaman_o_no_compro' => 'azul',
+            'vendido' => 'amarillo',
+            'no_estaba' => 'morado',
+        ];
+        $out = [];
+        foreach (Contact::PROSPECT_STATUS_LABELS as $key => $label) {
+            $hint = $hints[$key] ?? '';
+            $out[$key] = $hint !== '' ? "{$label} ({$hint})" : $label;
+        }
+
+        return $out;
+    }
+
     /** Operadores por campo para contactos (para uso en vistas). */
     public static function contactFieldsWithOptions(): array
     {
         $fields = self::contactFields();
         $fields['genero']['options'] = self::contactGeneroOptions();
         $fields['no_recibir_correos']['options'] = ['1' => 'Sí (no recibir correos)'];
+        $fields['status_color']['options'] = self::prospectStatusColorOptions();
         return $fields;
     }
 

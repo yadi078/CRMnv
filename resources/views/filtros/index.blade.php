@@ -27,6 +27,7 @@
                 'puesto_de_trabajo' => 'Puesto de trabajo',
                 'municipio' => 'Ciudad',
                 'estado' => 'Estado',
+                'status_color' => 'Estado de prospecto (color)',
                 'comercial' => 'Comercial',
                 'sector' => 'Giro',
                 'notas' => 'Notas',
@@ -225,6 +226,7 @@
             const headerLabels = @json($excelHeaders ?? []);
             const fieldOptions = @json($fieldOptions ?? []);
             const selectedByField = @json($selectedByField ?? []);
+            const prospectStatusLabels = @json($prospectStatusLabels ?? []);
             let currentField = null;
 
             Object.keys(headerLabels).forEach((field) => {
@@ -250,7 +252,14 @@
                 entries.forEach(([field, values]) => {
                     const chip = document.createElement('span');
                     chip.className = 'inline-flex items-center rounded-lg border border-[#FFE600]/40 bg-[#FFE600]/20 px-2.5 py-1 text-xs text-[#FFE600]';
-                    chip.textContent = `${headerLabels[field]}: ${values.join(', ')}`;
+                    const displayVals = values.map((v) => {
+                        const key = String(v);
+                        if (field === 'status_color' && prospectStatusLabels[key]) {
+                            return prospectStatusLabels[key];
+                        }
+                        return key;
+                    });
+                    chip.textContent = `${headerLabels[field]}: ${displayVals.join(', ')}`;
                     summaryEl.appendChild(chip);
                 });
             }

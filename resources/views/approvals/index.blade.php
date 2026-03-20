@@ -38,6 +38,15 @@
                     @endif
                 </a>
                 @endcan
+                @can('companies.approve')
+                <a href="{{ route('approvals.index', ['tab' => 'contactos']) }}"
+                   class="flex-1 sm:flex-none px-4 py-2.5 rounded-lg text-sm font-medium transition {{ $tab === 'contactos' ? 'approval-tabs__item--active' : 'approval-tabs__item' }}">
+                    Contactos
+                    @if(($contactsCount ?? 0) > 0)
+                        <span class="ml-1.5 inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 rounded-full text-xs font-bold bg-red-500 text-white">{{ $contactsCount }}</span>
+                    @endif
+                </a>
+                @endcan
                 </div>
             </div>
         </div>
@@ -65,15 +74,25 @@
                                 </dl>
                             </div>
                             <div class="flex flex-wrap items-center gap-2 flex-shrink-0">
-                                <form method="POST" action="{{ route('approvals.companies.approve-deletion', $company) }}" class="inline">
+                                <form method="POST" id="approval-co-del-app-{{ $company->id }}" action="{{ route('approvals.companies.approve-deletion', $company) }}" class="inline">
                                     @csrf
-                                    <button type="submit" class="btn-approve-amber" onclick="return confirm('¿Confirmar eliminación de esta empresa?');">
+                                    <button type="button" class="btn-approve-amber js-approval-confirm-trigger"
+                                        data-form-id="approval-co-del-app-{{ $company->id }}"
+                                        data-title="Confirmar eliminación"
+                                        data-message="¿Confirmar eliminación definitiva de esta empresa?"
+                                        data-variant="amber"
+                                        data-confirm-text="Sí, aprobar">
                                         Aprobar eliminación
                                     </button>
                                 </form>
-                                <form method="POST" action="{{ route('approvals.companies.deny-deletion', $company) }}" class="inline flex items-center gap-2">
+                                <form method="POST" id="approval-co-del-den-{{ $company->id }}" action="{{ route('approvals.companies.deny-deletion', $company) }}" class="inline flex items-center gap-2">
                                     @csrf
-                                    <button type="submit" class="px-4 py-2 rounded-xl font-semibold bg-red-600 text-white hover:bg-red-500 transition" onclick="return confirm('¿Rechazar la solicitud de eliminación? La empresa permanecerá activa.');">
+                                    <button type="button" class="px-4 py-2 rounded-xl font-semibold bg-red-600 text-white hover:bg-red-500 transition js-approval-confirm-trigger"
+                                        data-form-id="approval-co-del-den-{{ $company->id }}"
+                                        data-title="Denegar eliminación"
+                                        data-message="¿Rechazar la solicitud de eliminación? La empresa permanecerá activa."
+                                        data-variant="danger"
+                                        data-confirm-text="Sí, denegar">
                                         Denegar eliminación
                                     </button>
                                 </form>
@@ -98,10 +117,15 @@
                                         Aprobar
                                     </button>
                                 </form>
-                                <form method="POST" action="{{ route('approvals.companies.deny', $company) }}" class="inline flex items-center gap-2">
+                                <form method="POST" id="approval-co-reg-den-{{ $company->id }}" action="{{ route('approvals.companies.deny', $company) }}" class="inline flex items-center gap-2">
                                     @csrf
                                     <input type="text" name="motivo" placeholder="Motivo (opcional)" class="px-2 py-1.5 rounded text-sm bg-white/10 text-white placeholder-white/50 border border-white/20 w-40">
-                                    <button type="submit" class="px-4 py-2 rounded-xl font-semibold bg-red-600 text-white hover:bg-red-500 transition" onclick="return confirm('¿Denegar esta solicitud de empresa?');">
+                                    <button type="button" class="px-4 py-2 rounded-xl font-semibold bg-red-600 text-white hover:bg-red-500 transition js-approval-confirm-trigger"
+                                        data-form-id="approval-co-reg-den-{{ $company->id }}"
+                                        data-title="Denegar solicitud"
+                                        data-message="¿Denegar esta solicitud de registro de empresa?"
+                                        data-variant="danger"
+                                        data-confirm-text="Sí, denegar">
                                         Denegar
                                     </button>
                                 </form>
@@ -154,9 +178,14 @@
                                         Aprobar
                                     </button>
                                 </form>
-                                <form method="POST" action="{{ route('approvals.users.deny', $user) }}" class="inline" onsubmit="return confirm('¿Denegar y eliminar este registro? El usuario deberá registrarse nuevamente si desea intentarlo.');">
+                                <form method="POST" id="approval-us-den-{{ $user->id }}" action="{{ route('approvals.users.deny', $user) }}" class="inline">
                                     @csrf
-                                    <button type="submit" class="px-4 py-2 rounded-xl font-semibold bg-red-600 text-white hover:bg-red-500 transition">
+                                    <button type="button" class="px-4 py-2 rounded-xl font-semibold bg-red-600 text-white hover:bg-red-500 transition js-approval-confirm-trigger"
+                                        data-form-id="approval-us-den-{{ $user->id }}"
+                                        data-title="Denegar registro"
+                                        data-message="¿Denegar y eliminar este registro? El usuario deberá registrarse nuevamente si desea intentarlo."
+                                        data-variant="danger"
+                                        data-confirm-text="Sí, denegar">
                                         Denegar
                                     </button>
                                 </form>
@@ -174,5 +203,99 @@
         </div>
         @endcan
         @endif
+
+        @if($tab === 'contactos')
+        @can('companies.approve')
+        <div class="panel-card-dark p-0 overflow-hidden">
+            @if($contacts->count() > 0)
+                <div>
+                    @foreach($contacts as $contact)
+                    <div class="approval-request-card">
+                        <div class="px-4 sm:px-5 py-4 flex flex-wrap items-start justify-between gap-4">
+                            @if($contact->deletion_pending)
+                            <div class="flex-1 min-w-0 space-y-2">
+                                <p class="approval-request-card__header">Eliminación de contacto solicitada</p>
+                                <p class="text-sm text-white/90">
+                                    El usuario <strong class="text-[#FFE600]">{{ $contact->deletionRequester?->name ?? $contact->creator?->name ?? 'N/D' }}</strong>
+                                    solicita dar de baja el siguiente contacto:
+                                </p>
+                                <dl class="text-sm space-y-1 mt-2">
+                                    <div><span class="approval-request-card__label">Nombre:</span> <span class="text-white">{{ $contact->nombre_completo }}</span></div>
+                                    <div><span class="approval-request-card__label">Empresa:</span> {{ $contact->company?->nombre_comercial ?? '—' }}</div>
+                                    <div><span class="approval-request-card__label">Solicitud el:</span> {{ $contact->deletion_requested_at?->format('d/m/Y H:i') ?? '—' }}</div>
+                                    <div><span class="approval-request-card__label">Motivo:</span> {{ $contact->deletion_reason ?? '—' }}</div>
+                                </dl>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-2 flex-shrink-0">
+                                <form method="POST" id="approval-ct-del-app-{{ $contact->id }}" action="{{ route('approvals.contacts.approve-deletion', $contact) }}" class="inline">
+                                    @csrf
+                                    <button type="button" class="btn-approve-amber js-approval-confirm-trigger"
+                                        data-form-id="approval-ct-del-app-{{ $contact->id }}"
+                                        data-title="Confirmar eliminación"
+                                        data-message="¿Confirmar eliminación definitiva de este contacto?"
+                                        data-variant="amber"
+                                        data-confirm-text="Sí, aprobar">
+                                        Aprobar eliminación
+                                    </button>
+                                </form>
+                                <form method="POST" id="approval-ct-del-den-{{ $contact->id }}" action="{{ route('approvals.contacts.deny-deletion', $contact) }}" class="inline">
+                                    @csrf
+                                    <button type="button" class="px-4 py-2 rounded-xl font-semibold bg-red-600 text-white hover:bg-red-500 transition js-approval-confirm-trigger"
+                                        data-form-id="approval-ct-del-den-{{ $contact->id }}"
+                                        data-title="Denegar eliminación"
+                                        data-message="¿Rechazar la solicitud de eliminación? El contacto permanecerá activo."
+                                        data-variant="danger"
+                                        data-confirm-text="Sí, denegar">
+                                        Denegar eliminación
+                                    </button>
+                                </form>
+                            </div>
+                            @else
+                            <div class="flex-1 min-w-0 space-y-2">
+                                <p class="approval-request-card__header">Nuevo contacto solicitado</p>
+                                <dl class="text-sm space-y-1 mt-2">
+                                    <div><span class="approval-request-card__label">Nombre:</span> <span class="text-white">{{ $contact->nombre_completo }}</span></div>
+                                    <div><span class="approval-request-card__label">Correo:</span> {{ $contact->email ?? '—' }}</div>
+                                    <div><span class="approval-request-card__label">Empresa:</span> {{ $contact->company?->nombre_comercial ?? '—' }}</div>
+                                    <div><span class="approval-request-card__label">Solicitado por:</span> {{ $contact->creator?->name ?? 'N/D' }}</div>
+                                    <div><span class="approval-request-card__label">Fecha y hora:</span> {{ $contact->created_at->format('d/m/Y H:i') }}</div>
+                                </dl>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-2 flex-shrink-0">
+                                <form method="POST" action="{{ route('approvals.contacts.approve', $contact) }}" class="inline">
+                                    @csrf
+                                    <button type="submit" class="btn-approve-amber">
+                                        Aprobar
+                                    </button>
+                                </form>
+                                <form method="POST" id="approval-ct-reg-den-{{ $contact->id }}" action="{{ route('approvals.contacts.deny', $contact) }}" class="inline flex items-center gap-2">
+                                    @csrf
+                                    <input type="text" name="motivo" placeholder="Motivo (opcional)" class="px-2 py-1.5 rounded text-sm bg-white/10 text-white placeholder-white/50 border border-white/20 w-40">
+                                    <button type="button" class="px-4 py-2 rounded-xl font-semibold bg-red-600 text-white hover:bg-red-500 transition js-approval-confirm-trigger"
+                                        data-form-id="approval-ct-reg-den-{{ $contact->id }}"
+                                        data-title="Denegar contacto"
+                                        data-message="¿Denegar este contacto y rechazar su registro?"
+                                        data-variant="danger"
+                                        data-confirm-text="Sí, denegar">
+                                        Denegar
+                                    </button>
+                                </form>
+                            </div>
+                            @endif
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+                <div class="px-4 py-4 border-t border-white/20">
+                    {{ $contacts->withQueryString()->links() }}
+                </div>
+            @else
+                <p class="text-center text-white py-8 px-4">No hay solicitudes de contactos (altas o eliminaciones) pendientes.</p>
+            @endif
+        </div>
+        @endcan
+        @endif
     </div>
+
+    @include('approvals.partials.approval-confirm-modal')
 </x-app-layout>

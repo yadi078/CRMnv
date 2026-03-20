@@ -1,0 +1,14 @@
+{
+  "flowchart": {
+    "nodeSpacing": 26,
+    "rankSpacing": 32,
+    "padding": 10,
+    "curve": "basis",
+    "useMaxWidth": true,
+    "htmlLabels": true
+  },
+  "themeVariables": {
+    "fontSize": "11px",
+    "fontFamily": "Arial, Helvetica, sans-serif"
+  }
+}

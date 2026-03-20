@@ -35,15 +35,25 @@
                         </div>
                         <div class="flex gap-2 flex-wrap">
                             @if($company->deletion_pending)
-                            <form method="POST" action="{{ route('approvals.companies.approve-deletion', $company) }}" class="inline">
+                            <form method="POST" id="approval-legacy-co-del-app-{{ $company->id }}" action="{{ route('approvals.companies.approve-deletion', $company) }}" class="inline">
                                 @csrf
-                                <button type="submit" class="btn-panel-dark bg-emerald-600 hover:bg-emerald-500 text-white border-0" onclick="return confirm('¿Confirmar eliminación?');">
+                                <button type="button" class="btn-panel-dark bg-emerald-600 hover:bg-emerald-500 text-white border-0 js-approval-confirm-trigger"
+                                    data-form-id="approval-legacy-co-del-app-{{ $company->id }}"
+                                    data-title="Confirmar eliminación"
+                                    data-message="¿Confirmar eliminación definitiva de esta empresa?"
+                                    data-variant="amber"
+                                    data-confirm-text="Sí, aprobar">
                                     Aprobar eliminación
                                 </button>
                             </form>
-                            <form method="POST" action="{{ route('approvals.companies.deny-deletion', $company) }}" class="inline">
+                            <form method="POST" id="approval-legacy-co-del-den-{{ $company->id }}" action="{{ route('approvals.companies.deny-deletion', $company) }}" class="inline">
                                 @csrf
-                                <button type="submit" class="px-4 py-2 rounded-xl font-semibold bg-red-600 text-white hover:bg-red-500 transition" onclick="return confirm('¿Rechazar la eliminación?');">
+                                <button type="button" class="px-4 py-2 rounded-xl font-semibold bg-red-600 text-white hover:bg-red-500 transition js-approval-confirm-trigger"
+                                    data-form-id="approval-legacy-co-del-den-{{ $company->id }}"
+                                    data-title="Denegar eliminación"
+                                    data-message="¿Rechazar la solicitud de eliminación? La empresa permanecerá activa."
+                                    data-variant="danger"
+                                    data-confirm-text="Sí, denegar">
                                     Denegar eliminación
                                 </button>
                             </form>
@@ -54,10 +64,15 @@
                                     Aceptar
                                 </button>
                             </form>
-                            <form method="POST" action="{{ route('approvals.companies.deny', $company) }}" class="inline flex items-center gap-2">
+                            <form method="POST" id="approval-legacy-co-reg-den-{{ $company->id }}" action="{{ route('approvals.companies.deny', $company) }}" class="inline flex items-center gap-2">
                                 @csrf
                                 <input type="text" name="motivo" placeholder="Motivo (opcional)" class="px-2 py-1.5 rounded text-sm bg-white/10 text-white placeholder-white/50 border border-white/20 w-40">
-                                <button type="submit" class="px-4 py-2 rounded-xl font-semibold bg-red-600 text-white hover:bg-red-500 transition" onclick="return confirm('¿Denegar esta solicitud?');">
+                                <button type="button" class="px-4 py-2 rounded-xl font-semibold bg-red-600 text-white hover:bg-red-500 transition js-approval-confirm-trigger"
+                                    data-form-id="approval-legacy-co-reg-den-{{ $company->id }}"
+                                    data-title="Denegar solicitud"
+                                    data-message="¿Denegar esta solicitud de registro de empresa?"
+                                    data-variant="danger"
+                                    data-confirm-text="Sí, denegar">
                                     Denegar
                                 </button>
                             </form>
@@ -74,4 +89,6 @@
                 @endif
         </div>
     </div>
+
+    @include('approvals.partials.approval-confirm-modal')
 </x-app-layout>

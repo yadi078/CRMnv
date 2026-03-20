@@ -50,14 +50,33 @@ class ContactPolicy
 
     /**
      * Determine whether the user can delete the model.
-     * Admin elimina cualquiera; usuario solo los que creó (created_by).
+     * Solo administradores pueden borrar sin pasar por aprobación.
      */
     public function delete(User $user, Contact $contact): bool
     {
         if (! $user->can('contacts.delete')) {
             return false;
         }
-        return $user->esAdmin() || $contact->created_by === $user->id;
+
+        return $user->esAdmin();
+    }
+
+    /**
+     * Usuario (no admin) que creó el contacto: solicita eliminación para que un admin apruebe.
+     */
+    public function requestDeletion(User $user, Contact $contact): bool
+    {
+        if ($user->esAdmin()) {
+            return false;
+        }
+        if (! $user->can('contacts.edit')) {
+            return false;
+        }
+        if ($contact->approval_status !== 'aprobado' || $contact->deletion_pending) {
+            return false;
+        }
+
+        return (int) $contact->created_by === (int) $user->id;
     }
 
     /**

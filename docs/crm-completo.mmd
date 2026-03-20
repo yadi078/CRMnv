@@ -1,0 +1,80 @@
+%%{init: {'flowchart': {'nodeSpacing': 20, 'rankSpacing': 24, 'padding': 8, 'curve': 'basis'}, 'themeVariables': {'fontSize': '10px'}}}%%
+flowchart TB
+    classDef modulo fill:#ffd6d6,stroke:#222222,stroke-width:1.2px,color:#111111
+    classDef decision fill:#ffffff,stroke:#1a5fb4,stroke-width:2px,color:#111111
+    classDef admin fill:#d4e8ff,stroke:#1a5fb4,stroke-width:1.5px,color:#111111
+    classDef publico fill:#e8f5e9,stroke:#2e7d32,stroke-width:1.2px,color:#111111
+    classDef dato fill:#fff3e0,stroke:#e65100,stroke-width:1.2px,color:#111111
+    classDef mid fill:#f3e5f5,stroke:#6a1b9a,stroke-width:1.2px,color:#111111
+
+    subgraph PUB["1. Zona pública — visitante sin sesión"]
+        direction TB
+        RG([Registro de cuenta — ruta /register]):::publico
+        RP([Pantalla «registro pendiente» — /register/pending]):::publico
+        LG([Inicio de sesión — ruta /login]):::publico
+        FP[Recuperar y restablecer contraseña]:::publico
+        VE[Verificación de correo — mensaje y enlace firmado]:::publico
+        AC[Comprobar estado de aprobación — /verificar-aprobacion]:::publico
+        RG --> RP
+        LG --> VE
+    end
+
+    subgraph SIG["Acceso tras aprobación del administrador"]
+        AL["Entrada directa con URL firmada — ruta /entrar/usuario"]:::publico
+    end
+
+    subgraph MID["2. Usuario autenticado"]
+        MS[Sesión iniciada · correo verificado · rol y permisos asignados]:::mid
+    end
+
+    subgraph NAV["3. Entrada y redirección del sistema"]
+        ROOT([Página de inicio — /]):::decision
+        Q1{¿Hay sesión activa?}:::decision
+        Q2{¿El usuario es administrador?}:::decision
+    end
+
+    subgraph ADM["4. Funciones solo para administrador"]
+        direction TB
+        D1[Panel global del CRM — /dashboard y métricas]:::admin
+        D2[Notificaciones y recordatorios personales]:::admin
+        D3[Aprobaciones — empresas, usuarios y contactos — /approvals]:::admin
+        D4[Aprobar o rechazar cada solicitud pendiente]:::admin
+        D5[Exportar ficha de contacto en PDF o Word]:::admin
+        D6[Exportar e importar tablas — gestión de datos]:::admin
+        D1 --> D2 --> D3 --> D4 --> D5 --> D6
+    end
+
+    subgraph USR["5. Panel del usuario estándar"]
+        UD([Panel personal — /user/dashboard]):::modulo
+    end
+
+    subgraph CORE["6. Núcleo del CRM — según permisos del rol"]
+        direction TB
+        N1["Empresas: altas, bajas, cambios, importación, duplicados y filtros"]:::modulo
+        N2["Contactos: altas, bajas, cambios, correo activo y notas"]:::modulo
+        N3["Seguimientos: altas, bajas, cambios y marcar completado"]:::modulo
+        N4["Filtros avanzados — pantalla /filtros y búsquedas por AJAX"]:::modulo
+        N5["Historial de ventas — altas, bajas, cambios y fichas PDF/Word"]:::modulo
+        N6["Gestión de datos — consultar, editar y eliminar contactos y empresas"]:::dato
+        N7["Perfil de usuario — ver, actualizar o eliminar cuenta"]:::modulo
+        N1 --- N2 --- N3 --- N4 --- N5 --- N6 --- N7
+    end
+
+    POL[Reglas de negocio: política de empresas · estados de aprobación pendiente<br/>Permisos por acción en los controladores]:::dato
+
+    RP -.->|aviso por correo del administrador| AL
+    AL --> MS
+    LG -->|inicio de sesión correcto| MS
+    VE --> MS
+    AC --> LG
+
+    MS --> ROOT
+    ROOT --> Q1
+    Q1 -.->|No| LG
+    Q1 -->|Sí| Q2
+    Q2 -->|Sí| D1
+    Q2 -->|No| UD
+
+    D6 --> CORE
+    UD --> CORE
+    CORE -.-> POL

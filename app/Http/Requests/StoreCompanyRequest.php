@@ -12,6 +12,8 @@ use Illuminate\Validation\Rule;
  */
 class StoreCompanyRequest extends FormRequest
 {
+    use Concerns\NormalizesCompanySector;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -44,7 +46,7 @@ class StoreCompanyRequest extends FormRequest
                     'unique:companies,rfc',
                 ]),
             ],
-            'sector' => 'required|string|max:500',
+            'sector' => 'required|string|max:2000',
             'municipio' => 'nullable|string|max:255',
             'estado' => 'nullable|string|max:255',
             'ejecutivo_asignado' => 'nullable|string|max:255',
@@ -64,6 +66,7 @@ class StoreCompanyRequest extends FormRequest
             'nombre_comercial.required' => 'El nombre comercial es obligatorio.',
             'nombre_comercial.unique' => 'Ya existe una empresa con este nombre comercial.',
             'sector.required' => 'El sector o giro es obligatorio.',
+            'sector.max' => 'El sector o giro no puede superar :max caracteres.',
             'rfc.min' => 'El RFC debe tener entre 12 y 13 caracteres.',
             'rfc.max' => 'El RFC debe tener entre 12 y 13 caracteres.',
             'rfc.regex' => 'El formato del RFC no es válido.',

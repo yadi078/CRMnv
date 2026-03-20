@@ -36,34 +36,32 @@ class ContactController extends Controller
         $query = Contact::with(['company', 'creator']);
 
         if (! $isAdmin) {
-            $query->where('created_by', $user->id)
-                ->where('approval_status', 'aprobado');
+            $query->where('created_by', $user->id);
         }
 
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->whereHas('company', function ($q) use ($search) {
-                $q->where('nombre_comercial', 'like', "%{$search}%");
-            });
+            $query->where('nombre_completo', 'like', "%{$search}%");
         }
 
         $query->latest();
 
         $contacts = $query->paginate(15)->withQueryString();
 
-        $companyNamesQuery = Company::query();
+        $namesForDatalist = Contact::query();
         if (! $isAdmin) {
-            $companyNamesQuery->aprobados();
+            $namesForDatalist->where('created_by', $user->id);
         }
-        $companyNames = $companyNamesQuery
-            ->orderBy('nombre_comercial')
-            ->pluck('nombre_comercial')
+        $contactNames = $namesForDatalist
+            ->orderBy('nombre_completo')
+            ->pluck('nombre_completo')
+            ->filter()
             ->unique()
             ->values();
 
         return $this->resolveView('contacts.index', 'user.contacts.index', compact(
             'contacts',
-            'companyNames'
+            'contactNames'
         ));
     }
 
@@ -88,8 +86,8 @@ class ContactController extends Controller
         DB::beginTransaction();
         try {
             $user = auth()->user();
-            // Los contactos no pasan por cola de aprobación; solo las empresas nuevas de usuarios sin permiso de aprobar.
-            $approvalStatus = 'aprobado';
+            // Usuario normal: contacto pendiente. Admin/usuario con permiso: aprobado.
+            $approvalStatus = $user->can('contacts.approve') ? 'aprobado' : 'pendiente';
 
             $contact = Contact::create([
                 'company_id' => $request->company_id,
@@ -136,7 +134,9 @@ class ContactController extends Controller
             }
 
             return redirect()->route('contacts.index')
-                ->with('success', 'Contacto creado exitosamente.');
+                ->with('success', $approvalStatus === 'aprobado'
+                    ? 'Contacto creado exitosamente.'
+                    : 'Contacto creado. Pendiente de aprobación por un administrador.');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error al crear contacto: ' . $e->getMessage(), [
@@ -275,6 +275,30 @@ class ContactController extends Controller
         } catch (\Exception $e) {
             return back()->with('error', 'Error al eliminar el contacto. Por favor, intente nuevamente.');
         }
+    }
+
+    /**
+     * Solicitar eliminación de contacto (requiere aprobación de administrador).
+     */
+    public function requestDeletion(Request $request, Contact $contact)
+    {
+        $this->authorize('requestDeletion', $contact);
+
+        $validated = $request->validate([
+            'motivo' => 'required|string|max:500',
+        ], [
+            'motivo.required' => 'Debe escribir un motivo para solicitar la eliminación del contacto.',
+            'motivo.max' => 'El motivo no puede superar los 500 caracteres.',
+        ]);
+
+        $contact->update([
+            'deletion_pending' => true,
+            'deletion_requested_by' => auth()->id(),
+            'deletion_requested_at' => now(),
+            'deletion_reason' => $validated['motivo'],
+        ]);
+
+        return back()->with('success', 'Solicitud de eliminación enviada. Un administrador la revisará en Solicitudes pendientes.');
     }
 
     /**
