@@ -1,0 +1,111 @@
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Diagramas del Proceso CRM</title>
+  <style>
+    body { font-family: Arial, sans-serif; font-size: 11pt; color: #111; }
+    h2 { margin: 6px 0 10px 0; font-size: 14pt; }
+    h3 { margin: 18px 0 8px 0; font-size: 12pt; }
+    .nota { margin-bottom: 10px; }
+    table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+    th, td { border: 1px solid #333; padding: 8px; vertical-align: top; }
+    th { background: #efefef; text-align: left; }
+    .fila { min-height: 42px; }
+  </style>
+</head>
+<body>
+  <h2>3.3 DIAGRAMA DEL PROCESO - CRM</h2>
+  <p class="nota">
+    Separación por rol y flujo entre <b>Administrador</b>, <b>Base de datos</b> y <b>Usuario normal</b>.
+    Todas las acciones están conectadas por flechas de dirección.
+  </p>
+
+  <h3>Diagrama 1. Alta y aprobación (usuarios y empresas)</h3>
+  <table>
+    <tr>
+      <th>Administrador</th>
+      <th>Base de datos</th>
+      <th>Usuario normal</th>
+    </tr>
+    <tr class="fila">
+      <td></td>
+      <td>Se crea registro de usuario con estado <b>pendiente</b>.</td>
+      <td>Se registra en el sistema → envía solicitud de acceso.</td>
+    </tr>
+    <tr class="fila">
+      <td>Revisa módulo de <b>Solicitudes pendientes</b> (usuarios).</td>
+      <td>Recupera usuarios pendientes → muestra al admin.</td>
+      <td>Espera validación de su cuenta.</td>
+    </tr>
+    <tr class="fila">
+      <td>Aprueba o rechaza usuario → envía respuesta.</td>
+      <td>Actualiza estado a <b>aprobado</b> o <b>rechazado</b>.</td>
+      <td>Si aprueban: entra al panel. Si rechazan: se registra de nuevo.</td>
+    </tr>
+    <tr class="fila">
+      <td></td>
+      <td>Se guarda empresa nueva como <b>pendiente</b> (si la crea usuario normal).</td>
+      <td>Crea empresa → captura datos comerciales.</td>
+    </tr>
+    <tr class="fila">
+      <td>Revisa solicitudes de empresa → aprueba o deniega.</td>
+      <td>Cambia estado de empresa a <b>aprobada</b> o <b>rechazada</b>.</td>
+      <td>Consulta resultado en su panel.</td>
+    </tr>
+    <tr class="fila">
+      <td>Si hay baja solicitada: aprueba/deniega eliminación.</td>
+      <td>Marca solicitud de baja → elimina o conserva la empresa.</td>
+      <td>Solicita eliminación de empresa cuando aplica.</td>
+    </tr>
+  </table>
+
+  <h3>Diagrama 2. Operación comercial (contactos, seguimientos y ventas)</h3>
+  <table>
+    <tr>
+      <th>Administrador</th>
+      <th>Base de datos</th>
+      <th>Usuario normal</th>
+    </tr>
+    <tr class="fila">
+      <td>Monitorea dashboard global.</td>
+      <td>Entrega métricas (empresas, contactos, seguimientos, alertas).</td>
+      <td>Inicia sesión → entra a dashboard de usuario.</td>
+    </tr>
+    <tr class="fila">
+      <td>Recibe notificación de nuevos contactos.</td>
+      <td>Guarda empresa/contacto → registra creador y estado.</td>
+      <td>Captura o edita empresa aprobada → registra contacto.</td>
+    </tr>
+    <tr class="fila">
+      <td>Consulta alarmas y pendientes.</td>
+      <td>Guarda seguimiento (tipo, fecha_alarma, notas, asignado).</td>
+      <td>Crea seguimiento (llamada/reunión/cierre) → agenda alarma.</td>
+    </tr>
+    <tr class="fila">
+      <td>Visualiza avances en panel.</td>
+      <td>Actualiza seguimiento a completado cuando se atiende.</td>
+      <td>Da seguimiento → marca actividad completada.</td>
+    </tr>
+    <tr class="fila">
+      <td>Revisa historial y reportes.</td>
+      <td>Al cambiar a <b>Vendido</b> → crea venta automática en historial.</td>
+      <td>Cambia estado de contacto/empresa a <b>Vendido</b>.</td>
+    </tr>
+    <tr class="fila">
+      <td>Puede consultar/descargar fichas y reportes.</td>
+      <td>Guarda venta final y genera archivos PDF/Word.</td>
+      <td>Completa ficha de venta → descarga PDF o Word.</td>
+    </tr>
+    <tr class="fila">
+      <td>Gestiona centro de notificaciones y recordatorios.</td>
+      <td>Actualiza leídos, destacados, recordatorios activos/inactivos.</td>
+      <td>Consulta sus pendientes y próximos seguimientos.</td>
+    </tr>
+  </table>
+
+  <p style="margin-top:12px;">
+    Nota de lectura visual: en cada fila el flujo principal es <b>Usuario normal → Base de datos → Administrador</b>,
+    y cuando existe respuesta de control, retorna <b>Administrador → Base de datos → Usuario normal</b>.
+  </p>
+</body>
+</html>

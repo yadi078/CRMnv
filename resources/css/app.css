@@ -741,21 +741,26 @@ body {
   object-fit: contain;
 }
 
-/* Labels en panel oscuro: texto blanco */
+/* Labels en panel oscuro: texto blanco (mayor contraste) */
 .panel-card-dark label {
-  color: rgba(255, 255, 255, 0.9);
+  color: #ffffff;
 }
 
 /* Inputs en panel oscuro: fondo blanco siempre, borde amarillo al enfocar */
 .panel-card-dark input[type="text"],
 .panel-card-dark input[type="email"],
+.panel-card-dark input[type="password"],
 .panel-card-dark input[type="number"],
 .panel-card-dark input[type="tel"],
+.panel-card-dark input[type="url"],
+.panel-card-dark input[type="search"],
+.panel-card-dark input[type="date"],
+.panel-card-dark input[type="datetime-local"],
 .panel-card-dark select,
 .panel-card-dark textarea {
   background-color: #ffffff !important;
-  color: #1F2937;
-  border: 2px solid #E2E8F0;
+  color: #1f2937;
+  border: 2px solid #e2e8f0;
   border-radius: 0.375rem;
 }
 .panel-card-dark input:focus,

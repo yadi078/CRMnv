@@ -1,17 +1,15 @@
 <section>
-    <header class="flex items-start gap-4 mb-8">
-        <div class="flex-shrink-0 w-14 h-14 rounded-xl overflow-hidden bg-amber-100 flex items-center justify-center ring-2 ring-white shadow">
-            @if ($user->profile_photo_url)
-                <img src="{{ $user->profile_photo_url }}" alt="Foto de perfil" class="w-full h-full object-cover" />
-            @else
-                <span class="text-lg font-bold text-azul-fuerte">{{ $user->initials }}</span>
-            @endif
+    <header class="flex items-start gap-5 mb-8 sm:mb-10">
+        <div class="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-amarillo/20 flex items-center justify-center ring-2 ring-amarillo/40">
+            <svg class="w-6 h-6 sm:w-7 sm:h-7 text-amarillo" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
         </div>
-        <div>
-            <h2 class="text-xl font-bold text-gray-900 tracking-tight">
+        <div class="min-w-0 flex-1">
+            <h2 class="text-xl sm:text-2xl font-bold text-amarillo tracking-tight">
                 Información del perfil
             </h2>
-            <p class="mt-1 text-sm text-gray-500 leading-relaxed">
+            <p class="mt-2 text-sm sm:text-base text-white leading-relaxed">
                 Actualiza la información de tu perfil y tu correo electrónico.
             </p>
         </div>
@@ -21,62 +19,51 @@
         @csrf
     </form>
 
-    <form method="post" action="{{ route('profile.update') }}" class="space-y-6" enctype="multipart/form-data">
+    <form method="post" action="{{ route('profile.update') }}" class="space-y-6 sm:space-y-8">
         @csrf
         @method('patch')
 
-        <div class="space-y-2">
-            <x-input-label for="profile_photo" :value="'Foto de perfil'" class="text-gray-700 font-medium" />
-            <input
-                id="profile_photo"
-                name="profile_photo"
-                type="file"
-                accept="image/jpeg,image/png,image/jpg,image/gif,image/webp"
-                class="block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-azul-fuerte/10 file:text-azul-fuerte file:font-medium hover:file:bg-azul-fuerte/20 file:cursor-pointer rounded-xl border border-gray-200"
-            />
-            <p class="text-xs text-gray-500">JPEG, PNG, GIF o WebP. Máximo 2 MB. Se mostrará en el menú lateral.</p>
-            <x-input-error class="mt-1" :messages="$errors->get('profile_photo')" />
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+            <div class="space-y-2">
+                <x-input-label for="name" :value="'Nombre'" class="!text-white font-medium" />
+                <x-text-input
+                    id="name"
+                    name="name"
+                    type="text"
+                    class="block w-full rounded-xl bg-white text-gray-900 border-[#E2E8F0] shadow-sm focus:border-[#003366] focus:ring-2 focus:ring-[#003366]/10 py-2.5 transition"
+                    :value="old('name', $user->name)"
+                    required
+                    autofocus
+                    autocomplete="name"
+                />
+                <x-input-error class="mt-1" :messages="$errors->get('name')" />
+            </div>
+
+            <div class="space-y-2">
+                <x-input-label for="email" :value="'Correo electrónico'" class="!text-white font-medium" />
+                <x-text-input
+                    id="email"
+                    name="email"
+                    type="email"
+                    class="block w-full rounded-xl bg-white text-gray-900 border-[#E2E8F0] shadow-sm focus:border-[#003366] focus:ring-2 focus:ring-[#003366]/10 py-2.5 transition"
+                    :value="old('email', $user->email)"
+                    required
+                    autocomplete="username"
+                />
+                <x-input-error class="mt-1" :messages="$errors->get('email')" />
+            </div>
         </div>
 
-        <div class="space-y-2">
-            <x-input-label for="name" :value="'Nombre'" class="text-gray-700 font-medium" />
-            <x-text-input
-                id="name"
-                name="name"
-                type="text"
-                class="block w-full rounded-xl border-[#E2E8F0] shadow-sm focus:border-[#003366] focus:ring-2 focus:ring-[#003366]/10 py-2.5 transition"
-                :value="old('name', $user->name)"
-                required
-                autofocus
-                autocomplete="name"
-            />
-            <x-input-error class="mt-1" :messages="$errors->get('name')" />
-        </div>
-
-        <div class="space-y-2">
-            <x-input-label for="email" :value="'Correo electrónico'" class="text-gray-700 font-medium" />
-            <x-text-input
-                id="email"
-                name="email"
-                type="email"
-                class="block w-full rounded-xl border-[#E2E8F0] shadow-sm focus:border-[#003366] focus:ring-2 focus:ring-[#003366]/10 py-2.5 transition"
-                :value="old('email', $user->email)"
-                required
-                autocomplete="username"
-            />
-            <x-input-error class="mt-1" :messages="$errors->get('email')" />
-
-            @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
-                <div class="mt-3 p-4 rounded-xl bg-amber-50 border border-amber-200/80">
-                    <p class="text-sm text-amber-900">
-                        Tu correo electrónico no está verificado.
-                        <button form="send-verification" type="submit" class="font-medium text-azul-fuerte hover:text-azul-bright underline underline-offset-2 rounded focus:outline-none focus:ring-2 focus:ring-[#003366]/20">
-                            Reenviar correo de verificación
-                        </button>
-                    </p>
-                </div>
-            @endif
-        </div>
+        @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
+            <div class="p-4 rounded-xl bg-amarillo/15 border border-amarillo/40">
+                <p class="text-sm text-white">
+                    Tu correo electrónico no está verificado.
+                    <button form="send-verification" type="submit" class="font-semibold text-amarillo hover:underline underline-offset-2 rounded focus:outline-none focus:ring-2 focus:ring-amarillo focus:ring-offset-2 focus:ring-offset-[#1a3d6b]">
+                        Reenviar correo de verificación
+                    </button>
+                </p>
+            </div>
+        @endif
 
         <div class="flex flex-wrap items-center gap-4 pt-2">
             <button

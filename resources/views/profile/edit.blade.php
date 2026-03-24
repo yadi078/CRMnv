@@ -13,32 +13,26 @@
         </div>
     </x-slot>
 
-    <div class="py-8 sm:py-10">
-        <div class="max-w-3xl mx-auto sm:px-6 lg:px-8 space-y-8">
+    <div class="py-8 sm:py-12">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-10 space-y-10">
             {{-- Tarjeta: Información del perfil --}}
-            <div class="panel-card-dark overflow-hidden">
-                <div class="p-6 sm:p-8">
-                    <div class="max-w-xl">
-                        @include('profile.partials.update-profile-information-form')
-                    </div>
+            <div class="panel-card-dark !p-0 overflow-hidden rounded-2xl">
+                <div class="p-8 sm:p-10 lg:p-12">
+                    @include('profile.partials.update-profile-information-form')
                 </div>
             </div>
 
             {{-- Tarjeta: Actualizar contraseña --}}
-            <div class="panel-card-dark overflow-hidden">
-                <div class="p-6 sm:p-8">
-                    <div class="max-w-xl">
-                        @include('profile.partials.update-password-form')
-                    </div>
+            <div class="panel-card-dark !p-0 overflow-hidden rounded-2xl">
+                <div class="p-8 sm:p-10 lg:p-12">
+                    @include('profile.partials.update-password-form')
                 </div>
             </div>
 
             {{-- Tarjeta: Eliminar cuenta (zona de peligro) --}}
-            <div class="panel-card-dark overflow-hidden border-l-4 border-l-red-400">
-                <div class="p-6 sm:p-8">
-                    <div class="max-w-xl">
-                        @include('profile.partials.delete-user-form')
-                    </div>
+            <div class="panel-card-dark !p-0 overflow-hidden rounded-2xl border-l-4 border-l-red-400">
+                <div class="p-8 sm:p-10 lg:p-12">
+                    @include('profile.partials.delete-user-form')
                 </div>
             </div>
         </div>
@@ -58,32 +52,26 @@
         </div>
     </x-slot>
 
-    <div class="py-8 sm:py-10">
-        <div class="max-w-3xl mx-auto sm:px-6 lg:px-8 space-y-8">
+    <div class="py-8 sm:py-12">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-10 space-y-10">
             {{-- Tarjeta: Información del perfil --}}
-            <div class="panel-card-dark overflow-hidden">
-                <div class="p-6 sm:p-8">
-                    <div class="max-w-xl">
-                        @include('profile.partials.update-profile-information-form')
-                    </div>
+            <div class="panel-card-dark !p-0 overflow-hidden rounded-2xl">
+                <div class="p-8 sm:p-10 lg:p-12">
+                    @include('profile.partials.update-profile-information-form')
                 </div>
             </div>
 
             {{-- Tarjeta: Actualizar contraseña --}}
-            <div class="panel-card-dark overflow-hidden">
-                <div class="p-6 sm:p-8">
-                    <div class="max-w-xl">
-                        @include('profile.partials.update-password-form')
-                    </div>
+            <div class="panel-card-dark !p-0 overflow-hidden rounded-2xl">
+                <div class="p-8 sm:p-10 lg:p-12">
+                    @include('profile.partials.update-password-form')
                 </div>
             </div>
 
             {{-- Tarjeta: Eliminar cuenta (zona de peligro) --}}
-            <div class="panel-card-dark overflow-hidden border-l-4 border-l-red-400">
-                <div class="p-6 sm:p-8">
-                    <div class="max-w-xl">
-                        @include('profile.partials.delete-user-form')
-                    </div>
+            <div class="panel-card-dark !p-0 overflow-hidden rounded-2xl border-l-4 border-l-red-400">
+                <div class="p-8 sm:p-10 lg:p-12">
+                    @include('profile.partials.delete-user-form')
                 </div>
             </div>
         </div>

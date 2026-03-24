@@ -25,7 +25,6 @@ class ProfileUpdateRequest extends FormRequest
                 'max:255',
                 Rule::unique(User::class)->ignore($this->user()->id),
             ],
-            'profile_photo' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:2048'],
         ];
     }
 
@@ -44,9 +43,6 @@ class ProfileUpdateRequest extends FormRequest
             'email.email' => 'El correo electrónico debe tener un formato válido.',
             'email.unique' => 'Ya existe un usuario con este correo electrónico.',
             'email.max' => 'El correo electrónico no puede tener más de 255 caracteres.',
-            'profile_photo.image' => 'El archivo debe ser una imagen.',
-            'profile_photo.mimes' => 'La imagen debe ser JPEG, PNG, JPG, GIF o WebP.',
-            'profile_photo.max' => 'La imagen no puede superar 2 MB.',
         ];
     }
 }
