@@ -9,7 +9,7 @@ class SendReminderDueNotifications extends Command
 {
     protected $signature = 'reminders:send-due';
 
-    protected $description = 'Envía notificaciones de recordatorios (todo el día: cada 10 min; con hora: una vez 10 min antes)';
+    protected $description = 'Envía avisos de recordatorios: 10 min antes y en la hora programada';
 
     public function handle(ReminderDueNotifier $notifier): int
     {

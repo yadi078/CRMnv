@@ -9,8 +9,8 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Envía a los administradores una notificación el día del cumpleaños de cada contacto
- * (según mes/día de fecha_cumpleaños, sin importar el año guardado).
+ * Envía a los administradores una notificación el mismo día calendario del cumpleaños
+ * (mes y día de fecha_cumpleaños = mes y día de "hoy" en la zona horaria de la app).
  */
 class ContactBirthdayNotifier
 {
@@ -19,21 +19,20 @@ class ContactBirthdayNotifier
      */
     public function notifyAdminsForToday(?Carbon $today = null): int
     {
-        $today = ($today ?? now())->timezone(config('app.timezone'))->startOfDay();
+        $tz = config('app.timezone');
+        $today = ($today ?? Carbon::now($tz))->copy()->startOfDay();
+
+        $month = (int) $today->month;
+        $day = (int) $today->day;
 
         $contacts = Contact::query()
             ->whereNotNull('fecha_cumpleanos')
-            ->whereMonth('fecha_cumpleanos', $today->month)
-            ->whereDay('fecha_cumpleanos', $today->day)
+            ->whereMonth('fecha_cumpleanos', $month)
+            ->whereDay('fecha_cumpleanos', $day)
             ->with('company')
             ->get();
 
-        $admins = User::query()
-            ->whereHas('roles', function ($q) {
-                $q->where('guard_name', 'web')
-                    ->whereIn('name', ['admin', 'administrador']);
-            })
-            ->get();
+        $admins = User::administradoresParaNotificaciones();
 
         if ($admins->isEmpty()) {
             return 0;

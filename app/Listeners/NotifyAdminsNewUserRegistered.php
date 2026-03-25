@@ -5,6 +5,8 @@ namespace App\Listeners;
 use App\Models\User;
 use App\Notifications\NewUserRegisteredNotification;
 use Illuminate\Auth\Events\Registered;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class NotifyAdminsNewUserRegistered
 {
@@ -15,9 +17,25 @@ class NotifyAdminsNewUserRegistered
             return;
         }
 
-        $admins = User::role('admin')->get();
+        $admins = User::administradoresParaNotificaciones();
+        if ($admins->isEmpty()) {
+            Log::warning('Usuario registrado pero no hay admin/administrador para notificar.', [
+                'registered_user_id' => $user->id,
+            ]);
+
+            return;
+        }
+
         foreach ($admins as $admin) {
-            $admin->notify(new NewUserRegisteredNotification($user));
+            try {
+                $admin->notify(new NewUserRegisteredNotification($user));
+            } catch (Throwable $e) {
+                Log::error('No se pudo notificar a admin el registro de usuario', [
+                    'admin_id' => $admin->id,
+                    'registered_user_id' => $user->id,
+                    'message' => $e->getMessage(),
+                ]);
+            }
         }
     }
 }
