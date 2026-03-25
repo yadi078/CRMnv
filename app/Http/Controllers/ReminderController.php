@@ -115,6 +115,7 @@ class ReminderController extends Controller
 
         if ($resetNotifyState) {
             $payload['notification_sent_at'] = null;
+            $payload['pre_notification_sent_at'] = null;
             $payload['last_recurring_notify_at'] = null;
         }
 

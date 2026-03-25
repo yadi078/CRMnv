@@ -161,6 +161,7 @@ class NotificationController extends Controller
                 'titulo' => $d['titulo'] ?? 'Recordatorio',
                 'mensaje' => $line !== '' ? $line : ($d['mensaje'] ?? ''),
                 'fecha_prevista' => $d['fecha_prevista'] ?? null,
+                'alert_phase' => $d['alert_phase'] ?? 'due',
             ];
         })->values();
 

@@ -49,7 +49,34 @@ class CompanyController extends Controller
 
         $companyContactsCard = null;
         if ($companies->count() === 1) {
-            $companyContactsCard = $companies->first();
+            $single = $companies->first();
+            if ($isAdmin) {
+                // Misma empresa de la página: ya trae todos los contactos (eager load).
+                $companyContactsCard = $single;
+            } else {
+                // Usuario: ficha con solo contactos creados por él (aprobados) y sus seguimientos visibles.
+                $companyContactsCard = Company::query()
+                    ->with(['creator', 'approver'])
+                    ->whereKey($single->id)
+                    ->first();
+
+                if ($companyContactsCard) {
+                    $companyContactsCard->load([
+                        'contacts' => function ($q) use ($user) {
+                            $q->where('created_by', $user->id)
+                                ->where('approval_status', 'aprobado');
+                        },
+                    ]);
+                    $companyContactsCard->contacts->load([
+                        'followUps' => function ($q) use ($user) {
+                            $q->where(function ($q2) use ($user) {
+                                $q2->where('created_by', $user->id)
+                                    ->orWhere('asignado_a', $user->id);
+                            })->orderByDesc('fecha_alarma');
+                        },
+                    ]);
+                }
+            }
         }
 
         $companyNames = collect();
@@ -67,6 +94,7 @@ class CompanyController extends Controller
                 'companies' => $companies,
                 'misPendientes' => $misPendientes,
                 'misEliminacionesPendientes' => $misEliminacionesPendientes,
+                'companyContactsCard' => $companyContactsCard,
             ]);
         }
 
@@ -630,6 +658,11 @@ class CompanyController extends Controller
             'deletion_pending' => true,
             'deletion_requested_by' => auth()->id(),
             'deletion_requested_at' => now(),
+            'deletion_resolution' => null,
+            'deletion_resolution_note' => null,
+            'deletion_resolved_at' => null,
+            'deletion_resolved_by' => null,
+            'deletion_decision_user_id' => null,
         ]);
 
         return redirect()->route('companies.index')

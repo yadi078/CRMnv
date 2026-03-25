@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Company;
 use App\Models\Contact;
 use App\Models\User;
+use App\Notifications\DeletionRequestResolvedNotification;
 use App\Notifications\UserApprovedNotification;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
 
 /**
@@ -125,6 +127,9 @@ class ApprovalController extends Controller
             return back()->with('error', 'No hay solicitud de eliminación pendiente para esta empresa.');
         }
 
+        $requesterId = $company->deletion_requested_by;
+        $nombre = $company->nombre_comercial;
+
         $company->update([
             'deletion_pending' => false,
             'deletion_requested_by' => null,
@@ -132,13 +137,27 @@ class ApprovalController extends Controller
         ]);
         $company->delete();
 
+        if ($requesterId) {
+            $u = User::find($requesterId);
+            if ($u) {
+                try {
+                    $u->notify(new DeletionRequestResolvedNotification('company', 'approved', $nombre, null));
+                } catch (\Throwable $e) {
+                    Log::warning('No se pudo notificar eliminación aprobada (empresa)', [
+                        'user_id' => $requesterId,
+                        'message' => $e->getMessage(),
+                    ]);
+                }
+            }
+        }
+
         return back()->with('success', 'Eliminación aprobada. La empresa se ha dado de baja.');
     }
 
     /**
      * Rechaza la solicitud de eliminación; la empresa permanece activa.
      */
-    public function denyCompanyDeletion(Company $company)
+    public function denyCompanyDeletion(Request $request, Company $company)
     {
         $this->authorize('companies.approve');
 
@@ -146,13 +165,42 @@ class ApprovalController extends Controller
             return back()->with('error', 'No hay solicitud de eliminación pendiente para esta empresa.');
         }
 
+        $validated = $request->validate([
+            'nota_admin' => 'required|string|max:2000',
+        ], [
+            'nota_admin.required' => 'Debe escribir el motivo por el que no se acepta la eliminación.',
+        ]);
+
+        $requesterId = $company->deletion_requested_by;
+        $nombre = $company->nombre_comercial;
+        $nota = $validated['nota_admin'];
+
         $company->update([
             'deletion_pending' => false,
             'deletion_requested_by' => null,
             'deletion_requested_at' => null,
+            'deletion_resolution' => 'denied',
+            'deletion_resolution_note' => $nota,
+            'deletion_resolved_at' => now(),
+            'deletion_resolved_by' => auth()->id(),
+            'deletion_decision_user_id' => $requesterId,
         ]);
 
-        return back()->with('success', 'Solicitud de eliminación rechazada. La empresa sigue activa.');
+        if ($requesterId) {
+            $u = User::find($requesterId);
+            if ($u) {
+                try {
+                    $u->notify(new DeletionRequestResolvedNotification('company', 'denied', $nombre, $nota));
+                } catch (\Throwable $e) {
+                    Log::warning('No se pudo notificar eliminación denegada (empresa)', [
+                        'user_id' => $requesterId,
+                        'message' => $e->getMessage(),
+                    ]);
+                }
+            }
+        }
+
+        return back()->with('success', 'Solicitud de eliminación rechazada. El usuario verá el motivo en su ficha y en notificaciones.');
     }
 
     /**
@@ -198,7 +246,17 @@ class ApprovalController extends Controller
             now()->addDays(2),
             ['user' => $user->id]
         );
-        $user->notify(new UserApprovedNotification($entrarUrl));
+
+        try {
+            $user->notify(new UserApprovedNotification($entrarUrl));
+        } catch (\Throwable $e) {
+            Log::error('Notificación de aprobación de usuario falló (correo o BD)', [
+                'user_id' => $user->id,
+                'message' => $e->getMessage(),
+            ]);
+
+            return back()->with('warning', 'Usuario aprobado. No se pudo enviar el correo automático; revise la configuración MAIL en .env o los logs. El usuario puede iniciar sesión con su contraseña o desde notificaciones en el panel si aplica.');
+        }
 
         return back()->with('success', 'Usuario aprobado. Se le ha enviado un enlace para entrar a su panel.');
     }
@@ -269,6 +327,9 @@ class ApprovalController extends Controller
             return back()->with('error', 'No hay solicitud de eliminación pendiente para este contacto.');
         }
 
+        $requesterId = $contact->deletion_requested_by;
+        $nombre = $contact->nombre_completo;
+
         $contact->update([
             'deletion_pending' => false,
             'deletion_requested_by' => null,
@@ -277,13 +338,27 @@ class ApprovalController extends Controller
         ]);
         $contact->delete();
 
+        if ($requesterId) {
+            $u = User::find($requesterId);
+            if ($u) {
+                try {
+                    $u->notify(new DeletionRequestResolvedNotification('contact', 'approved', $nombre, null));
+                } catch (\Throwable $e) {
+                    Log::warning('No se pudo notificar eliminación aprobada (contacto)', [
+                        'user_id' => $requesterId,
+                        'message' => $e->getMessage(),
+                    ]);
+                }
+            }
+        }
+
         return back()->with('success', 'Eliminación aprobada. El contacto se ha dado de baja.');
     }
 
     /**
      * Rechaza la solicitud de eliminación y mantiene activo el contacto.
      */
-    public function denyContactDeletion(Contact $contact)
+    public function denyContactDeletion(Request $request, Contact $contact)
     {
         $this->authorize('companies.approve');
 
@@ -291,13 +366,42 @@ class ApprovalController extends Controller
             return back()->with('error', 'No hay solicitud de eliminación pendiente para este contacto.');
         }
 
+        $validated = $request->validate([
+            'nota_admin' => 'required|string|max:2000',
+        ], [
+            'nota_admin.required' => 'Debe escribir el motivo por el que no se acepta la eliminación.',
+        ]);
+
+        $requesterId = $contact->deletion_requested_by;
+        $nombre = $contact->nombre_completo;
+        $nota = $validated['nota_admin'];
+
         $contact->update([
             'deletion_pending' => false,
             'deletion_requested_by' => null,
             'deletion_requested_at' => null,
-            'deletion_reason' => null,
+            // Conservar deletion_reason (motivo que envió el usuario) como referencia
+            'deletion_resolution' => 'denied',
+            'deletion_resolution_note' => $nota,
+            'deletion_resolved_at' => now(),
+            'deletion_resolved_by' => auth()->id(),
+            'deletion_decision_user_id' => $requesterId,
         ]);
 
-        return back()->with('success', 'Solicitud de eliminación rechazada. El contacto sigue activo.');
+        if ($requesterId) {
+            $u = User::find($requesterId);
+            if ($u) {
+                try {
+                    $u->notify(new DeletionRequestResolvedNotification('contact', 'denied', $nombre, $nota));
+                } catch (\Throwable $e) {
+                    Log::warning('No se pudo notificar eliminación denegada (contacto)', [
+                        'user_id' => $requesterId,
+                        'message' => $e->getMessage(),
+                    ]);
+                }
+            }
+        }
+
+        return back()->with('success', 'Solicitud de eliminación rechazada. El usuario verá el motivo en su ficha y en notificaciones.');
     }
 }

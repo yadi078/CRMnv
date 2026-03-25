@@ -13,6 +13,7 @@ use App\Http\Requests\UpdateContactRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 /**
@@ -120,9 +121,23 @@ class ContactController extends Controller
 
             DB::commit();
 
-            // Notificar a todos los admins cuando se agrega un nuevo cliente (desde vista admin o usuario)
-            foreach (User::role('admin')->get() as $admin) {
-                $admin->notify(new NewContactAddedNotification($contact));
+            // Notificar a administradores (admin y administrador). Errores de correo/BD no revierten el contacto.
+            $admins = User::administradoresParaNotificaciones();
+            if ($admins->isEmpty()) {
+                Log::warning('Nuevo contacto creado pero no hay usuarios con rol admin o administrador para notificar.', [
+                    'contact_id' => $contact->id,
+                ]);
+            }
+            foreach ($admins as $admin) {
+                try {
+                    $admin->notify(new NewContactAddedNotification($contact));
+                } catch (Throwable $e) {
+                    Log::error('No se pudo enviar notificación de nuevo contacto al admin', [
+                        'admin_id' => $admin->id,
+                        'contact_id' => $contact->id,
+                        'message' => $e->getMessage(),
+                    ]);
+                }
             }
 
             if ($request->wantsJson()) {
@@ -180,7 +195,7 @@ class ContactController extends Controller
     {
         $this->authorize('update', $contact);
 
-        $companies = Company::forExecutiveFollowUpAndSales(request()->user());
+        $companies = Company::forExecutiveContactForm(request()->user());
 
         return $this->resolveView('contacts.edit', 'user.contacts.edit', compact('contact', 'companies'));
     }
@@ -297,6 +312,11 @@ class ContactController extends Controller
             'deletion_requested_by' => auth()->id(),
             'deletion_requested_at' => now(),
             'deletion_reason' => $validated['motivo'],
+            'deletion_resolution' => null,
+            'deletion_resolution_note' => null,
+            'deletion_resolved_at' => null,
+            'deletion_resolved_by' => null,
+            'deletion_decision_user_id' => null,
         ]);
 
         return back()->with('success', 'Solicitud de eliminación enviada. Un administrador la revisará en Solicitudes pendientes.');

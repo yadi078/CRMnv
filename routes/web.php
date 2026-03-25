@@ -116,6 +116,12 @@ Route::middleware(['auth', 'verified', 'ensure.role', 'admin'])->group(function 
         Route::post('/contacts/{contact}/deny', [ApprovalController::class, 'denyContact'])->name('contacts.deny');
         Route::post('/contacts/{contact}/approve-deletion', [ApprovalController::class, 'approveContactDeletion'])->name('contacts.approve-deletion');
         Route::post('/contacts/{contact}/deny-deletion', [ApprovalController::class, 'denyContactDeletion'])->name('contacts.deny-deletion');
+
+        // GET a estas rutas (p. ej. refrescar pestaña tras POST): redirige sin modal molesto; la acción real es solo POST.
+        Route::get('/companies/{company}/approve-deletion', fn () => redirect()->route('approvals.index', ['tab' => 'empresas']));
+        Route::get('/companies/{company}/deny-deletion', fn () => redirect()->route('approvals.index', ['tab' => 'empresas']));
+        Route::get('/contacts/{contact}/approve-deletion', fn () => redirect()->route('approvals.index', ['tab' => 'contactos']));
+        Route::get('/contacts/{contact}/deny-deletion', fn () => redirect()->route('approvals.index', ['tab' => 'contactos']));
         Route::get('/users', [ApprovalController::class, 'users'])->name('users');
         Route::post('/users/{user}/approve', [ApprovalController::class, 'approveUser'])->name('users.approve');
         Route::post('/users/{user}/deny', [ApprovalController::class, 'denyUser'])->name('users.deny');

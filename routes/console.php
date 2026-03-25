@@ -14,5 +14,7 @@ Schedule::command('follow-ups:send-reminders')->everyThirtyMinutes();
 // Recordatorios personales: cada minuto
 Schedule::command('reminders:send-due')->everyMinute();
 
-// Cumpleaños de contactos: notificar a administradores cada día a las 8:00
-Schedule::command('birthdays:notify')->dailyAt('08:00');
+// Cumpleaños: mismo día calendario en app.timezone (config/crm.php → BIRTHDAY_NOTIFY_TIME)
+Schedule::command('birthdays:notify')
+    ->dailyAt(config('crm.birthday_notify_time'))
+    ->timezone(config('app.timezone'));
