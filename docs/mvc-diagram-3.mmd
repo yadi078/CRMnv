@@ -1,0 +1,17 @@
+flowchart TB
+    B[Cliente<br/>navegador]
+    V[Vista Blade<br/>resources/views]
+    C[Controladores CRM<br/>app/Http/Controllers]
+    M[Modelos Eloquent<br/>app/Models]
+    D[(MySQL)]
+
+    B <-->|HTTP| V
+    V <-->|render / formularios| C
+    C <-->|consultas y reglas| M
+    M <-->|SQL| D
+
+    style B fill:#64748b,stroke:#334155,color:#fff
+    style V fill:#2563eb,stroke:#1e40af,color:#fff
+    style C fill:#16a34a,stroke:#15803d,color:#fff
+    style M fill:#ea580c,stroke:#c2410c,color:#fff
+    style D fill:#7c3aed,stroke:#5b21b6,color:#fff

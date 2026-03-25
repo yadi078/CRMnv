@@ -1,0 +1,44 @@
+flowchart TB
+    subgraph Cliente["Cliente (navegador)"]
+        B[Usuario admin o usuario CRM]
+    end
+
+    subgraph Vista["VISTA — resources/views/*.blade.php"]
+        V1[Pantallas usuario: empresas, contactos, seguimientos, ventas, notificaciones…]
+        V2[Pantallas admin: dashboard, aprobaciones, exportación contacto…]
+    end
+
+    subgraph Controlador["CONTROLADOR — app/Http/Controllers"]
+        C1[CompanyController · ContactController · FollowUpController]
+        C2[SalesController · ReminderController · NotificationController]
+        C3[ApprovalController · DashboardController · UserDashboardController]
+        C4[DataManagementController · FiltrosController · ProfileController · Auth]
+    end
+
+    subgraph Modelo["MODELO — app/Models (Eloquent)"]
+        M1[Company · Contact · FollowUp]
+        M2[Sale · SaleParticipant]
+        M3[Reminder · User · SavedFilter]
+    end
+
+    DB[(MySQL)]
+
+    B -->|HTTP| V1
+    B --> V2
+
+    V1 <-->|formularios / respuestas HTML| C1
+    V1 <-->|idem| C2
+    V2 <-->|idem| C3
+    V1 <-->|idem| C4
+    V2 <-->|idem| C4
+
+    C1 --> M1
+    C2 --> M2
+    C2 --> M3
+    C3 --> M1
+    C3 --> M3
+    C4 --> M1
+
+    M1 --> DB
+    M2 --> DB
+    M3 --> DB

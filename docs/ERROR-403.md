@@ -66,6 +66,15 @@ Con eso sabes si el 403 es de una **ruta de la app** (Laravel) o de un **recurso
   - Asegúrate de que en el `<head>` exista `<meta name="csrf-token" content="{{ csrf_token() }}">` y que tu JS envíe el header `X-CSRF-TOKEN` (o el token en el body) en peticiones POST/PUT/DELETE.
   - Si la ruta está protegida por `auth` o políticas, el usuario debe estar autenticado; si la sesión expiró, el servidor puede responder 403.
 
+### 5. Enlace de entrada automática `/entrar/{id}` — **Firma no válida**
+
+- **Síntoma:** Al abrir el enlace que envía el correo cuando un admin aprueba un usuario (o el JSON de `verificar-aprobacion`), ves **403** y un mensaje tipo **«Firma no válida»** / **Invalid signature**.
+- **Motivo:** Las rutas firmadas de Laravel se calculan con la **URL base** de la aplicación (`APP_URL` en `.env`). Si entras por `http://localhost/CRMnv/public/...` pero `APP_URL` es solo `http://localhost`, el enlace generado y el que abres **no coinciden** y la firma falla. También fallan enlaces **antiguos** si cambiaste `APP_KEY` o `APP_URL` después de generarlos.
+- **Qué hacer:**
+  1. En `.env`, pon `APP_URL` **exactamente** como la URL con la que abres el CRM en el navegador (en XAMPP suele ser `http://localhost/CRMnv/public`).
+  2. Ejecuta: `php artisan config:clear`
+  3. Pide un **enlace nuevo**: que un administrador vuelva a usar «Aprobar usuario» (se envía otro correo) **o** entra con **correo y contraseña** en `/login` si la cuenta ya está aprobada.
+
 ---
 
 ## Resumen
@@ -75,5 +84,6 @@ Con eso sabes si el 403 es de una **ruta de la app** (Laravel) o de un **recurso
 | Al abrir una página (ej. `/companies`) | Permiso/rol en Laravel | Seeders + rol `usuario` + cerrar sesión y volver a entrar |
 | En un archivo JS/CSS (Vite, `/build/`) | Vite no corre o build no generada | `npm run dev` o `npm run build` |
 | En una ruta de API / formulario enviado por JS | CSRF o sesión/permiso | Revisar token CSRF y que el usuario esté logueado |
+| En `/entrar/...` con firma | `APP_URL` distinta a la URL real, o enlace viejo | Ajustar `APP_URL`, `config:clear`, nuevo enlace o login normal |
 
 Siempre revisa la **URL exacta** que devuelve 403 en la pestaña Network para saber si es una ruta Laravel o un recurso estático.

@@ -1,0 +1,34 @@
+flowchart LR
+    subgraph Modulos["Módulos del CRMnv"]
+        E[Empresas]
+        CT[Contactos]
+        F[Seguimientos]
+        S[Historial de ventas]
+        N[Notificaciones y recordatorios]
+        A[Aprobaciones admin]
+        D[Dashboard admin / usuario]
+    end
+
+    E --- CompanyController
+    CT --- ContactController
+    F --- FollowUpController
+    S --- SalesController
+    N --- NotificationController
+    N --- ReminderController
+    A --- ApprovalController
+    D --- DashboardController
+    D --- UserDashboardController
+
+    CompanyController --> Company
+    ContactController --> Contact
+    FollowUpController --> FollowUp
+    SalesController --> Sale
+    ReminderController --> Reminder
+    NotificationController --> User
+
+    Company --> DB[(MySQL)]
+    Contact --> DB
+    FollowUp --> DB
+    Sale --> DB
+    Reminder --> DB
+    User --> DB
