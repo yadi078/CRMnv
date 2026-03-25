@@ -26,6 +26,15 @@
     </x-slot>
 
     <div class="space-y-8">
+        @if(($contact->deletion_resolution ?? '') === 'denied'
+            && (int) ($contact->deletion_decision_user_id ?? 0) === (int) auth()->id()
+            && filled($contact->deletion_resolution_note))
+            <x-deletion-denied-alert
+                :note="$contact->deletion_resolution_note"
+                :resolvedAt="$contact->deletion_resolved_at"
+                entity-label="contacto"
+            />
+        @endif
         <div class="panel-card-dark p-6">
             <h3 class="panel-card-dark__title panel-card-dark__title--accent mb-6 text-xl">Información del Contacto</h3>
 

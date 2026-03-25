@@ -17,15 +17,19 @@
                     @csrf
                     <h3 class="panel-card-dark__title panel-card-dark__title--accent mb-4">Datos del contacto</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="relative">
+                        <div class="md:col-span-2 relative">
                             <label for="company_autocomplete" class="block text-sm font-medium text-white/90 mb-1">Empresa *</label>
+                            <p class="text-xs text-white/65 mb-2">Escriba para filtrar o elija de la lista. Incluye empresas aprobadas en el CRM y las que usted haya registrado.</p>
                             <input type="hidden" id="company_id" name="company_id" value="{{ old('company_id', $companyId ?? '') }}" required />
                             @php
                                 $preselectedId = old('company_id', $companyId ?? null);
-                                $preselectedName = $preselectedId ? ($companies->firstWhere('id', (int)$preselectedId)?->nombre_comercial ?? '') : '';
+                                $preselectedName = $preselectedId ? ($companies->firstWhere('id', (int) $preselectedId)?->nombre_comercial ?? '') : '';
                             @endphp
-                            <input type="text" id="company_autocomplete" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3 focus:ring-2 focus:ring-[#FFE600]/50" placeholder="Escriba o seleccione una empresa" value="{{ $preselectedName }}" autocomplete="off" />
+                            <input type="text" id="company_autocomplete" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3 focus:ring-2 focus:ring-[#FFE600]/50" placeholder="Buscar o seleccionar empresa…" value="{{ $preselectedName }}" autocomplete="off" />
                             <div id="company_autocomplete_list" role="listbox" class="absolute left-0 right-0 top-full z-[100] mt-1 max-h-56 overflow-auto rounded-xl border border-white/20 bg-[#1a3d6b] shadow-lg hidden"></div>
+                            @if($companies->isEmpty())
+                                <p class="mt-2 text-sm text-amber-200/90">No hay empresas en el catálogo. Registre una empresa o espere aprobación.</p>
+                            @endif
                             <x-input-error :messages="$errors->get('company_id')" class="mt-2 text-red-300" />
                         </div>
                         <div>
@@ -138,7 +142,7 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        var companiesData = @json($companies->map(fn($c) => ['id' => $c->id, 'nombre_comercial' => $c->nombre_comercial]));
+        var companiesData = @json($companies->map(fn ($c) => ['id' => $c->id, 'nombre_comercial' => $c->nombre_comercial]));
         var form = document.getElementById('form-nuevo-contacto');
         var modal = document.getElementById('modal-registro-exitoso');
         var modalError = document.getElementById('modal-error');
@@ -150,7 +154,6 @@
         var errorAcceptBtn = document.getElementById('modal-error-accept');
         var errorCloseBtn = document.getElementById('modal-error-close');
         var errorBackdrop = document.getElementById('modal-error-backdrop');
-
         var companyInput = document.getElementById('company_autocomplete');
         var companyIdInput = document.getElementById('company_id');
         var companyList = document.getElementById('company_autocomplete_list');
@@ -171,7 +174,9 @@
         function filterCompanies(q) {
             var qq = (q || '').toLowerCase().trim();
             if (!qq) return companiesData;
-            return companiesData.filter(function(c) { return (c.nombre_comercial || '').toLowerCase().indexOf(qq) !== -1; });
+            return companiesData.filter(function(c) {
+                return (c.nombre_comercial || '').toLowerCase().indexOf(qq) !== -1;
+            });
         }
 
         function renderCompanyList(items) {
@@ -186,10 +191,6 @@
                 div.className = 'px-3 py-2.5 text-white/90 hover:bg-white/15 cursor-pointer text-sm';
                 div.setAttribute('role', 'option');
                 div.textContent = c.nombre_comercial;
-                div.dataset.id = c.id;
-                div.dataset.name = c.nombre_comercial;
-                // mousedown + preventDefault: evita que el input pierda el foco antes del click
-                // (sin esto el blur oculta la lista y la selección no se aplica).
                 div.addEventListener('mousedown', function(e) {
                     e.preventDefault();
                     companyIdInput.value = String(c.id);
@@ -202,7 +203,9 @@
         }
 
         if (companyInput && companyList) {
-            companyInput.addEventListener('focus', function() { renderCompanyList(filterCompanies(companyInput.value)); });
+            companyInput.addEventListener('focus', function() {
+                renderCompanyList(filterCompanies(companyInput.value));
+            });
             companyInput.addEventListener('input', function() {
                 companyIdInput.value = '';
                 renderCompanyList(filterCompanies(companyInput.value));
@@ -240,10 +243,10 @@
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
                 if (companyIdInput && companyInput && !companyIdInput.value && companyInput.value.trim()) {
-                    var match = companiesData.find(function(c) { return (c.nombre_comercial || '').trim().toLowerCase() === companyInput.value.trim().toLowerCase(); });
-                    if (match) {
-                        companyIdInput.value = match.id;
-                    }
+                    var match = companiesData.find(function(c) {
+                        return (c.nombre_comercial || '').trim().toLowerCase() === companyInput.value.trim().toLowerCase();
+                    });
+                    if (match) companyIdInput.value = String(match.id);
                 }
                 var formData = new FormData(form);
                 var url = form.getAttribute('action');

@@ -28,6 +28,16 @@
     </x-slot>
 
     <div class="company-show company-show__sections">
+            @if(($company->deletion_resolution ?? '') === 'denied'
+                && (int) ($company->deletion_decision_user_id ?? 0) === (int) auth()->id()
+                && filled($company->deletion_resolution_note))
+                <x-deletion-denied-alert
+                    class="mb-6"
+                    :note="$company->deletion_resolution_note"
+                    :resolvedAt="$company->deletion_resolved_at"
+                    entity-label="empresa"
+                />
+            @endif
             <!-- Información Principal -->
             <section class="company-show__card company-show__card--info">
                 <div class="company-show__card-header">

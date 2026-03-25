@@ -651,6 +651,7 @@
                         @elseif($tipo === 'cumpleanos') bg-pink-100 text-pink-700
                         @elseif($tipo === 'aprobacion') bg-emerald-100 text-emerald-700
                         @elseif($tipo === 'recordatorio') bg-amber-100 text-amber-700
+                        @elseif($tipo === 'eliminacion_solicitud') bg-slate-200 text-slate-800
                         @else bg-white/10 text-white @endif">
                         @if($tipo === 'registro')
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
@@ -662,6 +663,8 @@
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                         @elseif($tipo === 'recordatorio')
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        @elseif($tipo === 'eliminacion_solicitud')
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                         @else
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
                         @endif
@@ -735,6 +738,8 @@
                                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                             @elseif($tipo === 'recordatorio')
                                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            @elseif($tipo === 'eliminacion_solicitud')
+                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                             @else
                                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
                             @endif
@@ -753,13 +758,27 @@
                             @if(isset($d['edad']))
                                 <p class="text-white/80 text-sm mt-1 text-left">Edad que cumple hoy: <span class="text-[#FFE600] font-medium">{{ $d['edad'] }} años</span></p>
                             @endif
+                        @elseif($tipo === 'eliminacion_solicitud')
+                            <p class="!text-white whitespace-pre-wrap break-words text-left">{{ $mensaje ?: 'Sin contenido.' }}</p>
+                            @if(!empty($d['entity_name']))
+                                <p class="text-white/80 text-sm mt-4 text-left"><span class="text-[#FFE600] font-semibold">{{ ($d['entity'] ?? '') === 'company' ? 'Empresa' : 'Contacto' }}:</span> {{ $d['entity_name'] }}</p>
+                            @endif
+                            @if(($d['outcome'] ?? '') === 'denied' && !empty($d['nota_admin']))
+                                <p class="text-white/90 text-sm mt-3 text-left font-semibold text-[#FFE600]">Motivo del administrador</p>
+                                <p class="text-white/90 text-sm mt-1 text-left whitespace-pre-wrap border border-white/15 rounded-xl p-3 bg-black/20">{{ $d['nota_admin'] }}</p>
+                            @endif
                         @else
                             <p class="!text-white whitespace-pre-wrap break-words">{{ $mensaje ?: 'Sin contenido.' }}</p>
                         @endif
                     </div>
                     <div class="p-6 pt-4 flex flex-wrap gap-3 justify-end">
                         @if($entrarUrl)
-                            <a href="{{ $entrarUrl }}" class="px-4 py-2 text-sm rounded-xl font-semibold text-gray-900 bg-[#FFE600] hover:bg-[#E6CF00] transition-colors">{{ $tipo === 'cumpleanos' ? 'Ver contacto' : 'Entrar a mi panel' }}</a>
+                            {{-- Aprobación de cuenta: con sesión activa, ir al panel sin URL firmada (evita 403 por firma vieja o APP_URL distinta). Incluye registros antiguos solo con tipo=aprobacion. --}}
+                            @if(($d['type'] ?? '') === 'user_approved' || ($d['tipo'] ?? '') === 'aprobacion')
+                                <a href="{{ auth()->user()->esAdmin() ? route('dashboard') : route('user.dashboard') }}" class="px-4 py-2 text-sm rounded-xl font-semibold text-gray-900 bg-[#FFE600] hover:bg-[#E6CF00] transition-colors">Entrar a mi panel</a>
+                            @else
+                                <a href="{{ $entrarUrl }}" class="px-4 py-2 text-sm rounded-xl font-semibold text-gray-900 bg-[#FFE600] hover:bg-[#E6CF00] transition-colors">{{ $tipo === 'cumpleanos' ? 'Ver contacto' : 'Entrar a mi panel' }}</a>
+                            @endif
                         @endif
                         @if(!$notification->read_at)
                             <form method="POST" action="{{ route('notifications.mark-read', $notification) }}" class="inline">
@@ -817,13 +836,30 @@
             } catch (e) {}
         }
 
-        function showReminderBrowserNotification(titulo, mensaje) {
+        /** Aviso más suave para “en 10 minutos” */
+        function playPreReminderBeep() {
+            try {
+                var ctx = new (window.AudioContext || window.webkitAudioContext)();
+                var osc = ctx.createOscillator();
+                var gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.frequency.value = 720;
+                osc.type = 'sine';
+                gain.gain.setValueAtTime(0.2, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
+                osc.start(ctx.currentTime);
+                osc.stop(ctx.currentTime + 0.35);
+            } catch (e) {}
+        }
+
+        function showReminderBrowserNotification(titulo, mensaje, tag) {
             if (!('Notification' in window)) return;
             if (Notification.permission === 'granted') {
                 new Notification(titulo || 'Recordatorio', {
                     body: mensaje || 'Tienes un recordatorio pendiente.',
                     icon: reminderNotificationIcon,
-                    tag: 'crm-reminder'
+                    tag: tag || 'crm-reminder'
                 });
             }
         }
@@ -840,8 +876,17 @@
                         if (id && !seenReminderIds.has(id)) {
                             seenReminderIds.add(id);
                             hasNew = true;
-                            playAlarmBeep();
-                            showReminderBrowserNotification(item.titulo, item.mensaje || item.fecha_prevista || '');
+                            var phase = item.alert_phase || 'due';
+                            if (phase === 'pre') {
+                                playPreReminderBeep();
+                            } else {
+                                playAlarmBeep();
+                            }
+                            showReminderBrowserNotification(
+                                item.titulo,
+                                item.mensaje || item.fecha_prevista || '',
+                                'crm-reminder-' + id
+                            );
                         }
                     });
                     // Al detectar una alarma nueva, recargar para que la notificación aparezca en la lista

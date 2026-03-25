@@ -25,6 +25,15 @@
         <div class="mt-4 text-white">
             @if($tipo === 'recordatorio')
                 @include('notifications.partials.reminder-notification-detail', ['d' => $d, 'mensaje' => $mensaje])
+            @elseif($tipo === 'eliminacion_solicitud')
+                <div class="whitespace-pre-wrap !text-white">{{ $mensaje ?: 'Sin contenido.' }}</div>
+                @if(!empty($d['entity_name']))
+                    <p class="text-white/80 text-sm mt-4"><span class="text-[#FFE600] font-semibold">{{ ($d['entity'] ?? '') === 'company' ? 'Empresa' : 'Contacto' }}:</span> {{ $d['entity_name'] }}</p>
+                @endif
+                @if(($d['outcome'] ?? '') === 'denied' && !empty($d['nota_admin']))
+                    <p class="text-[#FFE600] font-semibold text-sm mt-4">Motivo del administrador</p>
+                    <div class="mt-2 whitespace-pre-wrap text-white/90 border border-white/15 rounded-xl p-3 bg-black/20">{{ $d['nota_admin'] }}</div>
+                @endif
             @else
                 <div class="whitespace-pre-wrap !text-white">{{ $mensaje ?: 'Sin contenido.' }}</div>
             @endif

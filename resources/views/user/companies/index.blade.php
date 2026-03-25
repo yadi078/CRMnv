@@ -62,6 +62,94 @@
                     </div>
                 </form>
 
+                @if(isset($companyContactsCard) && $companyContactsCard)
+                <div class="mb-8 pb-8 border-b border-white/20">
+                    <p class="text-white/70 text-xs mb-4">
+                        Resultado único: datos de la empresa y <strong class="text-white/90">sus contactos que usted agregó</strong> (aprobados), con los <strong class="text-white/90">seguimientos</strong> que creó o tiene asignados.
+                    </p>
+                    <div class="rounded-xl border border-white/20 bg-white/5 p-4 sm:p-5">
+                        <h4 class="text-lg font-bold text-[#FFE600] mb-3">
+                            {{ $companyContactsCard->nombre_comercial }}
+                        </h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-2 text-sm text-white/90 mb-4">
+                            @if($companyContactsCard->rfc)
+                                <p><span class="text-white/60 font-medium">RFC:</span> {{ $companyContactsCard->rfc }}</p>
+                            @endif
+                            @if($companyContactsCard->municipio || $companyContactsCard->estado)
+                                <p><span class="text-white/60 font-medium">Ciudad, Estado:</span> {{ trim(($companyContactsCard->municipio ?? '') . ', ' . ($companyContactsCard->estado ?? ''), ' ,') }}</p>
+                            @endif
+                            @if($companyContactsCard->sector)
+                                <p><span class="text-white/60 font-medium">Sector:</span> {{ $companyContactsCard->sector }}</p>
+                            @endif
+                            @if($companyContactsCard->ejecutivo_asignado)
+                                <p><span class="text-white/60 font-medium">Ejecutivo asignado:</span> {{ $companyContactsCard->ejecutivo_asignado }}</p>
+                            @endif
+                        </div>
+                        @if($companyContactsCard->datos_fiscales)
+                            <p class="text-sm text-white/85 mb-4 pb-4 border-b border-white/10">
+                                <span class="text-white/60 font-medium">Domicilio fiscal:</span> {{ \Illuminate\Support\Str::limit($companyContactsCard->datos_fiscales, 120) }}
+                            </p>
+                        @endif
+
+                        @if($companyContactsCard->contacts->isEmpty())
+                            <p class="text-white/80 text-sm">
+                                Usted no tiene contactos <strong class="text-white">aprobados</strong> registrados para esta empresa, o aún están pendientes de aprobación.
+                            </p>
+                        @else
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                @foreach($companyContactsCard->contacts as $contact)
+                                    <div class="bg-white rounded-2xl shadow-md px-4 py-3 flex flex-col gap-2 border-2 border-[#071A3D] border-t-4 border-t-[#FFE600]">
+                                        <a href="{{ route('contacts.show', $contact) }}" class="text-sm font-semibold text-[#071A3D] hover:text-[#0f172a] hover:underline">
+                                            {{ $contact->nombre_completo }}
+                                        </a>
+                                        @if($contact->puesto_de_trabajo)
+                                            <p class="text-xs text-gray-600">{{ $contact->puesto_de_trabajo }}</p>
+                                        @endif
+                                        <p class="text-xs text-gray-700">
+                                            <span class="font-semibold">Correo:</span>
+                                            {{ ($contact->email_activo ?? true) ? ($contact->email ?? '—') : '—' }}
+                                        </p>
+                                        <p class="text-xs text-gray-700">
+                                            <span class="font-semibold">Teléfono:</span>
+                                            {{ $contact->celular ?? $contact->telefono ?? '—' }}
+                                        </p>
+                                        <div class="pt-2 border-t border-gray-200">
+                                            @if($contact->status_color)
+                                                <span class="px-3 py-1 text-xs font-bold rounded-full badge-prospect-{{ $contact->status_color }} border border-[#071A3D]/50 shrink-0 inline-block !text-[#0f172a]">
+                                                    {{ $contact->status_label }}
+                                                </span>
+                                            @else
+                                                <span class="px-3 py-1 text-xs font-bold rounded-full bg-yellow-300 !text-[#0f172a] border border-[#071A3D]/50 shrink-0 inline-block">
+                                                    Seguimiento
+                                                </span>
+                                            @endif
+                                        </div>
+                                        <div class="pt-2 mt-1 border-t border-gray-200">
+                                            <p class="text-xs font-semibold text-[#071A3D] mb-2">Seguimientos</p>
+                                            @forelse($contact->followUps as $followUp)
+                                                <a href="{{ route('follow-ups.show', $followUp) }}" class="block text-xs text-gray-700 hover:text-[#071A3D] py-1.5 border-b border-gray-100 last:border-0">
+                                                    <span class="font-medium">{{ $followUp->fecha_alarma?->format('d/m/Y H:i') }}</span>
+                                                    <span class="text-gray-500"> · {{ ucfirst($followUp->tipo_accion) }}</span>
+                                                    @if($followUp->completado)
+                                                        <span class="ml-1 text-green-700 font-medium">(Completado)</span>
+                                                    @elseif(method_exists($followUp, 'estaVencido') && $followUp->estaVencido())
+                                                        <span class="ml-1 text-red-600 font-medium">(Vencido)</span>
+                                                    @else
+                                                        <span class="ml-1 text-amber-700 font-medium">(Pendiente)</span>
+                                                    @endif
+                                                </a>
+                                            @empty
+                                                <p class="text-xs text-gray-500">Sin seguimientos que pueda ver para este contacto.</p>
+                                            @endforelse
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+                </div>
+                @endif
+
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-white/20">
                         <thead>

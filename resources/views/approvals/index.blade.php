@@ -87,12 +87,8 @@
                                 </form>
                                 <form method="POST" id="approval-co-del-den-{{ $company->id }}" action="{{ route('approvals.companies.deny-deletion', $company) }}" class="inline flex items-center gap-2">
                                     @csrf
-                                    <button type="button" class="px-4 py-2 rounded-xl font-semibold bg-red-600 text-white hover:bg-red-500 transition js-approval-confirm-trigger"
-                                        data-form-id="approval-co-del-den-{{ $company->id }}"
-                                        data-title="Denegar eliminación"
-                                        data-message="¿Rechazar la solicitud de eliminación? La empresa permanecerá activa."
-                                        data-variant="danger"
-                                        data-confirm-text="Sí, denegar">
+                                    <button type="button" class="px-4 py-2 rounded-xl font-semibold bg-red-600 text-white hover:bg-red-500 transition js-deny-deletion-trigger"
+                                        data-form-id="approval-co-del-den-{{ $company->id }}">
                                         Denegar eliminación
                                     </button>
                                 </form>
@@ -240,12 +236,8 @@
                                 </form>
                                 <form method="POST" id="approval-ct-del-den-{{ $contact->id }}" action="{{ route('approvals.contacts.deny-deletion', $contact) }}" class="inline">
                                     @csrf
-                                    <button type="button" class="px-4 py-2 rounded-xl font-semibold bg-red-600 text-white hover:bg-red-500 transition js-approval-confirm-trigger"
-                                        data-form-id="approval-ct-del-den-{{ $contact->id }}"
-                                        data-title="Denegar eliminación"
-                                        data-message="¿Rechazar la solicitud de eliminación? El contacto permanecerá activo."
-                                        data-variant="danger"
-                                        data-confirm-text="Sí, denegar">
+                                    <button type="button" class="px-4 py-2 rounded-xl font-semibold bg-red-600 text-white hover:bg-red-500 transition js-deny-deletion-trigger"
+                                        data-form-id="approval-ct-del-den-{{ $contact->id }}">
                                         Denegar eliminación
                                     </button>
                                 </form>
@@ -298,4 +290,5 @@
     </div>
 
     @include('approvals.partials.approval-confirm-modal')
+    @include('approvals.partials.approval-deny-deletion-modal')
 </x-app-layout>
