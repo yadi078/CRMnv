@@ -38,6 +38,11 @@ class Company extends Model
         'deletion_pending',
         'deletion_requested_by',
         'deletion_requested_at',
+        'deletion_resolution',
+        'deletion_resolution_note',
+        'deletion_resolved_at',
+        'deletion_resolved_by',
+        'deletion_decision_user_id',
     ];
 
     /**
@@ -49,6 +54,7 @@ class Company extends Model
             'approved_at' => 'datetime',
             'deletion_pending' => 'boolean',
             'deletion_requested_at' => 'datetime',
+            'deletion_resolved_at' => 'datetime',
         ];
     }
 
@@ -174,7 +180,7 @@ class Company extends Model
     }
 
     /**
-     * Alcance para ejecutivos: empresas que registraron o empresas aprobadas donde tienen al menos un contacto propio.
+     * Alcance para ejecutivos: empresas que registraron o todas las aprobadas en el CRM.
      * Los administradores no se filtran aquí.
      */
     public function scopeAccessibleForExecutive(Builder $query, User $user): Builder
@@ -185,15 +191,13 @@ class Company extends Model
 
         return $query->where(function ($q) use ($user) {
             $q->where('created_by', $user->id)
-                ->orWhere(function ($q2) use ($user) {
-                    $q2->where('approval_status', 'aprobado')
-                        ->whereHas('contacts', fn ($c) => $c->where('created_by', $user->id));
-                });
+                ->orWhere('approval_status', 'aprobado');
         });
     }
 
     /**
-     * Empresas disponibles al crear/editar un contacto (ejecutivo: solo las que él dio de alta).
+     * Empresas disponibles al crear/editar un contacto (ejecutivo):
+     * las que él registró (cualquier estado de aprobación) + todas las empresas ya aprobadas en el CRM.
      */
     public static function forExecutiveContactForm(User $user): \Illuminate\Database\Eloquent\Collection
     {
@@ -202,7 +206,10 @@ class Company extends Model
         }
 
         return static::query()
-            ->where('created_by', $user->id)
+            ->where(function ($q) use ($user) {
+                $q->where('created_by', $user->id)
+                    ->orWhere('approval_status', 'aprobado');
+            })
             ->orderBy('nombre_comercial')
             ->get();
     }
@@ -272,7 +279,8 @@ class Company extends Model
     }
 
     /**
-     * Si el ejecutivo puede usar esta empresa en seguimientos/ventas o verla según reglas de negocio.
+     * Si el ejecutivo puede ver/usar esta empresa: las que registró (aunque pendientes)
+     * o cualquier empresa ya aprobada en el CRM (p. ej. para agregar contactos o ver ficha).
      */
     public function isAccessibleByExecutive(User $user): bool
     {
@@ -282,10 +290,7 @@ class Company extends Model
         if ((int) $this->created_by === (int) $user->id) {
             return true;
         }
-        if ($this->approval_status !== 'aprobado') {
-            return false;
-        }
 
-        return $this->contacts()->where('created_by', $user->id)->exists();
+        return $this->approval_status === 'aprobado';
     }
 }

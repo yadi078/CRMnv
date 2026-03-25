@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 /**
  * Request de validación para actualizar contactos
@@ -26,8 +27,16 @@ class UpdateContactRequest extends FormRequest
     {
         $contact = $this->route('contact');
 
+        $companyRules = ['required'];
+        $companyRules[] = $this->user()->esAdmin()
+            ? 'exists:companies,id'
+            : Rule::exists('companies', 'id')->where(function ($query) {
+                $query->where('created_by', $this->user()->id)
+                    ->orWhere('approval_status', 'aprobado');
+            });
+
         return [
-            'company_id' => 'required|exists:companies,id',
+            'company_id' => $companyRules,
             'nombre_completo' => 'required|string|max:255',
             'genero' => 'nullable|string|max:50',
             'puesto_de_trabajo' => 'nullable|string|max:255',

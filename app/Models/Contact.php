@@ -61,6 +61,11 @@ class Contact extends Model
         'deletion_requested_by',
         'deletion_requested_at',
         'deletion_reason',
+        'deletion_resolution',
+        'deletion_resolution_note',
+        'deletion_resolved_at',
+        'deletion_resolved_by',
+        'deletion_decision_user_id',
         'created_by',
     ];
 
@@ -75,6 +80,7 @@ class Contact extends Model
             'approved_at' => 'datetime',
             'deletion_pending' => 'boolean',
             'deletion_requested_at' => 'datetime',
+            'deletion_resolved_at' => 'datetime',
         ];
     } 
 

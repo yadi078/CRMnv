@@ -9,6 +9,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Collection;
 use App\Models\Reminder;
 use Spatie\Permission\Traits\HasRoles;
 
@@ -133,6 +134,17 @@ class User extends Authenticatable
     public function esAdmin(): bool
     {
         return $this->hasRole(['admin', 'administrador']);
+    }
+
+    /**
+     * Administradores que deben recibir avisos del sistema (nuevo contacto, registro, etc.).
+     * Incluye rol "admin" y "administrador" (misma lógica que esAdmin()).
+     */
+    public static function administradoresParaNotificaciones(): Collection
+    {
+        return static::query()
+            ->role(['admin', 'administrador'])
+            ->get();
     }
 
     /**
