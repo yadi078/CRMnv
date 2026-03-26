@@ -54,6 +54,15 @@ class FixDeletionResolutionColumns extends Command
             return false;
         }
 
+        $missing = array_values(array_filter([
+            ! $before[0] ? 'deletion_resolution' : null,
+            ! $before[1] ? 'deletion_resolution_note' : null,
+            ! $before[2] ? 'deletion_resolved_at' : null,
+            ! $before[3] ? 'deletion_resolved_by' : null,
+            ! $before[4] ? 'deletion_decision_user_id' : null,
+        ]));
+        $this->line('  '.$table.': faltan columnas: '.implode(', ', $missing));
+
         Schema::table($table, function (Blueprint $blueprint) use ($table) {
             if (! Schema::hasColumn($table, 'deletion_resolution')) {
                 $blueprint->string('deletion_resolution', 20)->nullable();

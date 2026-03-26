@@ -1,10 +1,8 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="page-header-card__icon" aria-hidden="true">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <x-page-header-avatar><svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-            </svg>
-        </div>
+            </svg></x-page-header-avatar>
         <div>
             <h2 class="page-header-card__title">Notificaciones</h2>
             <p id="notifications-header-subtitle" class="page-header-card__subtitle">
@@ -23,6 +21,23 @@
         viewingReminderId: null,
         showReminderModal: false,
         showContactPanel: false,
+        editingReminderForm: {
+            title: '',
+            start_at: '',
+            end_at: '',
+            all_day: false,
+            repeat: '',
+            deadline_at: '',
+            description: '',
+            extension: '',
+            nombre_cliente: '',
+            empresa: '',
+            correo_electronico: '',
+            numero_telefonico: '',
+            area: '',
+            puesto_trabajo: '',
+            update_url: '',
+        },
         contactsForReminder: @js($contactsForReminder ?? []),
         remindersForDetail: @js($reminders->map(fn($r) => [
             'id' => $r->id,
@@ -42,10 +57,38 @@
             'repeat' => $r->repeat,
             'repeat_label' => match($r->repeat ?? '') { 'daily' => 'Diario', 'weekly' => 'Semanal', 'monthly' => 'Mensual', default => $r->repeat ?? '—' },
             'deadline_at' => $r->deadline_at?->format('d/m/Y'),
+            'start_at_input' => $r->start_at?->format('Y-m-d\TH:i'),
+            'end_at_input' => $r->end_at?->format('Y-m-d\TH:i'),
+            'deadline_at_input' => $r->deadline_at?->format('Y-m-d'),
+            'update_url' => route('reminders.update', $r),
             'is_done' => $r->is_done,
         ])->values()->all()),
         get viewingReminder() { return this.remindersForDetail.find(r => r.id === this.viewingReminderId) || null; },
+        get editingReminder() { return this.remindersForDetail.find(r => r.id === this.editingReminderId) || null; },
         init() { this.$watch('showReminderModal', v => { if (!v) this.showContactPanel = false; }); },
+        openEditReminder(id) {
+            const r = this.remindersForDetail.find(rem => rem.id === id);
+            if (!r) return;
+            this.editingReminderId = id;
+            this.viewingReminderId = null;
+            this.editingReminderForm = {
+                title: r.title || '',
+                start_at: r.start_at_input || '',
+                end_at: r.end_at_input || '',
+                all_day: !!r.all_day,
+                repeat: r.repeat || '',
+                deadline_at: r.deadline_at_input || '',
+                description: r.description || '',
+                extension: r.extension || '',
+                nombre_cliente: r.nombre_cliente || '',
+                empresa: r.empresa || '',
+                correo_electronico: r.correo_electronico || '',
+                numero_telefonico: r.numero_telefonico || '',
+                area: r.area || '',
+                puesto_trabajo: r.puesto_trabajo || '',
+                update_url: r.update_url || '',
+            };
+        },
         selectContact(contact) {
             const form = this.$refs.formReminder;
             if (!form) return;
@@ -134,59 +177,6 @@
                                 </p>
                             @endif
                         </div>
-                        <form
-                            x-show="editingReminderId === {{ $reminder->id }}"
-                            x-cloak
-                            method="POST"
-                            action="{{ route('reminders.update', $reminder) }}"
-                            class="space-y-1"
-                        >
-                            @csrf
-                            @method('PUT')
-                            <input type="hidden" name="extension" value="{{ $reminder->extension ?? '' }}">
-                            <input type="hidden" name="nombre_cliente" value="{{ $reminder->nombre_cliente ?? '' }}">
-                            <input type="hidden" name="empresa" value="{{ $reminder->empresa ?? '' }}">
-                            <input type="hidden" name="correo_electronico" value="{{ $reminder->correo_electronico ?? '' }}">
-                            <input type="hidden" name="numero_telefonico" value="{{ $reminder->numero_telefonico ?? '' }}">
-                            <input type="hidden" name="area" value="{{ $reminder->area ?? '' }}">
-                            <input type="hidden" name="puesto_trabajo" value="{{ $reminder->puesto_trabajo ?? '' }}">
-                            <input type="hidden" name="description" value="{{ $reminder->description ?? '' }}">
-                            <input type="hidden" name="repeat" value="{{ $reminder->repeat ?? '' }}">
-                            <input type="hidden" name="deadline_at" value="{{ $reminder->deadline_at?->format('Y-m-d') ?? '' }}">
-                            <input
-                                type="text"
-                                name="title"
-                                value="{{ $reminder->title }}"
-                                required
-                                maxlength="255"
-                                style="color: #111827;"
-                                class="w-full rounded-xl border border-gray-300 bg-white placeholder-gray-500 focus:ring-2 focus:ring-[#FFE600]/50 py-1.5 px-3 text-sm"
-                            >
-                            <div class="flex flex-wrap items-center gap-2 mt-1">
-                                <div class="flex flex-wrap items-center gap-2">
-                                    <input
-                                        type="datetime-local"
-                                        name="start_at"
-                                        value="{{ $reminder->start_at ? $reminder->start_at->format('Y-m-d\\TH:i') : '' }}"
-                                        style="color: #111827;"
-                                        class="rounded-xl border border-gray-300 bg-white placeholder-gray-500 focus:ring-2 focus:ring-[#FFE600]/50 py-1.5 px-3 text-xs"
-                                    >
-                                    <input
-                                        type="datetime-local"
-                                        name="end_at"
-                                        value="{{ $reminder->end_at ? $reminder->end_at->format('Y-m-d\\TH:i') : '' }}"
-                                        style="color: #111827;"
-                                        class="rounded-xl border border-gray-300 bg-white placeholder-gray-500 focus:ring-2 focus:ring-[#FFE600]/50 py-1.5 px-3 text-xs"
-                                    >
-                                    <label class="inline-flex items-center gap-1 text-[11px] text-white/80">
-                                        <input type="checkbox" name="all_day" value="1" class="rounded border-white/40 text-[#FFE600] bg-transparent focus:ring-[#FFE600]" {{ $reminder->all_day ? 'checked' : '' }}>
-                                        Todo el día
-                                    </label>
-                                </div>
-                                <button type="submit" class="btn-amber-app text-xs py-1 px-3">Guardar</button>
-                                <button type="button" @click="editingReminderId = null" class="text-xs text-white/80 hover:text-white">Cancelar</button>
-                            </div>
-                        </form>
                     </div>
                     <div class="flex-shrink-0 flex items-center gap-2">
                         <form method="POST" action="{{ route('reminders.toggle', $reminder) }}">
@@ -202,7 +192,7 @@
                         </form>
                         <button
                             type="button"
-                            @click="editingReminderId = editingReminderId === {{ $reminder->id }} ? null : {{ $reminder->id }}"
+                            @click="openEditReminder({{ $reminder->id }})"
                             class="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
                             title="Editar recordatorio"
                         >
@@ -493,7 +483,7 @@
                                 <button type="button" @click="viewingReminderId = null" class="px-5 py-2.5 text-sm rounded-xl border border-white/30 text-white/90 hover:bg-white/10 transition-colors">
                                     Cerrar
                                 </button>
-                                <button type="button" @click="editingReminderId = viewingReminder.id; viewingReminderId = null" class="px-5 py-2.5 text-sm rounded-xl bg-[#FFE600] text-[#003366] font-semibold hover:bg-[#e6cf00] transition-colors inline-flex items-center gap-2">
+                                <button type="button" @click="openEditReminder(viewingReminder.id)" class="px-5 py-2.5 text-sm rounded-xl bg-[#FFE600] text-[#003366] font-semibold hover:bg-[#e6cf00] transition-colors inline-flex items-center gap-2">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                                     Editar
                                 </button>
@@ -501,6 +491,124 @@
                         </div>
                     </div>
                 </template>
+            </div>
+        </div>
+
+        {{-- Modal edición completa del recordatorio --}}
+        <div
+            x-show="editingReminderId"
+            x-cloak
+            class="fixed inset-0 z-50 flex items-center justify-center px-4 bg-[#000836]"
+            x-transition
+            @keydown.escape.window="editingReminderId = null"
+        >
+            <div
+                class="w-full max-w-2xl min-w-[340px] max-h-[90vh] bg-[#0b386a] rounded-2xl shadow-2xl ring-2 ring-[#FFE600]/70 ring-offset-2 ring-offset-[#000836] overflow-hidden flex flex-col"
+                @click.outside="editingReminderId = null"
+            >
+                <div class="px-5 py-3 bg-[#FFE600] flex items-center justify-between text-[#003366] rounded-t-2xl">
+                    <div class="flex items-center gap-2">
+                        <span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[#003366] text-[#FFE600]">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                        </span>
+                        <h3 class="font-semibold text-sm">Editar recordatorio</h3>
+                    </div>
+                    <button type="button" @click="editingReminderId = null" class="p-1 rounded-lg text-[#003366] hover:bg-[#003366]/10 hover:text-black transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <form method="POST" :action="editingReminderForm.update_url" class="px-5 py-4 space-y-4 text-white overflow-y-auto flex-1">
+                    @csrf
+                    @method('PUT')
+                    <div>
+                        <label class="block text-sm font-medium text-white/90 mb-1.5">Título del recordatorio</label>
+                        <input type="text" name="title" required maxlength="255" x-model="editingReminderForm.title" style="color: #111827;" class="w-full rounded-xl border border-gray-300 bg-white placeholder-gray-400 focus:ring-2 focus:ring-[#FFE600]/60 py-2.5 px-3 text-sm">
+                    </div>
+
+                    <div class="pt-5 border-t border-white/15">
+                        <p class="text-xs font-semibold uppercase tracking-wider text-[#FFE600]/90 mb-4">Datos del cliente o contacto</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-5">
+                            <div class="sm:col-span-2">
+                                <label class="block text-sm font-medium text-white/90 mb-1.5">Nombre del cliente</label>
+                                <input type="text" name="nombre_cliente" maxlength="255" x-model="editingReminderForm.nombre_cliente" style="color: #111827;" class="w-full rounded-xl border border-gray-300 bg-white placeholder-gray-400 focus:ring-2 focus:ring-[#FFE600]/60 py-2.5 px-3 text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-white/90 mb-1.5">Empresa</label>
+                                <input type="text" name="empresa" maxlength="255" x-model="editingReminderForm.empresa" style="color: #111827;" class="w-full rounded-xl border border-gray-300 bg-white placeholder-gray-400 focus:ring-2 focus:ring-[#FFE600]/60 py-2.5 px-3 text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-white/90 mb-1.5">Correo electrónico</label>
+                                <input type="email" name="correo_electronico" maxlength="255" x-model="editingReminderForm.correo_electronico" style="color: #111827;" class="w-full rounded-xl border border-gray-300 bg-white placeholder-gray-400 focus:ring-2 focus:ring-[#FFE600]/60 py-2.5 px-3 text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-white/90 mb-1.5">Número telefónico</label>
+                                <input type="text" name="numero_telefonico" maxlength="50" x-model="editingReminderForm.numero_telefonico" style="color: #111827;" class="w-full rounded-xl border border-gray-300 bg-white placeholder-gray-400 focus:ring-2 focus:ring-[#FFE600]/60 py-2.5 px-3 text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-white/90 mb-1.5">Extensión</label>
+                                <input type="text" name="extension" maxlength="20" x-model="editingReminderForm.extension" style="color: #111827;" class="w-full rounded-xl border border-gray-300 bg-white placeholder-gray-400 focus:ring-2 focus:ring-[#FFE600]/60 py-2.5 px-3 text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-white/90 mb-1.5">Área</label>
+                                <input type="text" name="area" maxlength="255" x-model="editingReminderForm.area" style="color: #111827;" class="w-full rounded-xl border border-gray-300 bg-white placeholder-gray-400 focus:ring-2 focus:ring-[#FFE600]/60 py-2.5 px-3 text-sm">
+                            </div>
+                            <div class="sm:col-span-2">
+                                <label class="block text-sm font-medium text-white/90 mb-1.5">Puesto de trabajo</label>
+                                <input type="text" name="puesto_trabajo" maxlength="255" x-model="editingReminderForm.puesto_trabajo" style="color: #111827;" class="w-full rounded-xl border border-gray-300 bg-white placeholder-gray-400 focus:ring-2 focus:ring-[#FFE600]/60 py-2.5 px-3 text-sm">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t border-white/15">
+                        <p class="text-xs font-semibold uppercase tracking-wider text-[#FFE600]/90 mb-3">Programación</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                            <div>
+                                <label class="block text-sm font-medium text-white/90 mb-1.5">Fecha y hora inicio</label>
+                                <input type="datetime-local" name="start_at" x-model="editingReminderForm.start_at" style="color: #111827;" class="w-full rounded-xl border border-gray-300 bg-white focus:ring-2 focus:ring-[#FFE600]/60 py-3 px-4 text-sm min-h-[44px]">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-white/90 mb-1.5">Fecha y hora fin</label>
+                                <input type="datetime-local" name="end_at" x-model="editingReminderForm.end_at" style="color: #111827;" class="w-full rounded-xl border border-gray-300 bg-white focus:ring-2 focus:ring-[#FFE600]/60 py-3 px-4 text-sm min-h-[44px]">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-white/90 mb-1">Repetir</label>
+                                <select name="repeat" x-model="editingReminderForm.repeat" style="color: #111827;" class="w-full rounded-xl border border-gray-300 bg-white focus:ring-2 focus:ring-[#FFE600]/60 py-2.5 px-3 text-sm">
+                                    <option value="">No repetir</option>
+                                    <option value="daily">Diario</option>
+                                    <option value="weekly">Semanal</option>
+                                    <option value="monthly">Mensual</option>
+                                </select>
+                                <label class="inline-flex items-center gap-2 text-xs text-white/80 mt-1.5">
+                                    <input type="checkbox" name="all_day" value="1" x-model="editingReminderForm.all_day" class="rounded border-white/30 text-[#FFE600] bg-white focus:ring-[#FFE600]">
+                                    Recordatorio todo el día
+                                </label>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-white/90 mb-1.5">Fecha límite</label>
+                                <input type="date" name="deadline_at" x-model="editingReminderForm.deadline_at" style="color: #111827;" class="w-full rounded-xl border border-gray-300 bg-white focus:ring-2 focus:ring-[#FFE600]/60 py-3 px-4 text-sm min-h-[44px]">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-white/90 mb-1">Detalles del recordatorio</label>
+                        <textarea name="description" rows="3" x-model="editingReminderForm.description" style="color: #111827;" class="w-full rounded-xl border border-gray-300 bg-white placeholder-gray-400 focus:ring-2 focus:ring-[#FFE600]/60 py-2.5 px-3 text-sm"></textarea>
+                    </div>
+
+                    <div class="flex justify-end gap-4 pt-4 border-t border-white/15">
+                        <button type="button" @click="editingReminderId = null" class="px-5 py-2.5 text-sm rounded-xl border border-white/30 text-white/90 hover:bg-white/10 transition-colors">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="px-6 py-2.5 text-sm rounded-xl bg-[#FFE600] text-[#003366] font-semibold hover:bg-[#e6cf00] transition-colors">
+                            Guardar cambios
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
 
@@ -544,10 +652,6 @@
                     </label>
                 </div>
                 <div class="flex items-center gap-2 flex-shrink-0">
-                    <a href="{{ route('notifications.index') }}" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-white/40 text-white/90 text-sm font-medium hover:bg-white/10 transition-all" title="Quitar filtros y orden">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                        Limpiar filtros
-                    </a>
                     <a href="{{ request()->fullUrl() }}" class="inline-flex items-center justify-center w-11 h-11 rounded-2xl bg-white text-[#003366] shadow-md hover:shadow-lg hover:bg-white/90 border-2 border-[#FFE600] transition-all" title="Refrescar">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                     </a>
@@ -805,6 +909,7 @@
         var csrfToken = document.querySelector('meta[name="csrf-token"]') && document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         var unreadCountUrl = '{{ route("notifications.unread-count") }}';
         var reminderAlertsUrl = '{{ route("notifications.reminder-alerts") }}';
+        var notificationsIndexUrl = '{{ route("notifications.index") }}';
         var reminderNotificationIcon = '{{ url("/icons/alarm-clock.svg") }}';
         var seenReminderIds = new Set((window.__reminderAlertSeenIds || []).map(String));
 
@@ -856,11 +961,16 @@
         function showReminderBrowserNotification(titulo, mensaje, tag) {
             if (!('Notification' in window)) return;
             if (Notification.permission === 'granted') {
-                new Notification(titulo || 'Recordatorio', {
+                var n = new Notification(titulo || 'Recordatorio', {
                     body: mensaje || 'Tienes un recordatorio pendiente.',
                     icon: reminderNotificationIcon,
                     tag: tag || 'crm-reminder'
                 });
+                n.onclick = function() {
+                    try { window.focus(); } catch (e) {}
+                    window.location.href = notificationsIndexUrl;
+                    n.close();
+                };
             }
         }
 

@@ -1,0 +1,103 @@
+﻿
+  GET|HEAD        / .................................................................................................. 
+  GET|HEAD        approvals ............................................... approvals.index ΓÇ║ ApprovalController@index
+  GET|HEAD        approvals/companies ............................. approvals.companies ΓÇ║ ApprovalController@companies
+  POST            approvals/companies/{company}/approve approvals.companies.approve ΓÇ║ ApprovalController@approveCompaΓÇª
+  POST            approvals/companies/{company}/deny ....... approvals.companies.deny ΓÇ║ ApprovalController@denyCompany
+  POST            approvals/contacts/{contact}/approve approvals.contacts.approve ΓÇ║ ApprovalController@approveContact
+  POST            approvals/contacts/{contact}/deny ......... approvals.contacts.deny ΓÇ║ ApprovalController@denyContact
+  GET|HEAD        approvals/users ......................................... approvals.users ΓÇ║ ApprovalController@users
+  POST            approvals/users/{user}/approve ............ approvals.users.approve ΓÇ║ ApprovalController@approveUser
+  POST            approvals/users/{user}/deny ..................... approvals.users.deny ΓÇ║ ApprovalController@denyUser
+  GET|HEAD        companies ................................................ companies.index ΓÇ║ CompanyController@index
+  POST            companies ................................................ companies.store ΓÇ║ CompanyController@store
+  POST            companies/check-duplicates .......... companies.check-duplicates ΓÇ║ CompanyController@checkDuplicates
+  GET|HEAD        companies/create ....................................... companies.create ΓÇ║ CompanyController@create
+  POST            companies/import ....................................... companies.import ΓÇ║ CompanyController@import
+  GET|HEAD        companies/{company} ........................................ companies.show ΓÇ║ CompanyController@show
+  PUT|PATCH       companies/{company} .................................... companies.update ΓÇ║ CompanyController@update
+  DELETE          companies/{company} .................................. companies.destroy ΓÇ║ CompanyController@destroy
+  GET|HEAD        companies/{company}/edit ................................... companies.edit ΓÇ║ CompanyController@edit
+  GET|HEAD        companies/{company}/edit-form ..................... companies.edit-form ΓÇ║ CompanyController@editForm
+  GET|HEAD        confirm-password ........................ password.confirm ΓÇ║ Auth\ConfirmablePasswordController@show
+  POST            confirm-password .......................................... Auth\ConfirmablePasswordController@store
+  GET|HEAD        contacts .................................................. contacts.index ΓÇ║ ContactController@index
+  POST            contacts .................................................. contacts.store ΓÇ║ ContactController@store
+  GET|HEAD        contacts/create ......................................... contacts.create ΓÇ║ ContactController@create
+  GET|HEAD        contacts/{contact} .......................................... contacts.show ΓÇ║ ContactController@show
+  PUT|PATCH       contacts/{contact} ...................................... contacts.update ΓÇ║ ContactController@update
+  DELETE          contacts/{contact} .................................... contacts.destroy ΓÇ║ ContactController@destroy
+  GET|HEAD        contacts/{contact}/edit ..................................... contacts.edit ΓÇ║ ContactController@edit
+  PATCH           contacts/{contact}/email-status ........ contacts.email-status ΓÇ║ ContactController@updateEmailStatus
+  PATCH           contacts/{contact}/notes ............................ contacts.notes ΓÇ║ ContactController@updateNotes
+  GET|HEAD        contacts/{contact}/pdf ................................ contacts.pdf ΓÇ║ ContactController@generatePdf
+  GET|HEAD        contacts/{contact}/word ............................. contacts.word ΓÇ║ ContactController@generateWord
+  GET|HEAD        dashboard .................................................... dashboard ΓÇ║ DashboardController@index
+  GET|HEAD        data-management ............................. data-management.index ΓÇ║ DataManagementController@index
+  GET|HEAD        data-management/companies/{company} data-management.companies.show ΓÇ║ DataManagementController@getCoΓÇª
+  PUT             data-management/companies/{company} data-management.companies.update ΓÇ║ DataManagementController@updΓÇª
+  DELETE          data-management/companies/{company} data-management.companies.destroy ΓÇ║ DataManagementController@deΓÇª
+  GET|HEAD        data-management/contacts/{contact} data-management.contacts.show ΓÇ║ DataManagementController@getContΓÇª
+  PUT             data-management/contacts/{contact} data-management.contacts.update ΓÇ║ DataManagementController@updatΓÇª
+  DELETE          data-management/contacts/{contact} data-management.contacts.destroy ΓÇ║ DataManagementController@destΓÇª
+  POST            data-management/export .................... data-management.export ΓÇ║ DataManagementController@export
+  POST            data-management/import .................... data-management.import ΓÇ║ DataManagementController@import
+  GET|HEAD        data-management/tables ................. data-management.tables ΓÇ║ DataManagementController@getTables
+  POST            email/verification-notification verification.send ΓÇ║ Auth\EmailVerificationNotificationController@stΓÇª
+  GET|HEAD        entrar/{user} ........................................... auth.auto-login ΓÇ║ Auth\AutoLoginController
+  GET|HEAD        filtros .................................................... filtros.index ΓÇ║ FiltrosController@index
+  POST            filtros/ajax ................................................. filtros.ajax ΓÇ║ FiltrosController@ajax
+  GET|HEAD        follow-ups ............................................. follow-ups.index ΓÇ║ FollowUpController@index
+  POST            follow-ups ............................................. follow-ups.store ΓÇ║ FollowUpController@store
+  GET|HEAD        follow-ups/create .................................... follow-ups.create ΓÇ║ FollowUpController@create
+  POST            follow-ups/{followUp}/complete ................... follow-ups.complete ΓÇ║ FollowUpController@complete
+  GET|HEAD        follow-ups/{follow_up} ................................... follow-ups.show ΓÇ║ FollowUpController@show
+  PUT|PATCH       follow-ups/{follow_up} ............................... follow-ups.update ΓÇ║ FollowUpController@update
+  DELETE          follow-ups/{follow_up} ............................. follow-ups.destroy ΓÇ║ FollowUpController@destroy
+  GET|HEAD        follow-ups/{follow_up}/edit .............................. follow-ups.edit ΓÇ║ FollowUpController@edit
+  GET|HEAD        forgot-password ......................... password.request ΓÇ║ Auth\PasswordResetLinkController@create
+  POST            forgot-password ............................ password.email ΓÇ║ Auth\PasswordResetLinkController@store
+  GET|HEAD        login ........................................... login ΓÇ║ Auth\AuthenticatedSessionController@create
+  POST            login .................................................... Auth\AuthenticatedSessionController@store
+  POST            logout ........................................ logout ΓÇ║ Auth\AuthenticatedSessionController@destroy
+  GET|HEAD        notifications ................................... notifications.index ΓÇ║ NotificationController@index
+  POST            notifications/read-all .......... notifications.mark-all-read ΓÇ║ NotificationController@markAllAsRead
+  GET|HEAD        notifications/reminder-alerts notifications.reminder-alerts ΓÇ║ NotificationController@reminderAlerts
+  GET|HEAD        notifications/unread-count ......... notifications.unread-count ΓÇ║ NotificationController@unreadCount
+  GET|HEAD        notifications/{notification} ...................... notifications.show ΓÇ║ NotificationController@show
+  DELETE          notifications/{notification} ................ notifications.destroy ΓÇ║ NotificationController@destroy
+  POST            notifications/{notification}/read ...... notifications.mark-read ΓÇ║ NotificationController@markAsRead
+  POST            notifications/{notification}/star ................. notifications.star ΓÇ║ NotificationController@star
+  POST            notifications/{notification}/unstar ........... notifications.unstar ΓÇ║ NotificationController@unstar
+  PUT             password .......................................... password.update ΓÇ║ Auth\PasswordController@update
+  GET|HEAD        profile ...................................................... profile.edit ΓÇ║ ProfileController@edit
+  PATCH           profile .................................................. profile.update ΓÇ║ ProfileController@update
+  DELETE          profile ................................................ profile.destroy ΓÇ║ ProfileController@destroy
+  GET|HEAD        register ........................................... register ΓÇ║ Auth\RegisteredUserController@create
+  POST            register ....................................................... Auth\RegisteredUserController@store
+  GET|HEAD        register/pending .................................................................. register.pending
+  GET|HEAD        reminders .......................................................................... reminders.index
+  POST            reminders ............................................... reminders.store ΓÇ║ ReminderController@store
+  PUT             reminders/{reminder} .................................. reminders.update ΓÇ║ ReminderController@update
+  DELETE          reminders/{reminder} ................................ reminders.destroy ΓÇ║ ReminderController@destroy
+  PATCH           reminders/{reminder}/toggle ........................... reminders.toggle ΓÇ║ ReminderController@toggle
+  POST            reset-password ................................... password.store ΓÇ║ Auth\NewPasswordController@store
+  GET|HEAD        reset-password/{token} .......................... password.reset ΓÇ║ Auth\NewPasswordController@create
+  GET|HEAD        storage/{path} ....................................................................... storage.local
+  GET|HEAD        up ................................................................................................. 
+  GET|HEAD        user/dashboard ...................................... user.dashboard ΓÇ║ UserDashboardController@index
+  GET|HEAD        user/historial-ventas ..................................... user.sales.index ΓÇ║ SalesController@index
+  POST            user/historial-ventas ..................................... user.sales.store ΓÇ║ SalesController@store
+  GET|HEAD        user/historial-ventas/create ............................ user.sales.create ΓÇ║ SalesController@create
+  GET|HEAD        user/historial-ventas/{sale} ................................ user.sales.show ΓÇ║ SalesController@show
+  PUT             user/historial-ventas/{sale} ............................ user.sales.update ΓÇ║ SalesController@update
+  DELETE          user/historial-ventas/{sale} .......................... user.sales.destroy ΓÇ║ SalesController@destroy
+  GET|HEAD        user/historial-ventas/{sale}/edit ........................... user.sales.edit ΓÇ║ SalesController@edit
+  GET|HEAD        user/historial-ventas/{sale}/ficha-pdf ............. user.sales.ficha-pdf ΓÇ║ SalesController@fichaPdf
+  GET|HEAD        user/historial-ventas/{sale}/ficha-word .......... user.sales.ficha-word ΓÇ║ SalesController@fichaWord
+  GET|HEAD        verificar-aprobacion ................................. approval.check ΓÇ║ Auth\CheckApprovalController
+  GET|HEAD        verify-email .......................... verification.notice ΓÇ║ Auth\EmailVerificationPromptController
+  GET|HEAD        verify-email/{id}/{hash} .......................... verification.verify ΓÇ║ Auth\VerifyEmailController
+
+                                                                                                   Showing [99] routes
+

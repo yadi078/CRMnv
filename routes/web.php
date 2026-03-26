@@ -52,6 +52,7 @@ Route::middleware(['auth', 'verified', 'ensure.role'])->group(function () {
     // Perfil (compartido)
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile/photo', [ProfileController::class, 'destroyProfilePhoto'])->name('profile.photo.destroy');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // Empresas, Contactos y Seguimientos (usuario: captura, consulta, seguimiento; admin: además aprobaciones)
@@ -101,6 +102,7 @@ Route::middleware(['auth', 'verified', 'ensure.role'])->group(function () {
 // Rutas exclusivas de Administrador (dashboard global, aprobaciones, descargas)
 Route::middleware(['auth', 'verified', 'ensure.role', 'admin'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::post('/profile/admin-reset-user-password', [ProfileController::class, 'adminResetUserPassword'])->name('profile.admin-reset-user-password');
 
     Route::get('/contacts/{contact}/pdf', [ContactController::class, 'generatePdf'])->name('contacts.pdf');
     Route::get('/contacts/{contact}/word', [ContactController::class, 'generateWord'])->name('contacts.word');

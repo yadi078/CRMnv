@@ -8,7 +8,7 @@
     role="navigation"
     aria-label="Navegación principal"
 >
-    {{-- Logo de la empresa: enlaza al dashboard, bien centrado arriba del menú --}}
+    {{-- Logo de la empresa: enlaza al dashboard --}}
     <div class="sidebar-nav__brand">
         <a href="{{ route('dashboard') }}" class="sidebar-nav__brand-link" aria-label="Ir al inicio">
             <img

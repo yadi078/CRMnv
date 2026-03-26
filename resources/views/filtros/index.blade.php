@@ -1,10 +1,8 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="page-header-card__icon" aria-hidden="true">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <x-page-header-avatar><svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h18M5 10h14M9 16h6m-3 4v-4" />
-            </svg>
-        </div>
+            </svg></x-page-header-avatar>
         <div>
             <h2 class="page-header-card__title">Filtros</h2>
             <p class="page-header-card__subtitle">Filtros avanzados por contactos y empresas</p>

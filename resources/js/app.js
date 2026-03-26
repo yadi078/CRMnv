@@ -2,6 +2,49 @@ import './bootstrap';
 
 import Alpine from 'alpinejs';
 
+/**
+ * Subida de foto de perfil (evita meter URL en x-data con comillas: rompe el HTML y Alpine no monta).
+ */
+Alpine.data('profilePhotoUploader', () => ({
+    initialPreview: null,
+    preview: null,
+    fileLabel: '',
+    dragOver: false,
+    blobUrl: null,
+    init() {
+        const raw = this.$el.dataset.profilePhotoInitial;
+        this.initialPreview = raw && raw !== '' ? raw : null;
+        this.preview = this.initialPreview;
+    },
+    onPick(e) {
+        const f = e.target.files?.[0];
+        if (this.blobUrl) {
+            URL.revokeObjectURL(this.blobUrl);
+            this.blobUrl = null;
+        }
+        if (f) {
+            this.fileLabel = f.name;
+            this.blobUrl = URL.createObjectURL(f);
+            this.preview = this.blobUrl;
+        } else {
+            this.fileLabel = '';
+            this.preview = this.initialPreview;
+        }
+    },
+    onDrop(e) {
+        e.preventDefault();
+        this.dragOver = false;
+        const f = e.dataTransfer?.files?.[0];
+        if (!f || !f.type.startsWith('image/')) {
+            return;
+        }
+        const dt = new DataTransfer();
+        dt.items.add(f);
+        this.$refs.photoInput.files = dt.files;
+        this.onPick({ target: this.$refs.photoInput });
+    },
+}));
+
 window.Alpine = Alpine;
 
 Alpine.start();

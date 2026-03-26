@@ -7,8 +7,11 @@ use App\Models\Contact;
 use App\Models\User;
 use App\Notifications\DeletionRequestResolvedNotification;
 use App\Notifications\UserApprovedNotification;
+use Illuminate\Database\QueryException;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
 
 /**
@@ -18,6 +21,23 @@ use Illuminate\Support\Facades\URL;
  */
 class ApprovalController extends Controller
 {
+    /**
+     * Evita error 500 si las migraciones de eliminación no se aplicaron en esta BD.
+     */
+    protected function respondIfDeletionResolutionSchemaMissing(string $table): ?RedirectResponse
+    {
+        if (! Schema::hasTable($table) || Schema::hasColumn($table, 'deletion_resolution')) {
+            return null;
+        }
+
+        return back()->with(
+            'error',
+            'La tabla «'.$table.'» no tiene las columnas de resolución de eliminación. '
+            .'Abra una terminal en la carpeta del proyecto y ejecute: php artisan crm:fix-deletion-columns '
+            .'(o php artisan migrate). Luego recargue esta página e intente de nuevo.'
+        );
+    }
+
     /**
      * Centro único de solicitudes pendientes (pestañas Empresas | Contactos | Usuarios)
      */
@@ -175,16 +195,30 @@ class ApprovalController extends Controller
         $nombre = $company->nombre_comercial;
         $nota = $validated['nota_admin'];
 
-        $company->update([
-            'deletion_pending' => false,
-            'deletion_requested_by' => null,
-            'deletion_requested_at' => null,
-            'deletion_resolution' => 'denied',
-            'deletion_resolution_note' => $nota,
-            'deletion_resolved_at' => now(),
-            'deletion_resolved_by' => auth()->id(),
-            'deletion_decision_user_id' => $requesterId,
-        ]);
+        if ($redirect = $this->respondIfDeletionResolutionSchemaMissing($company->getTable())) {
+            return $redirect;
+        }
+
+        try {
+            $company->update([
+                'deletion_pending' => false,
+                'deletion_requested_by' => null,
+                'deletion_requested_at' => null,
+                'deletion_resolution' => 'denied',
+                'deletion_resolution_note' => $nota,
+                'deletion_resolved_at' => now(),
+                'deletion_resolved_by' => auth()->id(),
+                'deletion_decision_user_id' => $requesterId,
+            ]);
+        } catch (QueryException $e) {
+            if (str_contains($e->getMessage(), 'deletion_resolution')) {
+                return back()->with(
+                    'error',
+                    'No se pudo guardar: faltan columnas en la base de datos. Ejecute: php artisan crm:fix-deletion-columns'
+                );
+            }
+            throw $e;
+        }
 
         if ($requesterId) {
             $u = User::find($requesterId);
@@ -376,17 +410,31 @@ class ApprovalController extends Controller
         $nombre = $contact->nombre_completo;
         $nota = $validated['nota_admin'];
 
-        $contact->update([
-            'deletion_pending' => false,
-            'deletion_requested_by' => null,
-            'deletion_requested_at' => null,
-            // Conservar deletion_reason (motivo que envió el usuario) como referencia
-            'deletion_resolution' => 'denied',
-            'deletion_resolution_note' => $nota,
-            'deletion_resolved_at' => now(),
-            'deletion_resolved_by' => auth()->id(),
-            'deletion_decision_user_id' => $requesterId,
-        ]);
+        if ($redirect = $this->respondIfDeletionResolutionSchemaMissing($contact->getTable())) {
+            return $redirect;
+        }
+
+        try {
+            $contact->update([
+                'deletion_pending' => false,
+                'deletion_requested_by' => null,
+                'deletion_requested_at' => null,
+                // Conservar deletion_reason (motivo que envió el usuario) como referencia
+                'deletion_resolution' => 'denied',
+                'deletion_resolution_note' => $nota,
+                'deletion_resolved_at' => now(),
+                'deletion_resolved_by' => auth()->id(),
+                'deletion_decision_user_id' => $requesterId,
+            ]);
+        } catch (QueryException $e) {
+            if (str_contains($e->getMessage(), 'deletion_resolution')) {
+                return back()->with(
+                    'error',
+                    'No se pudo guardar: faltan columnas en la base de datos. Ejecute: php artisan crm:fix-deletion-columns'
+                );
+            }
+            throw $e;
+        }
 
         if ($requesterId) {
             $u = User::find($requesterId);

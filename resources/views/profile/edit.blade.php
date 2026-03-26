@@ -2,11 +2,9 @@
 @if(!auth()->user()->esAdmin())
 <x-app-user-layout>
     <x-slot name="header">
-        <div class="page-header-card__icon" aria-hidden="true">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <x-page-header-avatar><svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-        </div>
+            </svg></x-page-header-avatar>
         <div>
             <h2 class="page-header-card__title">Perfil</h2>
             <p class="page-header-card__subtitle">Configuración de tu cuenta</p>
@@ -41,11 +39,9 @@
 @else
 <x-app-layout>
     <x-slot name="header">
-        <div class="page-header-card__icon" aria-hidden="true">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <x-page-header-avatar><svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-        </div>
+            </svg></x-page-header-avatar>
         <div>
             <h2 class="page-header-card__title">Perfil</h2>
             <p class="page-header-card__subtitle">Configuración de tu cuenta</p>
@@ -65,6 +61,15 @@
             <div class="panel-card-dark !p-0 overflow-hidden rounded-2xl">
                 <div class="p-8 sm:p-10 lg:p-12">
                     @include('profile.partials.update-password-form')
+                </div>
+            </div>
+
+            {{-- Tarjeta: Gestión de contraseñas de usuarios (solo admin) --}}
+            <div class="panel-card-dark overflow-hidden">
+                <div class="p-6 sm:p-8">
+                    <div class="max-w-xl">
+                        @include('profile.partials.admin-user-password-assistance')
+                    </div>
                 </div>
             </div>
 

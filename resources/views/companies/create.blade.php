@@ -1,10 +1,8 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="page-header-card__icon" aria-hidden="true">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <x-page-header-avatar><svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-            </svg>
-        </div>
+            </svg></x-page-header-avatar>
         <div>
             <h2 class="page-header-card__title">Nueva Empresa</h2>
             <p class="page-header-card__subtitle">Registrar nueva empresa</p>

@@ -61,6 +61,26 @@ class ProfileTest extends TestCase
         $this->assertNotNull($user->refresh()->email_verified_at);
     }
 
+    public function test_user_can_remove_profile_photo(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('public');
+
+        $user = User::factory()->create([
+            'profile_photo_path' => 'profile-photos/test.jpg',
+        ]);
+
+        $response = $this
+            ->actingAs($user)
+            ->from('/profile')
+            ->delete('/profile/photo');
+
+        $response
+            ->assertSessionHasNoErrors()
+            ->assertRedirect('/profile');
+
+        $this->assertNull($user->fresh()->profile_photo_path);
+    }
+
     public function test_user_can_delete_their_account(): void
     {
         $user = User::factory()->create();

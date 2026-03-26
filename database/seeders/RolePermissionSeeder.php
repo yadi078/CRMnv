@@ -70,11 +70,21 @@ class RolePermissionSeeder extends Seeder
         }
 
         // Crear rol Admin con todos los permisos
-        $adminRole = Role::firstOrCreate(['name' => 'admin']);
+        $adminRole = Role::firstOrCreate(
+            ['name' => 'admin', 'guard_name' => 'web']
+        );
         $adminRole->syncPermissions(Permission::all());
 
+        // Alias en español (misma capacidad que admin; usado en User::esAdmin())
+        $adminEsRole = Role::firstOrCreate(
+            ['name' => 'administrador', 'guard_name' => 'web']
+        );
+        $adminEsRole->syncPermissions(Permission::all());
+
         // Crear rol Usuario con permisos limitados
-        $userRole = Role::firstOrCreate(['name' => 'usuario']);
+        $userRole = Role::firstOrCreate(
+            ['name' => 'usuario', 'guard_name' => 'web']
+        );
         $userRole->givePermissionTo([
             'companies.view',
             'companies.create',

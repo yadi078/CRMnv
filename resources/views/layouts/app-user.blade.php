@@ -63,6 +63,7 @@
                     @php
                         $statusMsg = match(session('status')) {
                             'profile-updated' => 'Perfil actualizado correctamente.',
+                            'profile-photo-removed' => 'Foto de perfil eliminada.',
                             'password-updated' => 'Contraseña actualizada correctamente.',
                             'verification-link-sent' => 'Se ha enviado un nuevo enlace de verificación a tu correo.',
                             default => session('status'),

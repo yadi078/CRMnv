@@ -93,15 +93,6 @@
                         <x-input-error :messages="$errors->get('password')" class="mt-2 text-sm" />
                     </div>
 
-                    <!-- Forgot Password -->
-                    @if (Route::has('password.request'))
-                        <div class="flex justify-end">
-                            <a class="text-sm text-[#000099] hover:text-[#003366] hover:underline transition-colors" href="{{ route('password.request') }}">
-                                ¿Olvidaste tu contraseña?
-                            </a>
-                        </div>
-                    @endif
-
                     <!-- Login Button -->
                     <div class="pt-4">
                         <button 

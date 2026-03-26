@@ -6,11 +6,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Collection;
 use App\Models\Reminder;
+use Spatie\Permission\Models\Role;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
@@ -62,14 +62,30 @@ class User extends Authenticatable
 
     /**
      * URL de la foto de perfil (para usar en img src).
-     * Si no hay foto, devuelve null para mostrar iniciales o placeholder.
+     *
+     * - En el navegador usamos ruta relativa (/CRMnv/public/storage/...) para XAMPP en subcarpeta
+     *   sin depender de APP_URL ni del host.
+     * - Fuera de la petición HTTP (correos, consola): URL absoluta con app.url.
+     *
+     * Requiere: php artisan storage:link (public/storage → storage/app/public).
      */
     public function getProfilePhotoUrlAttribute(): ?string
     {
-        if (!$this->profile_photo_path) {
+        if (! $this->profile_photo_path) {
             return null;
         }
-        return Storage::url($this->profile_photo_path);
+
+        $relative = str_replace('\\', '/', ltrim($this->profile_photo_path, '/'));
+
+        $baseUrl = (! app()->runningInConsole() && request())
+            ? (rtrim(request()->getBasePath(), '/')).'/storage/'.$relative
+            : rtrim((string) config('app.url'), '/').'/storage/'.$relative;
+
+        // Evita que el navegador muestre la imagen en caché de otra sesión o usuario (misma ruta, distinto dueño).
+        $cacheKey = (string) ($this->updated_at?->getTimestamp() ?? 0);
+        $sep = str_contains($baseUrl, '?') ? '&' : '?';
+
+        return $baseUrl.$sep.'u='.$this->getKey().'&v='.$cacheKey;
     }
 
     /**
@@ -142,8 +158,21 @@ class User extends Authenticatable
      */
     public static function administradoresParaNotificaciones(): Collection
     {
+        $guard = config('auth.defaults.guard') ?? 'web';
+        $nombres = ['admin', 'administrador'];
+        $existentes = array_values(array_filter($nombres, function (string $nombre) use ($guard): bool {
+            return Role::query()
+                ->where('name', $nombre)
+                ->where('guard_name', $guard)
+                ->exists();
+        }));
+
+        if ($existentes === []) {
+            return collect();
+        }
+
         return static::query()
-            ->role(['admin', 'administrador'])
+            ->role($existentes)
             ->get();
     }
 
