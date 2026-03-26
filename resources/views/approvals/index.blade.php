@@ -111,15 +111,10 @@
                                         Aprobar
                                     </button>
                                 </form>
-                                <form method="POST" id="approval-co-reg-den-{{ $company->id }}" action="{{ route('approvals.companies.deny', $company) }}" class="inline flex items-center gap-2">
+                                <form method="POST" id="approval-co-reg-den-{{ $company->id }}" action="{{ route('approvals.companies.deny', $company) }}" class="inline">
                                     @csrf
-                                    <input type="text" name="motivo" placeholder="Motivo (opcional)" class="px-2 py-1.5 rounded text-sm bg-white/10 text-white placeholder-white/50 border border-white/20 w-40">
-                                    <button type="button" class="px-4 py-2 rounded-xl font-semibold bg-red-600 text-white hover:bg-red-500 transition js-approval-confirm-trigger"
-                                        data-form-id="approval-co-reg-den-{{ $company->id }}"
-                                        data-title="Denegar solicitud"
-                                        data-message="¿Denegar esta solicitud de registro de empresa?"
-                                        data-variant="danger"
-                                        data-confirm-text="Sí, denegar">
+                                    <button type="button" class="px-4 py-2 rounded-xl font-semibold bg-red-600 text-white hover:bg-red-500 transition js-deny-registration-trigger"
+                                        data-form-id="approval-co-reg-den-{{ $company->id }}">
                                         Denegar
                                     </button>
                                 </form>
@@ -258,15 +253,10 @@
                                         Aprobar
                                     </button>
                                 </form>
-                                <form method="POST" id="approval-ct-reg-den-{{ $contact->id }}" action="{{ route('approvals.contacts.deny', $contact) }}" class="inline flex items-center gap-2">
+                                <form method="POST" id="approval-ct-reg-den-{{ $contact->id }}" action="{{ route('approvals.contacts.deny', $contact) }}" class="inline">
                                     @csrf
-                                    <input type="text" name="motivo" placeholder="Motivo (opcional)" class="px-2 py-1.5 rounded text-sm bg-white/10 text-white placeholder-white/50 border border-white/20 w-40">
-                                    <button type="button" class="px-4 py-2 rounded-xl font-semibold bg-red-600 text-white hover:bg-red-500 transition js-approval-confirm-trigger"
-                                        data-form-id="approval-ct-reg-den-{{ $contact->id }}"
-                                        data-title="Denegar contacto"
-                                        data-message="¿Denegar este contacto y rechazar su registro?"
-                                        data-variant="danger"
-                                        data-confirm-text="Sí, denegar">
+                                    <button type="button" class="px-4 py-2 rounded-xl font-semibold bg-red-600 text-white hover:bg-red-500 transition js-deny-registration-trigger"
+                                        data-form-id="approval-ct-reg-den-{{ $contact->id }}">
                                         Denegar
                                     </button>
                                 </form>
@@ -289,4 +279,5 @@
 
     @include('approvals.partials.approval-confirm-modal')
     @include('approvals.partials.approval-deny-deletion-modal')
+    @include('approvals.partials.approval-deny-registration-modal')
 </x-app-layout>

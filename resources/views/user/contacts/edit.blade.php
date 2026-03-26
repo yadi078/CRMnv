@@ -119,21 +119,6 @@
                             <textarea id="notas" name="notas" rows="4" class="mt-1 block w-full rounded-md border-gray-300">{{ old('notas', $contact->notas) }}</textarea>
                         </div>
 
-                        <div class="md:col-span-2">
-                            <x-input-label for="status_color" value="Estado de prospecto" />
-                            <select
-                                id="status_color"
-                                name="status_color"
-                                class="mt-1 block w-full rounded-md border-gray-300"
-                            >
-                                @foreach(\App\Models\Contact::PROSPECT_STATUS_LABELS as $value => $label)
-                                    <option value="{{ $value }}" {{ old('status_color', $contact->status_color ?? 'seguimiento') === $value ? 'selected' : '' }}>
-                                        {{ $label }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            <x-input-error :messages="$errors->get('status_color')" class="mt-2" />
-                        </div>
                     </div>
                     <div class="flex items-center justify-end mt-6 gap-3 flex-wrap">
                         <a href="{{ route('contacts.show', $contact) }}" class="btn-icon-text text-gray-600 hover:text-gray-800 px-4 py-2 rounded-xl border border-gray-300 hover:bg-gray-50">Cancelar</a>

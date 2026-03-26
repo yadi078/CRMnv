@@ -636,7 +636,8 @@ body {
 }
 
 /* Con foto: burbuja circular como el logotipo (anillo amarillo + trazo claro, sin recuadro relleno) */
-.page-header-card__icon:has(.page-header-card__icon-img) {
+.page-header-card__icon:has(.page-header-card__icon-img),
+.page-header-card__icon--with-photo {
   width: 3rem;
   height: 3rem;
   border-radius: 50%;
@@ -679,7 +680,8 @@ body {
     height: 2.3rem;
   }
 
-  .page-header-card__icon:has(.page-header-card__icon-img) {
+  .page-header-card__icon:has(.page-header-card__icon-img),
+  .page-header-card__icon--with-photo {
     width: 2.65rem;
     height: 2.65rem;
     box-shadow:

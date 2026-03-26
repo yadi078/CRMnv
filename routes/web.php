@@ -79,6 +79,8 @@ Route::middleware(['auth', 'verified', 'ensure.role'])->group(function () {
     Route::get('/notifications/{notification}', [NotificationController::class, 'show'])->name('notifications.show');
     Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
+    Route::post('/notifications/bulk-read', [NotificationController::class, 'bulkMarkAsRead'])->name('notifications.bulk-read');
+    Route::post('/notifications/bulk-delete', [NotificationController::class, 'bulkDelete'])->name('notifications.bulk-delete');
     Route::post('/notifications/{notification}/star', [NotificationController::class, 'star'])->name('notifications.star');
     Route::post('/notifications/{notification}/unstar', [NotificationController::class, 'unstar'])->name('notifications.unstar');
     Route::delete('/notifications/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');

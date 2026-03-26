@@ -385,35 +385,13 @@
             renderSummary();
             renderHiddenInputs();
 
-            form.addEventListener('submit', async function (e) {
-                e.preventDefault();
-
-                const url = @json(route('filtros.ajax'));
-                const fd = new FormData(form);
-
-                try {
-                    const res = await fetch(url, {
-                        method: 'POST',
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest',
-                            'Accept': 'application/json'
-                        },
-                        body: fd
-                    });
-
-                    if (!res.ok) {
-                        const params = new URLSearchParams(fd);
-                        window.location.href = form.action + '?' + params.toString();
-                        return;
-                    }
-
-                    const data = await res.json();
-                    if (data.resultsHtml && resultsEl) resultsEl.innerHTML = data.resultsHtml;
-                } catch (err) {
-                    console.error(err);
-                    const params = new URLSearchParams(fd);
-                    window.location.href = form.action + '?' + params.toString();
+            form.addEventListener('submit', function () {
+                // Si el panel está abierto, primero consolida las selecciones visibles.
+                if (currentField && !panelEl.classList.contains('hidden')) {
+                    applyPanelSelections();
                 }
+                // Garantiza que los inputs hidden estén actualizados antes del envío GET.
+                renderHiddenInputs();
             });
         })();
     </script>

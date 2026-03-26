@@ -8,7 +8,6 @@ use App\Notifications\ReminderDueNotification;
 use App\Services\ContactBirthdayNotifier;
 use App\Services\ReminderDueNotifier;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -43,12 +42,10 @@ class NotificationController extends Controller
         // Al abrir Notificaciones: mismo criterio que el scheduler (por si no corre el cron)
         app(ReminderDueNotifier::class)->dispatchDue($user->id);
 
-        // Cumpleaños: si el servidor no ejecuta `schedule:run`, al menos una vez al día al entrar aquí como admin
+        // Cumpleaños: respaldo web si el servidor no ejecuta `schedule:run`.
+        // Se puede ejecutar en cada carga; el servicio evita duplicados por admin/contacto/día.
         if ($user->esAdmin()) {
-            $todayStr = now()->timezone(config('app.timezone'))->toDateString();
-            if (Cache::add('crm:birthdays:web-run:'.$todayStr, true, now()->endOfDay())) {
-                app(ContactBirthdayNotifier::class)->notifyAdminsForToday();
-            }
+            app(ContactBirthdayNotifier::class)->notifyAdminsForToday();
         }
 
         $query = $user->notifications();
@@ -68,14 +65,17 @@ class NotificationController extends Controller
         }
 
         // Orden
-        $sort = $request->get('orden', 'fecha');
+        $sort = $request->get('orden', 'recientes');
         if ($sort === 'alfabetico') {
             $driver = DB::connection()->getDriverName();
             $tituloCol = $driver === 'sqlite'
                 ? "json_extract(data, '$.titulo')"
                 : "JSON_UNQUOTE(JSON_EXTRACT(data, '$.titulo'))";
             $query->orderByRaw("{$tituloCol} ASC");
+        } elseif ($sort === 'antiguas') {
+            $query->orderBy('created_at');
         } else {
+            // Compatibilidad: "fecha" equivale a más recientes.
             $query->orderByDesc('created_at');
         }
 
@@ -226,6 +226,52 @@ class NotificationController extends Controller
             }
             return back()->with('error', 'Error al marcar todas como leídas.');
         }
+    }
+
+    public function bulkMarkAsRead(Request $request)
+    {
+        $validated = $request->validate([
+            'notification_ids' => ['required', 'array', 'min:1'],
+            'notification_ids.*' => ['required', 'string'],
+        ]);
+
+        $user = auth()->user();
+        $ids = collect($validated['notification_ids'])->map(fn ($id) => (string) $id)->unique()->values();
+
+        $toMark = $user->notifications()->whereIn('id', $ids)->get();
+        $toMark->markAsRead();
+
+        $unreadCount = $user->unreadNotifications()->count();
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'affected' => $toMark->count(),
+                'unread_count' => $unreadCount,
+                'display' => $unreadCount > 99 ? '99+' : (string) $unreadCount,
+            ]);
+        }
+
+        return back()->with('success', 'Notificaciones seleccionadas marcadas como leídas.');
+    }
+
+    public function bulkDelete(Request $request)
+    {
+        $validated = $request->validate([
+            'notification_ids' => ['required', 'array', 'min:1'],
+            'notification_ids.*' => ['required', 'string'],
+        ]);
+
+        $user = auth()->user();
+        $ids = collect($validated['notification_ids'])->map(fn ($id) => (string) $id)->unique()->values();
+
+        $affected = $user->notifications()->whereIn('id', $ids)->delete();
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['success' => true, 'affected' => $affected]);
+        }
+
+        return back()->with('success', 'Notificaciones seleccionadas eliminadas.');
     }
 
     public function star(Request $request, string $notification)

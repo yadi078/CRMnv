@@ -37,7 +37,8 @@ class ContactController extends Controller
         $query = Contact::with(['company', 'creator']);
 
         if (! $isAdmin) {
-            $query->where('created_by', $user->id);
+            $query->where('created_by', $user->id)
+                ->where('approval_status', 'aprobado');
         }
 
         if ($request->filled('search')) {
@@ -143,7 +144,10 @@ class ContactController extends Controller
             if ($request->wantsJson()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Contacto creado exitosamente.',
+                    'message' => $approvalStatus === 'aprobado'
+                        ? 'Contacto creado exitosamente.'
+                        : 'El contacto será visible cuando un administrador lo apruebe.',
+                    'pending_approval' => $approvalStatus !== 'aprobado',
                     'redirect' => route('contacts.index'),
                 ], 201);
             }

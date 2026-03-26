@@ -19,6 +19,8 @@
         detailId: null,
         editingReminderId: null,
         viewingReminderId: null,
+        selectedNotificationIds: [],
+        notificationPageIds: @js($notifications->pluck('id')->values()->all()),
         showReminderModal: false,
         showContactPanel: false,
         editingReminderForm: {
@@ -100,6 +102,30 @@
             form.querySelector('[name=area]').value = contact.departamento || '';
             form.querySelector('[name=puesto_trabajo]').value = contact.puesto_de_trabajo || '';
             this.showContactPanel = false;
+        },
+        isSelectedNotification(id) {
+            return this.selectedNotificationIds.includes(String(id));
+        },
+        toggleNotificationSelection(id) {
+            const key = String(id);
+            if (this.selectedNotificationIds.includes(key)) {
+                this.selectedNotificationIds = this.selectedNotificationIds.filter(v => v !== key);
+            } else {
+                this.selectedNotificationIds.push(key);
+            }
+        },
+        toggleSelectAllNotifications() {
+            const pageIds = this.notificationPageIds.map(String);
+            const allSelected = pageIds.length > 0 && pageIds.every(id => this.selectedNotificationIds.includes(id));
+            if (allSelected) {
+                this.selectedNotificationIds = this.selectedNotificationIds.filter(id => !pageIds.includes(id));
+            } else {
+                this.selectedNotificationIds = Array.from(new Set([...this.selectedNotificationIds, ...pageIds]));
+            }
+        },
+        areAllNotificationsSelected() {
+            const pageIds = this.notificationPageIds.map(String);
+            return pageIds.length > 0 && pageIds.every(id => this.selectedNotificationIds.includes(id));
         }
     }">
         {{-- Tarjeta de Recordatorios --}}
@@ -672,7 +698,8 @@
                                 @csrf
                                 <button type="submit" class="w-full text-left px-4 py-2 text-sm text-[#1F2937] hover:bg-gray-100">Marcar todas como leídas</button>
                             </form>
-                            <a href="{{ route('notifications.index', ['filtro' => request('filtro'), 'orden' => 'fecha']) }}" class="block px-4 py-2 text-sm text-[#1F2937] hover:bg-gray-100">Ordenar por fecha</a>
+                            <a href="{{ route('notifications.index', ['filtro' => request('filtro'), 'orden' => 'recientes']) }}" class="block px-4 py-2 text-sm text-[#1F2937] hover:bg-gray-100">Ordenar por más recientes</a>
+                            <a href="{{ route('notifications.index', ['filtro' => request('filtro'), 'orden' => 'antiguas']) }}" class="block px-4 py-2 text-sm text-[#1F2937] hover:bg-gray-100">Ordenar por más antiguas</a>
                             <a href="{{ route('notifications.index', ['filtro' => request('filtro'), 'orden' => 'alfabetico']) }}" class="block px-4 py-2 text-sm text-[#1F2937] hover:bg-gray-100">Ordenar alfabéticamente</a>
                         </div>
                     </div>
@@ -695,13 +722,55 @@
         });
         </script>
 
+        <div class="panel-card-dark" x-show="selectedNotificationIds.length > 0" x-cloak>
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <div class="inline-flex items-center gap-3">
+                    <label class="inline-flex items-center gap-2 cursor-pointer text-sm text-white">
+                        <input type="checkbox" class="rounded border-white/40 text-[#FFE600] bg-transparent focus:ring-[#FFE600]"
+                               :checked="areAllNotificationsSelected()"
+                               @change="toggleSelectAllNotifications()">
+                        Seleccionar todas
+                    </label>
+                    <span class="text-sm text-[#FFE600] font-semibold" x-text="selectedNotificationIds.length + ' seleccionadas'"></span>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <form method="POST" action="{{ route('notifications.bulk-read') }}">
+                        @csrf
+                        <template x-for="id in selectedNotificationIds" :key="'read-' + id">
+                            <input type="hidden" name="notification_ids[]" :value="id">
+                        </template>
+                        <button type="submit" class="inline-flex items-center px-4 py-2 text-sm rounded-xl font-semibold text-[#003366] bg-[#FFE600] hover:bg-[#E6CF00] transition-colors">
+                            Marcar seleccionadas como leídas
+                        </button>
+                    </form>
+                    <form method="POST" action="{{ route('notifications.bulk-delete') }}" onsubmit="return confirm('¿Eliminar las notificaciones seleccionadas?');">
+                        @csrf
+                        <template x-for="id in selectedNotificationIds" :key="'del-' + id">
+                            <input type="hidden" name="notification_ids[]" :value="id">
+                        </template>
+                        <button type="submit" class="inline-flex items-center px-4 py-2 text-sm rounded-xl font-semibold text-white bg-red-500 hover:bg-red-600 transition-colors">
+                            Eliminar seleccionadas
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
         {{-- Tarjeta lista de notificaciones --}}
         <div class="panel-card-dark p-0 overflow-hidden">
             @if($notifications->total() > 0)
             <div class="flex items-center justify-between text-sm px-4 sm:px-5 py-3 m-3 rounded-xl border-4 border-[#FFE600] bg-white text-[#003366]">
-                <span class="font-medium">
-                    {{ $notifications->firstItem() }}-{{ $notifications->lastItem() }} de {{ $notifications->total() }}
-                </span>
+                <div class="inline-flex items-center gap-3">
+                    <label class="inline-flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="rounded border-[#003366]/40 text-[#003366] bg-white focus:ring-[#003366]"
+                               :checked="areAllNotificationsSelected()"
+                               @change="toggleSelectAllNotifications()">
+                        <span class="font-medium">Seleccionar todas</span>
+                    </label>
+                    <span class="font-medium">
+                        {{ $notifications->firstItem() }}-{{ $notifications->lastItem() }} de {{ $notifications->total() }}
+                    </span>
+                </div>
                 <div class="flex gap-1">
                     @if($notifications->onFirstPage())
                         <span class="px-2 py-1 rounded text-gray-300 cursor-not-allowed">←</span>
@@ -734,6 +803,14 @@
                      data-notification-id="{{ $notification->id }}"
                      data-unread="{{ $isUnread ? '1' : '0' }}"
                      @click="detailId = '{{ $notification->id }}'">
+                    <div class="flex-shrink-0 pt-2" @click.stop>
+                        <input
+                            type="checkbox"
+                            class="rounded border-white/40 text-[#FFE600] bg-transparent focus:ring-[#FFE600]"
+                            :checked="isSelectedNotification('{{ $notification->id }}')"
+                            @change="toggleNotificationSelection('{{ $notification->id }}')"
+                        >
+                    </div>
                     {{-- Estrella (destacada) - antes del icono tipo --}}
                     <div class="flex-shrink-0 pt-1" @click.stop>
                         @if($isStarred)
@@ -822,6 +899,15 @@
                 $mensaje = $d['mensaje'] ?? $d['message'] ?? '';
                 $tipo = $d['tipo'] ?? 'general';
                 $entrarUrl = $d['entrar_url'] ?? null;
+                $contactUrl = null;
+                if (!empty($d['contact_id'])) {
+                    try {
+                        $contactUrl = route('contacts.show', (int) $d['contact_id']);
+                    } catch (\Throwable) {
+                        $contactUrl = null;
+                    }
+                }
+                $actionUrl = $entrarUrl ?: $contactUrl;
             @endphp
             <div x-show="detailId === '{{ $notification->id }}'"
                  x-cloak
@@ -876,12 +962,12 @@
                         @endif
                     </div>
                     <div class="p-6 pt-4 flex flex-wrap gap-3 justify-end">
-                        @if($entrarUrl)
+                        @if($actionUrl)
                             {{-- Aprobación de cuenta: con sesión activa, ir al panel sin URL firmada (evita 403 por firma vieja o APP_URL distinta). Incluye registros antiguos solo con tipo=aprobacion. --}}
                             @if(($d['type'] ?? '') === 'user_approved' || ($d['tipo'] ?? '') === 'aprobacion')
                                 <a href="{{ auth()->user()->esAdmin() ? route('dashboard') : route('user.dashboard') }}" class="px-4 py-2 text-sm rounded-xl font-semibold text-gray-900 bg-[#FFE600] hover:bg-[#E6CF00] transition-colors">Entrar a mi panel</a>
                             @else
-                                <a href="{{ $entrarUrl }}" class="px-4 py-2 text-sm rounded-xl font-semibold text-gray-900 bg-[#FFE600] hover:bg-[#E6CF00] transition-colors">{{ $tipo === 'cumpleanos' ? 'Ver contacto' : 'Entrar a mi panel' }}</a>
+                                <a href="{{ $actionUrl }}" class="px-4 py-2 text-sm rounded-xl font-semibold text-gray-900 bg-[#FFE600] hover:bg-[#E6CF00] transition-colors">{{ in_array($tipo, ['cumpleanos', 'contacto'], true) ? 'Mostrar contacto' : 'Entrar a mi panel' }}</a>
                             @endif
                         @endif
                         @if(!$notification->read_at)

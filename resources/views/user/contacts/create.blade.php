@@ -225,6 +225,26 @@
             document.body.style.overflow = 'hidden';
         }
 
+        function showPendingApprovalNotice(message) {
+            var notice = document.createElement('div');
+            notice.className = 'fixed inset-0 z-[70] flex items-center justify-center bg-black/40 px-4';
+            notice.innerHTML = `
+                <div class="w-full max-w-md rounded-2xl border border-amber-300/40 bg-[#1a3d6b] p-5 text-amber-100 shadow-2xl">
+                    <div class="flex items-start gap-3">
+                        <svg class="w-6 h-6 mt-0.5 animate-spin text-[#FFE600] shrink-0" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle>
+                            <path class="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8V1C6.477 1 2 5.477 2 11h2z"></path>
+                        </svg>
+                        <div>
+                            <p class="text-sm">${message || 'El contacto será visible hasta que el administrador lo apruebe.'}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(notice);
+            return notice;
+        }
+
         function hideErrorModal() {
             modalError.classList.add('hidden');
             document.body.style.overflow = '';
@@ -275,7 +295,17 @@
 
                     if (result.status === 201 && result.data.success) {
                         if (result.data.redirect) {
-                            window.location.href = result.data.redirect;
+                            if (result.data.pending_approval) {
+                                var pendingNotice = showPendingApprovalNotice(result.data.message);
+                                setTimeout(function() {
+                                    if (pendingNotice && pendingNotice.parentNode) {
+                                        pendingNotice.parentNode.removeChild(pendingNotice);
+                                    }
+                                    window.location.href = result.data.redirect;
+                                }, 3500);
+                            } else {
+                                window.location.href = result.data.redirect;
+                            }
                         } else {
                             showModal();
                         }

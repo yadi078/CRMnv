@@ -150,6 +150,7 @@
                     try {
                         if (auth()->user()?->can('companies.approve')) {
                             $pendientes += \App\Models\Company::pendientesAprobacion()->count();
+                            $pendientes += \App\Models\Contact::pendientesAprobacion()->count();
                         }
                         if (auth()->user()?->can('users.approve')) {
                             $pendientes += \App\Models\User::where('approval_status', 'pendiente')->count();

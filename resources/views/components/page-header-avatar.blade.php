@@ -6,13 +6,17 @@
 
 @php
     $isView = $variant === 'view-header';
-    $iconClass = $isView ? 'view-header__icon' : 'page-header-card__icon';
-    $imgClass = $isView ? 'view-header__avatar-img' : 'page-header-card__icon-img';
     $headerUser = $user ?? auth()->user();
+    $hasPhoto = (bool) $headerUser?->profile_photo_url;
+    $iconClass = $isView ? 'view-header__icon' : 'page-header-card__icon';
+    if ($hasPhoto) {
+        $iconClass .= $isView ? ' view-header__icon--with-photo' : ' page-header-card__icon--with-photo';
+    }
+    $imgClass = $isView ? 'view-header__avatar-img' : 'page-header-card__icon-img';
 @endphp
 
 <div class="{{ $iconClass }}" aria-hidden="true" @if ($headerUser) data-profile-user-id="{{ $headerUser->getKey() }}" @endif>
-    @if ($headerUser?->profile_photo_url)
+    @if ($hasPhoto)
         <img
             src="{{ $headerUser->profile_photo_url }}"
             alt=""

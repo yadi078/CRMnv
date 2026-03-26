@@ -36,6 +36,7 @@ class NewContactAddedNotification extends Notification
             'contact_id' => $this->contact->id,
             'contact_name' => $this->contact->nombre_completo,
             'company_name' => $companyName,
+            'entrar_url' => route('contacts.show', $this->contact),
         ];
     }
 }
