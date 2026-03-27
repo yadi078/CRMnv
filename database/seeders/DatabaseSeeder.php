@@ -19,17 +19,20 @@ class DatabaseSeeder extends Seeder
         // Ejecutar seeder de roles y permisos
         $this->call(RolePermissionSeeder::class);
 
-        // Crear usuario administrador (contraseña hasheada con bcrypt)
+        // Crear usuario administrador (email/contraseña: config/admin.php y .env)
+        $adminEmail = config('admin.email');
+        $adminPassword = config('admin.password');
+
         $admin = User::firstOrCreate(
-            ['email' => 'admin@cceconsultoria.com'],
+            ['email' => $adminEmail],
             [
                 'name' => 'Administrador',
-                'password' => Hash::make('password123'),
+                'password' => Hash::make($adminPassword),
                 'approval_status' => 'aprobado',
                 'approved_at' => now(),
             ]
         );
-        $admin->update(['password' => Hash::make('password123')]);
+        $admin->update(['password' => Hash::make($adminPassword)]);
         if (! $admin->hasRole('admin')) {
             $admin->assignRole('admin');
         }

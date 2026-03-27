@@ -19,17 +19,20 @@ class AdminUserSeeder extends Seeder
 
         $role = Role::firstOrCreate(['name' => 'admin'], ['guard_name' => 'web']);
 
+        $adminEmail = config('admin.email');
+        $adminPassword = config('admin.password');
+
         $admin = User::firstOrCreate(
-            ['email' => 'admin@cceconsultoria.com'],
+            ['email' => $adminEmail],
             [
                 'name' => 'Administrador',
-                'password' => Hash::make('password123'),
+                'password' => Hash::make($adminPassword),
                 'approval_status' => 'aprobado',
                 'approved_at' => now(),
             ]
         );
 
-        $admin->update(['password' => Hash::make('password123')]);
+        $admin->update(['password' => Hash::make($adminPassword)]);
 
         if (! $admin->hasRole('admin')) {
             $admin->assignRole($role);
