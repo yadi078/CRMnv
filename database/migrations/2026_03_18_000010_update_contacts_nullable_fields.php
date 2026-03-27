@@ -13,6 +13,13 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // En testing usamos SQLite (in-memory) y no soporta la sintaxis
+        // MySQL `ALTER TABLE ... MODIFY ...` usada en esta migración.
+        // Para evitar romper la suite, omitimos este ajuste en SQLite.
+        if (DB::getDriverName() === 'sqlite') {
+            return;
+        }
+
         // Importante: evitar Doctrine. Usamos ALTER TABLE directo.
         // 1) Quitar UNIQUE del email (si existe)
         try {
