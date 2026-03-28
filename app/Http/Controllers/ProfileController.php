@@ -66,6 +66,14 @@ class ProfileController extends Controller
             $user->email_verified_at = null;
         }
 
+        if ($request->hasFile('profile_photo')) {
+            $path = $request->file('profile_photo')->store('profile-photos', 'public');
+            if ($user->profile_photo_path) {
+                Storage::disk('public')->delete($user->profile_photo_path);
+            }
+            $user->profile_photo_path = $path;
+        }
+
         $user->save();
         $user->refresh();
 

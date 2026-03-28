@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class ProfileTest extends TestCase
@@ -61,9 +63,33 @@ class ProfileTest extends TestCase
         $this->assertNotNull($user->refresh()->email_verified_at);
     }
 
+    public function test_user_can_upload_profile_photo(): void
+    {
+        Storage::fake('public');
+
+        $user = User::factory()->create();
+        $file = UploadedFile::fake()->image('avatar.jpg', 120, 120);
+
+        $response = $this
+            ->actingAs($user)
+            ->patch('/profile', [
+                'name' => $user->name,
+                'email' => $user->email,
+                'profile_photo' => $file,
+            ]);
+
+        $response
+            ->assertSessionHasNoErrors()
+            ->assertRedirect('/profile');
+
+        $user->refresh();
+        $this->assertNotNull($user->profile_photo_path);
+        Storage::disk('public')->assertExists($user->profile_photo_path);
+    }
+
     public function test_user_can_remove_profile_photo(): void
     {
-        \Illuminate\Support\Facades\Storage::fake('public');
+        Storage::fake('public');
 
         $user = User::factory()->create([
             'profile_photo_path' => 'profile-photos/test.jpg',
