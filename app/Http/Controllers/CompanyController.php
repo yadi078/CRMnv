@@ -6,6 +6,7 @@ use App\Http\Controllers\Concerns\ResolvesAdminUserView;
 use App\Models\Company;
 use App\Models\Contact;
 use App\Models\Sale;
+use App\Services\SpreadsheetProspectStatusResolver;
 use App\Http\Requests\StoreCompanyRequest;
 use App\Http\Requests\UpdateCompanyRequest;
 use Illuminate\Database\Eloquent\Builder;
@@ -207,6 +208,9 @@ class CompanyController extends Controller
      * Duplicado de contacto: mismo email/teléfono/celular/nombre en la empresa solo si además coinciden
      * área de trabajo (departamento) y puesto; si difieren, se crea otro contacto (misma persona, distinto rol).
      * Las empresas se procesan primero para que cada contacto resuelva su company_id.
+     *
+     * Estado de prospecto: columna de texto (p. ej. "Estado de prospecto") o color de relleno en la fila
+     * (mostaza/amarillo ≈ seguimiento). Los colores se leen en Excel (.xlsx/.xls); CSV no trae formato.
      */
     public function import(Request $request)
     {
@@ -222,14 +226,13 @@ class CompanyController extends Controller
             $file = $validated['file'];
             $spreadsheet = IOFactory::load($file->getRealPath());
             $sheet = $spreadsheet->getActiveSheet();
-            $rows = $sheet->toArray(null, true, true, true);
+            $allRows = $sheet->toArray(null, true, true, true);
 
-            if (count($rows) < 2) {
+            $headerRow = $allRows[1] ?? null;
+            if ($headerRow === null) {
                 return back()->with('error', 'El archivo no contiene datos para importar.');
             }
 
-            // Primera fila: encabezados
-            $headerRow = array_shift($rows);
             $normalizedHeaders = [];
             foreach ($headerRow as $column => $headerValue) {
                 if ($headerValue === null) {
@@ -254,7 +257,11 @@ class CompanyController extends Controller
             };
 
             $parsedRows = [];
-            foreach ($rows as $row) {
+            foreach ($allRows as $excelRowNum => $row) {
+                if ((int) $excelRowNum === 1) {
+                    continue;
+                }
+
                 $isEmpty = collect($row)->filter(function ($value) {
                     return ! is_null($value) && trim((string) $value) !== '';
                 })->isEmpty();
@@ -294,6 +301,7 @@ class CompanyController extends Controller
                 }
 
                 $parsedRows[] = [
+                    'excel_row' => (int) $excelRowNum,
                     'row' => $row,
                     'company_name' => $companyName,
                     'area_trabajo' => $areaTrabajoValor,
@@ -328,6 +336,14 @@ class CompanyController extends Controller
                     continue;
                 }
 
+                $importStatus = SpreadsheetProspectStatusResolver::resolve(
+                    $sheet,
+                    (int) $p['excel_row'],
+                    $p['row'],
+                    $normalizedHeaders,
+                    $getValue
+                );
+
                 $companyName = $p['company_name'];
                 $municipio = $p['municipio'];
                 $estado = $p['estado'];
@@ -346,6 +362,7 @@ class CompanyController extends Controller
                         $company->restore();
                     }
 
+                    $statusAnterior = $company->status_color;
                     $updates = [];
                     if ($sector !== '') {
                         $updates['sector'] = $sector;
@@ -362,11 +379,26 @@ class CompanyController extends Controller
                     if ($datosFiscales !== '') {
                         $updates['datos_fiscales'] = $datosFiscales;
                     }
+                    if ($importStatus !== null) {
+                        $updates['status_color'] = $importStatus;
+                    }
                     if ($updates !== []) {
                         $company->fill($updates);
                         if ($company->isDirty()) {
                             $company->save();
                             $updatedCompanies++;
+                            if ($company->status_color === 'vendido' && $statusAnterior !== 'vendido') {
+                                Sale::create([
+                                    'company_id' => $company->id,
+                                    'nombre_servicio' => 'Venta registrada desde prospecto',
+                                    'fecha_venta' => now(),
+                                    'monto' => null,
+                                    'tipo_pago' => null,
+                                    'participantes' => null,
+                                    'notas' => 'Registrado automáticamente al importar estado de prospecto Vendido.',
+                                    'created_by' => auth()->id(),
+                                ]);
+                            }
                         } else {
                             $redundantEmpresaRows++;
                         }
@@ -374,6 +406,7 @@ class CompanyController extends Controller
                         $redundantEmpresaRows++;
                     }
                 } else {
+                    $statusColor = $importStatus ?? 'seguimiento';
                     $company = Company::create([
                         'nombre_comercial' => $companyName,
                         'rfc' => null,
@@ -382,13 +415,25 @@ class CompanyController extends Controller
                         'estado' => $estado !== '' ? $estado : null,
                         'ejecutivo_asignado' => $ejecutivo !== '' ? $ejecutivo : null,
                         'datos_fiscales' => $datosFiscales !== '' ? $datosFiscales : null,
-                        'status_color' => 'seguimiento',
+                        'status_color' => $statusColor,
                         'approval_status' => $approvalStatus,
                         'created_by' => $user->id,
                         'approved_by' => $approvalStatus === 'aprobado' ? $user->id : null,
                         'approved_at' => $approvalStatus === 'aprobado' ? now() : null,
                     ]);
                     $createdCompanies++;
+                    if ($statusColor === 'vendido') {
+                        Sale::create([
+                            'company_id' => $company->id,
+                            'nombre_servicio' => 'Venta registrada desde prospecto',
+                            'fecha_venta' => now(),
+                            'monto' => null,
+                            'tipo_pago' => null,
+                            'participantes' => null,
+                            'notas' => 'Registrado automáticamente al importar estado de prospecto Vendido.',
+                            'created_by' => auth()->id(),
+                        ]);
+                    }
                 }
 
                 $empresaRegistry[] = [
@@ -403,6 +448,14 @@ class CompanyController extends Controller
                 if ($p['is_empresa']) {
                     continue;
                 }
+
+                $importStatus = SpreadsheetProspectStatusResolver::resolve(
+                    $sheet,
+                    (int) $p['excel_row'],
+                    $p['row'],
+                    $normalizedHeaders,
+                    $getValue
+                );
 
                 $row = $p['row'];
                 $companyName = $p['company_name'];
@@ -494,6 +547,9 @@ class CompanyController extends Controller
                         $value = Str::lower($noDeseaCorreos);
                         $contactData['email_activo'] = ! in_array($value, ['si', 'sí', 'yes', '1', 'true'], true);
                     }
+                    if ($importStatus !== null) {
+                        $contactData['status_color'] = $importStatus;
+                    }
 
                     $contact->fill($contactData);
                     if ($contact->isDirty()) {
@@ -507,7 +563,7 @@ class CompanyController extends Controller
                         'company_id' => $company->id,
                         'nombre_completo' => $contactName,
                         'email_activo' => true,
-                        'status_color' => 'seguimiento',
+                        'status_color' => $importStatus ?? 'seguimiento',
                         'approval_status' => $contactApprovalStatus,
                         'approved_by' => $contactApprovalStatus === 'aprobado' ? $user->id : null,
                         'approved_at' => $contactApprovalStatus === 'aprobado' ? now() : null,
