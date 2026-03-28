@@ -1245,9 +1245,71 @@ body {
   border-left: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-/* Paginación dentro de panel oscuro: enlaces visibles */
-.panel-card-dark .pagination,
-.panel-card-dark nav[role="navigation"] {
+/* Paginación en panel oscuro (vista Tailwind de Laravel): texto legible + celdas azules */
+.panel-card-dark nav[role='navigation'] {
+  width: 100%;
+}
+
+.panel-card-dark nav[role='navigation'] p {
+  color: rgba(255, 255, 255, 0.95) !important;
+}
+
+/* Números del resumen “Showing …”: fondo azul claro, cifras en negro */
+.panel-card-dark nav[role='navigation'] p .font-medium {
+  color: #0a0a0a !important;
+  font-weight: 800;
+  background: #93c5fd;
+  padding: 0.15em 0.4em;
+  border-radius: 0.35rem;
+  border: 1px solid #2563eb;
+}
+
+/* Celdas de página: azul + números negros */
+.panel-card-dark nav[role='navigation'] a[href] {
+  background: linear-gradient(180deg, #bfdbfe 0%, #93c5fd 100%) !important;
+  color: #0a0a0a !important;
+  border-color: #2563eb !important;
+  text-decoration: none;
+}
+
+.panel-card-dark nav[role='navigation'] a[href]:hover {
+  background: linear-gradient(180deg, #93c5fd 0%, #60a5fa 100%) !important;
+  color: #000000 !important;
+}
+
+.panel-card-dark nav[role='navigation'] span[aria-disabled='true'] span.inline-flex {
+  background: linear-gradient(180deg, #bfdbfe 0%, #93c5fd 100%) !important;
+  color: #0a0a0a !important;
+  border-color: #93c5fd !important;
+}
+
+.panel-card-dark nav[role='navigation'] span[aria-disabled='true'] span[class*='cursor-not-allowed'] {
+  opacity: 0.45;
+}
+
+.panel-card-dark nav[role='navigation'] span[aria-current='page'] span.inline-flex {
+  background: #3b82f6 !important;
+  color: #000000 !important;
+  border: 2px solid #0f172a !important;
+  font-weight: 800;
+}
+
+.panel-card-dark nav[role='navigation'] a svg,
+.panel-card-dark nav[role='navigation'] span[aria-disabled='true'] svg {
+  color: currentColor;
+  fill: currentColor;
+}
+
+/* Paginación móvil */
+.panel-card-dark nav[role='navigation'] div.sm\:hidden > span.inline-flex {
+  background: linear-gradient(180deg, #bfdbfe 0%, #93c5fd 100%) !important;
+  color: #0a0a0a !important;
+  border-color: #cbd5e1 !important;
+  opacity: 0.65;
+}
+
+/* Vista .pagination legada */
+.panel-card-dark .pagination {
   display: flex;
   flex-wrap: wrap;
   gap: 0.25rem;
@@ -1255,26 +1317,25 @@ body {
 }
 
 .panel-card-dark .pagination a,
-.panel-card-dark .pagination span,
-.panel-card-dark nav[role="navigation"] a,
-.panel-card-dark nav[role="navigation"] span {
-  color: rgba(255, 255, 255, 0.9);
+.panel-card-dark .pagination span {
   padding: 0.5rem 0.75rem;
   border-radius: 8px;
   text-decoration: none;
-  font-weight: 500;
+  font-weight: 600;
+  color: #0a0a0a;
+  background: linear-gradient(180deg, #bfdbfe 0%, #93c5fd 100%);
+  border: 1px solid #2563eb;
 }
 
-.panel-card-dark .pagination a:hover,
-.panel-card-dark nav[role="navigation"] a:hover {
-  background: rgba(255, 255, 255, 0.15);
-  color: #fff;
+.panel-card-dark .pagination a:hover {
+  background: #60a5fa;
+  color: #000000;
 }
 
-.panel-card-dark .pagination span[aria-current="page"],
-.panel-card-dark nav[role="navigation"] span.relative {
-  background: var(--color-accent);
-  color: var(--color-primary-deep);
+.panel-card-dark .pagination span[aria-current='page'] {
+  background: #3b82f6;
+  color: #000000;
+  border: 2px solid #0f172a;
 }
 
 /* Subrayado amarillo bajo títulos de secciones */

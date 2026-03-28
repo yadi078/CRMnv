@@ -168,7 +168,7 @@
                     </tbody>
                 </table>
             </div>
-            <div class="mt-4">{{ $companies->withQueryString()->links() }}</div>
+            <div class="mt-4 pt-2 px-1 border-t border-white/15">{{ $companies->withQueryString()->links() }}</div>
         </div>
 
         {{-- Listado reciente: Contactos --}}
@@ -233,7 +233,7 @@
                     </tbody>
                 </table>
             </div>
-            <div class="mt-4">{{ $contacts->withQueryString()->links() }}</div>
+            <div class="mt-4 pt-2 px-1 border-t border-white/15">{{ $contacts->withQueryString()->links() }}</div>
         </div>
 
         {{-- Modal Editar Contacto --}}
