@@ -58,34 +58,42 @@
 
         <div class="panel-card-dark overflow-hidden">
             <h3 class="panel-card-dark__title panel-card-dark__title--accent mb-4">Listado</h3>
-            <div class="overflow-x-auto w-full min-w-0 -mx-4 sm:-mx-0" style="-webkit-overflow-scrolling: touch;">
-                <table class="min-w-full divide-y divide-white/20">
+            <div class="scroll-x-top w-full min-w-0 -mx-4 sm:-mx-0" style="-webkit-overflow-scrolling: touch;">
+                <table class="w-full min-w-[980px] table-fixed divide-y divide-white/20">
                     <thead>
                         <tr class="table-header-panel-dark">
-                            <th class="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">Nombre</th>
-                            <th class="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">Empresa</th>
-                            <th class="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">Estado</th>
-                            <th class="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">Correo</th>
-                            <th class="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">Teléfono</th>
-                            <th class="px-6 py-3.5 text-center text-xs font-semibold uppercase tracking-wider">Acciones</th>
+                            <th scope="col" class="crm-row-marker-head w-11 min-w-[2.75rem] px-1 py-3.5 text-center text-[10px] font-semibold uppercase tracking-wide text-[#FFE600]/90" title="Seguimiento personal (solo en este navegador)">Seg.</th>
+                            <th class="w-[16rem] px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">Nombre</th>
+                            <th class="w-[16rem] px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">Empresa</th>
+                            <th class="w-[9rem] px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">Estatus</th>
+                            <th class="w-[16rem] px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">Correo</th>
+                            <th class="w-[11rem] px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">Teléfono</th>
+                            <th class="w-[12rem] px-6 py-3.5 text-center text-xs font-semibold uppercase tracking-wider">Acciones</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-white/15">
                         @forelse($contacts as $contact)
                         <tr class="panel-card-dark__row hover:bg-white/8 transition-colors">
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm font-medium text-white">{{ $contact->nombre_completo }}</div>
-                                <div class="text-sm text-white/80">{{ $contact->puesto_de_trabajo ?? '-' }}</div>
+                            <x-crm-row-marker entity="contact" :id="$contact->id" />
+                            <td class="px-6 py-4 align-top whitespace-normal break-words">
+                                <a href="{{ route('contacts.show', $contact) }}" class="block text-sm font-medium text-white hover:text-[#FFE600] hover:underline focus:outline-none focus:ring-2 focus:ring-[#FFE600]/35 rounded">{{ $contact->nombre_completo }}</a>
+                                <div class="text-sm text-white/80 mt-0.5">{{ $contact->puesto_de_trabajo ?? '-' }}</div>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-white/90">{{ $contact->company?->nombre_comercial ?? '-' }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">
+                            <td class="px-6 py-4 align-top whitespace-normal break-words text-sm text-white/90">
+                                @if($contact->company)
+                                    <a href="{{ route('companies.show', $contact->company) }}" class="hover:text-[#FFE600] hover:underline focus:outline-none focus:ring-2 focus:ring-[#FFE600]/35 rounded">{{ $contact->company->nombre_comercial }}</a>
+                                @else
+                                    -
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 align-top whitespace-nowrap">
                                 <span class="px-2.5 py-1 text-xs font-medium rounded-lg badge-prospect-{{ $contact->status_color ?? 'seguimiento' }}">{{ $contact->status_label ?? 'Seguimiento' }}</span>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-white/90">
+                            <td class="px-6 py-4 align-top whitespace-normal break-words text-sm text-white/90">
                                 {{ ($contact->email_activo ?? true) ? ($contact->email ?? '—') : '—' }}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-white/90">{{ $contact->celular ?? '-' }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <td class="px-6 py-4 align-top whitespace-normal break-words text-sm text-white/90">{{ $contact->celular ?? '-' }}</td>
+                            <td class="px-6 py-4 align-top whitespace-nowrap text-sm font-medium">
                                 <div class="flex items-center gap-3">
                                     <a href="{{ route('contacts.show', $contact) }}" class="text-[#FFE600] hover:text-white inline-flex items-center gap-1">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
@@ -106,7 +114,7 @@
                             </td>
                         </tr>
                         @empty
-                        <tr><td colspan="6" class="px-6 py-8 text-center text-white/70">No se encontraron contactos</td></tr>
+                        <tr><td colspan="7" class="px-6 py-8 text-center text-white/70">No se encontraron contactos</td></tr>
                         @endforelse
                     </tbody>
                 </table>

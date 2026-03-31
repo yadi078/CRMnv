@@ -152,6 +152,7 @@
                     <table class="min-w-full divide-y divide-white/20">
                         <thead>
                             <tr class="table-header-panel-dark">
+                                <th scope="col" class="crm-row-marker-head w-11 min-w-[2.75rem] px-1 py-3 text-center text-[10px] font-semibold uppercase tracking-wide text-[#FFE600]/90" title="Seguimiento personal (solo en este navegador)">Seg.</th>
                                 <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Nombre</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">RFC</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Estado</th>
@@ -162,10 +163,11 @@
                         <tbody class="divide-y divide-white/15">
                             @forelse($companies as $company)
                             <tr class="panel-card-dark__row hover:bg-white/8 transition-colors">
+                                <x-crm-row-marker entity="company" :id="$company->id" />
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
-                                        <div class="w-3 h-3 rounded-full mr-2 dot-prospect-{{ $company->status_color }}"></div>
-                                        <div class="text-sm font-medium text-white">{{ $company->nombre_comercial }}</div>
+                                        <div class="w-3 h-3 rounded-full mr-2 flex-shrink-0 dot-prospect-{{ $company->status_color }}"></div>
+                                        <a href="{{ route('companies.show', $company) }}" class="text-sm font-medium text-white hover:text-[#FFE600] hover:underline focus:outline-none focus:ring-2 focus:ring-[#FFE600]/35 rounded min-w-0">{{ $company->nombre_comercial }}</a>
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-white/90">{{ $company->rfc ?? '-' }}</td>
@@ -184,7 +186,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="5" class="px-6 py-8 text-center text-white/80">No hay empresas aprobadas para mostrar</td>
+                                <td colspan="6" class="px-6 py-8 text-center text-white/80">No hay empresas aprobadas para mostrar</td>
                             </tr>
                             @endforelse
                         </tbody>

@@ -23,6 +23,7 @@
                     <span class="font-semibold text-white text-fluid-lg">CE CRM</span>
                 </a>
                 <div class="flex items-center gap-1">
+                    <x-crm-back-button compact />
                     <a href="{{ route('notifications.index') }}" class="relative flex items-center justify-center min-w-[44px] min-h-[44px] rounded-xl text-[#FFE600] hover:bg-white/10 transition-colors" aria-label="Notificaciones">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
                         <span class="js-header-notification-badge-wrap absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[1.25rem] h-5 px-1 rounded-full text-xs font-bold bg-red-500 text-white" style="{{ (auth()->user()->unreadNotifications->count() > 0) ? '' : 'display: none;' }}">
@@ -60,12 +61,15 @@
                                 <div class="flex items-center gap-4 min-w-0 flex-1">
                                     {{ $header }}
                                 </div>
-                                <a href="{{ route('notifications.index') }}" class="flex-shrink-0 relative flex items-center justify-center w-11 h-11 rounded-xl text-[#FFE600] hover:bg-white/10 transition-colors" aria-label="Notificaciones">
+                                <div class="flex items-center gap-2 flex-shrink-0">
+                                    <x-crm-back-button />
+                                    <a href="{{ route('notifications.index') }}" class="relative flex items-center justify-center w-11 h-11 rounded-xl text-[#FFE600] hover:bg-white/10 transition-colors" aria-label="Notificaciones">
                                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
                                     <span class="js-header-notification-badge-wrap absolute top-0 right-0 flex items-center justify-center min-w-[1.25rem] h-5 px-1 rounded-full text-xs font-bold bg-red-500 text-white" style="{{ (auth()->user()->unreadNotifications->count() > 0) ? '' : 'display: none;' }}">
                                         <span class="js-header-notification-badge">{{ auth()->user()->unreadNotifications->count() > 0 ? min(auth()->user()->unreadNotifications->count(), 99) . (auth()->user()->unreadNotifications->count() > 99 ? '+' : '') : '' }}</span>
                                     </span>
                                 </a>
+                                </div>
                             </div>
                         </div>
                     </div>

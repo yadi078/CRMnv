@@ -26,10 +26,6 @@
                 Solicitar eliminación
             </button>
             @endcan
-            <a href="{{ route('contacts.index') }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-[#FFE600] bg-white/10 text-white font-medium hover:bg-white/20">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/></svg>
-                Volver
-            </a>
         </div>
     </x-slot>
 

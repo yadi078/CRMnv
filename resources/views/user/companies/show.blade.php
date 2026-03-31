@@ -30,12 +30,6 @@
                 Eliminación pendiente de aprobación
             </span>
             @endif
-            <a href="{{ route('companies.index') }}" class="btn-panel-dark bg-white/10 text-white border-2 border-[#FFE600] hover:bg-white/20">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-                </svg>
-                Volver
-            </a>
         </div>
     </x-slot>
 
@@ -129,7 +123,7 @@
                 @forelse($company->contacts as $contact)
                 <div class="company-show__list-item company-show__list-item--contact">
                     <div class="company-show__list-body">
-                        <p class="company-show__list-title">{{ $contact->nombre_completo }}</p>
+                        <a href="{{ route('contacts.show', $contact) }}" class="company-show__list-title text-white hover:text-[#FFE600] hover:underline focus:outline-none focus:ring-2 focus:ring-[#FFE600]/35 rounded inline-block">{{ $contact->nombre_completo }}</a>
                         <p class="company-show__list-meta">{{ $contact->puesto_de_trabajo ?? '-' }} · {{ $contact->email }}</p>
                     </div>
                     <a href="{{ route('contacts.show', $contact) }}" class="company-show__list-link">Ver</a>

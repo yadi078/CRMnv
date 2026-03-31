@@ -147,25 +147,26 @@
         <!-- Tabla: contenedor azul, encabezados amarillos, texto blanco -->
         <div class="panel-card-dark overflow-hidden">
             <h3 class="panel-card-dark__title panel-card-dark__title--accent mb-4">Listado</h3>
-            <div class="overflow-x-auto w-full min-w-0 -mx-4 sm:-mx-0" style="-webkit-overflow-scrolling: touch;">
-                <table class="min-w-full divide-y divide-white/20">
+            <div class="scroll-x-top w-full min-w-0 -mx-4 sm:-mx-0" style="-webkit-overflow-scrolling: touch;">
+                <table class="w-full min-w-[944px] table-fixed divide-y divide-white/20">
                     <thead>
                         <tr class="table-header-panel-dark">
-                            <th class="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">Nombre</th>
-                            <th class="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">RFC</th>
-                            <th class="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">Estado</th>
-                            <th class="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">Ejecutivo</th>
+                            <th scope="col" class="crm-row-marker-head w-11 min-w-[2.75rem] px-1 py-3.5 text-center text-[10px] font-semibold uppercase tracking-wide text-[#FFE600]/90" title="Seguimiento personal (solo en este navegador)">Seg.</th>
+                            <th class="w-[18rem] px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">Nombre</th>
+                            <th class="w-[12rem] px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">RFC</th>
+                            <th class="w-[10rem] px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">Estatus</th>
+                            <th class="w-[12rem] px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">Ejecutivo</th>
                             <th class="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">Acciones</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-white/15">
                         @forelse($companies as $company)
                         <tr class="panel-card-dark__row hover:bg-white/8 transition-colors">
-                            <td class="px-6 py-4 whitespace-nowrap">
+                            <td class="px-6 py-4 align-top whitespace-normal break-words">
                                 <div class="flex items-center gap-2">
                                     <span class="w-2.5 h-2.5 rounded-full flex-shrink-0 dot-prospect-{{ $company->status_color }}"></span>
-                                    <div>
-                                        <div class="text-sm font-medium text-white">{{ $company->nombre_comercial }}</div>
+                                    <div class="min-w-0">
+                                        <a href="{{ route('companies.show', $company) }}" class="inline-block text-sm font-medium text-white hover:text-[#FFE600] hover:underline focus:outline-none focus:ring-2 focus:ring-[#FFE600]/35 rounded">{{ $company->nombre_comercial }}</a>
                                         @if($company->approval_status === 'pendiente')
                                         <span class="text-xs font-medium text-[#FCD34D] bg-amber-500/20 px-2 py-0.5 rounded-lg mt-0.5 inline-block">Pendiente</span>
                                         @elseif($company->approval_status === 'rechazado')
@@ -174,14 +175,14 @@
                                     </div>
                                 </div>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-white/90">{{ $company->rfc ?? '-' }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">
+                            <td class="px-6 py-4 align-top whitespace-normal break-words text-sm text-white/90">{{ $company->rfc ?? '-' }}</td>
+                            <td class="px-6 py-4 align-top whitespace-nowrap">
                                 <span class="px-2.5 py-1 text-xs font-medium rounded-lg badge-prospect-{{ $company->status_color }}">
                                     {{ $company->status_label }}
                                 </span>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-white/90">{{ $company->ejecutivo_asignado ?? '-' }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <td class="px-6 py-4 align-top whitespace-normal break-words text-sm text-white/90">{{ $company->ejecutivo_asignado ?? '-' }}</td>
+                            <td class="px-6 py-4 align-top whitespace-nowrap text-sm font-medium">
                                 <a href="{{ route('companies.show', $company) }}" class="text-[#FFE600] hover:text-[#fff] mr-3 inline-flex items-center gap-1">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -218,7 +219,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="5" class="px-6 py-8 text-center text-white/70">No se encontraron empresas</td>
+                            <td colspan="6" class="px-6 py-8 text-center text-white/70">No se encontraron empresas</td>
                         </tr>
                         @endforelse
                     </tbody>

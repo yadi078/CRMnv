@@ -7,7 +7,6 @@
             <h2 class="page-header-card__title">Detalle de notificación</h2>
             <p class="page-header-card__subtitle">{{ $notification->created_at->format('d/m/Y H:i') }}</p>
         </div>
-        <a href="{{ route('notifications.index') }}" class="btn-panel-dark ml-auto">← Volver al listado</a>
     </x-slot>
 
     @php

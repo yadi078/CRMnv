@@ -11,12 +11,22 @@ use Illuminate\Http\Request;
 
 class FiltrosController extends Controller
 {
+    private const FILTROS_SESSION_KEY = 'filtros.persisted_query';
+
     /**
      * Vista de filtros avanzados: contactos y empresas (filtros dinámicos).
      */
     public function index(Request $request)
     {
         $this->authorize('viewAny', Company::class);
+
+        if ($request->boolean('clear')) {
+            $request->session()->forget(self::FILTROS_SESSION_KEY);
+
+            return redirect()->route('filtros.index');
+        }
+
+        $this->persistOrRestoreFiltrosQuery($request);
 
         $user = auth()->user();
         $isAdmin = $user?->esAdmin() ?? false;
@@ -165,7 +175,7 @@ class FiltrosController extends Controller
                     ->where('approval_status', 'aprobado');
             }
             $filterService->applyToContactQuery($contactsQuery, $contactFilterSpecs, $filterLogic);
-            $contacts = $contactsQuery->latest()->paginate(20)->appends($request->except('_token'));
+            $contacts = $contactsQuery->latest()->paginate(20)->appends($this->filtrosPaginationAppends($request));
         }
 
         $companies = null;
@@ -180,7 +190,7 @@ class FiltrosController extends Controller
                 $companiesQuery->accessibleForExecutive($user);
             }
             $filterService->applyToCompanyQuery($companiesQuery, $companyFilterSpecs, $filterLogic);
-            $companies = $companiesQuery->latest()->paginate(20)->appends($request->except('_token'));
+            $companies = $companiesQuery->latest()->paginate(20)->appends($this->filtrosPaginationAppends($request));
         }
 
         // Sugerencias para autocompletar en inputs de texto (datalist).
@@ -228,6 +238,10 @@ class FiltrosController extends Controller
     {
         $this->authorize('viewAny', Company::class);
 
+        if (! $request->boolean('clear')) {
+            $this->persistOrRestoreFiltrosQuery($request);
+        }
+
         $user = auth()->user();
         $isAdmin = $user?->esAdmin() ?? false;
         $userId = $user?->id;
@@ -272,7 +286,7 @@ class FiltrosController extends Controller
                     ->where('approval_status', 'aprobado');
             }
             $filterService->applyToContactQuery($contactsQuery, $contactFilterSpecs, $filterLogic);
-            $contacts = $contactsQuery->latest()->paginate(20)->appends($request->except('_token'));
+            $contacts = $contactsQuery->latest()->paginate(20)->appends($this->filtrosPaginationAppends($request));
         }
 
         $companies = null;
@@ -287,10 +301,10 @@ class FiltrosController extends Controller
                 $companiesQuery->accessibleForExecutive($user);
             }
             $filterService->applyToCompanyQuery($companiesQuery, $companyFilterSpecs, $filterLogic);
-            $companies = $companiesQuery->latest()->paginate(20)->appends($request->except('_token'));
+            $companies = $companiesQuery->latest()->paginate(20)->appends($this->filtrosPaginationAppends($request));
         }
 
-        $clearUrl = route('filtros.index');
+        $clearUrl = route('filtros.index', ['clear' => 1]);
 
         return response()->json([
             'chipsHtml' => view('filtros.partials.chips', [
@@ -313,6 +327,51 @@ class FiltrosController extends Controller
             'contacto' => 'contacto',
             default => 'ambos',
         };
+    }
+
+    /**
+     * Guarda en sesión cada aplicación de filtros; si el usuario entra sin enviar el formulario, restaura el último estado.
+     */
+    private function persistOrRestoreFiltrosQuery(Request $request): void
+    {
+        if ($request->has('filter_logic')) {
+            $toStore = [
+                'filters' => $request->input('filters', []),
+                'filter_logic' => $request->input('filter_logic', 'and'),
+                'result_scope' => $request->input('result_scope', 'ambos'),
+            ];
+
+            if ($request->filled('page')) {
+                $toStore['page'] = $request->input('page');
+            }
+
+            $request->session()->put(self::FILTROS_SESSION_KEY, $toStore);
+
+            return;
+        }
+
+        $stored = $request->session()->get(self::FILTROS_SESSION_KEY);
+
+        if (! is_array($stored) || $stored === []) {
+            return;
+        }
+
+        $query = $request->query();
+        foreach ($stored as $key => $value) {
+            if (! array_key_exists($key, $query)) {
+                $request->merge([$key => $value]);
+            }
+        }
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function filtrosPaginationAppends(Request $request): array
+    {
+        return collect($request->except(['_token', 'clear']))
+            ->filter(static fn ($v) => $v !== null && $v !== '')
+            ->all();
     }
 
     /**

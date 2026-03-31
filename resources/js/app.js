@@ -2,6 +2,55 @@ import './bootstrap';
 
 import Alpine from 'alpinejs';
 
+const CRM_MARKER_STORAGE_KEY = 'CE_CRM_ROW_MARKERS_V1';
+const CRM_MARKER_STATES = ['none', 'progress', 'done'];
+
+function crmMarkerKey(entity, id) {
+    return String(entity) + ':' + String(id);
+}
+
+function crmLoadMarkers() {
+    try {
+        return JSON.parse(localStorage.getItem(CRM_MARKER_STORAGE_KEY) || '{}');
+    } catch (e) {
+        return {};
+    }
+}
+
+function crmSaveMarkers(obj) {
+    try {
+        localStorage.setItem(CRM_MARKER_STORAGE_KEY, JSON.stringify(obj));
+    } catch (e) {
+        /* ignore quota / private mode */
+    }
+}
+
+function crmApplyMarkerButton(btn) {
+    const entity = btn.getAttribute('data-crm-marker-entity');
+    const id = btn.getAttribute('data-crm-marker-id');
+    if (!entity || id == null) {
+        return;
+    }
+    const all = crmLoadMarkers();
+    const raw = all[crmMarkerKey(entity, id)];
+    const state = CRM_MARKER_STATES.includes(raw) ? raw : 'none';
+    btn.setAttribute('data-state', state);
+    btn.setAttribute('aria-pressed', state !== 'none' ? 'true' : 'false');
+}
+
+function crmCycleMarkerState(current) {
+    const i = CRM_MARKER_STATES.indexOf(current);
+    const from = i >= 0 ? i : 0;
+    return CRM_MARKER_STATES[(from + 1) % CRM_MARKER_STATES.length];
+}
+
+function crmInitRowMarkers(root) {
+    const el = root && root.nodeType === 1 ? root : document;
+    el.querySelectorAll('.crm-row-marker').forEach(crmApplyMarkerButton);
+}
+
+window.crmInitRowMarkers = crmInitRowMarkers;
+
 /**
  * Subida de foto de perfil (evita meter URL en x-data con comillas: rompe el HTML y Alpine no monta).
  */
@@ -51,6 +100,46 @@ Alpine.start();
 
 // Mensajes de validación en español para campos tipo email (evita tooltips en inglés del navegador)
 document.addEventListener('DOMContentLoaded', function() {
+    document.body.addEventListener('click', function (e) {
+        const markerBtn = e.target.closest('.crm-row-marker');
+        if (markerBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            const entity = markerBtn.getAttribute('data-crm-marker-entity');
+            const id = markerBtn.getAttribute('data-crm-marker-id');
+            if (!entity || id == null) {
+                return;
+            }
+            const k = crmMarkerKey(entity, id);
+            const all = crmLoadMarkers();
+            const curRaw = all[k];
+            const cur = CRM_MARKER_STATES.includes(curRaw) ? curRaw : 'none';
+            const next = crmCycleMarkerState(cur);
+            if (next === 'none') {
+                delete all[k];
+            } else {
+                all[k] = next;
+            }
+            crmSaveMarkers(all);
+            crmApplyMarkerButton(markerBtn);
+            return;
+        }
+
+        const btn = e.target.closest('[data-crm-back]');
+        if (!btn || btn.tagName !== 'BUTTON') {
+            return;
+        }
+        e.preventDefault();
+        const fallback = btn.getAttribute('data-crm-back') || '/';
+        if (window.history.length > 1) {
+            window.history.back();
+        } else {
+            window.location.href = fallback;
+        }
+    });
+
+    crmInitRowMarkers(document);
+
     document.querySelectorAll('form input[type="email"]').forEach(function(input) {
         input.addEventListener('invalid', function() {
             if (this.validity.valueMissing) {

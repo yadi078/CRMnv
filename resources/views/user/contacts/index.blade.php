@@ -46,6 +46,7 @@
                 <table class="min-w-full divide-y divide-white/20">
                     <thead>
                         <tr class="table-header-panel-dark">
+                            <th scope="col" class="crm-row-marker-head w-11 min-w-[2.75rem] px-1 py-3 text-center text-[10px] font-semibold uppercase tracking-wide text-[#FFE600]/90" title="Seguimiento personal (solo en este navegador)">Seg.</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Nombre</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Empresa</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Estado</th>
@@ -57,11 +58,18 @@
                     <tbody class="divide-y divide-white/15">
                         @forelse($contacts as $contact)
                         <tr class="panel-card-dark__row hover:bg:white/8 transition-colors">
+                            <x-crm-row-marker entity="contact" :id="$contact->id" />
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm font-medium text-white">{{ $contact->nombre_completo }}</div>
-                                <div class="text-sm text-white/80">{{ $contact->puesto_de_trabajo ?? '-' }}</div>
+                                <a href="{{ route('contacts.show', $contact) }}" class="block text-sm font-medium text-white hover:text-[#FFE600] hover:underline focus:outline-none focus:ring-2 focus:ring-[#FFE600]/35 rounded">{{ $contact->nombre_completo }}</a>
+                                <div class="text-sm text-white/80 mt-0.5">{{ $contact->puesto_de_trabajo ?? '-' }}</div>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-white/90">{{ $contact->company?->nombre_comercial ?? '-' }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-white/90">
+                                @if($contact->company)
+                                    <a href="{{ route('companies.show', $contact->company) }}" class="hover:text-[#FFE600] hover:underline focus:outline-none focus:ring-2 focus:ring-[#FFE600]/35 rounded">{{ $contact->company->nombre_comercial }}</a>
+                                @else
+                                    -
+                                @endif
+                            </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="px-2.5 py-1 text-xs font-medium rounded-lg badge-prospect-{{ $contact->status_color ?? 'seguimiento' }}">{{ $contact->status_label ?? 'Seguimiento' }}</span>
                             </td>
@@ -78,7 +86,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="6" class="px-6 py-8 text-center text-white/80">No se encontraron contactos</td>
+                            <td colspan="7" class="px-6 py-8 text-center text-white/80">No se encontraron contactos</td>
                         </tr>
                         @endforelse
                     </tbody>

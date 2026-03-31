@@ -11,7 +11,6 @@
             @can('follow-ups.edit')
             <a href="{{ route('follow-ups.edit', $followUp) }}" class="btn-amber-app">Editar</a>
             @endcan
-            <a href="{{ route('follow-ups.index') }}" class="btn-panel-dark bg-white/10 text-white border-2 border-[#FFE600] hover:bg-white/20">Volver</a>
         </div>
     </x-slot>
 

@@ -5,10 +5,11 @@
             <h3 class="panel-card-dark__title panel-card-dark__title--accent !mb-0 text-xl md:text-2xl font-bold tracking-tight">Contactos</h3>
             <span class="text-sm text-white/60 font-medium tabular-nums">{{ $contacts->total() }} {{ $contacts->total() === 1 ? 'registro' : 'registros' }}</span>
         </div>
-        <div class="overflow-x-auto -mx-1 px-1">
+        <div class="scroll-x-top w-full min-w-0 -mx-1 px-1" style="-webkit-overflow-scrolling: touch;">
             <table class="min-w-full divide-y divide-white/15">
                 <thead>
                     <tr class="table-header-panel-dark">
+                        <th scope="col" class="crm-row-marker-head w-11 min-w-[2.75rem] px-1 py-3.5 text-center text-[10px] font-semibold uppercase tracking-wide text-[#FFE600]/90" title="Seguimiento personal (solo en este navegador)">Seg.</th>
                         <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Nombre</th>
                         <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Empresa</th>
                         <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Tel / Cel</th>
@@ -20,8 +21,17 @@
                 <tbody class="divide-y divide-white/10">
                     @foreach($contacts as $contact)
                         <tr class="panel-card-dark__row odd:bg-white/5 even:bg-white/[0.02] hover:bg-white/10 transition-colors duration-150">
-                            <td class="px-4 py-3.5 text-sm text-white">{{ $contact->nombre_completo }}</td>
-                            <td class="px-4 py-3.5 text-sm text-white/90">{{ $contact->company?->nombre_comercial ?? '—' }}</td>
+                            <x-crm-row-marker entity="contact" :id="$contact->id" />
+                            <td class="px-4 py-3.5 text-sm">
+                                <a href="{{ route('contacts.show', $contact) }}" class="font-medium text-white hover:text-[#FFE600] hover:underline focus:outline-none focus:ring-2 focus:ring-[#FFE600]/35 rounded">{{ $contact->nombre_completo }}</a>
+                            </td>
+                            <td class="px-4 py-3.5 text-sm text-white/90">
+                                @if($contact->company)
+                                    <a href="{{ route('companies.show', $contact->company) }}" class="hover:text-[#FFE600] hover:underline focus:outline-none focus:ring-2 focus:ring-[#FFE600]/35 rounded">{{ $contact->company->nombre_comercial }}</a>
+                                @else
+                                    —
+                                @endif
+                            </td>
                             <td class="px-4 py-3.5 text-sm text-white/90">{{ $contact->telefono ?? $contact->celular ?? '—' }}</td>
                             <td class="px-4 py-3.5 text-sm text-white/90">{{ $contact->email ?? '—' }}</td>
                             <td class="px-4 py-3.5">
@@ -50,10 +60,11 @@
             <h3 class="panel-card-dark__title panel-card-dark__title--accent !mb-0 text-xl md:text-2xl font-bold tracking-tight">Empresas</h3>
             <span class="text-sm text-white/60 font-medium tabular-nums">{{ $companies->total() }} {{ $companies->total() === 1 ? 'registro' : 'registros' }}</span>
         </div>
-        <div class="overflow-x-auto -mx-1 px-1">
+        <div class="scroll-x-top w-full min-w-0 -mx-1 px-1" style="-webkit-overflow-scrolling: touch;">
             <table class="min-w-full divide-y divide-white/15">
                 <thead>
                     <tr class="table-header-panel-dark">
+                        <th scope="col" class="crm-row-marker-head w-11 min-w-[2.75rem] px-1 py-3.5 text-center text-[10px] font-semibold uppercase tracking-wide text-[#FFE600]/90" title="Seguimiento personal (solo en este navegador)">Seg.</th>
                         <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Nombre</th>
                         <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">RFC</th>
                         <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Estado</th>
@@ -64,7 +75,10 @@
                 <tbody class="divide-y divide-white/10">
                     @foreach($companies as $company)
                         <tr class="panel-card-dark__row odd:bg-white/5 even:bg-white/[0.02] hover:bg-white/10 transition-colors duration-150">
-                            <td class="px-4 py-3.5 text-sm text-white">{{ $company->nombre_comercial }}</td>
+                            <x-crm-row-marker entity="company" :id="$company->id" />
+                            <td class="px-4 py-3.5 text-sm">
+                                <a href="{{ route('companies.show', $company) }}" class="font-medium text-white hover:text-[#FFE600] hover:underline focus:outline-none focus:ring-2 focus:ring-[#FFE600]/35 rounded">{{ $company->nombre_comercial }}</a>
+                            </td>
                             <td class="px-4 py-3.5 text-sm text-white/90">{{ $company->rfc ?? '—' }}</td>
                             <td class="px-4 py-3.5">
                                 <span class="px-2 py-0.5 text-xs rounded-lg badge-prospect-{{ $company->status_color }}">

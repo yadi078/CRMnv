@@ -266,12 +266,27 @@ body {
   width: 100%;
   overflow-y: auto;
   overflow-x: hidden;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 230, 0, 0.75) rgba(255, 255, 255, 0.12);
 }
 
 .sidebar-nav__list::-webkit-scrollbar {
-  display: none;
+  width: 10px;
+}
+
+.sidebar-nav__list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 9999px;
+}
+
+.sidebar-nav__list::-webkit-scrollbar-thumb {
+  background: rgba(255, 230, 0, 0.78);
+  border-radius: 9999px;
+  border: 2px solid rgba(0, 8, 54, 0.65);
+}
+
+.sidebar-nav__list::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 230, 0, 0.95);
 }
 
 /* Pie del nav: Cerrar sesión - siempre visible al final */
@@ -1338,6 +1353,17 @@ body {
   border: 2px solid #0f172a;
 }
 
+/* Scroll horizontal arriba para tablas (uso puntual en listados) */
+.scroll-x-top {
+  overflow-x: auto;
+  overflow-y: hidden;
+  transform: rotateX(180deg);
+}
+
+.scroll-x-top > * {
+  transform: rotateX(180deg);
+}
+
 /* Subrayado amarillo bajo títulos de secciones */
 .section-title-underline {
   position: relative;
@@ -2292,4 +2318,20 @@ nav[aria-label="Pagination"] span[aria-current="page"] span {
 .approval-request-card__label {
   font-weight: 700;
   color: rgba(255, 255, 255, 0.9);
+}
+
+/* Marcador de fila (localStorage): vacío → flecha → palomita */
+.crm-row-marker .crm-row-marker__empty,
+.crm-row-marker .crm-row-marker__arrow,
+.crm-row-marker .crm-row-marker__check {
+  display: none;
+}
+.crm-row-marker[data-state="none"] .crm-row-marker__empty {
+  display: inline-block;
+}
+.crm-row-marker[data-state="progress"] .crm-row-marker__arrow {
+  display: block;
+}
+.crm-row-marker[data-state="done"] .crm-row-marker__check {
+  display: block;
 }
