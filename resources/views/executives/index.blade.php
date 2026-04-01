@@ -128,17 +128,20 @@
                         </select>
                     </div>
                     <div>
-                        <label for="ejecutivo_id" class="block text-xs font-medium text-white/70 mb-1.5">Ejecutivo</label>
+                        <label for="ejecutivo_id" class="block text-xs font-medium text-white/70 mb-1.5">Ejecutivo (asignación)</label>
                         <select
                             id="ejecutivo_id"
                             name="ejecutivo_id"
                             class="w-full rounded-xl border-0 bg-white/15 text-white text-sm py-2.5 px-3 focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50"
                         >
-                            <option value="">Todos</option>
+                            <option value="">Todos (con o sin ejecutivo)</option>
+                            <option value="sin" @selected(request('ejecutivo_id') === 'sin')>Sin ejecutivo asignado</option>
+                            <option value="con" @selected(request('ejecutivo_id') === 'con')>Con ejecutivo asignado</option>
                             @foreach($executivesForTransfer as $ex)
                                 <option value="{{ $ex->id }}" @selected((string) request('ejecutivo_id') === (string) $ex->id)>{{ $ex->name }} — {{ $ex->email }}</option>
                             @endforeach
                         </select>
+                        <p class="mt-1.5 text-[11px] text-white/45 leading-snug">Use «Sin» o «Con» para listar contactos y asignarlos sin elegir empresa antes.</p>
                     </div>
                 </div>
                 <div class="flex flex-wrap gap-2">
@@ -263,7 +266,7 @@
                     <div class="min-w-0">
                         <h3 class="text-base font-semibold text-white">Asignaciones</h3>
                         <p class="text-xs text-white/55 mt-1 max-w-2xl leading-relaxed">
-                            Cada fila muestra la empresa, el contacto, el ejecutivo responsable y la acción para reasignar el contacto.
+                            Cada fila muestra la empresa, el contacto, el ejecutivo responsable y la acción para asignar o transferir. Filtre por «Sin ejecutivo asignado» para ver pendientes de cartera.
                         </p>
                     </div>
                 </div>

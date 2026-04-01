@@ -239,16 +239,18 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         e.preventDefault();
         const fallback = btn.getAttribute('data-crm-back') || '/';
+        // Preferir ?return= (encadenación CRM) antes que history.back(): si no, tras guardar
+        // desde editar, volver iría otra vez al formulario de edición.
+        const preferred = btn.getAttribute('data-crm-preferred-return');
+        if (preferred) {
+            window.location.assign(preferred);
+            return;
+        }
         if (window.history.length > 1) {
             window.history.back();
             return;
         }
-        const preferred = btn.getAttribute('data-crm-preferred-return');
-        if (preferred) {
-            window.location.assign(preferred);
-        } else {
-            window.location.href = fallback;
-        }
+        window.location.href = fallback;
     });
 
     crmInitRowMarkers(document);

@@ -56,7 +56,7 @@
                                     <option value="{{ $workArea }}"></option>
                                 @endforeach
                             </datalist>
-                            <p class="mt-1 text-xs text-white/60">Solo puede seleccionar areas del catalogo.</p>
+                            <p class="mt-1 text-xs text-white/60">Puede escribir el área o elegir una sugerencia del listado.</p>
                         </div>
                         <div>
                             <label for="email" class="block text-sm font-medium text-white/90 mb-1">Correo electrónico *</label>
@@ -147,8 +147,6 @@
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         var companiesData = @json($companies->map(fn ($c) => ['id' => $c->id, 'nombre_comercial' => $c->nombre_comercial]));
-        var allowedWorkAreas = @json($workAreas->values());
-        var departamentoInput = document.getElementById('departamento');
         var form = document.getElementById('form-nuevo-contacto');
         var modal = document.getElementById('modal-registro-exitoso');
         var modalError = document.getElementById('modal-error');
@@ -265,37 +263,9 @@
             showErrorModal(initialError.getAttribute('data-message'));
         }
 
-        function validateDepartamentoInput() {
-            if (!departamentoInput) return true;
-            if (allowedWorkAreas.length === 0) {
-                departamentoInput.setCustomValidity('');
-                return true;
-            }
-            var value = (departamentoInput.value || '').trim();
-            if (!value) {
-                departamentoInput.setCustomValidity('');
-                return true;
-            }
-            var normalized = value.toUpperCase();
-            var isValid = allowedWorkAreas.some(function(item) {
-                return (item || '').toUpperCase() === normalized;
-            });
-            departamentoInput.setCustomValidity(isValid ? '' : 'Seleccione un area valida del catalogo.');
-            return isValid;
-        }
-
-        if (departamentoInput) {
-            departamentoInput.addEventListener('input', validateDepartamentoInput);
-            departamentoInput.addEventListener('blur', validateDepartamentoInput);
-        }
-
         if (form) {
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
-                if (!validateDepartamentoInput()) {
-                    departamentoInput.reportValidity();
-                    return;
-                }
                 if (companyIdInput && companyInput && !companyIdInput.value && companyInput.value.trim()) {
                     var match = companiesData.find(function(c) {
                         return (c.nombre_comercial || '').trim().toLowerCase() === companyInput.value.trim().toLowerCase();

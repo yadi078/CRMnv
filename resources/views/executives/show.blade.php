@@ -79,14 +79,40 @@
                         <dt class="text-white/60 font-medium">Correo</dt>
                         <dd class="text-white mt-0.5 break-all">{{ $executive->email }}</dd>
                     </div>
-                    <div>
-                        <dt class="text-white/60 font-medium">Estado de cuenta</dt>
-                        <dd class="mt-0.5">
-                            @if($executive->is_active)
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Activo</span>
-                            @else
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-medium bg-red-500/20 text-red-300 border border-red-500/30">Inactivo</span>
-                            @endif
+                    <div class="sm:col-span-2">
+                        <dt class="text-white/60 font-medium mb-2">Estado de cuenta</dt>
+                        <dd class="mt-0">
+                            <p class="text-xs text-white/55 mb-2 max-w-xl">Activa: puede entrar al CRM. Inactiva: el acceso queda bloqueado hasta reactivar.</p>
+                            <form
+                                method="POST"
+                                action="{{ route('executives.update-account-status', $executive) }}"
+                                class="inline-flex flex-col xs:flex-row xs:items-start gap-2"
+                            >
+                                @csrf
+                                @method('PATCH')
+                                <div
+                                    class="inline-flex rounded-xl border border-white/20 p-0.5 bg-black/25 shadow-inner gap-0.5"
+                                    role="group"
+                                    aria-label="Cambiar estado de cuenta"
+                                >
+                                    <button
+                                        type="submit"
+                                        name="is_active"
+                                        value="1"
+                                        class="min-w-[5.5rem] px-4 py-2 rounded-lg text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFE600] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f2744] {{ $executive->is_active ? 'bg-[#FFE600] text-[#071A3D] shadow-sm' : 'text-white/75 hover:text-white hover:bg-white/10' }}"
+                                    >
+                                        Activa
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        name="is_active"
+                                        value="0"
+                                        class="min-w-[5.5rem] px-4 py-2 rounded-lg text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFE600] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f2744] {{ ! $executive->is_active ? 'bg-red-500/85 text-white shadow-sm' : 'text-white/75 hover:text-white hover:bg-white/10' }}"
+                                    >
+                                        Inactiva
+                                    </button>
+                                </div>
+                            </form>
                         </dd>
                     </div>
                     <div>

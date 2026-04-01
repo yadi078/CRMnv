@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\AssignContactExecutiveRequest;
 use App\Http\Requests\BulkAssignContactsExecutiveRequest;
+use App\Http\Requests\UpdateExecutiveAccountStatusRequest;
 use App\Http\Requests\StoreExecutiveRequest;
 use App\Http\Requests\TransferExecutiveContactRequest;
 use App\Http\Requests\TransferExecutivePortfolioRequest;
@@ -78,9 +79,18 @@ class ExecutiveController extends Controller
             $contactoId = null;
         }
 
-        $ejecutivoId = isset($effective['ejecutivo_id']) ? (int) $effective['ejecutivo_id'] : null;
-        if ($ejecutivoId !== null && $ejecutivoId < 1) {
-            $ejecutivoId = null;
+        $ejecutivoRaw = $effective['ejecutivo_id'] ?? null;
+        $ejecutivoModo = null;
+        $ejecutivoUserId = null;
+        if ($ejecutivoRaw === 'sin') {
+            $ejecutivoModo = 'sin';
+        } elseif ($ejecutivoRaw === 'con') {
+            $ejecutivoModo = 'con';
+        } elseif ($ejecutivoRaw !== null && $ejecutivoRaw !== '' && is_numeric($ejecutivoRaw)) {
+            $uid = (int) $ejecutivoRaw;
+            if ($uid > 0) {
+                $ejecutivoUserId = $uid;
+            }
         }
 
         $entidadFiltro = isset($effective['entidad']) ? (string) $effective['entidad'] : null;
@@ -104,13 +114,16 @@ class ExecutiveController extends Controller
             ->get(['id', 'name', 'email', 'is_active']);
 
         /**
-         * Con filtro de empresa y/o contacto: listado por asignaciones (empresa → contacto → ejecutivo),
-         * no por tarjetas de ejecutivo.
+         * Listado por asignaciones (contactos): con empresa y/o contacto, o vista masiva (sin/con ejecutivo).
          */
         $assignmentContacts = null;
         $executives = null;
 
-        if ($empresaId !== null || $contactoId !== null) {
+        $showAssignments = $empresaId !== null
+            || $contactoId !== null
+            || $ejecutivoModo !== null;
+
+        if ($showAssignments) {
             $cq = Contact::query()->with(['company', 'assignedExecutive']);
 
             if ($empresaId !== null) {
@@ -128,7 +141,8 @@ class ExecutiveController extends Controller
                 });
             }
 
-            if ($cuentaActivaFiltro !== null) {
+            // Sin ejecutivo asignado: no aplica "estado de cuenta" del responsable (no hay usuario).
+            if ($cuentaActivaFiltro !== null && $ejecutivoModo !== 'sin') {
                 if ($cuentaActivaFiltro === 'activo') {
                     $cq->whereHas('assignedExecutive', fn ($q) => $q->where('is_active', true));
                 } else {
@@ -136,8 +150,12 @@ class ExecutiveController extends Controller
                 }
             }
 
-            if ($ejecutivoId !== null) {
-                $cq->where('assigned_user_id', $ejecutivoId);
+            if ($ejecutivoModo === 'sin') {
+                $cq->whereNull('assigned_user_id');
+            } elseif ($ejecutivoModo === 'con') {
+                $cq->whereNotNull('assigned_user_id');
+            } elseif ($ejecutivoUserId !== null) {
+                $cq->where('assigned_user_id', $ejecutivoUserId);
             }
 
             $assignmentContacts = $cq->orderBy('nombre_completo')->paginate(20)->withQueryString();
@@ -169,8 +187,8 @@ class ExecutiveController extends Controller
                 }
             }
 
-            if ($ejecutivoId !== null) {
-                $query->whereKey($ejecutivoId);
+            if ($ejecutivoUserId !== null) {
+                $query->whereKey($ejecutivoUserId);
             }
 
             if ($entidadFiltro !== null) {
@@ -214,6 +232,28 @@ class ExecutiveController extends Controller
         unset($saved['estado']);
 
         return $saved;
+    }
+
+    /**
+     * Activar o desactivar la cuenta del ejecutivo (solo admin).
+     */
+    public function updateAccountStatus(UpdateExecutiveAccountStatusRequest $request, User $user): RedirectResponse
+    {
+        if ($user->esAdmin()) {
+            abort(404);
+        }
+
+        $active = $request->boolean('is_active');
+        if ($user->is_active === $active) {
+            return back();
+        }
+
+        $user->update(['is_active' => $active]);
+
+        return back()->with(
+            'status',
+            $active ? 'La cuenta quedó activa: el usuario puede iniciar sesión.' : 'La cuenta quedó inactiva: no podrá iniciar sesión hasta que la reactive.'
+        );
     }
 
     /**

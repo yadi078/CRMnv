@@ -4,7 +4,7 @@
             Areas de trabajo
         </h2>
         <p class="mt-1 text-sm text-white/70">
-            Catalogo usado en el campo "Area de trabajo" de contactos. Solo se permiten valores de esta lista.
+            Sugerencias para el campo "Area de trabajo" en contactos (el texto puede ser libre).
         </p>
     </header>
 

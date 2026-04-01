@@ -61,7 +61,7 @@
                                     <option value="{{ $workArea }}"></option>
                                 @endforeach
                             </datalist>
-                            <p class="mt-1 text-xs text-white/60">Solo se permiten areas del catalogo.</p>
+                            <p class="mt-1 text-xs text-white/60">Puede escribir el área o elegir una sugerencia del listado.</p>
                             <x-input-error :messages="$errors->get('departamento')" class="mt-2" />
                         </div>
 
@@ -186,44 +186,4 @@
             </div>
         </div>
     </div>
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        var allowedWorkAreas = @json($workAreas->values());
-        var form = document.querySelector('form[action="{{ route('contacts.update', $contact) }}"]');
-        var departamentoInput = document.getElementById('departamento');
-
-        function validateDepartamentoInput() {
-            if (!departamentoInput) return true;
-            if (allowedWorkAreas.length === 0) {
-                departamentoInput.setCustomValidity('');
-                return true;
-            }
-            var value = (departamentoInput.value || '').trim();
-            if (!value) {
-                departamentoInput.setCustomValidity('');
-                return true;
-            }
-            var normalized = value.toUpperCase();
-            var isValid = allowedWorkAreas.some(function(item) {
-                return (item || '').toUpperCase() === normalized;
-            });
-            departamentoInput.setCustomValidity(isValid ? '' : 'Seleccione un area valida del catalogo.');
-            return isValid;
-        }
-
-        if (departamentoInput) {
-            departamentoInput.addEventListener('input', validateDepartamentoInput);
-            departamentoInput.addEventListener('blur', validateDepartamentoInput);
-        }
-
-        if (form) {
-            form.addEventListener('submit', function(e) {
-                if (!validateDepartamentoInput()) {
-                    e.preventDefault();
-                    departamentoInput.reportValidity();
-                }
-            });
-        }
-    });
-    </script>
 </x-app-layout>
