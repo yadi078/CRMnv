@@ -7,7 +7,8 @@
             <h2 class="page-header-card__title">{{ $contact->nombre_completo }}</h2>
             <p class="page-header-card__subtitle">Detalle de contacto</p>
         </div>
-        <div class="flex flex-wrap gap-2 ml-auto justify-end">
+        <div class="flex flex-wrap gap-2 ml-auto justify-end items-center">
+            <x-crm-back-button :fallback="route('contacts.index')" />
             <x-contact-reminder-button :contact="$contact" />
             @can('contacts.edit')
             <a href="{{ \App\Support\CrmNavigation::withReturn(route('contacts.edit', $contact)) }}" class="btn-amber-app">

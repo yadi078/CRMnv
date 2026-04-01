@@ -208,7 +208,15 @@ class ContactController extends Controller
     {
         $this->authorize('update', $contact);
 
+        $contact->loadMissing('company');
+
         $companies = Company::forExecutiveContactForm(request()->user());
+
+        // Asegurar que la empresa actual del contacto esté en el desplegable (p. ej. pendiente de aprobación o fuera del listado filtrado).
+        if ($contact->company instanceof Company
+            && ! $companies->contains(fn (Company $c): bool => (int) $c->id === (int) $contact->company->id)) {
+            $companies = $companies->push($contact->company)->sortBy('nombre_comercial')->values();
+        }
 
         return $this->resolveView('contacts.edit', 'user.contacts.edit', compact('contact', 'companies'));
     }
@@ -219,7 +227,6 @@ class ContactController extends Controller
     public function update(UpdateContactRequest $request, Contact $contact)
     {
         $this->authorize('update', $contact);
-        $this->authorize('view', Company::findOrFail($request->validated('company_id')));
 
         try {
             $statusAnterior = $contact->status_color;

@@ -41,10 +41,11 @@ class UpdateContactRequest extends FormRequest
         $companyRules = ['required'];
         $companyRules[] = $this->user()->esAdmin()
             ? 'exists:companies,id'
-            : Rule::exists('companies', 'id')->where(function ($query) {
-                $uid = $this->user()->id;
-                $query->where('created_by', $uid)
-                    ->orWhere('assigned_user_id', $uid);
+            : Rule::exists('companies', 'id')->where(function ($query) use ($contact) {
+                $query->where('approval_status', 'aprobado');
+                if ($contact?->company_id) {
+                    $query->orWhere('id', (int) $contact->company_id);
+                }
             });
 
         return [

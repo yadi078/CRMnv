@@ -247,22 +247,12 @@ class Company extends Model
     }
 
     /**
-     * Empresas disponibles al crear/editar un contacto (ejecutivo):
-     * las asignadas a su cartera o las que él registró (incluye pendientes de aprobación).
+     * Empresas disponibles al crear/editar un contacto: todas las dadas de alta y aprobadas.
+     * El ejecutivo elige empresa en el desplegable; la validación exige empresa aprobada.
      */
     public static function forExecutiveContactForm(User $user): \Illuminate\Database\Eloquent\Collection
     {
-        if ($user->esAdmin()) {
-            return static::aprobadosOrdenados()->get();
-        }
-
-        return static::query()
-            ->where(function ($q) use ($user) {
-                $q->where('assigned_user_id', $user->id)
-                    ->orWhere('created_by', $user->id);
-            })
-            ->orderBy('nombre_comercial')
-            ->get();
+        return static::aprobadosOrdenados()->get();
     }
 
     /**

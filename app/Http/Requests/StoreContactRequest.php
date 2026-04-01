@@ -31,11 +31,7 @@ class StoreContactRequest extends FormRequest
         $companyRules = ['required'];
         $companyRules[] = $this->user()->esAdmin()
             ? 'exists:companies,id'
-            : Rule::exists('companies', 'id')->where(function ($query) {
-                $uid = $this->user()->id;
-                $query->where('created_by', $uid)
-                    ->orWhere('assigned_user_id', $uid);
-            });
+            : Rule::exists('companies', 'id')->where('approval_status', 'aprobado');
 
         return [
             'company_id' => $companyRules,
