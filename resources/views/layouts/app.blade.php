@@ -64,7 +64,22 @@
                                     {{ $header }}
                                 </div>
                                 <div class="flex items-center gap-2 flex-shrink-0">
-                                    <x-crm-back-button />
+                                    @unless(
+                                        request()->routeIs('dashboard') ||
+                                        request()->routeIs('user.dashboard') ||
+                                        request()->routeIs('companies.index') ||
+                                        request()->routeIs('filtros.index') ||
+                                        request()->routeIs('contacts.index') ||
+                                        request()->routeIs('executives.index') ||
+                                        request()->routeIs('follow-ups.index') ||
+                                        request()->routeIs('user.sales.index') ||
+                                        request()->routeIs('approvals.*') ||
+                                        request()->routeIs('notifications.index') ||
+                                        request()->routeIs('data-management.index') ||
+                                        request()->routeIs('profile.edit')
+                                    )
+                                        <x-crm-back-button />
+                                    @endunless
                                     <a href="{{ route('notifications.index') }}" class="relative flex items-center justify-center w-11 h-11 rounded-xl text-[#FFE600] hover:bg-white/10 transition-colors" aria-label="Notificaciones">
                                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
                                     <span class="js-header-notification-badge-wrap absolute top-0 right-0 flex items-center justify-center min-w-[1.25rem] h-5 px-1 rounded-full text-xs font-bold bg-red-500 text-white" style="{{ ($crmHeaderUnreadNotif ?? 0) > 0 ? '' : 'display: none;' }}">
@@ -121,6 +136,25 @@
         (function() {
             var url = '{{ route("notifications.unread-count") }}';
             var seenReminderAlertIds = {};
+            var audioUnlocked = false;
+            var alarmCtx = null;
+            var seenStorageKey = 'crm_seen_reminder_alert_ids_v1';
+
+            try {
+                var rawSeen = sessionStorage.getItem(seenStorageKey);
+                if (rawSeen) {
+                    var parsedSeen = JSON.parse(rawSeen);
+                    if (parsedSeen && typeof parsedSeen === 'object') {
+                        seenReminderAlertIds = parsedSeen;
+                    }
+                }
+            } catch (e) {}
+
+            function persistSeenReminderIds() {
+                try {
+                    sessionStorage.setItem(seenStorageKey, JSON.stringify(seenReminderAlertIds));
+                } catch (e) {}
+            }
 
             function escapeHtml(text) {
                 var div = document.createElement('div');
@@ -137,6 +171,195 @@
                 return t || 'Ahora';
             }
 
+            function unlockAudio() {
+                try {
+                    var Ctx = window.AudioContext || window.webkitAudioContext;
+                    if (!Ctx) {
+                        return;
+                    }
+                    if (!alarmCtx) {
+                        alarmCtx = new Ctx();
+                    }
+                    if (alarmCtx.state === 'suspended') {
+                        alarmCtx.resume();
+                    }
+                    var osc = alarmCtx.createOscillator();
+                    var gain = alarmCtx.createGain();
+                    gain.gain.value = 0.00001;
+                    osc.frequency.value = 440;
+                    osc.connect(gain);
+                    gain.connect(alarmCtx.destination);
+                    osc.start();
+                    osc.stop(alarmCtx.currentTime + 0.02);
+                    audioUnlocked = true;
+                } catch (e) {}
+            }
+
+            function playReminderAlarm() {
+                try {
+                    if (!audioUnlocked) {
+                        unlockAudio();
+                    }
+                    if (!alarmCtx) {
+                        return;
+                    }
+                    if (alarmCtx.state === 'suspended') {
+                        alarmCtx.resume();
+                    }
+
+                    function ring(startAt) {
+                        [0, 0.24, 0.48, 0.72, 0.96].forEach(function(offset, idx) {
+                            var osc = alarmCtx.createOscillator();
+                            var gain = alarmCtx.createGain();
+                            osc.type = 'sawtooth';
+                            osc.frequency.setValueAtTime(idx % 2 === 0 ? 980 : 780, startAt + offset);
+                            gain.gain.setValueAtTime(0.0001, startAt + offset);
+                            gain.gain.exponentialRampToValueAtTime(0.85, startAt + offset + 0.012);
+                            gain.gain.exponentialRampToValueAtTime(0.0001, startAt + offset + 0.21);
+                            osc.connect(gain);
+                            gain.connect(alarmCtx.destination);
+                            osc.start(startAt + offset);
+                            osc.stop(startAt + offset + 0.22);
+                        });
+                    }
+
+                    var now = alarmCtx.currentTime;
+                    ring(now);
+                    ring(now + 1.25);
+                } catch (e) {}
+            }
+
+            function maybeRequestBrowserNotificationPermission() {
+                try {
+                    if (!('Notification' in window)) {
+                        return;
+                    }
+                    if (Notification.permission !== 'default') {
+                        return;
+                    }
+                    if (window.isSecureContext !== true) {
+                        return;
+                    }
+                    if (localStorage.getItem('crm-notif-permission-requested') === '1') {
+                        return;
+                    }
+                    localStorage.setItem('crm-notif-permission-requested', '1');
+                    Notification.requestPermission().catch(function() {});
+                } catch (e) {}
+            }
+
+            function showBrowserReminderNotification(alertData) {
+                try {
+                    if (!('Notification' in window)) {
+                        return;
+                    }
+                    if (Notification.permission !== 'granted') {
+                        return;
+                    }
+                    if (window.isSecureContext !== true) {
+                        return;
+                    }
+                    new Notification('Recordatorio', {
+                        body: (alertData.title || 'Tienes un recordatorio') + (alertData.time ? ('\nHora: ' + alertData.time) : ''),
+                        tag: 'crm-reminder-' + String(alertData.id || ''),
+                        renotify: true,
+                    });
+                } catch (e) {}
+            }
+
+            function closeReminderDetailModal() {
+                var modal = document.getElementById('crm-reminder-detail-modal');
+                if (modal) {
+                    modal.remove();
+                }
+                document.body.style.overflow = '';
+            }
+
+            function markReminderAsRead(notificationId) {
+                if (!notificationId) {
+                    return Promise.resolve();
+                }
+                var tokenMeta = document.querySelector('meta[name="csrf-token"]');
+                var csrf = tokenMeta ? tokenMeta.getAttribute('content') : '';
+                return fetch('/notifications/' + encodeURIComponent(notificationId) + '/read', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrf,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({})
+                }).catch(function() {});
+            }
+
+            function rowHtml(label, value) {
+                if (!value) {
+                    return '';
+                }
+                return '<div class="py-1.5 border-b border-white/10 last:border-b-0">'
+                    + '<p class="text-xs text-white/70">' + escapeHtml(label) + '</p>'
+                    + '<p class="text-sm text-white font-semibold">' + escapeHtml(value) + '</p>'
+                    + '</div>';
+            }
+
+            function openReminderDetailModal(alertData) {
+                closeReminderDetailModal();
+                var detail = alertData.detail || {};
+                var html = ''
+                    + '<div id="crm-reminder-detail-modal" class="fixed inset-0 z-[130] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">'
+                    + '  <div class="absolute inset-0" data-close-reminder-modal="1"></div>'
+                    + '  <div class="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border-2 border-[#FFE600] bg-[#0b2f69] shadow-2xl">'
+                    + '    <div class="px-5 py-3 bg-[#071A3D] border-b border-[#FFE600]/45 flex items-center justify-between">'
+                    + '      <h3 class="text-base font-extrabold text-[#FFE600]">Detalle del recordatorio</h3>'
+                    + '      <button type="button" class="w-8 h-8 rounded-full border border-[#FFE600]/70 text-[#FFE600] hover:bg-[#FFE600]/15" data-close-reminder-modal="1">×</button>'
+                    + '    </div>'
+                    + '    <div class="p-5 space-y-4 text-white">'
+                    + '      <div class="rounded-xl border border-white/15 bg-[#123f8f] p-4">'
+                    + '        <p class="text-sm text-white/80">Título</p>'
+                    + '        <p class="text-lg font-bold">' + escapeHtml(alertData.title || 'Recordatorio') + '</p>'
+                    + (alertData.description ? '<p class="mt-2 text-sm text-white/90">' + escapeHtml(alertData.description) + '</p>' : '')
+                    + '      </div>'
+                    + '      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">'
+                    + '        <div class="rounded-xl border border-white/15 bg-[#0f376f] p-4">'
+                    + '          <p class="text-sm font-bold text-[#FFE600] mb-2">Datos del contacto</p>'
+                    +            rowHtml('Nombre', detail.nombre_cliente)
+                    +            rowHtml('Empresa', detail.empresa)
+                    +            rowHtml('Correo', detail.correo_electronico)
+                    +            rowHtml('Teléfono', detail.numero_telefonico)
+                    +            rowHtml('Extensión', detail.extension)
+                    +            rowHtml('Área', detail.area)
+                    +            rowHtml('Puesto', detail.puesto_trabajo)
+                    + '        </div>'
+                    + '        <div class="rounded-xl border border-white/15 bg-[#0f376f] p-4">'
+                    + '          <p class="text-sm font-bold text-[#FFE600] mb-2">Datos del recordatorio</p>'
+                    +            rowHtml('Hora programada', detail.fecha_inicio || alertData.time)
+                    +            rowHtml('Fecha límite', detail.fecha_limite)
+                    +            rowHtml('Repetición', detail.repeticion)
+                    + '        </div>'
+                    + '      </div>'
+                    + '      <div class="flex justify-end pt-1">'
+                    + '        <button type="button" id="crm-reminder-mark-seen" class="px-5 py-2.5 rounded-xl bg-[#FFE600] text-[#071A3D] text-sm font-bold hover:bg-[#ffeb3b]">Visto</button>'
+                    + '      </div>'
+                    + '    </div>'
+                    + '  </div>'
+                    + '</div>';
+                document.body.insertAdjacentHTML('beforeend', html);
+                document.body.style.overflow = 'hidden';
+                document.querySelectorAll('[data-close-reminder-modal="1"]').forEach(function(el) {
+                    el.addEventListener('click', closeReminderDetailModal);
+                });
+                var seenBtn = document.getElementById('crm-reminder-mark-seen');
+                if (seenBtn) {
+                    seenBtn.addEventListener('click', function() {
+                        markReminderAsRead(alertData.id).finally(function() {
+                            closeReminderDetailModal();
+                            updateBadge();
+                        });
+                    });
+                }
+            }
+
             function showDueReminderSideAlert(alertData) {
                 var host = document.getElementById('crm-reminder-side-alerts');
                 if (!host) {
@@ -149,21 +372,21 @@
                 var id = 'due-reminder-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
                 var hourText = extractHourLabel(alertData.time);
                 var html = ''
-                    + '<div id="' + id + '" class="pointer-events-auto rounded-2xl border-2 border-[#FFE600] bg-gradient-to-r from-[#b30000] via-[#123f8f] to-[#001b4d] text-white shadow-2xl ring-2 ring-[#FFE600]/60 overflow-hidden">'
-                    + '  <div class="px-4 py-3 border-b border-[#FFE600]/40 bg-black/20 flex items-center gap-2">'
-                    + '    <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-[#FFE600] text-[#b30000] shrink-0">'
+                    + '<div id="' + id + '" class="pointer-events-auto rounded-2xl overflow-hidden" style="background:#0b2f69;border:2px solid #FFE600;box-shadow:0 14px 30px rgba(0,0,0,0.45);">'
+                    + '  <div class="px-4 py-3 flex items-center gap-2" style="background:#071A3D;color:#FFE600;border-bottom:1px solid rgba(255,230,0,0.45);">'
+                    + '    <span class="inline-flex items-center justify-center w-8 h-8 rounded-full shrink-0" style="background:rgba(255,230,0,0.2);color:#FFE600;border:1px solid rgba(255,230,0,0.8);">'
                     + '      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">'
                     + '        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>'
                     + '      </svg>'
                     + '    </span>'
-                    + '    <p class="text-sm font-bold tracking-wide text-[#FFE600] flex-1">ALERTA DE RECORDATORIO</p>'
-                    + '    <button type="button" data-dismiss-id="' + id + '" class="inline-flex items-center justify-center w-7 h-7 rounded-full border border-[#FFE600]/70 text-[#FFE600] hover:bg-[#FFE600]/15" aria-label="Cerrar alerta">'
+                    + '    <p class="text-sm font-extrabold tracking-wide flex-1">ALERTA DE RECORDATORIO</p>'
+                    + '    <button type="button" data-dismiss-id="' + id + '" class="inline-flex items-center justify-center w-7 h-7 rounded-full border border-[#ffe600]/80 text-[#ffe600] hover:bg-[#ffe600]/20" aria-label="Cerrar alerta">'
                     + '      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>'
                     + '    </button>'
                     + '  </div>'
-                    + '  <div class="px-4 py-3">'
-                    + '    <p class="text-sm font-semibold leading-snug">' + escapeHtml(alertData.title || 'Recordatorio') + '</p>'
-                    + '    <p class="mt-1 text-xs text-white/90">Hora: <span class="font-bold text-[#FFE600]">' + escapeHtml(hourText) + '</span></p>'
+                    + '  <div class="px-4 py-3.5" style="background:#0b2f69;">'
+                    + '    <p class="text-base font-extrabold leading-snug text-white">' + escapeHtml(alertData.title || 'Recordatorio') + '</p>'
+                    + '    <p class="mt-1.5 text-sm text-white/90">Hora: <span class="font-extrabold text-[#FFE600]">' + escapeHtml(hourText) + '</span></p>'
                     + '  </div>'
                     + '</div>';
 
@@ -178,6 +401,12 @@
                         dismissReminderNode(node);
                     });
                 }
+                node.addEventListener('click', function(e) {
+                    if (e.target && e.target.closest('[data-dismiss-id]')) {
+                        return;
+                    }
+                    openReminderDetailModal(alertData);
+                });
                 setTimeout(function() {
                     dismissReminderNode(node);
                 }, 180000);
@@ -221,11 +450,22 @@
                                 return;
                             }
                             seenReminderAlertIds[reminderId] = true;
+                            persistSeenReminderIds();
                             showDueReminderSideAlert(alertData);
+                            playReminderAlarm();
+                            showBrowserReminderNotification(alertData);
                         });
                     })
                     .catch(function() {});
             }
+            document.addEventListener('click', unlockAudio, { once: true });
+            document.addEventListener('keydown', unlockAudio, { once: true });
+            document.addEventListener('visibilitychange', function() {
+                if (document.visibilityState === 'visible') {
+                    maybeRequestBrowserNotificationPermission();
+                }
+            });
+            maybeRequestBrowserNotificationPermission();
             updateBadge();
             setInterval(updateBadge, 25000);
             window.updateNotificationBadge = updateBadge;

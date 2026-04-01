@@ -7,12 +7,12 @@ use Illuminate\Notifications\Notification;
 
 class ReminderDueNotification extends Notification
 {
-    /** @param  'pre'|'due'  $phase  pre = 10 min antes; due = hora programada */
+    /** @param  'pre15'|'pre10'|'pre5'|'due'  $phase */
     public function __construct(
         public Reminder $reminder,
         public string $phase = 'due',
     ) {
-        $this->phase = in_array($phase, ['pre', 'due'], true) ? $phase : 'due';
+        $this->phase = in_array($phase, ['pre15', 'pre10', 'pre5', 'due'], true) ? $phase : 'due';
     }
 
     /**
@@ -87,7 +87,13 @@ class ReminderDueNotification extends Notification
      */
     public static function reminderSummaryLine(array $data): string
     {
-        $prefix = (($data['alert_phase'] ?? '') === 'pre') ? 'En 10 min: ' : '';
+        $phase = (string) ($data['alert_phase'] ?? '');
+        $prefix = match ($phase) {
+            'pre15' => 'En 15 min: ',
+            'pre10' => 'En 10 min: ',
+            'pre5' => 'En 5 min: ',
+            default => '',
+        };
 
         $det = $data['reminder_detalle'] ?? [];
         if (is_array($det)) {
@@ -117,9 +123,12 @@ class ReminderDueNotification extends Notification
             ? $this->reminder->title . ' — ' . $this->reminder->description
             : $this->reminder->title;
 
-        $titulo = $this->phase === 'pre'
-            ? 'Recordatorio en 10 minutos'
-            : 'Recordatorio';
+        $titulo = match ($this->phase) {
+            'pre15' => 'Recordatorio en 15 minutos',
+            'pre10' => 'Recordatorio en 10 minutos',
+            'pre5' => 'Recordatorio en 5 minutos',
+            default => 'Recordatorio',
+        };
 
         return [
             'titulo' => $titulo,

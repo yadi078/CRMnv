@@ -8,7 +8,6 @@
             <p class="page-header-card__subtitle">{{ $contact->nombre_completo }}</p>
             </div>
         <div class="flex flex-wrap gap-2 ml-auto justify-end items-center shrink-0">
-            <x-crm-back-button :fallback="route('contacts.show', $contact)" />
         </div>
     </x-slot>
 

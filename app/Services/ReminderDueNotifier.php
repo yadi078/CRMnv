@@ -3,17 +3,21 @@
 namespace App\Services;
 
 use App\Models\Reminder;
+use App\Models\User;
+use App\Notifications\ReminderDueNotification;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Reglas de aviso (con hora o "todo el día" con hora concreta en start_at):
- * - Primera notificación: en cuanto entramos en los 10 minutos anteriores a la hora programada (una sola vez).
- * - Segunda notificación: a la hora programada o después (una sola vez), si aún no se envió.
+ * Reglas de aviso:
+ * - Alertas previas: 15, 10 y 5 minutos antes (una vez cada fase).
+ * - Alarma principal: en la hora programada o después (una sola vez).
  */
 class ReminderDueNotifier
 {
-    public const PRE_EVENT_MINUTES = 10;
+    /** @var array<int> */
+    public const PRE_EVENT_MINUTES = [15, 10, 5];
 
     /**
      * Procesa recordatorios pendientes y envía notificaciones según reglas.
@@ -62,29 +66,44 @@ class ReminderDueNotifier
         return $this->processTimed($reminder, $now, $start);
     }
 
-    /**
-     * Aviso 10 minutos antes (una vez) y aviso en la hora programada (una vez).
-     */
     protected function processTimed(Reminder $reminder, Carbon $now, Carbon $start): bool
     {
-        $windowStart = $start->copy()->subMinutes(self::PRE_EVENT_MINUTES);
-
-        if ($now->gte($start) && ! $reminder->notification_sent_at) {
+        // 1) Aviso en hora (fase due).
+        if ($now->gte($start) && ! $this->alreadySentPhase($reminder, 'due')) {
             $reminder->update([
                 'notification_sent_at' => $now,
             ]);
+            $reminder->user?->notify(new ReminderDueNotification($reminder, 'due'));
 
             return true;
         }
 
-        if ($now->gte($windowStart) && $now->lt($start) && ! $reminder->pre_notification_sent_at) {
-            $reminder->update([
-                'pre_notification_sent_at' => $now,
-            ]);
+        // 2) Avisos previos (fases pre15/pre10/pre5).
+        foreach (self::PRE_EVENT_MINUTES as $minutes) {
+            $phase = 'pre' . $minutes;
+            $windowStart = $start->copy()->subMinutes($minutes);
+            if ($now->gte($windowStart) && $now->lt($start) && ! $this->alreadySentPhase($reminder, $phase)) {
+                $reminder->update([
+                    'pre_notification_sent_at' => $now,
+                ]);
+                $reminder->user?->notify(new ReminderDueNotification($reminder, $phase));
 
-            return true;
+                return true;
+            }
         }
 
         return false;
+    }
+
+    protected function alreadySentPhase(Reminder $reminder, string $phase): bool
+    {
+        return DB::table('notifications')
+            ->where('notifiable_type', User::class)
+            ->where('notifiable_id', $reminder->user_id)
+            ->where('type', ReminderDueNotification::class)
+            ->where('data->tipo', 'recordatorio')
+            ->where('data->reminder_id', $reminder->id)
+            ->where('data->alert_phase', $phase)
+            ->exists();
     }
 }

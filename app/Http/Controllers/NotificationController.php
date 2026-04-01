@@ -23,6 +23,9 @@ class NotificationController extends Controller
     {
         try {
             $user = auth()->user();
+            // Respaldo web: si no corre cron/scheduler, generar aquí los recordatorios debidos
+            // para el usuario autenticado (15/10/5 min y hora).
+            app(ReminderDueNotifier::class)->dispatchDue($user->id);
             $count = $user->unreadNonReminderNotificationsCount();
             $display = $count > 99 ? '99+' : (string) $count;
 
@@ -37,7 +40,7 @@ class NotificationController extends Controller
                     $data = ReminderDueNotification::enrichStoredData($data, $user->id);
 
                     $phase = (string) ($data['alert_phase'] ?? 'due');
-                    if ($phase !== 'due') {
+                    if (! in_array($phase, ['pre15', 'pre10', 'pre5', 'due'], true)) {
                         return null;
                     }
 
@@ -46,11 +49,25 @@ class NotificationController extends Controller
                         : [];
                     $title = trim((string) ($detail['titulo'] ?? $data['titulo'] ?? 'Recordatorio'));
                     $fechaInicio = trim((string) ($detail['fecha_inicio'] ?? $data['fecha_prevista'] ?? ''));
+                    $description = trim((string) ($detail['descripcion'] ?? $data['mensaje'] ?? ''));
 
                     return [
                         'id' => (string) $notification->id,
                         'title' => $title !== '' ? $title : 'Recordatorio',
                         'time' => $fechaInicio,
+                        'description' => $description,
+                        'detail' => [
+                            'nombre_cliente' => trim((string) ($detail['nombre_cliente'] ?? '')),
+                            'empresa' => trim((string) ($detail['empresa'] ?? '')),
+                            'correo_electronico' => trim((string) ($detail['correo_electronico'] ?? '')),
+                            'numero_telefonico' => trim((string) ($detail['numero_telefonico'] ?? '')),
+                            'extension' => trim((string) ($detail['extension'] ?? '')),
+                            'area' => trim((string) ($detail['area'] ?? '')),
+                            'puesto_trabajo' => trim((string) ($detail['puesto_trabajo'] ?? '')),
+                            'fecha_inicio' => $fechaInicio,
+                            'fecha_limite' => trim((string) ($detail['fecha_limite'] ?? '')),
+                            'repeticion' => trim((string) ($detail['repeticion'] ?? '')),
+                        ],
                     ];
                 })
                 ->filter()
