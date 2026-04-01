@@ -162,7 +162,7 @@
                 <span class="sidebar-nav__label">Notificaciones</span>
                 @php
                     try {
-                        $unread = auth()->user()->unreadNonReminderNotificationsCount();
+                        $unread = auth()->user()->unreadNotificationsCount();
                     } catch (\Throwable $e) {
                         $unread = 0;
                     }

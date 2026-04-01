@@ -110,6 +110,8 @@ Alpine.data('executivesPage', (initial = {}) => ({
     filterContactId: initial.filterContactId ?? null,
     autoAssignContactId: initial.autoAssignContactId ?? null,
     registerModalOpen: Boolean(initial.registerModalOpen),
+    registerPasswordVisible: false,
+    registerPasswordConfirmVisible: false,
     modalOpen: Boolean(initial.modalOpen),
     openContactTransfer(execId, contactId) {
         this.transferFromUserId = execId;
@@ -150,6 +152,8 @@ Alpine.data('executivesPage', (initial = {}) => ({
     },
     closeRegisterModal() {
         this.registerModalOpen = false;
+        this.registerPasswordVisible = false;
+        this.registerPasswordConfirmVisible = false;
     },
 }));
 

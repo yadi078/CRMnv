@@ -20,7 +20,7 @@
                         : route('contacts.show', $contact);
                     $selectedCompanyId = old('company_id', $contact->company_id ?? $contact->company?->id);
                 @endphp
-                <form method="POST" action="{{ route('contacts.update', $contact) }}">
+                <form id="form-editar-contacto" method="POST" action="{{ route('contacts.update', $contact) }}">
                     @csrf
                     @method('PUT')
                     @if(($crmNavReturn = request('return')) && is_string($crmNavReturn) && \App\Support\CrmNavigation::isSafeReturnUrl($crmNavReturn))
@@ -219,6 +219,10 @@
 
         function validateDepartamentoInput() {
             if (!departamentoInput) return true;
+            if (allowedWorkAreas.length === 0) {
+                departamentoInput.setCustomValidity('');
+                return true;
+            }
             var value = (departamentoInput.value || '').trim();
             if (!value) {
                 departamentoInput.setCustomValidity('');

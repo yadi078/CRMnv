@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\WorkArea;
 use App\Rules\CommaSeparatedEmails;
 use App\Support\ContactEmailList;
 use Illuminate\Foundation\Http\FormRequest;
@@ -62,7 +63,7 @@ class UpdateContactRequest extends FormRequest
             'nombre_completo' => 'required|string|max:255',
             'genero' => 'nullable|string|max:50',
             'puesto_de_trabajo' => 'nullable|string|max:255',
-            'departamento' => 'nullable|string|max:255|exists:work_areas,name',
+            'departamento' => WorkArea::validationRulesForDepartamentoField(),
             'celular' => 'nullable|string|max:20',
             'telefono' => 'nullable|string|max:30',
             'extension' => 'nullable|string|max:10',

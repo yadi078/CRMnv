@@ -80,7 +80,7 @@ class ContactController extends Controller
 
         $companyId = $request->company_id;
         $companies = Company::forExecutiveContactForm($request->user());
-        $workAreas = WorkArea::query()->orderBy('name')->pluck('name');
+        $workAreas = WorkArea::namesForContactForms();
 
         return $this->resolveView('contacts.create', 'user.contacts.create', compact('companies', 'companyId', 'workAreas'));
     }
@@ -213,7 +213,7 @@ class ContactController extends Controller
         $contact->loadMissing('company');
 
         $companies = Company::forExecutiveContactForm(request()->user());
-        $workAreas = WorkArea::query()->orderBy('name')->pluck('name');
+        $workAreas = WorkArea::namesForContactForms();
 
         // Asegurar que la empresa actual del contacto esté en el desplegable (p. ej. pendiente de aprobación o fuera del listado filtrado).
         if ($contact->company instanceof Company
@@ -259,8 +259,18 @@ class ContactController extends Controller
             return redirect()->to(\App\Support\CrmNavigation::redirectTargetFromRequest($request, route('contacts.show', $contact)))
                 ->with('success', 'Contacto actualizado exitosamente.');
         } catch (\Exception $e) {
-            return back()->withInput()
-                ->with('error', 'Error al actualizar el contacto. Por favor, intente nuevamente.');
+            Log::error('Error al actualizar contacto: '.$e->getMessage(), [
+                'contact_id' => $contact->id,
+                'exception' => $e::class,
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            $msg = 'Error al actualizar el contacto. Por favor, intente nuevamente.';
+            if (config('app.debug')) {
+                $msg .= ' Detalle: '.$e->getMessage();
+            }
+
+            return back()->withInput()->with('error', $msg);
         }
     }
 

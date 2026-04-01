@@ -16,7 +16,7 @@
     </head>
     <body class="font-sans antialiased text-fluid-base">
         @auth
-            @php($crmHeaderUnreadNotif = auth()->user()->unreadNonReminderNotificationsCount())
+            @php($crmHeaderUnreadNotif = auth()->user()->unreadNotificationsCount())
         @endauth
         <div class="sidebar-layout sidebar-layout--expanded" x-data="{ mobileMenuOpen: false }">
             {{-- Barra superior móvil/tablet: logo + notificaciones + menú hamburguesa (solo < lg) --}}

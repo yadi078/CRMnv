@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use App\Notifications\ReminderDueNotification;
 use App\Services\ContactBirthdayNotifier;
 use App\Services\ReminderDueNotifier;
@@ -26,7 +25,7 @@ class NotificationController extends Controller
             // Respaldo web: si no corre cron/scheduler, generar aquí los recordatorios debidos
             // para el usuario autenticado (15/10/5 min y hora).
             app(ReminderDueNotifier::class)->dispatchDue($user->id);
-            $count = $user->unreadNonReminderNotificationsCount();
+            $count = $user->unreadNotificationsCount();
             $display = $count > 99 ? '99+' : (string) $count;
 
             $dueReminderAlerts = $user->unreadNotifications()
@@ -97,7 +96,6 @@ class NotificationController extends Controller
         }
 
         $query = $user->notifications();
-        User::applyExcludeReminderNotificationsScope($query);
 
         // Filtro
         $filter = $request->get('filtro', 'todas');
@@ -138,10 +136,8 @@ class NotificationController extends Controller
             return $n;
         });
 
-        $unreadCount = $user->unreadNonReminderNotificationsCount();
-        $starredQuery = $user->notifications()->where('starred', true);
-        User::applyExcludeReminderNotificationsScope($starredQuery);
-        $starredCount = $starredQuery->count();
+        $unreadCount = $user->unreadNotificationsCount();
+        $starredCount = $user->notifications()->where('starred', true)->count();
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
@@ -178,7 +174,7 @@ class NotificationController extends Controller
             $user = auth()->user();
             $n = $user->notifications()->findOrFail($notification);
             $n->markAsRead();
-            $unreadCount = $user->unreadNonReminderNotificationsCount();
+            $unreadCount = $user->unreadNotificationsCount();
 
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json([
@@ -227,7 +223,7 @@ class NotificationController extends Controller
         $toMark = $user->notifications()->whereIn('id', $ids)->get();
         $toMark->markAsRead();
 
-        $unreadCount = $user->unreadNonReminderNotificationsCount();
+        $unreadCount = $user->unreadNotificationsCount();
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([

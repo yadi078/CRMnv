@@ -3,17 +3,14 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Collection;
 use App\Models\Contact;
 use App\Models\Reminder;
-use App\Notifications\ReminderDueNotification;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Traits\HasRoles;
 
@@ -165,21 +162,10 @@ class User extends Authenticatable
         return $this->hasMany(Reminder::class);
     }
 
-    /**
-     * Excluye avisos de recordatorios vencidos del listado y del contador.
-     * Se usa la columna `type` (clase de la notificación), no JSON en `data`, para evitar errores SQL con TEXT/JSON mal formado.
-     */
-    public static function applyExcludeReminderNotificationsScope(Builder|Relation $query): void
+    /** Cantidad de notificaciones no leídas (incluye recordatorios; mismo criterio que la vista /notifications). */
+    public function unreadNotificationsCount(): int
     {
-        $query->where('type', '!=', ReminderDueNotification::class);
-    }
-
-    public function unreadNonReminderNotificationsCount(): int
-    {
-        $q = $this->unreadNotifications();
-        static::applyExcludeReminderNotificationsScope($q);
-
-        return $q->count();
+        return $this->unreadNotifications()->count();
     }
 
     /**

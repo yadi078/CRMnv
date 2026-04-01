@@ -10,11 +10,13 @@ use App\Http\Requests\UpdateExecutiveAssignmentsRequest;
 use App\Models\Company;
 use App\Models\Contact;
 use App\Models\User;
+use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
+use Spatie\Permission\Models\Role;
 
 class ExecutiveController extends Controller
 {
@@ -33,6 +35,9 @@ class ExecutiveController extends Controller
 
             return redirect()->route('executives.index');
         }
+
+        $this->ensureWebRoleExists('usuario');
+        $this->ensureWebRoleExists('administrador');
 
         $hasFilterKeysInQuery = $request->hasAny(['empresa_id', 'contacto_id', 'estado']);
 
@@ -276,6 +281,8 @@ class ExecutiveController extends Controller
         $roleName = $data['role'];
         unset($data['role']);
 
+        $this->ensureWebRoleExists($roleName);
+
         $user = DB::transaction(function () use ($data, $request, $roleName) {
             $admin = $request->user();
             $user = User::create([
@@ -378,5 +385,18 @@ class ExecutiveController extends Controller
                 'success',
                 'Cartera transferida: '.$counts['companies'].' empresa(s) y '.$counts['contacts'].' contacto(s) pasaron de «'.$from->name.'» a «'.$to->name.'».'
             );
+    }
+
+    /**
+     * En hosting suele faltar el seeder de Spatie; syncRoles() lanza excepción si el rol no existe.
+     * El seeder es idempotente (firstOrCreate / givePermissionTo).
+     */
+    private function ensureWebRoleExists(string $roleName): void
+    {
+        if (Role::query()->where('name', $roleName)->where('guard_name', 'web')->exists()) {
+            return;
+        }
+
+        app(RolePermissionSeeder::class)->run();
     }
 }

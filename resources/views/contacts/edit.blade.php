@@ -194,6 +194,10 @@
 
         function validateDepartamentoInput() {
             if (!departamentoInput) return true;
+            if (allowedWorkAreas.length === 0) {
+                departamentoInput.setCustomValidity('');
+                return true;
+            }
             var value = (departamentoInput.value || '').trim();
             if (!value) {
                 departamentoInput.setCustomValidity('');
