@@ -15,19 +15,18 @@
                         <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Tel / Cel</th>
                         <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Email</th>
                         <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Estado</th>
-                        <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Acción</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-white/10">
                     @foreach($contacts as $contact)
                         <tr class="panel-card-dark__row odd:bg-white/5 even:bg-white/[0.02] hover:bg-white/10 transition-colors duration-150">
                             <x-crm-row-marker entity="contact" :id="$contact->id" />
-                            <td class="px-4 py-3.5 text-sm">
-                                <a href="{{ route('contacts.show', $contact) }}" class="font-medium text-white hover:text-[#FFE600] hover:underline focus:outline-none focus:ring-2 focus:ring-[#FFE600]/35 rounded">{{ $contact->nombre_completo }}</a>
+                            <td class="px-4 py-3.5 text-sm align-top whitespace-normal break-words">
+                                <a href="{{ \App\Support\CrmNavigation::withReturn(route('contacts.show', $contact)) }}" title="Ver ficha del contacto" class="font-medium text-white hover:text-[#FFE600] hover:underline focus:outline-none focus:ring-2 focus:ring-[#FFE600]/35 rounded">{{ $contact->nombre_completo }}</a>
                             </td>
-                            <td class="px-4 py-3.5 text-sm text-white/90">
+                            <td class="px-4 py-3.5 text-sm text-white/90 align-top whitespace-normal break-words">
                                 @if($contact->company)
-                                    <a href="{{ route('companies.show', $contact->company) }}" class="hover:text-[#FFE600] hover:underline focus:outline-none focus:ring-2 focus:ring-[#FFE600]/35 rounded">{{ $contact->company->nombre_comercial }}</a>
+                                    <a href="{{ \App\Support\CrmNavigation::withReturn(route('companies.show', $contact->company)) }}" title="Ver ficha de la empresa" class="hover:text-[#FFE600] hover:underline focus:outline-none focus:ring-2 focus:ring-[#FFE600]/35 rounded">{{ $contact->company->nombre_comercial }}</a>
                                 @else
                                     —
                                 @endif
@@ -38,9 +37,6 @@
                                 <span class="px-2 py-0.5 text-xs rounded-lg badge-prospect-{{ $contact->status_color ?? 'seguimiento' }}">
                                     {{ $contact->status_label ?? '—' }}
                                 </span>
-                            </td>
-                            <td class="px-4 py-3.5">
-                                <a href="{{ route('contacts.show', $contact) }}" class="text-[#FFE600] hover:text-white text-sm font-medium">Ver</a>
                             </td>
                         </tr>
                     @endforeach
@@ -69,26 +65,20 @@
                         <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">RFC</th>
                         <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Estado</th>
                         <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Ejecutivo</th>
-                        <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Acción</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-white/10">
                     @foreach($companies as $company)
                         <tr class="panel-card-dark__row odd:bg-white/5 even:bg-white/[0.02] hover:bg-white/10 transition-colors duration-150">
                             <x-crm-row-marker entity="company" :id="$company->id" />
-                            <td class="px-4 py-3.5 text-sm">
-                                <a href="{{ route('companies.show', $company) }}" class="font-medium text-white hover:text-[#FFE600] hover:underline focus:outline-none focus:ring-2 focus:ring-[#FFE600]/35 rounded">{{ $company->nombre_comercial }}</a>
+                            <td class="px-4 py-3.5 text-sm align-top whitespace-normal break-words">
+                                <a href="{{ \App\Support\CrmNavigation::withReturn(route('companies.show', $company)) }}" title="Ver ficha de la empresa" class="font-medium text-white hover:text-[#FFE600] hover:underline focus:outline-none focus:ring-2 focus:ring-[#FFE600]/35 rounded">{{ $company->nombre_comercial }}</a>
                             </td>
                             <td class="px-4 py-3.5 text-sm text-white/90">{{ $company->rfc ?? '—' }}</td>
-                            <td class="px-4 py-3.5">
-                                <span class="px-2 py-0.5 text-xs rounded-lg badge-prospect-{{ $company->status_color }}">
-                                    {{ $company->status_label }}
-                                </span>
+                            <td class="px-4 py-3.5 align-top max-w-[14rem]">
+                                <x-company-prospect-status-badges :company="$company" variant="filtros" />
                             </td>
                             <td class="px-4 py-3.5 text-sm text-white/90">{{ $company->ejecutivo_asignado ?? '—' }}</td>
-                            <td class="px-4 py-3.5">
-                                <a href="{{ route('companies.show', $company) }}" class="text-[#FFE600] hover:text-white text-sm font-medium">Ver</a>
-                            </td>
                         </tr>
                     @endforeach
                 </tbody>

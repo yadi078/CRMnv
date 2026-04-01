@@ -671,6 +671,25 @@ body {
   display: block;
 }
 
+/* Burbuja compacta (foto / iniciales más pequeñas) */
+.page-header-card__icon.page-header-card__icon--compact,
+.page-header-card__icon.page-header-card__icon--compact:has(.page-header-card__icon-img),
+.page-header-card__icon.page-header-card__icon--compact.page-header-card__icon--with-photo {
+  width: 2.25rem;
+  height: 2.25rem;
+  min-width: 2.25rem;
+  min-height: 2.25rem;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.45),
+    0 0 0 2px var(--color-accent),
+    0 2px 8px rgba(0, 0, 0, 0.28);
+}
+
+.page-header-card__icon.page-header-card__icon--compact svg {
+  width: 1rem;
+  height: 1rem;
+}
+
 .page-header-card__title {
   font-size: clamp(1.05rem, 2.6vw + 0.7rem, 1.3rem);
   font-weight: 700;
@@ -791,6 +810,52 @@ body {
 /* Labels en panel oscuro: texto blanco (mayor contraste) */
 .panel-card-dark label {
   color: #ffffff;
+}
+
+/*
+ * Listas claras (asignación ejecutivo): el panel oscuro impone color:#fff;
+ * hay que forzar texto oscuro en todo el bloque para que se lea sobre fondo blanco.
+ */
+.panel-card-dark .exec-assignment-picklist {
+  color: #000000 !important;
+}
+.panel-card-dark .exec-assignment-picklist label,
+.panel-card-dark .exec-assignment-picklist label span,
+.panel-card-dark .exec-assignment-picklist > div {
+  color: #000000 !important;
+}
+.panel-card-dark .exec-assignment-picklist .text-gray-600 {
+  color: #4b5563 !important;
+}
+.panel-card-dark .exec-assignment-picklist .text-amber-700 {
+  color: #b45309 !important;
+}
+.panel-card-dark .exec-assignment-picklist button[type='button'] {
+  color: #ffe600 !important;
+}
+
+/* ID: mayor especificidad que .panel-card-dark label (texto blanco heredado) */
+#picklist-empresas-asig label.exec-assignment-picklist__row,
+#picklist-empresas-asig label.exec-assignment-picklist__row span {
+  color: #000000 !important;
+}
+#picklist-empresas-asig label.exec-assignment-picklist__row .text-amber-800 {
+  color: #92400e !important;
+}
+#picklist-contactos-asig,
+#picklist-contactos-asig label,
+#picklist-contactos-asig label span,
+#picklist-contactos-asig > div {
+  color: #000000 !important;
+}
+#picklist-contactos-asig .text-gray-600 {
+  color: #4b5563 !important;
+}
+#picklist-contactos-asig .text-amber-700 {
+  color: #b45309 !important;
+}
+#picklist-contactos-asig button[type='button'] {
+  color: #ffe600 !important;
 }
 
 /* Inputs en panel oscuro: fondo blanco siempre, borde amarillo al enfocar */

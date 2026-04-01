@@ -16,7 +16,7 @@ class CompanyPolicy
     }
 
     /**
-     * Admin ve todas (con permisos). Ejecutivo: la que creó o cualquier empresa aprobada del CRM.
+     * Admin ve todas (con permisos). Ejecutivo: asignadas a él o registradas por él.
      */
     public function view(User $user, Company $company): bool
     {

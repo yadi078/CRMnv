@@ -1,7 +1,6 @@
 {{--
-  Sidebar para Usuario Normal (operativo y gestión).
-  Inicio, Empresas, Contactos, Seguimientos, Historial de Ventas, Notificaciones, Perfil.
-  Sin acceso a Configuración global ni vistas de administrador.
+  Sidebar usuario operativo: Inicio, Empresas, Filtros, Contactos, Seguimientos, Historial,
+  Gestión de datos, Notificaciones, Perfil. (Sin panel admin, ejecutivos ni aprobaciones.)
 --}}
 <nav
     class="sidebar-nav"
@@ -40,11 +39,16 @@
         </li>
 
         <li class="sidebar-nav__item">
+            @php
+                $isCompaniesRoute = request()->routeIs('companies.*');
+                $isFiltersView = request()->routeIs('companies.index') && request('view') === 'filtros';
+                $isCompaniesActive = $isCompaniesRoute && ! $isFiltersView;
+            @endphp
             <a
                 href="{{ route('companies.index') }}"
-                class="sidebar-nav__link {{ request()->routeIs('companies.*') ? 'sidebar-nav__link--active' : '' }}"
+                class="sidebar-nav__link sidebar-nav__link--icon-accent-when-active {{ $isCompaniesActive ? 'sidebar-nav__link--active' : '' }}"
                 aria-label="Empresas"
-                aria-current="{{ request()->routeIs('companies.*') ? 'page' : false }}"
+                aria-current="{{ $isCompaniesActive ? 'page' : false }}"
             >
                 <span class="sidebar-nav__icon-wrap">
                     <span class="sidebar-nav__wave" aria-hidden="true"></span>
@@ -53,6 +57,23 @@
                     </svg>
                 </span>
                 <span class="sidebar-nav__label">Empresas</span>
+            </a>
+        </li>
+
+        <li class="sidebar-nav__item">
+            <a
+                href="{{ route('filtros.index') }}"
+                class="sidebar-nav__link {{ request()->routeIs('filtros.index') ? 'sidebar-nav__link--active' : '' }}"
+                aria-label="Filtros"
+                aria-current="{{ request()->routeIs('filtros.index') ? 'page' : false }}"
+            >
+                <span class="sidebar-nav__icon-wrap">
+                    <span class="sidebar-nav__wave" aria-hidden="true"></span>
+                    <svg class="sidebar-nav__icon" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h18M5 10h14M9 16h6m-3 4v-4" />
+                    </svg>
+                </span>
+                <span class="sidebar-nav__label">Filtros</span>
             </a>
         </li>
 
@@ -110,6 +131,23 @@
 
         <li class="sidebar-nav__item">
             <a
+                href="{{ route('data-management.index') }}"
+                class="sidebar-nav__link {{ request()->routeIs('data-management.*') ? 'sidebar-nav__link--active' : '' }}"
+                aria-label="Gestión de Datos"
+                aria-current="{{ request()->routeIs('data-management.*') ? 'page' : false }}"
+            >
+                <span class="sidebar-nav__icon-wrap">
+                    <span class="sidebar-nav__wave" aria-hidden="true"></span>
+                    <svg class="sidebar-nav__icon" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+                    </svg>
+                </span>
+                <span class="sidebar-nav__label">Gestión de Datos</span>
+            </a>
+        </li>
+
+        <li class="sidebar-nav__item">
+            <a
                 href="{{ route('notifications.index') }}"
                 class="sidebar-nav__link {{ request()->routeIs('notifications.*') ? 'sidebar-nav__link--active' : '' }}"
                 aria-label="Notificaciones"
@@ -124,7 +162,7 @@
                 <span class="sidebar-nav__label">Notificaciones</span>
                 @php
                     try {
-                        $unread = auth()->user()->unreadNotifications->count();
+                        $unread = auth()->user()->unreadNonReminderNotificationsCount();
                     } catch (\Throwable $e) {
                         $unread = 0;
                     }

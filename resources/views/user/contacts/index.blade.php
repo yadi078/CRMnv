@@ -13,6 +13,11 @@
     </x-slot>
 
     <div class="space-y-8">
+        <div class="panel-card-dark rounded-lg border border-white/20 p-4">
+            <p class="text-sm text-white/90">
+                Verá los contactos <strong class="text-[#FFE600]">asignados por administración</strong> y los que <strong class="text-[#FFE600]">usted registre</strong>. Los que usted dé de alta quedan <strong class="text-white">pendientes</strong> hasta aprobación: no serán visibles para el resto del equipo hasta entonces.
+            </p>
+        </div>
         <div class="panel-card-dark overflow-hidden p-6">
             <form method="GET" action="{{ route('contacts.index') }}" class="mb-6 flex flex-col sm:flex-row sm:items-end gap-3">
                 <div class="flex-1 min-w-0">
@@ -43,50 +48,47 @@
                 </datalist>
             @endif
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-white/20">
+                <table class="w-full min-w-[980px] table-fixed divide-y divide-white/20">
                     <thead>
                         <tr class="table-header-panel-dark">
                             <th scope="col" class="crm-row-marker-head w-11 min-w-[2.75rem] px-1 py-3 text-center text-[10px] font-semibold uppercase tracking-wide text-[#FFE600]/90" title="Seguimiento personal (solo en este navegador)">Seg.</th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Nombre</th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Empresa</th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Estado</th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Correo</th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Teléfono</th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Acciones</th>
+                            <th class="w-[22%] min-w-[11rem] px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Nombre</th>
+                            <th class="w-[20%] min-w-[10rem] px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Empresa</th>
+                            <th class="w-[11%] min-w-[6rem] px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Estado</th>
+                            <th class="w-[18%] min-w-[9rem] px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Correo</th>
+                            <th class="w-[12%] min-w-[7rem] px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Teléfono</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-white/15">
                         @forelse($contacts as $contact)
-                        <tr class="panel-card-dark__row hover:bg:white/8 transition-colors">
+                        <tr class="panel-card-dark__row hover:bg-white/8 transition-colors">
                             <x-crm-row-marker entity="contact" :id="$contact->id" />
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <a href="{{ route('contacts.show', $contact) }}" class="block text-sm font-medium text-white hover:text-[#FFE600] hover:underline focus:outline-none focus:ring-2 focus:ring-[#FFE600]/35 rounded">{{ $contact->nombre_completo }}</a>
-                                <div class="text-sm text-white/80 mt-0.5">{{ $contact->puesto_de_trabajo ?? '-' }}</div>
+                            <td class="px-6 py-4 align-top whitespace-normal break-words">
+                                <a href="{{ \App\Support\CrmNavigation::withReturn(route('contacts.show', $contact)) }}" title="Ver ficha del contacto" class="group block rounded-lg -m-1 p-1 min-w-0 hover:bg-white/[0.06] focus:outline-none focus:ring-2 focus:ring-[#FFE600]/35">
+                                    <span class="block text-sm font-medium text-white group-hover:text-[#FFE600] group-hover:underline">{{ $contact->nombre_completo }}</span>
+                                    @if(($contact->approval_status ?? '') === 'pendiente')
+                                        <span class="mt-1 inline-block text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-md bg-amber-500/25 text-amber-200 border border-amber-400/40" title="Pendiente de aprobación por administrador">Pendiente</span>
+                                    @endif
+                                </a>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-white/90">
+                            <td class="px-6 py-4 align-top whitespace-normal break-words text-sm text-white/90">
                                 @if($contact->company)
-                                    <a href="{{ route('companies.show', $contact->company) }}" class="hover:text-[#FFE600] hover:underline focus:outline-none focus:ring-2 focus:ring-[#FFE600]/35 rounded">{{ $contact->company->nombre_comercial }}</a>
+                                    <a href="{{ \App\Support\CrmNavigation::withReturn(route('companies.show', $contact->company)) }}" title="Ver ficha de la empresa" class="inline-block rounded-md -m-0.5 p-0.5 font-medium text-white hover:text-[#FFE600] hover:underline focus:outline-none focus:ring-2 focus:ring-[#FFE600]/35">{{ $contact->company->nombre_comercial }}</a>
                                 @else
                                     -
                                 @endif
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2.5 py-1 text-xs font-medium rounded-lg badge-prospect-{{ $contact->status_color ?? 'seguimiento' }}">{{ $contact->status_label ?? 'Seguimiento' }}</span>
+                            <td class="px-6 py-4 align-top min-w-0 w-[11%] max-w-[8.5rem]">
+                                <span class="inline-block max-w-full truncate px-2.5 py-1 text-xs font-medium rounded-lg align-middle badge-prospect-{{ $contact->status_color ?? 'seguimiento' }}" title="{{ $contact->status_label }}">{{ $contact->status_label_short }}</span>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-white/90">
+                            <td class="px-6 py-4 align-top min-w-0 text-sm text-white/90 whitespace-normal break-words [overflow-wrap:anywhere]">
                                 {{ ($contact->email_activo ?? true) ? ($contact->email ?? '—') : '—' }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-white/90">{{ $contact->celular ?? '-' }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <a href="{{ route('contacts.show', $contact) }}" class="text-[#FFE600] hover:text-[#fff] inline-flex items-center gap-1">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                                    Ver
-                                </a>
-                            </td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="7" class="px-6 py-8 text-center text-white/80">No se encontraron contactos</td>
+                            <td colspan="6" class="px-6 py-8 text-center text-white/80">No se encontraron contactos</td>
                         </tr>
                         @endforelse
                     </tbody>

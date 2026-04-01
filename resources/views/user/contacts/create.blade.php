@@ -54,7 +54,7 @@
                         </div>
                         <div>
                             <label for="email" class="block text-sm font-medium text-white/90 mb-1">Correo electrónico *</label>
-                            <input id="email" name="email" type="email" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3" value="{{ old('email') }}" required />
+                            <input id="email" name="email" type="text" inputmode="email" autocomplete="email" placeholder="correo@empresa.com, otro@empresa.com" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3" value="{{ old('email') }}" required />
                             <x-input-error :messages="$errors->get('email')" class="mt-2 text-red-300" />
                         </div>
                         <div class="md:col-span-2 flex items-center gap-3">

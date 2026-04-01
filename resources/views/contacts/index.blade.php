@@ -76,41 +76,36 @@
                         <tr class="panel-card-dark__row hover:bg-white/8 transition-colors">
                             <x-crm-row-marker entity="contact" :id="$contact->id" />
                             <td class="px-6 py-4 align-top whitespace-normal break-words">
-                                <a href="{{ route('contacts.show', $contact) }}" class="block text-sm font-medium text-white hover:text-[#FFE600] hover:underline focus:outline-none focus:ring-2 focus:ring-[#FFE600]/35 rounded">{{ $contact->nombre_completo }}</a>
-                                <div class="text-sm text-white/80 mt-0.5">{{ $contact->puesto_de_trabajo ?? '-' }}</div>
+                                <a href="{{ \App\Support\CrmNavigation::withReturn(route('contacts.show', $contact)) }}" title="Ver ficha del contacto" class="group block rounded-lg -m-1 p-1 min-w-0 hover:bg-white/[0.06] focus:outline-none focus:ring-2 focus:ring-[#FFE600]/35">
+                                    <span class="block text-sm font-medium text-white group-hover:text-[#FFE600] group-hover:underline">{{ $contact->nombre_completo }}</span>
+                                </a>
                             </td>
                             <td class="px-6 py-4 align-top whitespace-normal break-words text-sm text-white/90">
                                 @if($contact->company)
-                                    <a href="{{ route('companies.show', $contact->company) }}" class="hover:text-[#FFE600] hover:underline focus:outline-none focus:ring-2 focus:ring-[#FFE600]/35 rounded">{{ $contact->company->nombre_comercial }}</a>
+                                    <a href="{{ \App\Support\CrmNavigation::withReturn(route('companies.show', $contact->company)) }}" title="Ver ficha de la empresa" class="hover:text-[#FFE600] hover:underline focus:outline-none focus:ring-2 focus:ring-[#FFE600]/35 rounded">{{ $contact->company->nombre_comercial }}</a>
                                 @else
                                     -
                                 @endif
                             </td>
-                            <td class="px-6 py-4 align-top whitespace-nowrap">
-                                <span class="px-2.5 py-1 text-xs font-medium rounded-lg badge-prospect-{{ $contact->status_color ?? 'seguimiento' }}">{{ $contact->status_label ?? 'Seguimiento' }}</span>
+                            <td class="px-6 py-4 align-top min-w-0 w-[9rem] max-w-[9rem]">
+                                <span class="inline-block max-w-full truncate px-2.5 py-1 text-xs font-medium rounded-lg align-middle badge-prospect-{{ $contact->status_color ?? 'seguimiento' }}" title="{{ $contact->status_label }}">{{ $contact->status_label_short }}</span>
                             </td>
-                            <td class="px-6 py-4 align-top whitespace-normal break-words text-sm text-white/90">
+                            <td class="px-6 py-4 align-top min-w-0 whitespace-normal break-words text-sm text-white/90 [overflow-wrap:anywhere]">
                                 {{ ($contact->email_activo ?? true) ? ($contact->email ?? '—') : '—' }}
                             </td>
                             <td class="px-6 py-4 align-top whitespace-normal break-words text-sm text-white/90">{{ $contact->celular ?? '-' }}</td>
                             <td class="px-6 py-4 align-top whitespace-nowrap text-sm font-medium">
-                                <div class="flex items-center gap-3">
-                                    <a href="{{ route('contacts.show', $contact) }}" class="text-[#FFE600] hover:text-white inline-flex items-center gap-1">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                                        Ver
-                                    </a>
-                                    @can('delete', $contact)
-                                    <form method="POST" action="{{ route('contacts.destroy', $contact) }}" class="inline-flex items-center gap-1"
-                                        onsubmit="return confirm('¿Eliminar el contacto \'{{ addslashes($contact->nombre_completo) }}\'? Esta acción no se puede deshacer.');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="text-red-400 hover:text-red-200 inline-flex items-center gap-1">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-4h4a1 1 0 011 1v2H9V4a1 1 0 011-1z" /></svg>
-                                            Eliminar
-                                        </button>
-                                    </form>
-                                    @endcan
-                                </div>
+                                @can('delete', $contact)
+                                <form method="POST" action="{{ route('contacts.destroy', $contact) }}" class="inline-flex items-center gap-1"
+                                    onsubmit="return confirm('¿Eliminar el contacto \'{{ addslashes($contact->nombre_completo) }}\'? Esta acción no se puede deshacer.');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="text-red-400 hover:text-red-200 inline-flex items-center gap-1">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-4h4a1 1 0 011 1v2H9V4a1 1 0 011-1z" /></svg>
+                                        Eliminar
+                                    </button>
+                                </form>
+                                @endcan
                             </td>
                         </tr>
                         @empty

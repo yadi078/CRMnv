@@ -58,7 +58,7 @@
 
                         <div>
                             <x-input-label for="email" value="Correo electrónico *" />
-                            <x-text-input id="email" name="email" type="email" class="mt-1 block w-full" :value="old('email')" required />
+                            <x-text-input id="email" name="email" type="text" inputmode="email" autocomplete="email" placeholder="correo@empresa.com, otro@empresa.com" class="mt-1 block w-full" :value="old('email')" required />
                             <x-input-error :messages="$errors->get('email')" class="mt-2" />
                         </div>
                         <div class="flex items-center gap-3 md:col-span-2">

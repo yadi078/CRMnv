@@ -134,7 +134,7 @@
                             <td class="px-7 py-5 text-base text-white/90">{{ $company->contacts_count }}</td>
                             <td class="px-7 py-5">
                                 <div class="flex flex-wrap items-center gap-6">
-                                    <a href="{{ route('companies.show', $company) }}" class="inline-flex items-center gap-1 text-[#FFE600] font-medium hover:text-white">
+                                    <a href="{{ \App\Support\CrmNavigation::withReturn(route('companies.show', $company)) }}" class="inline-flex items-center gap-1 text-[#FFE600] font-medium hover:text-white">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
@@ -199,7 +199,7 @@
                             <td class="px-7 py-5 text-base text-white/90">{{ $contact->company?->nombre_comercial ?? '—' }}</td>
                             <td class="px-7 py-5">
                                 <div class="flex flex-wrap items-center gap-6">
-                                    <a href="{{ route('contacts.show', $contact) }}" class="inline-flex items-center gap-1 text-[#FFE600] font-medium hover:text-white">
+                                    <a href="{{ \App\Support\CrmNavigation::withReturn(route('contacts.show', $contact)) }}" class="inline-flex items-center gap-1 text-[#FFE600] font-medium hover:text-white">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />

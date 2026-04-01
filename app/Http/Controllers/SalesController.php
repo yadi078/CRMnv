@@ -75,7 +75,7 @@ class SalesController extends Controller
         $companies = Company::forExecutiveFollowUpAndSales($user);
         $contacts = $companyId
             ? Contact::where('company_id', $companyId)
-                ->when(! $user->esAdmin(), fn ($q) => $q->where('created_by', $user->id))
+                ->when(! $user->esAdmin(), fn ($q) => $q->accessibleForExecutive($user))
                 ->orderBy('nombre_completo')
                 ->get()
             : collect();
@@ -173,7 +173,7 @@ class SalesController extends Controller
         $user = request()->user();
         $companies = Company::forExecutiveFollowUpAndSales($user);
         $contacts = Contact::where('company_id', $sale->company_id)
-            ->when(! $user->esAdmin(), fn ($q) => $q->where('created_by', $user->id))
+            ->when(! $user->esAdmin(), fn ($q) => $q->accessibleForExecutive($user))
             ->orderBy('nombre_completo')
             ->get();
 
@@ -308,11 +308,16 @@ class SalesController extends Controller
      */
     protected function contactIdRules(Request $request): array
     {
-        $exists = Rule::exists('contacts', 'id')->where('company_id', $request->company_id);
         $user = $request->user();
-        if ($user && ! $user->esAdmin()) {
-            $exists->where('created_by', $user->id);
-        }
+        $exists = Rule::exists('contacts', 'id')->where(function ($query) use ($request, $user) {
+            $query->where('company_id', $request->company_id);
+            if ($user && ! $user->esAdmin()) {
+                $query->where(function ($q) use ($user) {
+                    $q->where('created_by', $user->id)
+                        ->orWhere('assigned_user_id', $user->id);
+                });
+            }
+        });
 
         return ['nullable', $exists];
     }

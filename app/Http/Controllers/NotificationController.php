@@ -2,8 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Contact;
-use App\Models\Reminder;
+use App\Models\User;
 use App\Notifications\ReminderDueNotification;
 use App\Services\ContactBirthdayNotifier;
 use App\Services\ReminderDueNotifier;
@@ -23,7 +22,7 @@ class NotificationController extends Controller
     public function unreadCount(Request $request)
     {
         try {
-            $count = auth()->user()->unreadNotifications()->count();
+            $count = auth()->user()->unreadNonReminderNotificationsCount();
             $display = $count > 99 ? '99+' : (string) $count;
 
             return response()->json([
@@ -49,6 +48,7 @@ class NotificationController extends Controller
         }
 
         $query = $user->notifications();
+        User::applyExcludeReminderNotificationsScope($query);
 
         // Filtro
         $filter = $request->get('filtro', 'todas');
@@ -89,46 +89,10 @@ class NotificationController extends Controller
             return $n;
         });
 
-        $unreadCount = $user->unreadNotifications()->count();
-        $starredCount = $user->notifications()->where('starred', true)->count();
-
-        // Recordatorios personales
-        $reminders = Reminder::where('user_id', $user->id)
-            ->orderByRaw('CASE WHEN COALESCE(start_at, scheduled_for) IS NULL THEN 1 ELSE 0 END')
-            ->orderBy(DB::raw('COALESCE(start_at, scheduled_for)'))
-            ->get();
-
-        // Contactos para el selector del modal de recordatorio (nombre del cliente)
-        $contactsQuery = Contact::with('company')->orderBy('nombre_completo');
-        if (! $user->esAdmin()) {
-            $contactsQuery->where('created_by', $user->id);
-        }
-        $contactsForReminder = $contactsQuery->get()->map(function ($c) {
-            return [
-                'id' => $c->id,
-                'nombre_completo' => $c->nombre_completo,
-                'email' => $c->email ?? '',
-                'telefono' => $c->telefono ?? $c->celular ?? '',
-                'extension' => $c->extension ?? '',
-                'departamento' => $c->departamento ?? '',
-                'puesto_de_trabajo' => $c->puesto_de_trabajo ?? '',
-                'empresa' => $c->company?->nombre_comercial ?? $c->nombre_comercial ?? '',
-            ];
-        })->values()->toArray();
-
-        // IDs de notificaciones no leídas tipo recordatorio ya "vistas" (no disparar alarma al cargar).
-        // Excluimos las creadas en los últimos 15 segundos para que las recién creadas sí disparen alarma al hacer el primer poll.
-        $cutoff = now()->subSeconds(15);
-        $reminderAlertIds = $user->unreadNotifications()
-            ->where('created_at', '<', $cutoff)
-            ->get()
-            ->filter(function ($n) {
-                $d = is_array($n->data) ? $n->data : [];
-                return ($d['tipo'] ?? '') === 'recordatorio';
-            })
-            ->pluck('id')
-            ->values()
-            ->toArray();
+        $unreadCount = $user->unreadNonReminderNotificationsCount();
+        $starredQuery = $user->notifications()->where('starred', true);
+        User::applyExcludeReminderNotificationsScope($starredQuery);
+        $starredCount = $starredQuery->count();
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
@@ -138,34 +102,7 @@ class NotificationController extends Controller
             ]);
         }
 
-        return view('notifications.index', compact('notifications', 'unreadCount', 'starredCount', 'filter', 'sort', 'reminders', 'reminderAlertIds', 'contactsForReminder'));
-    }
-
-    /**
-     * Para polling: devuelve notificaciones no leídas de tipo recordatorio (para alarma y notificación del navegador).
-     */
-    public function reminderAlerts(Request $request)
-    {
-        $user = auth()->user();
-        $all = $user->unreadNotifications()->orderByDesc('created_at')->limit(50)->get();
-        $items = $all->filter(function ($n) {
-            $d = is_array($n->data) ? $n->data : [];
-            return ($d['tipo'] ?? '') === 'recordatorio';
-        })->take(20)->map(function ($n) use ($user) {
-            $d = is_array($n->data) ? $n->data : [];
-            $d = ReminderDueNotification::enrichStoredData($d, $user->id);
-            $line = ReminderDueNotification::reminderSummaryLine($d);
-
-            return [
-                'id' => $n->id,
-                'titulo' => $d['titulo'] ?? 'Recordatorio',
-                'mensaje' => $line !== '' ? $line : ($d['mensaje'] ?? ''),
-                'fecha_prevista' => $d['fecha_prevista'] ?? null,
-                'alert_phase' => $d['alert_phase'] ?? 'due',
-            ];
-        })->values();
-
-        return response()->json(['items' => $items]);
+        return view('notifications.index', compact('notifications', 'unreadCount', 'starredCount', 'filter', 'sort'));
     }
 
     /**
@@ -192,7 +129,7 @@ class NotificationController extends Controller
             $user = auth()->user();
             $n = $user->notifications()->findOrFail($notification);
             $n->markAsRead();
-            $unreadCount = $user->unreadNotifications()->count();
+            $unreadCount = $user->unreadNonReminderNotificationsCount();
 
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json([
@@ -241,7 +178,7 @@ class NotificationController extends Controller
         $toMark = $user->notifications()->whereIn('id', $ids)->get();
         $toMark->markAsRead();
 
-        $unreadCount = $user->unreadNotifications()->count();
+        $unreadCount = $user->unreadNonReminderNotificationsCount();
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([

@@ -7,24 +7,47 @@
                 <h2 class="page-header-card__title">Editar Contacto</h2>
             <p class="page-header-card__subtitle">{{ $contact->nombre_completo }}</p>
             </div>
+        <div class="flex flex-wrap gap-2 ml-auto justify-end items-center shrink-0">
+            <x-crm-back-button :fallback="route('contacts.show', $contact)" />
+        </div>
     </x-slot>
 
     <div class="py-8 sm:py-10">
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
             <div class="panel-card-dark p-6">
-                <form method="POST" action="{{ route('contacts.update', $contact) }}">
+                @php
+                    $crmCancelHref = (($r = request('return')) && is_string($r) && \App\Support\CrmNavigation::isSafeReturnUrl($r))
+                        ? $r
+                        : route('contacts.show', $contact);
+                    $preselectedCompanyId = old('company_id', $contact->company_id);
+                    $preselectedCompanyName = $preselectedCompanyId
+                        ? ($companies->firstWhere('id', (int) $preselectedCompanyId)?->nombre_comercial ?? '')
+                        : '';
+                @endphp
+                <form id="form-editar-contacto" method="POST" action="{{ route('contacts.update', $contact) }}">
                     @csrf
                     @method('PUT')
+                    @if(($crmNavReturn = request('return')) && is_string($crmNavReturn) && \App\Support\CrmNavigation::isSafeReturnUrl($crmNavReturn))
+                        <input type="hidden" name="return" value="{{ $crmNavReturn }}">
+                    @endif
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="md:col-span-2">
-                            <x-input-label for="company_id" value="Empresa *" />
-                            <select id="company_id" name="company_id" class="mt-1 block w-full rounded-md border-gray-300" required>
-                                <option value="">Seleccione una empresa</option>
-                                @foreach($companies as $company)
-                                <option value="{{ $company->id }}" {{ old('company_id', $contact->company_id) == $company->id ? 'selected' : '' }}>{{ $company->nombre_comercial }}</option>
-                                @endforeach
-                            </select>
-                            <x-input-error :messages="$errors->get('company_id')" class="mt-2" />
+                        <div class="md:col-span-2 relative">
+                            <label for="company_autocomplete" class="block text-sm font-medium text-white/90 mb-1">Empresa *</label>
+                            <p class="text-xs text-white/65 mb-2">Escriba para filtrar o elija una sugerencia. Se muestran las empresas disponibles para su cuenta.</p>
+                            <input type="hidden" id="company_id" name="company_id" value="{{ old('company_id', $contact->company_id) }}" required />
+                            <input
+                                type="text"
+                                id="company_autocomplete"
+                                class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3 focus:ring-2 focus:ring-[#FFE600]/50"
+                                placeholder="Buscar o seleccionar empresa…"
+                                value="{{ $preselectedCompanyName }}"
+                                autocomplete="off"
+                            />
+                            <div id="company_autocomplete_list" role="listbox" class="absolute left-0 right-0 top-full z-[100] mt-1 max-h-56 overflow-auto rounded-xl border border-white/20 bg-[#1a3d6b] shadow-lg hidden"></div>
+                            @if($companies->isEmpty())
+                                <p class="mt-2 text-sm text-amber-200/90">No hay empresas en el catálogo.</p>
+                            @endif
+                            <x-input-error :messages="$errors->get('company_id')" class="mt-2 text-red-300" />
                         </div>
                         <div class="md:col-span-2">
                             <x-input-label for="nombre_completo" value="Nombre Completo *" />
@@ -50,7 +73,7 @@
                         </div>
                         <div>
                             <x-input-label for="email" value="Correo electrónico *" />
-                            <x-text-input id="email" name="email" type="email" class="mt-1 block w-full" :value="old('email', $contact->email)" required />
+                            <x-text-input id="email" name="email" type="text" inputmode="email" autocomplete="email" placeholder="correo@empresa.com, otro@empresa.com" class="mt-1 block w-full" :value="old('email', $contact->email)" required />
                             <x-input-error :messages="$errors->get('email')" class="mt-2" />
                         </div>
                         <div class="flex items-center gap-3 md:col-span-2">
@@ -121,11 +144,82 @@
 
                     </div>
                     <div class="flex items-center justify-end mt-6 gap-3 flex-wrap">
-                        <a href="{{ route('contacts.show', $contact) }}" class="btn-icon-text text-gray-600 hover:text-gray-800 px-4 py-2 rounded-xl border border-gray-300 hover:bg-gray-50">Cancelar</a>
+                        <a href="{{ $crmCancelHref }}" class="btn-icon-text text-gray-600 hover:text-gray-800 px-4 py-2 rounded-xl border border-gray-300 hover:bg-gray-50">Cancelar</a>
                         <button type="submit" class="btn-amber-app">Actualizar</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var companiesData = @json($companies->map(fn ($c) => ['id' => $c->id, 'nombre_comercial' => $c->nombre_comercial]));
+        var form = document.getElementById('form-editar-contacto');
+        var companyInput = document.getElementById('company_autocomplete');
+        var companyIdInput = document.getElementById('company_id');
+        var companyList = document.getElementById('company_autocomplete_list');
+
+        function filterCompanies(q) {
+            var qq = (q || '').toLowerCase().trim();
+            if (!qq) return companiesData;
+            return companiesData.filter(function(c) {
+                return (c.nombre_comercial || '').toLowerCase().indexOf(qq) !== -1;
+            });
+        }
+
+        function renderCompanyList(items) {
+            if (!companyList) return;
+            companyList.innerHTML = '';
+            if (items.length === 0) {
+                companyList.classList.add('hidden');
+                return;
+            }
+            items.forEach(function(c) {
+                var div = document.createElement('div');
+                div.className = 'px-3 py-2.5 text-white/90 hover:bg-white/15 cursor-pointer text-sm';
+                div.setAttribute('role', 'option');
+                div.textContent = c.nombre_comercial;
+                div.addEventListener('mousedown', function(e) {
+                    e.preventDefault();
+                    companyIdInput.value = String(c.id);
+                    companyInput.value = c.nombre_comercial;
+                    companyList.classList.add('hidden');
+                });
+                companyList.appendChild(div);
+            });
+            companyList.classList.remove('hidden');
+        }
+
+        if (companyInput && companyList) {
+            companyInput.addEventListener('focus', function() {
+                renderCompanyList(filterCompanies(companyInput.value));
+            });
+            companyInput.addEventListener('input', function() {
+                companyIdInput.value = '';
+                renderCompanyList(filterCompanies(companyInput.value));
+            });
+            companyInput.addEventListener('blur', function() {
+                setTimeout(function() { companyList.classList.add('hidden'); }, 150);
+            });
+            document.addEventListener('click', function(e) {
+                if (companyList.classList.contains('hidden')) return;
+                if (!companyList.contains(e.target) && e.target !== companyInput) {
+                    companyList.classList.add('hidden');
+                }
+            });
+        }
+
+        if (form) {
+            form.addEventListener('submit', function() {
+                if (companyIdInput && companyInput && !companyIdInput.value && companyInput.value.trim()) {
+                    var match = companiesData.find(function(c) {
+                        return (c.nombre_comercial || '').trim().toLowerCase() === companyInput.value.trim().toLowerCase();
+                    });
+                    if (match) companyIdInput.value = String(match.id);
+                }
+            });
+        }
+    });
+    </script>
 </x-app-user-layout>

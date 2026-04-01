@@ -7,9 +7,11 @@
             <h2 class="page-header-card__title">{{ $contact->nombre_completo }}</h2>
             <p class="page-header-card__subtitle">Detalle de contacto</p>
         </div>
-        <div class="flex gap-2 ml-auto">
+        <div class="flex flex-wrap gap-2 ml-auto justify-end items-center">
+                <x-crm-back-button :fallback="route('contacts.index')" />
+                <x-contact-reminder-button :contact="$contact" />
                 @can('contacts.edit')
-                <a href="{{ route('contacts.edit', $contact) }}" class="btn-amber-app">
+                <a href="{{ \App\Support\CrmNavigation::withReturn(route('contacts.edit', $contact)) }}" class="btn-amber-app">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
@@ -77,7 +79,7 @@
                             <p class="text-base text-white/70">Empresa</p>
                             <p class="text-lg font-semibold text-white">
                                 @if($contact->company)
-                                <a href="{{ route('companies.show', $contact->company) }}" class="text-[#FFE600] hover:text-white underline underline-offset-4">
+                                <a href="{{ \App\Support\CrmNavigation::withReturn(route('companies.show', $contact->company)) }}" class="text-[#FFE600] hover:text-white underline underline-offset-4">
                                     {{ $contact->company->nombre_comercial }}
                                 </a>
                                 @else

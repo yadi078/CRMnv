@@ -14,6 +14,9 @@
                 <form method="POST" action="{{ route('contacts.update', $contact) }}">
                     @csrf
                     @method('PUT')
+                    @if(($crmNavReturn = request('return')) && is_string($crmNavReturn) && \App\Support\CrmNavigation::isSafeReturnUrl($crmNavReturn))
+                        <input type="hidden" name="return" value="{{ $crmNavReturn }}">
+                    @endif
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="md:col-span-2">
@@ -58,7 +61,7 @@
 
                         <div>
                             <x-input-label for="email" value="Correo electrónico *" />
-                            <x-text-input id="email" name="email" type="email" class="mt-1 block w-full" :value="old('email', $contact->email)" required />
+                            <x-text-input id="email" name="email" type="text" inputmode="email" autocomplete="email" placeholder="correo@empresa.com, otro@empresa.com" class="mt-1 block w-full" :value="old('email', $contact->email)" required />
                             <x-input-error :messages="$errors->get('email')" class="mt-2" />
                         </div>
                         <div class="flex items-center gap-3 md:col-span-2">
@@ -160,7 +163,7 @@
                     </div>
 
                     <div class="flex items-center justify-end mt-6 gap-3 flex-wrap">
-                        <a href="{{ route('contacts.show', $contact) }}" class="btn-panel-dark bg-white/10 text-white border-2 border-[#FFE600] hover:bg-white/20">
+                        <a href="{{ \App\Support\CrmNavigation::withReturn(route('contacts.show', $contact)) }}" class="btn-panel-dark bg-white/10 text-white border-2 border-[#FFE600] hover:bg-white/20">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                             </svg>

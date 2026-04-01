@@ -15,6 +15,9 @@
                 <form method="POST" action="{{ route('companies.update', $company) }}">
                     @csrf
                     @method('PUT')
+                    @if(($crmNavReturn = request('return')) && is_string($crmNavReturn) && \App\Support\CrmNavigation::isSafeReturnUrl($crmNavReturn))
+                        <input type="hidden" name="return" value="{{ $crmNavReturn }}">
+                    @endif
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <x-input-label for="nombre_comercial" value="Nombre Comercial *" />
@@ -56,7 +59,7 @@
                         </div>
                     </div>
                     <div class="flex items-center justify-end mt-6 gap-3 flex-wrap">
-                        <a href="{{ route('companies.show', $company) }}" class="btn-icon-text text-gray-600 hover:text-gray-800 px-4 py-2 rounded-xl border border-gray-300 hover:bg-gray-50">Cancelar</a>
+                        <a href="{{ \App\Support\CrmNavigation::withReturn(route('companies.show', $company)) }}" class="btn-icon-text text-gray-600 hover:text-gray-800 px-4 py-2 rounded-xl border border-gray-300 hover:bg-gray-50">Cancelar</a>
                         <button type="submit" class="btn-amber-app">Guardar cambios</button>
                     </div>
                 </form>

@@ -4,6 +4,7 @@
 ])
 @php
     $crmBackFallback = $fallback ?? (auth()->user()->esAdmin() ? route('dashboard') : route('user.dashboard'));
+    $crmPreferredReturn = \App\Support\CrmNavigation::preferredBackUrlFromRequest();
 @endphp
 <button
     type="button"
@@ -13,6 +14,9 @@
         'px-3 sm:px-4 py-2' => ! $compact,
     ])
     data-crm-back="{{ $crmBackFallback }}"
+    @if($crmPreferredReturn)
+        data-crm-preferred-return="{{ $crmPreferredReturn }}"
+    @endif
     aria-label="Volver a la página anterior"
 >
     <svg class="shrink-0 {{ $compact ? 'w-6 h-6' : 'w-5 h-5' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

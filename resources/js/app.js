@@ -94,6 +94,65 @@ Alpine.data('profilePhotoUploader', () => ({
     },
 }));
 
+/**
+ * Página Ejecutivos: estado y modales (asignación, registro, transferencias).
+ * Evita meter @json/@js dentro de un objeto literal en el atributo HTML: rompe Alpine si hay comillas.
+ */
+Alpine.data('executivesPage', (initial = {}) => ({
+    transferConfirmOpen: false,
+    contactTransferOpen: Boolean(initial.contactTransferOpen),
+    transferFromUserId: null,
+    transferContactId: null,
+    transferToUserId: initial.transferToUserId ?? '',
+    selectedExecutiveId: initial.selectedExecutiveId ?? null,
+    selectedExecutiveName: initial.selectedExecutiveName ?? '',
+    pendingContactId: null,
+    filterContactId: initial.filterContactId ?? null,
+    autoAssignContactId: initial.autoAssignContactId ?? null,
+    registerModalOpen: Boolean(initial.registerModalOpen),
+    modalOpen: Boolean(initial.modalOpen),
+    openContactTransfer(execId, contactId) {
+        this.transferFromUserId = execId;
+        this.transferContactId = contactId;
+        this.transferToUserId = '';
+        this.contactTransferOpen = true;
+    },
+    selectExecutive(id, name) {
+        this.selectedExecutiveId = id;
+        this.selectedExecutiveName = name;
+    },
+    closeModal() {
+        this.modalOpen = false;
+        this.selectedExecutiveId = null;
+        this.selectedExecutiveName = '';
+        this.pendingContactId = null;
+    },
+    openModalForContact(contactId) {
+        this.pendingContactId = contactId;
+        this.selectedExecutiveId = null;
+        this.selectedExecutiveName = '';
+        this.modalOpen = true;
+    },
+    resolvedContactId() {
+        if (this.pendingContactId != null && this.pendingContactId !== '') {
+            return this.pendingContactId;
+        }
+        if (this.filterContactId != null && this.filterContactId !== '') {
+            return this.filterContactId;
+        }
+        if (this.autoAssignContactId != null && this.autoAssignContactId !== '') {
+            return this.autoAssignContactId;
+        }
+        return null;
+    },
+    canConfirmAssign() {
+        return this.selectedExecutiveId && this.resolvedContactId();
+    },
+    closeRegisterModal() {
+        this.registerModalOpen = false;
+    },
+}));
+
 window.Alpine = Alpine;
 
 Alpine.start();
@@ -130,6 +189,11 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         e.preventDefault();
+        const preferred = btn.getAttribute('data-crm-preferred-return');
+        if (preferred) {
+            window.location.assign(preferred);
+            return;
+        }
         const fallback = btn.getAttribute('data-crm-back') || '/';
         if (window.history.length > 1) {
             window.history.back();

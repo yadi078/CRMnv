@@ -64,15 +64,6 @@
                 </div>
             </div>
 
-            {{-- Tarjeta: Gestión de contraseñas de usuarios (solo admin) --}}
-            <div class="panel-card-dark overflow-hidden">
-                <div class="p-6 sm:p-8">
-                    <div class="max-w-xl">
-                        @include('profile.partials.admin-user-password-assistance')
-                    </div>
-                </div>
-            </div>
-
             {{-- Tarjeta: Eliminar cuenta (zona de peligro) --}}
             <div class="panel-card-dark !p-0 overflow-hidden rounded-2xl border-l-4 border-l-red-400">
                 <div class="p-8 sm:p-10 lg:p-12">

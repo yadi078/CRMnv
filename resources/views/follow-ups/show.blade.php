@@ -62,7 +62,7 @@
                         <div>
                             <p class="text-sm text-gray-500">Empresa</p>
                             <p class="text-lg font-medium text-gray-900">
-                                <a href="{{ route('companies.show', $followUp->company) }}" class="text-azul-bright hover:text-azul-fuerte">
+                                <a href="{{ \App\Support\CrmNavigation::withReturn(route('companies.show', $followUp->company)) }}" class="text-azul-bright hover:text-azul-fuerte">
                                     {{ $followUp->company->nombre_comercial }}
                                 </a>
                             </p>
@@ -72,7 +72,7 @@
                         <div>
                             <p class="text-sm text-gray-500">Contacto</p>
                             <p class="text-lg font-medium text-gray-900">
-                                <a href="{{ route('contacts.show', $followUp->contact) }}" class="text-azul-bright hover:text-azul-fuerte">
+                                <a href="{{ \App\Support\CrmNavigation::withReturn(route('contacts.show', $followUp->contact)) }}" class="text-azul-bright hover:text-azul-fuerte">
                                     {{ $followUp->contact->nombre_completo }}
                                 </a>
                             </p>

@@ -68,13 +68,12 @@ class FiltrosController extends Controller
 
         // Queries base con alcance de usuario para resultados/sugerencias operativas.
         $baseContacts = Contact::query();
-        if (! $isAdmin && $userId) {
-            $baseContacts->where('created_by', $userId)
-                ->where('approval_status', 'aprobado');
+        if (! $isAdmin && $user) {
+            $baseContacts->accessibleForExecutive($user);
         }
 
         $baseCompanies = Company::query();
-        if (! $isAdmin && $userId) {
+        if (! $isAdmin && $user) {
             $baseCompanies->accessibleForExecutive($user);
         }
 
@@ -170,9 +169,8 @@ class FiltrosController extends Controller
         };
         if ($shouldQueryContacts) {
             $contactsQuery = Contact::query()->with('company');
-            if (! $isAdmin && $userId) {
-                $contactsQuery->where('created_by', $userId)
-                    ->where('approval_status', 'aprobado');
+            if (! $isAdmin && $user) {
+                $contactsQuery->accessibleForExecutive($user);
             }
             $filterService->applyToContactQuery($contactsQuery, $contactFilterSpecs, $filterLogic);
             $contacts = $contactsQuery->latest()->paginate(20)->appends($this->filtrosPaginationAppends($request));
@@ -281,9 +279,8 @@ class FiltrosController extends Controller
         };
         if ($shouldQueryContacts) {
             $contactsQuery = Contact::query()->with('company');
-            if (! $isAdmin && $userId) {
-                $contactsQuery->where('created_by', $userId)
-                    ->where('approval_status', 'aprobado');
+            if (! $isAdmin && $user) {
+                $contactsQuery->accessibleForExecutive($user);
             }
             $filterService->applyToContactQuery($contactsQuery, $contactFilterSpecs, $filterLogic);
             $contacts = $contactsQuery->latest()->paginate(20)->appends($this->filtrosPaginationAppends($request));

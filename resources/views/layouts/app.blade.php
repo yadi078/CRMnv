@@ -15,6 +15,9 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="font-sans antialiased text-fluid-base">
+        @auth
+            @php($crmHeaderUnreadNotif = auth()->user()->unreadNonReminderNotificationsCount())
+        @endauth
         <div class="sidebar-layout sidebar-layout--expanded" x-data="{ mobileMenuOpen: false }">
             {{-- Barra superior móvil/tablet: logo + notificaciones + menú hamburguesa (solo < lg) --}}
             <header class="mobile-header lg:hidden fixed top-0 left-0 right-0 z-30 flex items-center justify-between min-h-touch px-4 bg-[#000836] shadow-lg safe-area-inset">
@@ -23,11 +26,10 @@
                     <span class="font-semibold text-white text-fluid-lg">CE CRM</span>
                 </a>
                 <div class="flex items-center gap-1">
-                    <x-crm-back-button compact />
                     <a href="{{ route('notifications.index') }}" class="relative flex items-center justify-center min-w-[44px] min-h-[44px] rounded-xl text-[#FFE600] hover:bg-white/10 transition-colors" aria-label="Notificaciones">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-                        <span class="js-header-notification-badge-wrap absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[1.25rem] h-5 px-1 rounded-full text-xs font-bold bg-red-500 text-white" style="{{ (auth()->user()->unreadNotifications->count() > 0) ? '' : 'display: none;' }}">
-                            <span class="js-header-notification-badge">{{ auth()->user()->unreadNotifications->count() > 0 ? min(auth()->user()->unreadNotifications->count(), 99) . (auth()->user()->unreadNotifications->count() > 99 ? '+' : '') : '' }}</span>
+                        <span class="js-header-notification-badge-wrap absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[1.25rem] h-5 px-1 rounded-full text-xs font-bold bg-red-500 text-white" style="{{ ($crmHeaderUnreadNotif ?? 0) > 0 ? '' : 'display: none;' }}">
+                            <span class="js-header-notification-badge">{{ ($crmHeaderUnreadNotif ?? 0) > 0 ? min($crmHeaderUnreadNotif, 99) . ($crmHeaderUnreadNotif > 99 ? '+' : '') : '' }}</span>
                         </span>
                     </a>
                     <button type="button" @click="mobileMenuOpen = true" class="flex items-center justify-center min-w-[44px] min-h-[44px] rounded-xl text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-[#FFE600] focus:ring-offset-2 focus:ring-offset-[#000836] transition-colors" aria-label="Abrir menú">
@@ -62,11 +64,10 @@
                                     {{ $header }}
                                 </div>
                                 <div class="flex items-center gap-2 flex-shrink-0">
-                                    <x-crm-back-button />
                                     <a href="{{ route('notifications.index') }}" class="relative flex items-center justify-center w-11 h-11 rounded-xl text-[#FFE600] hover:bg-white/10 transition-colors" aria-label="Notificaciones">
                                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-                                    <span class="js-header-notification-badge-wrap absolute top-0 right-0 flex items-center justify-center min-w-[1.25rem] h-5 px-1 rounded-full text-xs font-bold bg-red-500 text-white" style="{{ (auth()->user()->unreadNotifications->count() > 0) ? '' : 'display: none;' }}">
-                                        <span class="js-header-notification-badge">{{ auth()->user()->unreadNotifications->count() > 0 ? min(auth()->user()->unreadNotifications->count(), 99) . (auth()->user()->unreadNotifications->count() > 99 ? '+' : '') : '' }}</span>
+                                    <span class="js-header-notification-badge-wrap absolute top-0 right-0 flex items-center justify-center min-w-[1.25rem] h-5 px-1 rounded-full text-xs font-bold bg-red-500 text-white" style="{{ ($crmHeaderUnreadNotif ?? 0) > 0 ? '' : 'display: none;' }}">
+                                        <span class="js-header-notification-badge">{{ ($crmHeaderUnreadNotif ?? 0) > 0 ? min($crmHeaderUnreadNotif, 99) . ($crmHeaderUnreadNotif > 99 ? '+' : '') : '' }}</span>
                                     </span>
                                 </a>
                                 </div>
@@ -75,26 +76,27 @@
                     </div>
                 @endisset
 
-                {{-- Mensajes flash flotantes (éxito, error, warning, info, status) --}}
+                {{-- Mensajes flash (pueden mostrarse varios: éxito + aviso) --}}
                 @if(session('success'))
                     <x-alert type="success" :message="session('success')" />
-                @elseif(session('error'))
-                    <x-alert type="error" :message="session('error')" />
-                @elseif(session('warning'))
+                @endif
+                @if(session('warning'))
                     <x-alert type="warning" :message="session('warning')" />
-                @elseif(session('info'))
+                @endif
+                @if(session('info'))
                     <x-alert type="info" :message="session('info')" />
-                @elseif(session('status'))
-                    @php
-                        $statusMsg = match(session('status')) {
-                            'profile-updated' => 'Perfil actualizado correctamente.',
-                            'profile-photo-removed' => 'Foto de perfil eliminada.',
-                            'password-updated' => 'Contraseña actualizada correctamente.',
-                            'verification-link-sent' => 'Se ha enviado un nuevo enlace de verificación a tu correo.',
-                            default => session('status'),
-                        };
-                    @endphp
-                    <x-alert type="success" :message="$statusMsg" />
+                @endif
+                @if(session('error'))
+                    <x-alert type="error" :message="session('error')" />
+                @endif
+                @if(session('status'))
+                    <x-alert type="success" :message="match (session('status')) {
+                        'profile-updated' => 'Perfil actualizado correctamente.',
+                        'profile-photo-removed' => 'Foto de perfil eliminada.',
+                        'password-updated' => 'Contraseña actualizada correctamente.',
+                        'verification-link-sent' => 'Se ha enviado un nuevo enlace de verificación a tu correo.',
+                        default => session('status'),
+                    }" />
                 @endif
 
                 {{-- Contenido: padding-top en móvil para no quedar bajo la barra fija --}}

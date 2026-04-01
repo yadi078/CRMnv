@@ -11,8 +11,63 @@
     </x-slot>
 
     <div class="space-y-8">
-        {{-- Resumen de Actividad - Métricas compactas en una sola hilera --}}
-        <div class="flex gap-2">
+        {{-- Métricas alineadas al panel administrador (alcance: tu cartera) --}}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <a href="{{ route('companies.index') }}" class="metric-card-dark cursor-pointer block no-underline">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="metric-card-dark__label">Total Empresas</p>
+                        <p class="metric-card-dark__value">{{ $totalEmpresas }}</p>
+                    </div>
+                    <div class="metric-card-dark__icon-wrap">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
+                    </div>
+                </div>
+            </a>
+            <a href="{{ route('contacts.index') }}" class="metric-card-dark cursor-pointer block no-underline">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="metric-card-dark__label">Total Contactos</p>
+                        <p class="metric-card-dark__value">{{ $totalContactos }}</p>
+                    </div>
+                    <div class="metric-card-dark__icon-wrap">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                    </div>
+                </div>
+            </a>
+            <a href="{{ route('follow-ups.index') }}" class="metric-card-dark cursor-pointer block no-underline">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="metric-card-dark__label">Seguimientos</p>
+                        <p class="metric-card-dark__value">{{ $totalSeguimientos }}</p>
+                    </div>
+                    <div class="metric-card-dark__icon-wrap">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                        </svg>
+                    </div>
+                </div>
+            </a>
+            <a href="{{ route('filtros.index') }}" class="metric-card-dark cursor-pointer block no-underline">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="metric-card-dark__label">Filtros</p>
+                        <p class="metric-card-dark__value text-fluid-lg">Avanzados</p>
+                    </div>
+                    <div class="metric-card-dark__icon-wrap">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h18M5 10h14M9 16h6m-3 4v-4" />
+                        </svg>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-3">
             <a href="{{ route('follow-ups.index', ['completado' => 0]) }}" class="metric-card-dark metric-card-dark--compact cursor-pointer block no-underline flex-1 min-w-0">
                 <div class="flex items-center justify-between gap-1.5">
                     <div class="min-w-0">
@@ -21,16 +76,15 @@
                     </div>
                     <div class="metric-card-dark__icon-wrap flex-shrink-0">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                         </svg>
                     </div>
                 </div>
             </a>
-
             <div class="metric-card-dark metric-card-dark--compact flex-1 min-w-0">
                 <div class="flex items-center justify-between gap-1.5">
                     <div class="min-w-0">
-                        <p class="metric-card-dark__label">Alarmas programadas</p>
+                        <p class="metric-card-dark__label">Alarmas hoy</p>
                         <p class="metric-card-dark__value">{{ $alarmasProgramadas }}</p>
                     </div>
                     <div class="metric-card-dark__icon-wrap flex-shrink-0">
@@ -40,7 +94,6 @@
                     </div>
                 </div>
             </div>
-
             <a href="{{ route('companies.index') }}" class="metric-card-dark metric-card-dark--compact cursor-pointer block no-underline border-l-4 border-l-red-500 flex-1 min-w-0">
                 <div class="flex items-center justify-between gap-1.5">
                     <div class="min-w-0">
@@ -55,6 +108,47 @@
                 </div>
             </a>
         </div>
+
+        <div class="panel-card-dark">
+            <h3 class="panel-card-dark__title panel-card-dark__title--spaced section-title-underline">Estado de prospectos (tus contactos)</h3>
+            <div class="flex flex-col sm:flex-row gap-3 sm:gap-3">
+                <a href="{{ route('contacts.index', ['status_color' => 'seguimiento']) }}" class="prospect-status-bar flex-1 min-h-[80px] sm:min-h-[100px] flex flex-col items-center justify-center gap-1 p-3 sm:p-4 rounded-xl border-4 border-[#15803D] bg-[#BBF7D0] hover:bg-[#86EFAC] transition-all cursor-pointer text-[#14532D] text-center">
+                    <span class="text-2xl sm:text-3xl font-bold">{{ $contactosSeguimiento }}</span>
+                    <span class="text-xs sm:text-sm font-semibold uppercase leading-tight">Seguimiento</span>
+                </a>
+                <a href="{{ route('contacts.index', ['status_color' => 'interesado']) }}" class="prospect-status-bar flex-1 min-h-[80px] sm:min-h-[100px] flex flex-col items-center justify-center gap-1 p-3 sm:p-4 rounded-xl border-4 border-[#DC2626] bg-[#FECACA] hover:bg-[#FCA5A5] transition-all cursor-pointer text-[#991B1B] text-center">
+                    <span class="text-2xl sm:text-3xl font-bold">{{ $contactosInteresado }}</span>
+                    <span class="text-xs sm:text-sm font-semibold uppercase leading-tight">Interesado</span>
+                </a>
+                <a href="{{ route('contacts.index', ['status_color' => 'si_le_interesa_nos_llaman_o_no_compro']) }}" class="prospect-status-bar flex-1 min-h-[80px] sm:min-h-[100px] flex flex-col items-center justify-center gap-1 p-3 sm:p-4 rounded-xl border-4 border-[#3B82F6] bg-[#BFDBFE] hover:bg-[#93C5FD] transition-all cursor-pointer text-[#1e3a5f] text-center">
+                    <span class="text-2xl sm:text-3xl font-bold">{{ $contactosSiLeInteresa }}</span>
+                    <span class="text-xs sm:text-sm font-semibold uppercase leading-tight" style="line-height: 1.2;">Si le interesa nos llaman o no compro</span>
+                </a>
+                <a href="{{ route('contacts.index', ['status_color' => 'vendido']) }}" class="prospect-status-bar flex-1 min-h-[80px] sm:min-h-[100px] flex flex-col items-center justify-center gap-1 p-3 sm:p-4 rounded-xl border-4 border-[#CA8A04] bg-[#FEF08A] hover:bg-[#FDE047] transition-all cursor-pointer text-[#713F12] text-center">
+                    <span class="text-2xl sm:text-3xl font-bold">{{ $contactosVendido }}</span>
+                    <span class="text-xs sm:text-sm font-semibold uppercase leading-tight">Vendido</span>
+                </a>
+                <a href="{{ route('contacts.index', ['status_color' => 'no_estaba']) }}" class="prospect-status-bar flex-1 min-h-[80px] sm:min-h-[100px] flex flex-col items-center justify-center gap-1 p-3 sm:p-4 rounded-xl border-4 border-[#7C3AED] bg-[#DDD6FE] hover:bg-[#C4B5FD] transition-all cursor-pointer text-[#4C1D95] text-center">
+                    <span class="text-2xl sm:text-3xl font-bold">{{ $contactosNoEstaba }}</span>
+                    <span class="text-xs sm:text-sm font-semibold uppercase leading-tight">No estaba</span>
+                </a>
+            </div>
+        </div>
+
+        @if($seguimientosVencidos > 0)
+        <div class="view-card flex flex-wrap items-center justify-between gap-4 border-l-4 border-l-[#B91C1C]">
+            <div>
+                <h3 class="font-semibold text-[#1F2937] section-title-underline">Seguimientos vencidos</h3>
+                <p class="text-sm text-[#6B7280]">Tienes {{ $seguimientosVencidos }} seguimiento(s) vencido(s)</p>
+            </div>
+            <a href="{{ route('follow-ups.index', ['completado' => 0]) }}" class="btn-primary-app">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+                Ver seguimientos
+            </a>
+        </div>
+        @endif
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {{-- Mis Empresas - Panel oscuro estilo admin --}}
@@ -108,7 +202,7 @@
                                         @if($empresa->approval_status === 'pendiente')
                                         <span class="w-2 h-2 rounded-full bg-[#FFE600] flex-shrink-0" title="Pendiente"></span>
                                         @endif
-                                        <a href="{{ route('companies.show', $empresa) }}" class="text-[#FFE600] hover:text-white font-medium">{{ $empresa->nombre_comercial }}</a>
+                                        <a href="{{ \App\Support\CrmNavigation::withReturn(route('companies.show', $empresa)) }}" class="text-[#FFE600] hover:text-white font-medium">{{ $empresa->nombre_comercial }}</a>
                                     </div>
                                     @if($empresa->approval_status === 'pendiente')
                                     <p class="text-xs text-[#FCD34D] mt-0.5">Pendiente</p>
@@ -182,7 +276,7 @@
                             @foreach($misContactos->take(5) as $contacto)
                             <tr class="panel-card-dark__row hover:bg-white/8 transition-colors">
                                 <td class="px-4 py-3">
-                                    <a href="{{ route('contacts.show', $contacto) }}" class="text-[#FFE600] hover:text-white font-medium">{{ $contacto->nombre_completo }}</a>
+                                    <a href="{{ \App\Support\CrmNavigation::withReturn(route('contacts.show', $contacto)) }}" class="text-[#FFE600] hover:text-white font-medium">{{ $contacto->nombre_completo }}</a>
                                 </td>
                                 <td class="px-4 py-3 text-white/90">{{ $contacto->company->nombre_comercial ?? '—' }}</td>
                                 <td class="px-4 py-3 text-white/90">{{ $contacto->celular ?? $contacto->email ?? '—' }}</td>
@@ -222,7 +316,7 @@
                         <tr class="panel-card-dark__row hover:bg-white/8 transition-colors">
                             <td class="px-4 py-3 text-white">{{ $venta->nombre_servicio ?? '—' }}</td>
                             <td class="px-4 py-3">
-                                <a href="{{ route('companies.show', $venta->company) }}" class="text-[#FFE600] hover:text-white">{{ $venta->company->nombre_comercial ?? '—' }}</a>
+                                <a href="{{ \App\Support\CrmNavigation::withReturn(route('companies.show', $venta->company)) }}" class="text-[#FFE600] hover:text-white">{{ $venta->company->nombre_comercial ?? '—' }}</a>
                             </td>
                             <td class="px-4 py-3 text-white/90">{{ $venta->fecha_venta->format('d/m/Y') ?? '—' }}</td>
                             <td class="px-4 py-3 text-white/90">—</td>

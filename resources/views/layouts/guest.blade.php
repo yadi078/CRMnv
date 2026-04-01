@@ -21,13 +21,10 @@
         @elseif(session('error'))
             <x-alert type="error" :message="session('error')" />
         @elseif(session('status'))
-            @php
-                $statusMsg = match(session('status')) {
-                    'verification-link-sent' => 'Se ha enviado un nuevo enlace de verificación a tu correo.',
-                    default => is_string(session('status')) ? session('status') : 'Listo.',
-                };
-            @endphp
-            <x-alert type="success" :message="$statusMsg" />
+            <x-alert type="success" :message="match (session('status')) {
+                'verification-link-sent' => 'Se ha enviado un nuevo enlace de verificación a tu correo.',
+                default => is_string(session('status')) ? session('status') : 'Listo.',
+            }" />
         @endif
         <div class="min-h-screen flex items-center justify-center px-4 py-8">
             <div class="w-full max-w-5xl">

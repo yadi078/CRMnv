@@ -20,7 +20,6 @@
                     <span class="font-semibold text-white text-fluid-lg">CE CRM</span>
                 </a>
                 <div class="flex items-center gap-1">
-                    <x-crm-back-button compact />
                     <button type="button" @click="mobileMenuOpen = true" class="flex items-center justify-center min-w-[44px] min-h-[44px] rounded-xl text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-[#FFE600] focus:ring-offset-2 focus:ring-offset-[#000836] transition-colors" aria-label="Abrir menú">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
                     </button>
@@ -48,32 +47,32 @@
                                 <div class="flex items-center gap-4 min-w-0 flex-1">
                                     {{ $header }}
                                 </div>
-                                <x-crm-back-button />
                             </div>
                         </div>
                     </div>
                 @endisset
 
-                {{-- Mensajes flash flotantes --}}
+                {{-- Mensajes flash (pueden mostrarse varios: éxito + aviso) --}}
                 @if(session('success'))
                     <x-alert type="success" :message="session('success')" />
-                @elseif(session('error'))
-                    <x-alert type="error" :message="session('error')" />
-                @elseif(session('warning'))
+                @endif
+                @if(session('warning'))
                     <x-alert type="warning" :message="session('warning')" />
-                @elseif(session('info'))
+                @endif
+                @if(session('info'))
                     <x-alert type="info" :message="session('info')" />
-                @elseif(session('status'))
-                    @php
-                        $statusMsg = match(session('status')) {
-                            'profile-updated' => 'Perfil actualizado correctamente.',
-                            'profile-photo-removed' => 'Foto de perfil eliminada.',
-                            'password-updated' => 'Contraseña actualizada correctamente.',
-                            'verification-link-sent' => 'Se ha enviado un nuevo enlace de verificación a tu correo.',
-                            default => session('status'),
-                        };
-                    @endphp
-                    <x-alert type="success" :message="$statusMsg" />
+                @endif
+                @if(session('error'))
+                    <x-alert type="error" :message="session('error')" />
+                @endif
+                @if(session('status'))
+                    <x-alert type="success" :message="match (session('status')) {
+                        'profile-updated' => 'Perfil actualizado correctamente.',
+                        'profile-photo-removed' => 'Foto de perfil eliminada.',
+                        'password-updated' => 'Contraseña actualizada correctamente.',
+                        'verification-link-sent' => 'Se ha enviado un nuevo enlace de verificación a tu correo.',
+                        default => session('status'),
+                    }" />
                 @endif
 
                 <main class="flex-1 p-4 sm:p-6 md:p-8 pt-[calc(2.75rem+1rem)] lg:pt-8 min-w-0 overflow-x-hidden">
@@ -81,13 +80,6 @@
                         {{ $slot }}
                     </div>
                 </main>
-
-                {{-- Barra inferior fija: slogan centrado, no se mueve con el scroll --}}
-                <div class="slogan-bar-fixed">
-                    <div class="top-bar-gradient slogan-bar-fixed__inner">
-                        <h1 class="top-bar-gradient__slogan">INVERTIR EN VALOR ¡ATRAE VALOR!</h1>
-                    </div>
-                </div>
             </div>
         </div>
     </body>

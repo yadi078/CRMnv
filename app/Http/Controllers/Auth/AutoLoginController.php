@@ -23,6 +23,11 @@ class AutoLoginController extends Controller
                 ->with('error', 'Esta cuenta aún no ha sido aprobada.');
         }
 
+        if ($user->is_active === false) {
+            return redirect()->route('login')
+                ->with('error', 'Esta cuenta está desactivada.');
+        }
+
         Auth::login($user, true);
 
         return redirect()->route('user.dashboard')

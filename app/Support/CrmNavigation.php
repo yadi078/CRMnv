@@ -1,0 +1,67 @@
+<?php
+
+namespace App\Support;
+
+class CrmNavigation
+{
+    /**
+     * Valida que la URL sea del mismo sitio (evita redirección abierta).
+     */
+    public static function isSafeReturnUrl(?string $url): bool
+    {
+        if ($url === null || $url === '') {
+            return false;
+        }
+
+        $parsed = parse_url($url);
+        if ($parsed === false || empty($parsed['scheme']) || empty($parsed['host'])) {
+            return false;
+        }
+
+        if (! in_array(strtolower($parsed['scheme']), ['http', 'https'], true)) {
+            return false;
+        }
+
+        $configHost = parse_url((string) config('app.url'), PHP_URL_HOST);
+
+        return $parsed['host'] === $configHost
+            || $parsed['host'] === request()->getHost();
+    }
+
+    /**
+     * URL preferida para el botón "Volver" (query ?return=).
+     */
+    public static function preferredBackUrlFromRequest(): ?string
+    {
+        $candidate = request()->query('return');
+        if (! is_string($candidate) || $candidate === '') {
+            return null;
+        }
+
+        return static::isSafeReturnUrl($candidate) ? $candidate : null;
+    }
+
+    /**
+     * Añade ?return= o &return= con la página actual para encadenar el flujo de "Volver".
+     */
+    public static function withReturn(string $targetUrl): string
+    {
+        $current = request()->fullUrl();
+        $separator = str_contains($targetUrl, '?') ? '&' : '?';
+
+        return $targetUrl.$separator.'return='.rawurlencode($current);
+    }
+
+    /**
+     * Tras guardar un formulario, redirige a la URL ?return= si viene en la petición y es segura.
+     */
+    public static function redirectTargetFromRequest(\Illuminate\Http\Request $request, string $fallbackUrl): string
+    {
+        $back = $request->input('return');
+        if (is_string($back) && static::isSafeReturnUrl($back)) {
+            return $back;
+        }
+
+        return $fallbackUrl;
+    }
+}

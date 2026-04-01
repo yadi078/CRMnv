@@ -60,7 +60,7 @@ class FollowUpController extends Controller
         $user = $request->user();
         $companies = Company::forExecutiveFollowUpAndSales($user);
         $contacts = Contact::with('company')
-            ->when(! $user->esAdmin(), fn ($q) => $q->where('created_by', $user->id))
+            ->when(! $user->esAdmin(), fn ($q) => $q->accessibleForExecutive($user))
             ->orderBy('nombre_completo')
             ->get();
 
@@ -136,7 +136,7 @@ class FollowUpController extends Controller
         $user = request()->user();
         $companies = Company::forExecutiveFollowUpAndSales($user);
         $contacts = Contact::with('company')
-            ->when(! $user->esAdmin(), fn ($q) => $q->where('created_by', $user->id))
+            ->when(! $user->esAdmin(), fn ($q) => $q->accessibleForExecutive($user))
             ->orderBy('nombre_completo')
             ->get();
 

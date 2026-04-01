@@ -5,7 +5,7 @@
             </svg></x-page-header-avatar>
         <div>
             <h2 class="page-header-card__title">Empresas</h2>
-            <p class="page-header-card__subtitle">Consultar y agregar empresas (solo aprobadas visibles aquí)</p>
+            <p class="page-header-card__subtitle">Cartera asignada y empresas que usted registre</p>
         </div>
         @can('companies.create')
         <a href="{{ route('companies.create') }}" class="btn-amber-app ml-auto">
@@ -21,7 +21,7 @@
             @if(isset($misPendientes) && $misPendientes > 0)
             <div class="panel-card-dark rounded-lg border-2 border-[#FFE600]/50 p-4">
                 <p class="text-sm text-white">
-                    <strong>{{ $misPendientes }}</strong> empresa(s) en estado <strong>Pendiente</strong> de aprobación. Se reflejarán en el sistema cuando un administrador las apruebe.
+                    <strong>{{ $misPendientes }}</strong> empresa(s) en estado <strong>Pendiente</strong>. No serán visibles para el resto del equipo hasta que un administrador las acepte; usted sí puede verlas y editarlas aquí.
                 </p>
             </div>
             @endif
@@ -63,7 +63,7 @@
                 @if(isset($companyContactsCard) && $companyContactsCard)
                 <div class="mb-8 pb-8 border-b border-white/20">
                     <p class="text-white/70 text-xs mb-4">
-                        Resultado único: datos de la empresa y <strong class="text-white/90">sus contactos que usted agregó</strong> (aprobados), con los <strong class="text-white/90">seguimientos</strong> que creó o tiene asignados.
+                        Resultado único: datos de la empresa y <strong class="text-white/90">contactos de su cartera</strong> en esta empresa, con los <strong class="text-white/90">seguimientos</strong> que creó o tiene asignados.
                     </p>
                     <div class="rounded-xl border border-white/20 bg-white/5 p-4 sm:p-5">
                         <h4 class="text-lg font-bold text-[#FFE600] mb-3">
@@ -97,7 +97,7 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 @foreach($companyContactsCard->contacts as $contact)
                                     <div class="bg-white rounded-2xl shadow-md px-4 py-3 flex flex-col gap-2 border-2 border-[#071A3D] border-t-4 border-t-[#FFE600]">
-                                        <a href="{{ route('contacts.show', $contact) }}" class="text-sm font-semibold text-[#071A3D] hover:text-[#0f172a] hover:underline">
+                                        <a href="{{ \App\Support\CrmNavigation::withReturn(route('contacts.show', $contact)) }}" class="text-sm font-semibold text-[#071A3D] hover:text-[#0f172a] hover:underline">
                                             {{ $contact->nombre_completo }}
                                         </a>
                                         @if($contact->puesto_de_trabajo)
@@ -125,7 +125,7 @@
                                         <div class="pt-2 mt-1 border-t border-gray-200">
                                             <p class="text-xs font-semibold text-[#071A3D] mb-2">Seguimientos</p>
                                             @forelse($contact->followUps as $followUp)
-                                                <a href="{{ route('follow-ups.show', $followUp) }}" class="block text-xs text-gray-700 hover:text-[#071A3D] py-1.5 border-b border-gray-100 last:border-0">
+                                                <a href="{{ \App\Support\CrmNavigation::withReturn(route('follow-ups.show', $followUp)) }}" class="block text-xs text-gray-700 hover:text-[#071A3D] py-1.5 border-b border-gray-100 last:border-0">
                                                     <span class="font-medium">{{ $followUp->fecha_alarma?->format('d/m/Y H:i') }}</span>
                                                     <span class="text-gray-500"> · {{ ucfirst($followUp->tipo_accion) }}</span>
                                                     @if($followUp->completado)
@@ -149,14 +149,14 @@
                 @endif
 
                 <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-white/20">
+                    <table class="w-full min-w-[920px] table-fixed divide-y divide-white/20">
                         <thead>
                             <tr class="table-header-panel-dark">
                                 <th scope="col" class="crm-row-marker-head w-11 min-w-[2.75rem] px-1 py-3 text-center text-[10px] font-semibold uppercase tracking-wide text-[#FFE600]/90" title="Seguimiento personal (solo en este navegador)">Seg.</th>
-                                <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Nombre</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">RFC</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Estado</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Ejecutivo</th>
+                                <th class="w-[28%] min-w-[12rem] px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Nombre</th>
+                                <th class="w-[14%] min-w-[7rem] px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">RFC</th>
+                                <th class="w-[12%] min-w-[7rem] px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Estado</th>
+                                <th class="w-[18%] min-w-[8rem] px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Ejecutivo</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Acciones</th>
                             </tr>
                         </thead>
@@ -164,23 +164,20 @@
                             @forelse($companies as $company)
                             <tr class="panel-card-dark__row hover:bg-white/8 transition-colors">
                                 <x-crm-row-marker entity="company" :id="$company->id" />
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        <div class="w-3 h-3 rounded-full mr-2 flex-shrink-0 dot-prospect-{{ $company->status_color }}"></div>
-                                        <a href="{{ route('companies.show', $company) }}" class="text-sm font-medium text-white hover:text-[#FFE600] hover:underline focus:outline-none focus:ring-2 focus:ring-[#FFE600]/35 rounded min-w-0">{{ $company->nombre_comercial }}</a>
-                                    </div>
+                                <td class="px-6 py-4 align-top whitespace-normal break-words">
+                                    <a href="{{ \App\Support\CrmNavigation::withReturn(route('companies.show', $company)) }}" title="Ver ficha de la empresa" class="group flex items-center gap-2 rounded-lg -m-1 p-1 min-w-0 hover:bg-white/[0.06] focus:outline-none focus:ring-2 focus:ring-[#FFE600]/35">
+                                        <span class="w-3 h-3 rounded-full flex-shrink-0 dot-prospect-{{ $company->status_color }}" aria-hidden="true"></span>
+                                        <span class="text-sm font-medium text-white group-hover:text-[#FFE600] group-hover:underline min-w-0">{{ $company->nombre_comercial }}</span>
+                                    </a>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-white/90">{{ $company->rfc ?? '-' }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-2 py-1 text-xs font-semibold rounded badge-prospect-{{ $company->status_color }}">
-                                        {{ $company->status_label }}
-                                    </span>
+                                <td class="px-6 py-4 align-top whitespace-normal max-w-[12rem]">
+                                    <x-company-prospect-status-badges :company="$company" variant="user" />
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-white/90">{{ $company->ejecutivo_asignado ?? '-' }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <a href="{{ route('companies.show', $company) }}" class="text-[#FFE600] hover:text-white mr-3">Ver</a>
                                     @can('companies.edit')
-                                    <a href="{{ route('companies.edit', $company) }}" class="text-[#FFE600] hover:text-white mr-3">Editar</a>
+                                    <a href="{{ \App\Support\CrmNavigation::withReturn(route('companies.edit', $company)) }}" class="text-[#FFE600] hover:text-white mr-3">Editar</a>
                                     @endcan
                                 </td>
                             </tr>

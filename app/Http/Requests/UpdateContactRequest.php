@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\CommaSeparatedEmails;
+use App\Support\ContactEmailList;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -18,6 +20,15 @@ class UpdateContactRequest extends FormRequest
         return $this->user()->can('contacts.edit');
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('email') && is_string($this->email)) {
+            $this->merge([
+                'email' => ContactEmailList::normalize($this->email),
+            ]);
+        }
+    }
+
     /**
      * Get the validation rules that apply to the request.
      *
@@ -31,8 +42,9 @@ class UpdateContactRequest extends FormRequest
         $companyRules[] = $this->user()->esAdmin()
             ? 'exists:companies,id'
             : Rule::exists('companies', 'id')->where(function ($query) {
-                $query->where('created_by', $this->user()->id)
-                    ->orWhere('approval_status', 'aprobado');
+                $uid = $this->user()->id;
+                $query->where('created_by', $uid)
+                    ->orWhere('assigned_user_id', $uid);
             });
 
         return [
@@ -44,7 +56,7 @@ class UpdateContactRequest extends FormRequest
             'celular' => 'nullable|string|max:20',
             'telefono' => 'nullable|string|max:30',
             'extension' => 'nullable|string|max:10',
-            'email' => 'required|email|unique:contacts,email,' . $contact->id . '|max:255',
+            'email' => ['required', 'string', 'max:1000', new CommaSeparatedEmails(), Rule::unique('contacts', 'email')->ignore($contact->id)],
             'email_activo' => 'sometimes|boolean',
             'fecha_cumpleanos' => 'nullable|date',
             'municipio' => 'nullable|string|max:255',

@@ -27,20 +27,52 @@ class UserDashboardController extends Controller
 
         $user = auth()->user();
 
-        // Seguimientos pendientes (no completados)
-        $seguimientosPendientes = FollowUp::where('completado', false)->count();
+        $followUpScope = function ($query) use ($user) {
+            $query->where(function ($q) use ($user) {
+                $q->where('created_by', $user->id)->orWhere('asignado_a', $user->id);
+            });
+        };
+
+        // Seguimientos pendientes (no completados), solo los del usuario (creados o asignados)
+        $seguimientosPendientes = FollowUp::query()
+            ->where($followUpScope)
+            ->where('completado', false)
+            ->count();
 
         // Alarmas programadas (hoy)
         $hoyInicio = now()->startOfDay();
         $hoyFin = now()->endOfDay();
-        $alarmasProgramadas = FollowUp::where('completado', false)
+        $alarmasProgramadas = FollowUp::query()
+            ->where($followUpScope)
+            ->where('completado', false)
             ->whereBetween('fecha_alarma', [$hoyInicio, $hoyFin])
             ->count();
-        $alarmasHoy = FollowUp::where('completado', false)
+        $alarmasHoy = FollowUp::query()
+            ->where($followUpScope)
+            ->where('completado', false)
             ->whereBetween('fecha_alarma', [$hoyInicio, $hoyFin])
             ->orderBy('fecha_alarma')
             ->limit(10)
             ->get();
+
+        $totalEmpresas = Company::query()->accessibleForExecutive($user)->count();
+        $totalContactos = Contact::query()->accessibleForExecutive($user)->count();
+        $totalSeguimientos = FollowUp::query()->where($followUpScope)->count();
+
+        $contactosProspectoBase = Contact::query()
+            ->accessibleForExecutive($user)
+            ->where('approval_status', 'aprobado');
+        $contactosSeguimiento = (clone $contactosProspectoBase)->porStatus('seguimiento')->count();
+        $contactosInteresado = (clone $contactosProspectoBase)->porStatus('interesado')->count();
+        $contactosSiLeInteresa = (clone $contactosProspectoBase)->porStatus('si_le_interesa_nos_llaman_o_no_compro')->count();
+        $contactosVendido = (clone $contactosProspectoBase)->porStatus('vendido')->count();
+        $contactosNoEstaba = (clone $contactosProspectoBase)->porStatus('no_estaba')->count();
+
+        $seguimientosVencidos = FollowUp::query()
+            ->where($followUpScope)
+            ->where('completado', false)
+            ->where('fecha_alarma', '<', now())
+            ->count();
 
         // Solicitudes: altas de empresa pendientes + eliminaciones enviadas a revisión
         $solicitudesPendientes = Company::where('created_by', $user->id)
@@ -50,11 +82,15 @@ class UserDashboardController extends Controller
             })
             ->count();
 
-        // Mis empresas: mismo alcance que en el listado (propias + aprobadas con contacto propio)
+        // Mis empresas: mismo alcance que en el listado
         $misEmpresasQuery = Company::query()
             ->accessibleForExecutive($user)
             ->with(['contacts' => function ($q) use ($user) {
-                $q->orderByRaw('CASE WHEN created_by = ? THEN 0 ELSE 1 END', [$user->id])
+                $q->where(function ($q2) use ($user) {
+                    $q2->where('assigned_user_id', $user->id)
+                        ->orWhere('created_by', $user->id);
+                })
+                    ->orderByRaw('CASE WHEN created_by = ? THEN 0 ELSE 1 END', [$user->id])
                     ->orderBy('id')
                     ->limit(1);
             }]);
@@ -67,8 +103,8 @@ class UserDashboardController extends Controller
         }
         $misEmpresas = $misEmpresasQuery->latest()->limit(20)->get();
 
-        // Mis contactos: los creados por el usuario
-        $misContactos = Contact::where('created_by', $user->id)->latest()->limit(20)->get();
+        // Mis contactos: cartera del ejecutivo (asignados o propios)
+        $misContactos = Contact::query()->accessibleForExecutive($user)->latest()->limit(20)->get();
 
         // Ventas recientes del usuario
         $ventasRecientes = Sale::where('created_by', $user->id)->with('company')->latest('fecha_venta')->limit(5)->get();
@@ -80,7 +116,16 @@ class UserDashboardController extends Controller
             'misEmpresas',
             'misContactos',
             'alarmasHoy',
-            'ventasRecientes'
+            'ventasRecientes',
+            'totalEmpresas',
+            'totalContactos',
+            'totalSeguimientos',
+            'contactosSeguimiento',
+            'contactosInteresado',
+            'contactosSiLeInteresa',
+            'contactosVendido',
+            'contactosNoEstaba',
+            'seguimientosVencidos'
         ));
     }
 }

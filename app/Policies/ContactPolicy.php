@@ -4,7 +4,6 @@ namespace App\Policies;
 
 use App\Models\Contact;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
 class ContactPolicy
 {
@@ -18,14 +17,19 @@ class ContactPolicy
 
     /**
      * Determine whether the user can view the model.
-     * Admin ve todos; usuario solo los que creó (created_by).
+     * Admin ve todos; ejecutivo: asignados o creados por él.
      */
     public function view(User $user, Contact $contact): bool
     {
         if (! $user->can('contacts.view')) {
             return false;
         }
-        return $user->esAdmin() || $contact->created_by === $user->id;
+        if ($user->esAdmin()) {
+            return true;
+        }
+
+        return (int) $contact->created_by === (int) $user->id
+            || (int) $contact->assigned_user_id === (int) $user->id;
     }
 
     /**
@@ -38,14 +42,19 @@ class ContactPolicy
 
     /**
      * Determine whether the user can update the model.
-     * Admin edita todos; usuario solo los que creó (created_by).
+     * Admin edita todos; ejecutivo: creador o ejecutivo asignado.
      */
     public function update(User $user, Contact $contact): bool
     {
         if (! $user->can('contacts.edit')) {
             return false;
         }
-        return $user->esAdmin() || $contact->created_by === $user->id;
+        if ($user->esAdmin()) {
+            return true;
+        }
+
+        return (int) $contact->created_by === (int) $user->id
+            || (int) $contact->assigned_user_id === (int) $user->id;
     }
 
     /**

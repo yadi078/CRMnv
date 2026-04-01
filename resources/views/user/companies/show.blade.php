@@ -9,7 +9,7 @@
         </div>
         <div class="flex gap-2 ml-auto">
             @can('companies.edit')
-            <a href="{{ route('companies.edit', $company) }}" class="btn-amber-app">
+            <a href="{{ \App\Support\CrmNavigation::withReturn(route('companies.edit', $company)) }}" class="btn-amber-app">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
@@ -34,6 +34,8 @@
     </x-slot>
 
     <div class="company-show company-show__sections">
+        <x-pending-approval-notice :model="$company" entity-label="empresa" />
+
         @if(($company->deletion_resolution ?? '') === 'denied'
             && (int) ($company->deletion_decision_user_id ?? 0) === (int) auth()->id()
             && filled($company->deletion_resolution_note))
@@ -123,10 +125,9 @@
                 @forelse($company->contacts as $contact)
                 <div class="company-show__list-item company-show__list-item--contact">
                     <div class="company-show__list-body">
-                        <a href="{{ route('contacts.show', $contact) }}" class="company-show__list-title text-white hover:text-[#FFE600] hover:underline focus:outline-none focus:ring-2 focus:ring-[#FFE600]/35 rounded inline-block">{{ $contact->nombre_completo }}</a>
+                        <a href="{{ \App\Support\CrmNavigation::withReturn(route('contacts.show', $contact)) }}" class="company-show__list-title text-white hover:text-[#FFE600] hover:underline focus:outline-none focus:ring-2 focus:ring-[#FFE600]/35 rounded inline-block">{{ $contact->nombre_completo }}</a>
                         <p class="company-show__list-meta">{{ $contact->puesto_de_trabajo ?? '-' }} · {{ $contact->email }}</p>
                     </div>
-                    <a href="{{ route('contacts.show', $contact) }}" class="company-show__list-link">Ver</a>
                 </div>
                 @empty
                 <p class="company-show__empty">No hay contactos registrados</p>
@@ -152,7 +153,7 @@
                         <p class="company-show__list-title">{{ $sale->nombre_servicio }}</p>
                         <p class="company-show__list-meta">{{ $sale->fecha_venta->format('d/m/Y') }} · {{ $sale->monto_formateado }}</p>
                     </div>
-                    <a href="{{ route('user.sales.show', $sale) }}" class="company-show__list-link">Ver</a>
+                    <a href="{{ \App\Support\CrmNavigation::withReturn(route('user.sales.show', $sale)) }}" class="company-show__list-link">Ver</a>
                 </div>
                 @empty
                 <p class="company-show__empty">No hay ventas registradas</p>

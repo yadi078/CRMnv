@@ -39,6 +39,7 @@ class RolePermissionSeeder extends Seeder
             'contacts.create',
             'contacts.edit',
             'contacts.delete',
+            'contacts.approve',
             'contacts.export',
             'contacts.generate-pdf',
             

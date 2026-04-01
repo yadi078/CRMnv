@@ -1,7 +1,7 @@
 <x-guest-layout>
     <div class="bg-white rounded-3xl shadow-2xl overflow-hidden">
         <div class="flex flex-col lg:flex-row">
-            <!-- Left Section - Welcome/Registration -->
+            <!-- Left Section - Marca (sin registro público; altas vía administrador) -->
             <div class="lg:w-2/5 bg-[#000836] relative px-8 py-12 lg:py-16 flex flex-col justify-center items-center text-center lg:text-left lg:items-start overflow-hidden">
                 <!-- Curved bottom-right corner effect -->
                 <div class="absolute bottom-0 right-0 w-40 h-40 bg-[#FFFF00] rounded-tl-[100px] opacity-0 lg:opacity-100"></div>
@@ -12,16 +12,10 @@
                         <img src="{{ asset('img/logo.png') }}" alt="Logo" class="h-36 lg:h-44 w-auto object-contain">
                     </div>
                     <h1 class="text-2xl lg:text-3xl font-bold text-amarillo mb-2 text-center w-full">INVERTIR EN VALOR</h1>
-                    <h2 class="text-2xl lg:text-3xl font-bold text-amarillo mb-4 text-center w-full">¡ATRAE VALOR!</h2>
-                    <p class="text-lg text-white mb-8">¿No tienes una Cuenta?</p>
-                    @if (Route::has('register'))
-                        <a href="{{ route('register') }}" class="inline-block border-2 border-white text-white px-8 py-3 rounded-xl hover:bg-white hover:text-[#000836] transition-all duration-200 font-semibold inline-flex items-center">
-                            <svg class="w-7 h-7 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM3 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 019.374 21c-2.331 0-4.512-.645-6.374-1.766z" />
-                            </svg>
-                            Registrarse
-                        </a>
-                    @endif
+                    <h2 class="text-2xl lg:text-3xl font-bold text-amarillo mb-6 text-center w-full">¡ATRAE VALOR!</h2>
+                    <p class="text-sm text-white/75 max-w-sm leading-relaxed">
+                        Las cuentas de acceso las crea y gestiona el administrador del sistema.
+                    </p>
                 </div>
             </div>
 

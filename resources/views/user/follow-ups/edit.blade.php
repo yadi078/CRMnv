@@ -74,7 +74,7 @@
                     </div>
 
                     <div class="flex items-center justify-end mt-6 gap-3 flex-wrap">
-                        <a href="{{ route('follow-ups.show', $followUp) }}" class="btn-icon-text text-gray-600 hover:text-gray-800 px-4 py-2 rounded-xl border border-gray-300 hover:bg-gray-50">
+                        <a href="{{ \App\Support\CrmNavigation::withReturn(route('follow-ups.show', $followUp)) }}" class="btn-icon-text text-gray-600 hover:text-gray-800 px-4 py-2 rounded-xl border border-gray-300 hover:bg-gray-50">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                             </svg>

@@ -47,7 +47,7 @@
                     <div>
                         <p class="text-sm text-white/70">Empresa</p>
                         <p class="text-lg font-medium text-white">
-                            <a href="{{ route('companies.show', $followUp->company) }}" class="text-[#FFE600] hover:text-white">{{ $followUp->company->nombre_comercial }}</a>
+                            <a href="{{ \App\Support\CrmNavigation::withReturn(route('companies.show', $followUp->company)) }}" class="text-[#FFE600] hover:text-white">{{ $followUp->company->nombre_comercial }}</a>
                         </p>
                     </div>
                     @endif
@@ -55,7 +55,7 @@
                     <div>
                         <p class="text-sm text-white/70">Contacto</p>
                         <p class="text-lg font-medium text-white">
-                            <a href="{{ route('contacts.show', $followUp->contact) }}" class="text-[#FFE600] hover:text-white">{{ $followUp->contact->nombre_completo }}</a>
+                            <a href="{{ \App\Support\CrmNavigation::withReturn(route('contacts.show', $followUp->contact)) }}" class="text-[#FFE600] hover:text-white">{{ $followUp->contact->nombre_completo }}</a>
                         </p>
                     </div>
                     @endif

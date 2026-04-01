@@ -107,7 +107,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     @foreach($companyContactsCard->contacts as $contact)
                         <a
-                            href="{{ route('contacts.show', $contact) }}"
+                            href="{{ \App\Support\CrmNavigation::withReturn(route('contacts.show', $contact)) }}"
                             class="bg-white rounded-2xl shadow-md px-4 py-3 flex flex-col gap-1 border-2 border-[#071A3D] border-t-4 border-t-[#FFE600] transition transform hover:-translate-y-0.5 hover:shadow-lg cursor-pointer"
                         >
                             <span class="text-sm font-semibold text-[#071A3D]">
@@ -162,36 +162,28 @@
                     <tbody class="divide-y divide-white/15">
                         @forelse($companies as $company)
                         <tr class="panel-card-dark__row hover:bg-white/8 transition-colors">
+                            <x-crm-row-marker entity="company" :id="$company->id" />
                             <td class="px-6 py-4 align-top whitespace-normal break-words">
-                                <div class="flex items-center gap-2">
-                                    <span class="w-2.5 h-2.5 rounded-full flex-shrink-0 dot-prospect-{{ $company->status_color }}"></span>
-                                    <div class="min-w-0">
-                                        <a href="{{ route('companies.show', $company) }}" class="inline-block text-sm font-medium text-white hover:text-[#FFE600] hover:underline focus:outline-none focus:ring-2 focus:ring-[#FFE600]/35 rounded">{{ $company->nombre_comercial }}</a>
+                                <a href="{{ \App\Support\CrmNavigation::withReturn(route('companies.show', $company)) }}" title="Ver ficha de la empresa" class="group flex items-start gap-2 rounded-lg -m-1 p-1 text-left min-w-0 hover:bg-white/[0.06] focus:outline-none focus:ring-2 focus:ring-[#FFE600]/35">
+                                    <span class="w-2.5 h-2.5 mt-1.5 rounded-full flex-shrink-0 dot-prospect-{{ $company->status_color }}" aria-hidden="true"></span>
+                                    <span class="min-w-0 flex flex-col gap-0.5">
+                                        <span class="text-sm font-medium text-white group-hover:text-[#FFE600] group-hover:underline">{{ $company->nombre_comercial }}</span>
                                         @if($company->approval_status === 'pendiente')
-                                        <span class="text-xs font-medium text-[#FCD34D] bg-amber-500/20 px-2 py-0.5 rounded-lg mt-0.5 inline-block">Pendiente</span>
+                                        <span class="text-xs font-medium text-[#FCD34D] bg-amber-500/20 px-2 py-0.5 rounded-lg self-start">Pendiente</span>
                                         @elseif($company->approval_status === 'rechazado')
-                                        <span class="text-xs font-medium text-red-300 bg-red-500/20 px-2 py-0.5 rounded-lg mt-0.5 inline-block">Rechazado</span>
+                                        <span class="text-xs font-medium text-red-300 bg-red-500/20 px-2 py-0.5 rounded-lg self-start">Rechazado</span>
                                         @endif
-                                    </div>
-                                </div>
+                                    </span>
+                                </a>
                             </td>
                             <td class="px-6 py-4 align-top whitespace-normal break-words text-sm text-white/90">{{ $company->rfc ?? '-' }}</td>
-                            <td class="px-6 py-4 align-top whitespace-nowrap">
-                                <span class="px-2.5 py-1 text-xs font-medium rounded-lg badge-prospect-{{ $company->status_color }}">
-                                    {{ $company->status_label }}
-                                </span>
+                            <td class="px-6 py-4 align-top whitespace-normal max-w-[14rem]">
+                                <x-company-prospect-status-badges :company="$company" variant="admin" />
                             </td>
                             <td class="px-6 py-4 align-top whitespace-normal break-words text-sm text-white/90">{{ $company->ejecutivo_asignado ?? '-' }}</td>
                             <td class="px-6 py-4 align-top whitespace-nowrap text-sm font-medium">
-                                <a href="{{ route('companies.show', $company) }}" class="text-[#FFE600] hover:text-[#fff] mr-3 inline-flex items-center gap-1">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                    </svg>
-                                    Ver
-                                </a>
                                 @can('companies.edit')
-                                <a href="{{ route('companies.edit', $company) }}" class="text-[#FFE600] hover:text-[#fff] mr-3 inline-flex items-center gap-1">
+                                <a href="{{ \App\Support\CrmNavigation::withReturn(route('companies.edit', $company)) }}" class="text-[#FFE600] hover:text-[#fff] mr-3 inline-flex items-center gap-1">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
                                     </svg>

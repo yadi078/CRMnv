@@ -3,13 +3,17 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Collection;
+use App\Models\Contact;
 use App\Models\Reminder;
+use App\Notifications\ReminderDueNotification;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Traits\HasRoles;
 
@@ -34,6 +38,7 @@ class User extends Authenticatable
         'approval_status',
         'approved_by',
         'approved_at',
+        'is_active',
     ];
 
     /**
@@ -57,6 +62,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'approved_at' => 'datetime',
+            'is_active' => 'boolean',
         ];
     }
 
@@ -120,6 +126,22 @@ class User extends Authenticatable
     }
 
     /**
+     * Empresas donde este usuario figura como ejecutivo asignado (admin).
+     */
+    public function assignedCompanies(): HasMany
+    {
+        return $this->hasMany(Company::class, 'assigned_user_id');
+    }
+
+    /**
+     * Contactos asignados directamente a este ejecutivo.
+     */
+    public function assignedContacts(): HasMany
+    {
+        return $this->hasMany(Contact::class, 'assigned_user_id');
+    }
+
+    /**
      * Relación: Empresas creadas por este usuario
      */
     public function companiesCreated(): HasMany
@@ -136,11 +158,28 @@ class User extends Authenticatable
     }
 
     /**
-     * Relación: Recordatorios personales (centro de notificaciones)
+     * Relación: Recordatorios personales del usuario
      */
     public function reminders(): HasMany
     {
         return $this->hasMany(Reminder::class);
+    }
+
+    /**
+     * Excluye avisos de recordatorios vencidos del listado y del contador.
+     * Se usa la columna `type` (clase de la notificación), no JSON en `data`, para evitar errores SQL con TEXT/JSON mal formado.
+     */
+    public static function applyExcludeReminderNotificationsScope(Builder|Relation $query): void
+    {
+        $query->where('type', '!=', ReminderDueNotification::class);
+    }
+
+    public function unreadNonReminderNotificationsCount(): int
+    {
+        $q = $this->unreadNotifications();
+        static::applyExcludeReminderNotificationsScope($q);
+
+        return $q->count();
     }
 
     /**

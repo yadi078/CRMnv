@@ -14,6 +14,9 @@
                 <form method="POST" action="{{ route('companies.update', $company) }}">
                     @csrf
                     @method('PUT')
+                    @if(($crmNavReturn = request('return')) && is_string($crmNavReturn) && \App\Support\CrmNavigation::isSafeReturnUrl($crmNavReturn))
+                        <input type="hidden" name="return" value="{{ $crmNavReturn }}">
+                    @endif
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
@@ -72,7 +75,7 @@
                     </div>
 
                     <div class="flex items-center justify-end mt-6 gap-3 flex-wrap">
-                        <a href="{{ route('companies.show', $company) }}" class="btn-panel-dark bg-white/10 text-white border-2 border-[#FFE600] hover:bg-white/20">
+                        <a href="{{ \App\Support\CrmNavigation::withReturn(route('companies.show', $company)) }}" class="btn-panel-dark bg-white/10 text-white border-2 border-[#FFE600] hover:bg-white/20">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                             </svg>

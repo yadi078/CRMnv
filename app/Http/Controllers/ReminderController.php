@@ -25,7 +25,9 @@ class ReminderController extends Controller
             'numero_telefonico' => ['nullable', 'string', 'max:50'],
             'area' => ['nullable', 'string', 'max:255'],
             'puesto_trabajo' => ['nullable', 'string', 'max:255'],
+            'reminder_context' => ['sometimes'],
         ]);
+        unset($data['reminder_context']);
 
         $startAt = null;
         if (!empty($data['date'])) {

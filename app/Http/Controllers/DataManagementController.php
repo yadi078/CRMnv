@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Company;
 use App\Models\Contact;
 use App\Models\Sale;
+use App\Rules\CommaSeparatedEmails;
+use App\Support\ContactEmailList;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -31,7 +33,7 @@ class DataManagementController extends Controller
 
         $contactsQuery = Contact::with('company');
         if (! $isAdmin) {
-            $contactsQuery->where('created_by', $user->id);
+            $contactsQuery->accessibleForExecutive($user);
         }
         $contacts = $contactsQuery->latest()->paginate(10, ['*'], 'contacts_page');
 
@@ -53,6 +55,12 @@ class DataManagementController extends Controller
     {
         $this->authorize('update', $contact);
 
+        if ($request->has('email') && is_string($request->input('email'))) {
+            $request->merge([
+                'email' => ContactEmailList::normalize($request->input('email')),
+            ]);
+        }
+
         $validated = $request->validate([
             'nombre_completo' => 'sometimes|string|max:255',
             'genero' => 'nullable|string|max:50',
@@ -61,7 +69,7 @@ class DataManagementController extends Controller
             'celular' => 'nullable|string|max:255',
             'telefono' => 'nullable|string|max:30',
             'extension' => 'nullable|string|max:255',
-            'email' => 'sometimes|email',
+            'email' => ['sometimes', 'nullable', 'string', 'max:1000', new CommaSeparatedEmails()],
             'municipio' => 'nullable|string|max:255',
             'estado' => 'nullable|string|max:255',
             'notas' => 'nullable|string',

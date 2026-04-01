@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -29,10 +31,22 @@ class Contact extends Model
     ];
 
     /**
+     * Etiquetas breves para tablas (evita desbordes en columnas estrechas).
+     */
+    public const PROSPECT_STATUS_SHORT_LABELS = [
+        'seguimiento' => 'Seguimiento',
+        'interesado' => 'Interesado',
+        'si_le_interesa_nos_llaman_o_no_compro' => 'Llama / no compró',
+        'vendido' => 'Vendido',
+        'no_estaba' => 'No estaba',
+    ];
+
+    /**
      * Campos que pueden ser asignados masivamente
      */
     protected $fillable = [
         'company_id',
+        'assigned_user_id',
         'nombre_completo',
         'genero',
         'puesto_de_trabajo',
@@ -93,6 +107,14 @@ class Contact extends Model
     }
 
     /**
+     * Ejecutivo asignado al contacto (gestión admin).
+     */
+    public function assignedExecutive(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_user_id');
+    }
+
+    /**
      * Relación: Un contacto puede tener muchos seguimientos
      */
     public function followUps(): HasMany
@@ -142,6 +164,18 @@ class Contact extends Model
     }
 
     /**
+     * Etiqueta corta de estado para listados (tooltip puede usar status_label completo).
+     */
+    public function getStatusLabelShortAttribute(): string
+    {
+        $status = $this->status_color ?? 'seguimiento';
+        if (isset(self::PROSPECT_STATUS_SHORT_LABELS[$status])) {
+            return self::PROSPECT_STATUS_SHORT_LABELS[$status];
+        }
+        return Str::limit($this->status_label, 28);
+    }
+
+    /**
      * Scope: filtrar por estado de prospecto (semáforo)
      */
     public function scopePorStatus($query, string $status)
@@ -174,6 +208,21 @@ class Contact extends Model
     public function scopeAprobados($query)
     {
         return $query->where('approval_status', 'aprobado');
+    }
+
+    /**
+     * Alcance para ejecutivos: contactos asignados por administración o registrados por el usuario.
+     */
+    public function scopeAccessibleForExecutive(Builder $query, User $user): Builder
+    {
+        if ($user->esAdmin()) {
+            return $query;
+        }
+
+        return $query->where(function ($q) use ($user) {
+            $q->where('assigned_user_id', $user->id)
+                ->orWhere('created_by', $user->id);
+        });
     }
 
     /**

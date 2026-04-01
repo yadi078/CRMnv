@@ -55,7 +55,7 @@ class CompanyController extends Controller
                 // Misma empresa de la página: ya trae todos los contactos (eager load).
                 $companyContactsCard = $single;
             } else {
-                // Usuario: ficha con solo contactos creados por él (aprobados) y sus seguimientos visibles.
+                // Usuario: contactos de su cartera en esa empresa y seguimientos visibles.
                 $companyContactsCard = Company::query()
                     ->with(['creator', 'approver'])
                     ->whereKey($single->id)
@@ -64,8 +64,10 @@ class CompanyController extends Controller
                 if ($companyContactsCard) {
                     $companyContactsCard->load([
                         'contacts' => function ($q) use ($user) {
-                            $q->where('created_by', $user->id)
-                                ->where('approval_status', 'aprobado');
+                            $q->where(function ($q2) use ($user) {
+                                $q2->where('assigned_user_id', $user->id)
+                                    ->orWhere('created_by', $user->id);
+                            });
                         },
                     ]);
                     $companyContactsCard->contacts->load([
@@ -119,7 +121,7 @@ class CompanyController extends Controller
     /**
      * Store a newly created resource in storage.
      * 
-     * Los usuarios normales crean registros en estado 'pendiente'
+     * Los ejecutivos crean en 'pendiente'; administradores (o quien apruebe) quedan 'aprobado' al instante.
      */
     public function store(StoreCompanyRequest $request)
     {
@@ -127,7 +129,7 @@ class CompanyController extends Controller
 
         DB::beginTransaction();
         try {
-            $approvalStatus = $user->can('companies.approve') ? 'aprobado' : 'pendiente';
+            $approvalStatus = ($user->esAdmin() || $user->can('companies.approve')) ? 'aprobado' : 'pendiente';
 
             $company = Company::create([
                 'nombre_comercial' => $request->nombre_comercial,
@@ -156,10 +158,16 @@ class CompanyController extends Controller
                 ]);
             }
 
-            return redirect()->route('companies.show', $company)
+            $redirect = redirect()->route('companies.show', $company)
                 ->with('success', $approvalStatus === 'aprobado'
                     ? 'Empresa creada exitosamente.'
-                    : 'Empresa creada. Pendiente de aprobación por un administrador.');
+                    : 'Empresa registrada correctamente.');
+
+            if ($approvalStatus !== 'aprobado' && ! $user->esAdmin()) {
+                $redirect->with('warning', 'Aviso: esta empresa no será visible para el resto del equipo hasta que un administrador la apruebe.');
+            }
+
+            return $redirect;
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error al crear empresa: ' . $e->getMessage());
@@ -218,9 +226,18 @@ class CompanyController extends Controller
 
         $validated = $request->validate([
             'file' => 'required|file|mimes:xlsx,xls,csv',
+            'assign_to_user_id' => 'nullable|integer|exists:users,id',
         ]);
 
         $user = auth()->user();
+
+        $assignToExecutive = null;
+        if (! empty($validated['assign_to_user_id'])) {
+            $assignToExecutive = \App\Models\User::find($validated['assign_to_user_id']);
+            if ($assignToExecutive && $assignToExecutive->esAdmin()) {
+                return back()->with('error', 'No se puede asignar la importación a un administrador.');
+            }
+        }
 
         try {
             $file = $validated['file'];
@@ -323,7 +340,7 @@ class CompanyController extends Controller
             $skippedContactsNoCompany = 0;
             $skippedContactsNoName = 0;
 
-            $approvalStatus = $user->can('companies.approve') ? 'aprobado' : 'pendiente';
+            $approvalStatus = ($user->esAdmin() || $user->can('companies.approve')) ? 'aprobado' : 'pendiente';
 
             /** @var array<int, array{name: string, canonical: string, company: Company}> $empresaRegistry */
             $empresaRegistry = [];
@@ -382,6 +399,10 @@ class CompanyController extends Controller
                     if ($importStatus !== null) {
                         $updates['status_color'] = $importStatus;
                     }
+                    if ($assignToExecutive) {
+                        $updates['assigned_user_id'] = $assignToExecutive->id;
+                        $updates['ejecutivo_asignado'] = $assignToExecutive->name;
+                    }
                     if ($updates !== []) {
                         $company->fill($updates);
                         if ($company->isDirty()) {
@@ -413,11 +434,12 @@ class CompanyController extends Controller
                         'sector' => $sector !== '' ? $sector : null,
                         'municipio' => $municipio !== '' ? $municipio : null,
                         'estado' => $estado !== '' ? $estado : null,
-                        'ejecutivo_asignado' => $ejecutivo !== '' ? $ejecutivo : null,
+                        'ejecutivo_asignado' => $assignToExecutive ? $assignToExecutive->name : ($ejecutivo !== '' ? $ejecutivo : null),
+                        'assigned_user_id' => $assignToExecutive?->id,
                         'datos_fiscales' => $datosFiscales !== '' ? $datosFiscales : null,
                         'status_color' => $statusColor,
                         'approval_status' => $approvalStatus,
-                        'created_by' => $user->id,
+                        'created_by' => $assignToExecutive ? $assignToExecutive->id : $user->id,
                         'approved_by' => $approvalStatus === 'aprobado' ? $user->id : null,
                         'approved_at' => $approvalStatus === 'aprobado' ? now() : null,
                     ]);
@@ -550,6 +572,9 @@ class CompanyController extends Controller
                     if ($importStatus !== null) {
                         $contactData['status_color'] = $importStatus;
                     }
+                    if ($assignToExecutive) {
+                        $contactData['assigned_user_id'] = $assignToExecutive->id;
+                    }
 
                     $contact->fill($contactData);
                     if ($contact->isDirty()) {
@@ -557,7 +582,7 @@ class CompanyController extends Controller
                         $updatedContacts++;
                     }
                 } else {
-                    $contactApprovalStatus = $user->can('contacts.approve') ? 'aprobado' : 'pendiente';
+                    $contactApprovalStatus = ($user->esAdmin() || $user->can('contacts.approve')) ? 'aprobado' : 'pendiente';
 
                     $contactData = [
                         'company_id' => $company->id,
@@ -567,7 +592,8 @@ class CompanyController extends Controller
                         'approval_status' => $contactApprovalStatus,
                         'approved_by' => $contactApprovalStatus === 'aprobado' ? $user->id : null,
                         'approved_at' => $contactApprovalStatus === 'aprobado' ? now() : null,
-                        'created_by' => $user->id,
+                        'created_by' => $assignToExecutive ? $assignToExecutive->id : $user->id,
+                        'assigned_user_id' => $assignToExecutive?->id,
                     ];
                     if ($genero !== '') {
                         $contactData['genero'] = $genero;
@@ -684,7 +710,7 @@ class CompanyController extends Controller
                 ]);
             }
 
-            return redirect()->route('companies.show', $company)
+            return redirect()->to(\App\Support\CrmNavigation::redirectTargetFromRequest($request, route('companies.show', $company)))
                 ->with('success', 'Empresa actualizada exitosamente.');
         } catch (\Exception $e) {
             DB::rollBack();

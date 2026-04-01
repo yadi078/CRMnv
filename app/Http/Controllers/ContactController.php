@@ -37,13 +37,16 @@ class ContactController extends Controller
         $query = Contact::with(['company', 'creator']);
 
         if (! $isAdmin) {
-            $query->where('created_by', $user->id)
-                ->where('approval_status', 'aprobado');
+            $query->accessibleForExecutive($user);
         }
 
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where('nombre_completo', 'like', "%{$search}%");
+        }
+
+        if ($request->filled('status_color')) {
+            $query->where('status_color', $request->status_color);
         }
 
         $query->latest();
@@ -52,7 +55,7 @@ class ContactController extends Controller
 
         $namesForDatalist = Contact::query();
         if (! $isAdmin) {
-            $namesForDatalist->where('created_by', $user->id);
+            $namesForDatalist->accessibleForExecutive($user);
         }
         $contactNames = $namesForDatalist
             ->orderBy('nombre_completo')
@@ -88,8 +91,8 @@ class ContactController extends Controller
         DB::beginTransaction();
         try {
             $user = auth()->user();
-            // Usuario normal: contacto pendiente. Admin/usuario con permiso: aprobado.
-            $approvalStatus = $user->can('contacts.approve') ? 'aprobado' : 'pendiente';
+            // Ejecutivo: pendiente. Administrador o quien tenga permiso de aprobar: alta directa sin cola.
+            $approvalStatus = ($user->esAdmin() || $user->can('contacts.approve')) ? 'aprobado' : 'pendiente';
 
             $contact = Contact::create([
                 'company_id' => $request->company_id,
@@ -152,10 +155,16 @@ class ContactController extends Controller
                 ], 201);
             }
 
-            return redirect()->route('contacts.index')
+            $redirect = redirect()->route('contacts.index')
                 ->with('success', $approvalStatus === 'aprobado'
                     ? 'Contacto creado exitosamente.'
-                    : 'Contacto creado. Pendiente de aprobación por un administrador.');
+                    : 'Contacto registrado correctamente.');
+
+            if ($approvalStatus !== 'aprobado') {
+                $redirect->with('warning', 'Aviso: este contacto no será visible para el resto del equipo hasta que un administrador lo apruebe.');
+            }
+
+            return $redirect;
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error al crear contacto: ' . $e->getMessage(), [
@@ -237,7 +246,7 @@ class ContactController extends Controller
                 ]);
             }
 
-            return redirect()->route('contacts.show', $contact)
+            return redirect()->to(\App\Support\CrmNavigation::redirectTargetFromRequest($request, route('contacts.show', $contact)))
                 ->with('success', 'Contacto actualizado exitosamente.');
         } catch (\Exception $e) {
             return back()->withInput()

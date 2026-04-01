@@ -10,6 +10,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ReminderController;
 use App\Http\Controllers\UserDashboardController;
 use App\Http\Controllers\DataManagementController;
+use App\Http\Controllers\ExecutiveController;
 use App\Http\Controllers\FiltrosController;
 use App\Http\Controllers\SalesController;
 use App\Http\Controllers\Auth\AutoLoginController;
@@ -74,7 +75,6 @@ Route::middleware(['auth', 'verified', 'ensure.role'])->group(function () {
 
     // Notificaciones y recordatorios (todos los usuarios autenticados)
     Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
-    Route::get('/notifications/reminder-alerts', [NotificationController::class, 'reminderAlerts'])->name('notifications.reminder-alerts');
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::get('/notifications/{notification}', [NotificationController::class, 'show'])->name('notifications.show');
     Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
@@ -137,6 +137,15 @@ Route::middleware(['auth', 'verified', 'ensure.role', 'admin'])->group(function 
         Route::post('/export', [DataManagementController::class, 'export'])->name('export');
         Route::post('/import', [DataManagementController::class, 'import'])->name('import');
     });
+
+    // Ejecutivos (usuarios del sistema — gestión admin)
+    Route::get('/ejecutivos', [ExecutiveController::class, 'index'])->name('executives.index');
+    Route::post('/ejecutivos', [ExecutiveController::class, 'store'])->name('executives.store');
+    Route::post('/ejecutivos/transferir-cartera', [ExecutiveController::class, 'transferPortfolio'])->name('executives.transfer-portfolio');
+    Route::post('/ejecutivos/asignar-contacto', [ExecutiveController::class, 'assignContactToExecutive'])->name('executives.assign-contact');
+    Route::get('/ejecutivos/{user}', [ExecutiveController::class, 'show'])->name('executives.show');
+    Route::patch('/ejecutivos/{user}/asignaciones', [ExecutiveController::class, 'updateAssignments'])->name('executives.assignments');
+    Route::post('/ejecutivos/{user}/contactos/transferir', [ExecutiveController::class, 'transferContact'])->name('executives.transfer-contact');
 });
 
 require __DIR__.'/auth.php';

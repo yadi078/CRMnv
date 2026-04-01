@@ -14,6 +14,14 @@
         $titulo = $d['titulo'] ?? $d['message'] ?? $d['contact_name'] ?? 'Notificación';
         $mensaje = $d['mensaje'] ?? $d['message'] ?? '';
         $tipo = $d['tipo'] ?? 'general';
+        $solicitudesPendientesUrl = null;
+        if (auth()->user()->can('companies.approve')) {
+            if ($tipo === 'contacto' || ($d['type'] ?? '') === 'new_client') {
+                $solicitudesPendientesUrl = route('approvals.index', ['tab' => 'contactos']);
+            } elseif ($tipo === 'empresa' || ($d['type'] ?? '') === 'new_company') {
+                $solicitudesPendientesUrl = route('approvals.index', ['tab' => 'empresas']);
+            }
+        }
     @endphp
 
     <div class="space-y-8">
@@ -36,6 +44,9 @@
             @endif
         </div>
         <div class="mt-6 flex flex-wrap gap-2">
+            @if($solicitudesPendientesUrl)
+                <a href="{{ $solicitudesPendientesUrl }}" class="btn-primary-app">Solicitudes pendientes</a>
+            @endif
             @if(!$notification->read_at)
                 <form method="POST" action="{{ route('notifications.mark-read', $notification) }}" class="inline">
                     @csrf

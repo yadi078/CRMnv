@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\Reminder;
-use App\Notifications\ReminderDueNotification;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 
@@ -71,7 +70,6 @@ class ReminderDueNotifier
         $windowStart = $start->copy()->subMinutes(self::PRE_EVENT_MINUTES);
 
         if ($now->gte($start) && ! $reminder->notification_sent_at) {
-            $reminder->user->notify(new ReminderDueNotification($reminder, 'due'));
             $reminder->update([
                 'notification_sent_at' => $now,
             ]);
@@ -80,7 +78,6 @@ class ReminderDueNotifier
         }
 
         if ($now->gte($windowStart) && $now->lt($start) && ! $reminder->pre_notification_sent_at) {
-            $reminder->user->notify(new ReminderDueNotification($reminder, 'pre'));
             $reminder->update([
                 'pre_notification_sent_at' => $now,
             ]);

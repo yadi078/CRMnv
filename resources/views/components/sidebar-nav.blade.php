@@ -99,6 +99,23 @@
 
         <li class="sidebar-nav__item">
             <a
+                href="{{ route('executives.index') }}"
+                class="sidebar-nav__link {{ request()->routeIs('executives.*') ? 'sidebar-nav__link--active' : '' }}"
+                aria-label="Ejecutivos"
+                aria-current="{{ request()->routeIs('executives.*') ? 'page' : false }}"
+            >
+                <span class="sidebar-nav__icon-wrap">
+                    <span class="sidebar-nav__wave" aria-hidden="true"></span>
+                    <svg class="sidebar-nav__icon" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                </span>
+                <span class="sidebar-nav__label">Ejecutivos</span>
+            </a>
+        </li>
+
+        <li class="sidebar-nav__item">
+            <a
                 href="{{ route('follow-ups.index') }}"
                 class="sidebar-nav__link {{ request()->routeIs('follow-ups.*') ? 'sidebar-nav__link--active' : '' }}"
                 aria-label="Seguimientos"
@@ -184,7 +201,7 @@
                 <span class="sidebar-nav__label">Notificaciones</span>
                 @php
                     try {
-                        $unread = auth()->user()->unreadNotifications->count();
+                        $unread = auth()->user()->unreadNonReminderNotificationsCount();
                     } catch (\Throwable $e) {
                         $unread = 0;
                     }

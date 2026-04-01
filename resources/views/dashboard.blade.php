@@ -127,7 +127,7 @@
                     </div>
                     <div class="space-y-0">
                         @forelse($ultimasEmpresas as $empresa)
-                        <a href="{{ route('companies.show', $empresa) }}" class="panel-card-dark__item block">
+                        <a href="{{ \App\Support\CrmNavigation::withReturn(route('companies.show', $empresa)) }}" class="panel-card-dark__item block">
                             <div class="flex items-center gap-3 flex-1 min-w-0">
                                 <span class="panel-card-dark__item-icon">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -162,7 +162,7 @@
                     </div>
                     <div class="space-y-0">
                         @forelse($proximosSeguimientos as $seguimiento)
-                        <a href="{{ route('follow-ups.show', $seguimiento) }}" class="panel-card-dark__item block">
+                        <a href="{{ \App\Support\CrmNavigation::withReturn(route('follow-ups.show', $seguimiento)) }}" class="panel-card-dark__item block">
                             <div class="flex items-center gap-3 flex-1 min-w-0">
                                 <span class="panel-card-dark__item-icon">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

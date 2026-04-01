@@ -21,11 +21,25 @@ class ProfileController extends Controller
     public function edit(Request $request): View
     {
         $authUser = $request->user()->fresh();
+
+        return view('profile.edit', [
+            'user' => $authUser,
+        ]);
+    }
+
+    /**
+     * Estado para la tarjeta "Asistencia de contraseñas" (listado de ejecutivos u otras vistas admin).
+     *
+     * @return array{managedUser: ?User, userSearch: string, managedUsersSuggestions: \Illuminate\Support\Collection<int, User>}
+     */
+    public static function adminPasswordAssistanceState(Request $request): array
+    {
+        $authUser = $request->user();
         $managedUser = null;
         $managedUsersSuggestions = collect();
         $userSearch = trim((string) $request->query('user_search', ''));
 
-        if ($authUser->esAdmin()) {
+        if ($authUser && $authUser->esAdmin()) {
             $managedUsersSuggestions = User::query()
                 ->where('id', '!=', $authUser->id)
                 ->orderBy('name')
@@ -46,12 +60,11 @@ class ProfileController extends Controller
             }
         }
 
-        return view('profile.edit', [
-            'user' => $authUser,
+        return [
             'managedUser' => $managedUser,
             'userSearch' => $userSearch,
             'managedUsersSuggestions' => $managedUsersSuggestions,
-        ]);
+        ];
     }
 
     /**
@@ -120,7 +133,7 @@ class ProfileController extends Controller
             'password' => Hash::make($plainPassword),
         ])->save();
 
-        return Redirect::route('profile.edit')
+        return Redirect::route('executives.index')
             ->with('success', 'Contraseña restablecida correctamente.')
             ->with('managed_user_id', $managedUser->id)
             ->with('admin_generated_password', $plainPassword)

@@ -25,7 +25,12 @@
     </header>
 
     <div class="rounded-2xl border border-white/20 bg-white/5 p-4 sm:p-5 space-y-4">
-        <form method="GET" action="{{ route('profile.edit') }}" class="flex flex-col sm:flex-row gap-3 sm:items-end">
+        <form method="GET" action="{{ route('executives.index') }}" class="flex flex-col sm:flex-row gap-3 sm:items-end">
+            @foreach (['empresa_id', 'estado', 'contacto_id'] as $filterKey)
+                @if (request()->filled($filterKey))
+                    <input type="hidden" name="{{ $filterKey }}" value="{{ request($filterKey) }}">
+                @endif
+            @endforeach
             <div class="flex-1">
                 <x-input-label for="user_search" :value="'Nombre o correo del usuario'" class="font-medium text-white/90" />
                 <x-text-input

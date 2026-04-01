@@ -28,6 +28,7 @@ class Company extends Model
         'municipio',
         'estado',
         'ejecutivo_asignado',
+        'assigned_user_id',
         'datos_fiscales',
         'status_color',
         'approval_status',
@@ -91,6 +92,14 @@ class Company extends Model
     }
 
     /**
+     * Ejecutivo comercial asignado (vínculo explícito para el módulo Ejecutivos).
+     */
+    public function assignedExecutive(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_user_id');
+    }
+
+    /**
      * Relación: Usuario que creó el registro
      */
     public function creator(): BelongsTo
@@ -145,6 +154,48 @@ class Company extends Model
     }
 
     /**
+     * Etiquetas de estatus para listados: un badge por cada status_color distinto entre contactos
+     * no rechazados; si no hay ninguno, se usa el estatus de la empresa.
+     *
+     * @return array<int, array{color: string, label: string}>
+     */
+    public function prospectStatusBadgesForList(): array
+    {
+        if (! $this->relationLoaded('contacts')) {
+            $this->load('contacts');
+        }
+
+        $relevant = $this->contacts->filter(
+            fn ($contact) => ($contact->approval_status ?? '') !== 'rechazado'
+        );
+
+        if ($relevant->isEmpty()) {
+            $color = $this->status_color ?: 'seguimiento';
+
+            return [[
+                'color' => $color,
+                'label' => self::PROSPECT_STATUS_LABELS[$color] ?? ucfirst((string) $color),
+            ]];
+        }
+
+        $order = array_flip(self::PROSPECT_STATUSES);
+
+        $colors = $relevant
+            ->map(fn ($contact) => $contact->status_color ?: 'seguimiento')
+            ->unique()
+            ->values()
+            ->sortBy(fn (string $color) => $order[$color] ?? 100)
+            ->values();
+
+        return $colors->map(function (string $color) {
+            return [
+                'color' => $color,
+                'label' => self::PROSPECT_STATUS_LABELS[$color] ?? ucfirst($color),
+            ];
+        })->all();
+    }
+
+    /**
      * Scope: Filtrar por estado de aprobación
      */
     public function scopePendientes($query)
@@ -180,7 +231,7 @@ class Company extends Model
     }
 
     /**
-     * Alcance para ejecutivos: empresas que registraron o todas las aprobadas en el CRM.
+     * Alcance para ejecutivos: empresas asignadas al usuario o registradas por él.
      * Los administradores no se filtran aquí.
      */
     public function scopeAccessibleForExecutive(Builder $query, User $user): Builder
@@ -190,14 +241,14 @@ class Company extends Model
         }
 
         return $query->where(function ($q) use ($user) {
-            $q->where('created_by', $user->id)
-                ->orWhere('approval_status', 'aprobado');
+            $q->where('assigned_user_id', $user->id)
+                ->orWhere('created_by', $user->id);
         });
     }
 
     /**
      * Empresas disponibles al crear/editar un contacto (ejecutivo):
-     * las que él registró (cualquier estado de aprobación) + todas las empresas ya aprobadas en el CRM.
+     * las asignadas a su cartera o las que él registró (incluye pendientes de aprobación).
      */
     public static function forExecutiveContactForm(User $user): \Illuminate\Database\Eloquent\Collection
     {
@@ -207,15 +258,15 @@ class Company extends Model
 
         return static::query()
             ->where(function ($q) use ($user) {
-                $q->where('created_by', $user->id)
-                    ->orWhere('approval_status', 'aprobado');
+                $q->where('assigned_user_id', $user->id)
+                    ->orWhere('created_by', $user->id);
             })
             ->orderBy('nombre_comercial')
             ->get();
     }
 
     /**
-     * Empresas para seguimientos y ventas: propias o aprobadas con contacto propio.
+     * Empresas para seguimientos y ventas: misma cartera que el listado del ejecutivo.
      */
     public static function forExecutiveFollowUpAndSales(User $user): \Illuminate\Database\Eloquent\Collection
     {
@@ -279,18 +330,17 @@ class Company extends Model
     }
 
     /**
-     * Si el ejecutivo puede ver/usar esta empresa: las que registró (aunque pendientes)
-     * o cualquier empresa ya aprobada en el CRM (p. ej. para agregar contactos o ver ficha).
+     * Si el ejecutivo puede ver/usar esta empresa: asignada a él o registrada por él.
      */
     public function isAccessibleByExecutive(User $user): bool
     {
         if ($user->esAdmin()) {
             return true;
         }
-        if ((int) $this->created_by === (int) $user->id) {
+        if ((int) $this->assigned_user_id === (int) $user->id) {
             return true;
         }
 
-        return $this->approval_status === 'aprobado';
+        return (int) $this->created_by === (int) $user->id;
     }
 }
