@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\DataTransferObjects\FilterSpec;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
@@ -11,6 +12,58 @@ use Illuminate\Database\Eloquent\Builder;
  */
 class DynamicFilterService
 {
+    /**
+     * Valores del filtro Comercial: IDs de usuario ("123") o texto de ficha ("E:".base64).
+     *
+     * @param  list<mixed>  $values
+     * @return array{0: list<int>, 1: list<string>, 2: list<string>} ids, textos libres, nombres de usuario (ids) para coincidir en ejecutivo_asignado
+     */
+    public static function splitComercialFilterValues(array $values): array
+    {
+        $ids = [];
+        $texts = [];
+        foreach ($values as $v) {
+            $s = is_string($v) ? trim($v) : (string) $v;
+            if ($s === '') {
+                continue;
+            }
+            if (str_starts_with($s, 'E:')) {
+                $decoded = base64_decode(substr($s, 2), true);
+                if ($decoded !== false && $decoded !== '') {
+                    $texts[] = $decoded;
+                }
+
+                continue;
+            }
+            if (ctype_digit($s)) {
+                $id = (int) $s;
+                if ($id > 0) {
+                    $ids[] = $id;
+                }
+            }
+        }
+
+        $ids = array_values(array_unique($ids));
+        $texts = array_values(array_unique($texts));
+        $userNames = $ids === []
+            ? []
+            : User::query()->whereIn('id', $ids)->pluck('name')->filter()->unique()->values()->all();
+
+        return [$ids, $texts, $userNames];
+    }
+
+    /**
+     * Cadenas que deben coincidir con companies.ejecutivo_asignado (incluye nombre de usuario y textos de catálogo).
+     *
+     * @param  list<string>  $userNames
+     * @param  list<string>  $freeTexts
+     * @return list<string>
+     */
+    public static function comercialEjecutivoAsignadoStrings(array $userNames, array $freeTexts): array
+    {
+        return array_values(array_unique(array_merge($userNames, $freeTexts)));
+    }
+
     public function applyToContactQuery(Builder $query, array $filterSpecs, string $logic = 'and'): Builder
     {
         $valid = array_filter(array_map(fn ($f) => $f instanceof FilterSpec ? $f : FilterSpec::fromArray($f), $filterSpecs), fn (FilterSpec $s) => $s->isValid());
@@ -103,45 +156,95 @@ class DynamicFilterService
             }
         }
 
-        // Comercial (relación: Company.nombre_comercial)
+        // Comercial = ejecutivo asignado: IDs de usuario y/o texto de empresa.ejecutivo_asignado (p. ej. "Lic. Olivia…").
         if ($col === 'comercial') {
             $values = is_array($val) ? $val : [$val];
             $values = array_values(array_filter(array_map(fn ($v) => is_string($v) ? trim($v) : $v, $values), fn ($v) => $v !== null && $v !== ''));
+            [$ids, $freeTexts, $userNames] = self::splitComercialFilterValues($values);
+            $matchStrings = self::comercialEjecutivoAsignadoStrings($userNames, $freeTexts);
 
             if ($op === 'is_empty') {
                 $q->{$method}(function (Builder $b) {
-                    $b->whereDoesntHave('company')
-                        ->orWhereHas('company', function (Builder $c) {
-                            $c->whereNull('nombre_comercial')->orWhere('nombre_comercial', '');
+                    $b->whereNull('assigned_user_id')
+                        ->where(function (Builder $b2) {
+                            $b2->whereDoesntHave('company')
+                                ->orWhereHas('company', function (Builder $c) {
+                                    $c->whereNull('assigned_user_id')
+                                        ->where(function (Builder $c2) {
+                                            $c2->whereNull('ejecutivo_asignado')->orWhere('ejecutivo_asignado', '');
+                                        });
+                                });
                         });
                 });
+
                 return;
             }
 
             if ($op === 'is_not_empty') {
                 $q->{$method}(function (Builder $b) {
-                    $b->whereHas('company', function (Builder $c) {
-                        $c->whereNotNull('nombre_comercial')->where('nombre_comercial', '!=', '');
-                    });
+                    $b->whereNotNull('assigned_user_id')
+                        ->orWhereHas('company', function (Builder $c) {
+                            $c->whereNotNull('assigned_user_id')
+                                ->orWhere(function (Builder $c2) {
+                                    $c2->whereNotNull('ejecutivo_asignado')->where('ejecutivo_asignado', '!=', '');
+                                });
+                        });
                 });
+
                 return;
             }
 
             if ($op === 'equals') {
-                $q->{$method}(function (Builder $b) use ($values) {
-                    $b->whereHas('company', function (Builder $c) use ($values) {
-                        $c->whereIn('nombre_comercial', $values);
+                if ($ids === [] && $matchStrings === []) {
+                    return;
+                }
+
+                $q->{$method}(function (Builder $b) use ($ids, $matchStrings) {
+                    $b->where(function (Builder $inner) use ($ids, $matchStrings) {
+                        if ($ids !== []) {
+                            $inner->where(function (Builder $w) use ($ids) {
+                                $w->whereIn('assigned_user_id', $ids)
+                                    ->orWhereHas('company', function (Builder $c) use ($ids) {
+                                        $c->whereIn('assigned_user_id', $ids);
+                                    });
+                            });
+                        }
+                        if ($matchStrings !== []) {
+                            $inner->orWhereHas('company', function (Builder $c) use ($matchStrings) {
+                                $c->whereIn('ejecutivo_asignado', $matchStrings);
+                            });
+                        }
                     });
                 });
+
                 return;
             }
 
             if ($op === 'not_equals') {
-                $q->{$method}(function (Builder $b) use ($values) {
-                    $b->whereDoesntHave('company', function (Builder $c) use ($values) {
-                        $c->whereIn('nombre_comercial', $values);
+                if ($ids === [] && $matchStrings === []) {
+                    return;
+                }
+
+                $q->{$method}(function (Builder $b) use ($ids, $matchStrings) {
+                    $b->whereNot(function (Builder $inner) use ($ids, $matchStrings) {
+                        $inner->where(function (Builder $w) use ($ids, $matchStrings) {
+                            if ($ids !== []) {
+                                $w->where(function (Builder $w2) use ($ids) {
+                                    $w2->whereIn('assigned_user_id', $ids)
+                                        ->orWhereHas('company', function (Builder $c) use ($ids) {
+                                            $c->whereIn('assigned_user_id', $ids);
+                                        });
+                                });
+                            }
+                            if ($matchStrings !== []) {
+                                $w->orWhereHas('company', function (Builder $c) use ($matchStrings) {
+                                    $c->whereIn('ejecutivo_asignado', $matchStrings);
+                                });
+                            }
+                        });
                     });
                 });
+
                 return;
             }
         }
@@ -218,35 +321,72 @@ class DynamicFilterService
         $val = $s->value;
         $op = $s->operator;
 
-        // Alias unificado: comercial -> companies.nombre_comercial
+        // Comercial = ejecutivo asignado (empresa): IDs y/o texto en ejecutivo_asignado
         if ($col === 'comercial') {
             $values = is_array($val) ? $val : [$val];
             $values = array_values(array_filter(array_map(fn ($v) => is_string($v) ? trim($v) : $v, $values), fn ($v) => $v !== null && $v !== ''));
+            [$ids, $freeTexts, $userNames] = self::splitComercialFilterValues($values);
+            $matchStrings = self::comercialEjecutivoAsignadoStrings($userNames, $freeTexts);
 
             if ($op === 'is_empty') {
                 $q->{$method}(function (Builder $b) {
-                    $b->whereNull('nombre_comercial')->orWhere('nombre_comercial', '');
+                    $b->whereNull('assigned_user_id')
+                        ->where(function (Builder $b2) {
+                            $b2->whereNull('ejecutivo_asignado')->orWhere('ejecutivo_asignado', '');
+                        });
                 });
+
                 return;
             }
 
             if ($op === 'is_not_empty') {
                 $q->{$method}(function (Builder $b) {
-                    $b->whereNotNull('nombre_comercial')->where('nombre_comercial', '!=', '');
+                    $b->whereNotNull('assigned_user_id')
+                        ->orWhere(function (Builder $b2) {
+                            $b2->whereNotNull('ejecutivo_asignado')->where('ejecutivo_asignado', '!=', '');
+                        });
                 });
+
                 return;
             }
 
             if ($op === 'equals') {
-                $q->{$method . 'In'}('nombre_comercial', $values);
+                if ($ids === [] && $matchStrings === []) {
+                    return;
+                }
+
+                $q->{$method}(function (Builder $b) use ($ids, $matchStrings) {
+                    $b->where(function (Builder $inner) use ($ids, $matchStrings) {
+                        if ($ids !== []) {
+                            $inner->whereIn('assigned_user_id', $ids);
+                        }
+                        if ($matchStrings !== []) {
+                            $inner->orWhereIn('ejecutivo_asignado', $matchStrings);
+                        }
+                    });
+                });
+
                 return;
             }
 
             if ($op === 'not_equals') {
-                // Nota: para no_equals usamos NOT IN + NULL permitido.
-                $q->{$method}(function (Builder $b) use ($values) {
-                    $b->whereNotIn('nombre_comercial', $values)->orWhereNull('nombre_comercial');
+                if ($ids === [] && $matchStrings === []) {
+                    return;
+                }
+
+                $q->{$method}(function (Builder $b) use ($ids, $matchStrings) {
+                    $b->whereNot(function (Builder $inner) use ($ids, $matchStrings) {
+                        $inner->where(function (Builder $in2) use ($ids, $matchStrings) {
+                            if ($ids !== []) {
+                                $in2->whereIn('assigned_user_id', $ids);
+                            }
+                            if ($matchStrings !== []) {
+                                $in2->orWhereIn('ejecutivo_asignado', $matchStrings);
+                            }
+                        });
+                    });
                 });
+
                 return;
             }
         }

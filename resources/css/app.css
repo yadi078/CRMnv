@@ -1418,15 +1418,84 @@ body {
   border: 2px solid #0f172a;
 }
 
-/* Scroll horizontal arriba para tablas (uso puntual en listados) */
-.scroll-x-top {
+/**
+ * Contenedor de tablas: scroll horizontal abajo (no arriba) y vertical a la derecha si hay muchas filas.
+ * Reemplaza el antiguo .scroll-x-top que invertía el eje y ponía la barra encima del encabezado.
+ */
+.crm-table-scroll-wrap {
   overflow-x: auto;
-  overflow-y: hidden;
-  transform: rotateX(180deg);
+  overflow-y: auto;
+  max-height: min(78vh, 52rem);
+  -webkit-overflow-scrolling: touch;
 }
 
-.scroll-x-top > * {
-  transform: rotateX(180deg);
+/**
+ * Scrollbars tablas CRM: riel azul oscuro, thumb amarillo (#FFE600), flechas amarillas.
+ * Aplicar junto a .crm-table-scroll-wrap en el contenedor que tiene overflow.
+ */
+.crm-table-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #ffe600 #0f172a;
+}
+
+.crm-table-scroll::-webkit-scrollbar {
+  width: 11px;
+  height: 11px;
+}
+
+.crm-table-scroll::-webkit-scrollbar-track {
+  background: #1e293b;
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.9);
+}
+
+.crm-table-scroll::-webkit-scrollbar-thumb {
+  background: #ffe600;
+  border-radius: 9999px;
+  border: 2px solid #0f172a;
+  min-height: 28px;
+  min-width: 28px;
+}
+
+.crm-table-scroll::-webkit-scrollbar-thumb:hover {
+  background: #fff176;
+}
+
+.crm-table-scroll::-webkit-scrollbar-thumb:active {
+  background: #fdd835;
+}
+
+.crm-table-scroll::-webkit-scrollbar-corner {
+  background: #0f172a;
+}
+
+/* Flechas extremos (WebKit/Chromium; Edge puede ocultarlas según SO) */
+.crm-table-scroll::-webkit-scrollbar-button:single-button {
+  display: block;
+  background-color: #0f172a;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 10px 10px;
+}
+
+.crm-table-scroll::-webkit-scrollbar-button:single-button:vertical:decrement {
+  height: 14px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath fill='%23FFE600' d='M6 3 L10 9 L2 9 Z'/%3E%3C/svg%3E");
+}
+
+.crm-table-scroll::-webkit-scrollbar-button:single-button:vertical:increment {
+  height: 14px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath fill='%23FFE600' d='M6 9 L2 3 L10 3 Z'/%3E%3C/svg%3E");
+}
+
+.crm-table-scroll::-webkit-scrollbar-button:single-button:horizontal:decrement {
+  width: 14px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath fill='%23FFE600' d='M3 6 L9 2 L9 10 Z'/%3E%3C/svg%3E");
+}
+
+.crm-table-scroll::-webkit-scrollbar-button:single-button:horizontal:increment {
+  width: 14px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath fill='%23FFE600' d='M9 6 L3 2 L3 10 Z'/%3E%3C/svg%3E");
 }
 
 /* Subrayado amarillo bajo títulos de secciones */

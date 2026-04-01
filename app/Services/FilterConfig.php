@@ -55,7 +55,7 @@ class FilterConfig
             // Semáforo de prospecto (mismo status_color que en listados / badges)
             'status_color' => ['label' => 'Estado de prospecto (color)', 'column' => 'status_color', 'type' => 'select', 'multiple' => true, 'operators' => ['equals', 'not_equals', 'is_empty', 'is_not_empty']],
 
-            // RELACIONAL: Comercial (empresa.nombre_comercial)
+            // RELACIONAL: ejecutivo asignado (usuario + administradores; vía assigned_user_id / empresa)
             'comercial' => ['label' => 'Comercial', 'column' => null, 'type' => 'select', 'multiple' => true, 'operators' => ['equals', 'not_equals', 'is_empty', 'is_not_empty']],
 
             // TEXT (LIKE / equals)
@@ -64,9 +64,6 @@ class FilterConfig
             'celular' => ['label' => 'Celular', 'column' => 'celular', 'type' => 'text', 'operators' => $withValue],
             'email' => ['label' => 'Email', 'column' => 'email', 'type' => 'text', 'operators' => $withValue],
             'notas' => ['label' => 'Notas', 'column' => 'notas', 'type' => 'text', 'operators' => $textAndExistence],
-
-            // RELACIONALES
-            'comercial' => ['label' => 'Comercial', 'column' => null, 'type' => 'select', 'multiple' => true, 'operators' => ['equals', 'not_equals', 'is_empty', 'is_not_empty']],
 
             'domicilio' => ['label' => 'Domicilio', 'column' => null, 'type' => 'existence', 'operators' => self::existenceOperators()],
             'no_recibir_correos' => ['label' => 'No desea recibir correos', 'column' => 'email_activo', 'type' => 'checkbox', 'operators' => ['equals']],
@@ -83,8 +80,8 @@ class FilterConfig
             'estado' => ['label' => 'Estado', 'column' => 'estado', 'type' => 'select', 'multiple' => true, 'operators' => ['equals', 'not_equals', 'is_empty', 'is_not_empty']],
             'status_color' => ['label' => 'Estado de prospecto (color)', 'column' => 'status_color', 'type' => 'select', 'multiple' => true, 'operators' => ['equals', 'not_equals', 'is_empty', 'is_not_empty']],
 
-            // Alias unificado: comercial -> companies.nombre_comercial
-            'comercial' => ['label' => 'Comercial', 'column' => 'nombre_comercial', 'type' => 'select', 'multiple' => true, 'operators' => ['equals', 'not_equals', 'is_empty', 'is_not_empty']],
+            // Ejecutivo asignado (mismo catálogo que en contactos: roles usuario + admin)
+            'comercial' => ['label' => 'Comercial', 'column' => null, 'type' => 'select', 'multiple' => true, 'operators' => ['equals', 'not_equals', 'is_empty', 'is_not_empty']],
 
             'datos_fiscales' => ['label' => 'Domicilio', 'column' => 'datos_fiscales', 'type' => 'existence', 'operators' => self::existenceOperators()],
             'nombre_comercial' => ['label' => 'Comercial', 'column' => 'nombre_comercial', 'type' => 'text', 'operators' => $textAndExistence],

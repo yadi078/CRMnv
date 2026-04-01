@@ -58,7 +58,7 @@
 
         <div class="panel-card-dark overflow-hidden">
             <h3 class="panel-card-dark__title panel-card-dark__title--accent mb-4">Listado</h3>
-            <div class="scroll-x-top w-full min-w-0 -mx-4 sm:-mx-0" style="-webkit-overflow-scrolling: touch;">
+            <div class="crm-table-scroll-wrap crm-table-scroll w-full min-w-0 -mx-4 sm:-mx-0">
                 <table class="w-full min-w-[980px] table-fixed divide-y divide-white/20">
                     <thead>
                         <tr class="table-header-panel-dark">

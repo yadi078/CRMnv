@@ -144,7 +144,9 @@ Route::middleware(['auth', 'verified', 'ensure.role', 'admin'])->group(function 
     Route::post('/ejecutivos', [ExecutiveController::class, 'store'])->name('executives.store');
     Route::post('/ejecutivos/transferir-cartera', [ExecutiveController::class, 'transferPortfolio'])->name('executives.transfer-portfolio');
     Route::post('/ejecutivos/asignar-contacto', [ExecutiveController::class, 'assignContactToExecutive'])->name('executives.assign-contact');
+    Route::post('/ejecutivos/contactos/asignacion-masiva', [ExecutiveController::class, 'bulkAssignContactsToExecutive'])->name('executives.bulk-assign-contacts');
     Route::get('/ejecutivos/{user}', [ExecutiveController::class, 'show'])->name('executives.show');
+    Route::delete('/ejecutivos/{user}', [ExecutiveController::class, 'destroy'])->name('executives.destroy');
     Route::patch('/ejecutivos/{user}/asignaciones', [ExecutiveController::class, 'updateAssignments'])->name('executives.assignments');
     Route::post('/ejecutivos/{user}/contactos/transferir', [ExecutiveController::class, 'transferContact'])->name('executives.transfer-contact');
 

@@ -1,16 +1,35 @@
 <x-app-layout>
     <x-slot name="header">
-        <x-page-header-avatar :user="$executive" :fallback-initials="true" :compact="true">
-            <svg class="text-[#FFE600]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-        </x-page-header-avatar>
-        <div>
-            <h2 class="page-header-card__title">Perfil del ejecutivo</h2>
-            <p class="page-header-card__subtitle">{{ $executive->name }} — mismo usuario que inicia sesión en el CRM</p>
+        <div class="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+            <x-page-header-avatar :user="$executive" :fallback-initials="true" :compact="true">
+                <svg class="text-[#FFE600]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+            </x-page-header-avatar>
+            <div class="min-w-0 flex-1">
+                <h2 class="page-header-card__title">Perfil del ejecutivo</h2>
+                <p class="page-header-card__subtitle truncate sm:whitespace-normal">{{ $executive->name }} — mismo usuario que inicia sesión en el CRM</p>
+            </div>
         </div>
-        <div class="flex flex-wrap gap-2 ml-auto justify-end items-center">
+        <div class="flex flex-row flex-nowrap items-center justify-end gap-2 sm:gap-3 shrink-0">
             <x-executive-reminder-button :executive="$executive" />
+            <form
+                method="POST"
+                action="{{ route('executives.destroy', $executive) }}"
+                class="inline-flex m-0 shrink-0"
+                onsubmit="return confirm('¿Eliminar al ejecutivo «{{ $executive->name }}»? Se quitarán las asignaciones de empresas y contactos y se borrará la cuenta de usuario.');"
+            >
+                @csrf
+                @method('DELETE')
+                <button
+                    type="submit"
+                    class="inline-flex items-center justify-center gap-2 h-11 min-h-[44px] rounded-xl border-2 border-red-400/55 bg-red-950/35 px-3 sm:px-4 text-sm font-semibold text-red-100 hover:bg-red-900/45 hover:border-red-300/65 focus:outline-none focus:ring-2 focus:ring-red-400/45 whitespace-nowrap"
+                >
+                    <svg class="w-5 h-5 shrink-0 opacity-95" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    <span class="hidden min-[380px]:inline">Eliminar ejecutivo</span>
+                    <span class="min-[380px]:hidden">Eliminar</span>
+                </button>
+            </form>
         </div>
     </x-slot>
 

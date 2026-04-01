@@ -109,6 +109,12 @@ Alpine.data('executivesPage', (initial = {}) => ({
     pendingContactId: null,
     filterContactId: initial.filterContactId ?? null,
     autoAssignContactId: initial.autoAssignContactId ?? null,
+    /** IDs de contactos en la página actual (vista Asignaciones) */
+    assignmentPageContactIds: Array.isArray(initial.assignmentPageContactIds) ? initial.assignmentPageContactIds.map(Number) : [],
+    /** Selección para asignación masiva a ejecutivo */
+    selectedIds: [],
+    bulkExportModalOpen: Boolean(initial.bulkExportModalOpen),
+    bulkExportToUserId: initial.bulkExportToUserId ?? '',
     registerModalOpen: Boolean(initial.registerModalOpen),
     registerPasswordVisible: false,
     registerPasswordConfirmVisible: false,
@@ -154,6 +160,45 @@ Alpine.data('executivesPage', (initial = {}) => ({
         this.registerModalOpen = false;
         this.registerPasswordVisible = false;
         this.registerPasswordConfirmVisible = false;
+    },
+    selectAllOnPage(checked) {
+        const pageIds = this.assignmentPageContactIds || [];
+        if (pageIds.length === 0) {
+            return;
+        }
+        if (checked) {
+            this.selectedIds = [...new Set([...this.selectedIds, ...pageIds])];
+        } else {
+            const drop = new Set(pageIds);
+            this.selectedIds = this.selectedIds.filter((id) => !drop.has(id));
+        }
+    },
+    allOnPageSelected() {
+        const pageIds = this.assignmentPageContactIds || [];
+        return pageIds.length > 0 && pageIds.every((id) => this.selectedIds.includes(id));
+    },
+    someOnPageSelected() {
+        const pageIds = this.assignmentPageContactIds || [];
+        return pageIds.some((id) => this.selectedIds.includes(id));
+    },
+    toggleContactSelection(id) {
+        const n = Number(id);
+        const i = this.selectedIds.indexOf(n);
+        if (i >= 0) {
+            this.selectedIds.splice(i, 1);
+        } else {
+            this.selectedIds.push(n);
+        }
+    },
+    isContactSelected(id) {
+        return this.selectedIds.includes(Number(id));
+    },
+    openBulkExportModal() {
+        this.bulkExportModalOpen = true;
+        this.bulkExportToUserId = '';
+    },
+    closeBulkExportModal() {
+        this.bulkExportModalOpen = false;
     },
 }));
 

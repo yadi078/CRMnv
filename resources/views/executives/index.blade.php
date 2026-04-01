@@ -22,8 +22,13 @@
             'selectedExecutiveName' => $oldAssignUserName,
             'filterContactId' => $executivesFilterContactId,
             'autoAssignContactId' => $autoAssignContactId ?? null,
+            'assignmentPageContactIds' => isset($assignmentContacts) && $assignmentContacts->isNotEmpty()
+                ? $assignmentContacts->pluck('id')->values()->all()
+                : [],
+            'bulkExportToUserId' => old('bulk_assign') ? (string) old('user_id', '') : '',
             'registerModalOpen' => $errors->has('name') || $errors->has('email') || $errors->has('password') || $errors->has('role') || $errors->has('is_active'),
-            'modalOpen' => ($errors->has('contact_id') || $errors->has('user_id')) && ! $errors->has('name') && ! $errors->has('email'),
+            'modalOpen' => ($errors->has('contact_id') || $errors->has('user_id')) && ! $errors->has('name') && ! $errors->has('email') && ! old('bulk_assign'),
+            'bulkExportModalOpen' => $errors->has('contact_ids') || ($errors->has('user_id') && old('bulk_assign')),
         ];
     @endphp
 
@@ -69,44 +74,72 @@
                     Registrar nuevo ejecutivo
                 </button>
             </div>
-            <form method="GET" action="{{ route('executives.index') }}" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 items-end">
-                <div>
-                    <label for="empresa_id" class="block text-xs font-medium text-white/70 mb-1.5">Empresa</label>
-                    <select
-                        id="empresa_id"
-                        name="empresa_id"
-                        class="w-full rounded-xl border-0 bg-white/15 text-white text-sm py-2.5 px-3 focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50"
-                    >
-                        <option value="">Todas</option>
-                        @foreach($companiesForFilter as $c)
-                            <option value="{{ $c->id }}" @selected(request('empresa_id') == $c->id)>{{ $c->nombre_comercial }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div>
-                    <label for="estado" class="block text-xs font-medium text-white/70 mb-1.5">Estado</label>
-                    <select
-                        id="estado"
-                        name="estado"
-                        class="w-full rounded-xl border-0 bg-white/15 text-white text-sm py-2.5 px-3 focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50"
-                    >
-                        <option value="">Todos</option>
-                        <option value="activo" @selected(request('estado') === 'activo')>Activo</option>
-                        <option value="inactivo" @selected(request('estado') === 'inactivo')>Inactivo</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="contacto_id" class="block text-xs font-medium text-white/70 mb-1.5">Contacto</label>
-                    <select
-                        id="contacto_id"
-                        name="contacto_id"
-                        class="w-full rounded-xl border-0 bg-white/15 text-white text-sm py-2.5 px-3 focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50"
-                    >
-                        <option value="">Todos</option>
-                        @foreach($contactsForFilter as $ct)
-                            <option value="{{ $ct->id }}" @selected(request('contacto_id') == $ct->id)>{{ $ct->nombre_completo }}</option>
-                        @endforeach
-                    </select>
+            <form method="GET" action="{{ route('executives.index') }}" class="space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5 gap-4 items-end">
+                    <div>
+                        <label for="empresa_id" class="block text-xs font-medium text-white/70 mb-1.5">Empresa</label>
+                        <select
+                            id="empresa_id"
+                            name="empresa_id"
+                            class="w-full rounded-xl border-0 bg-white/15 text-white text-sm py-2.5 px-3 focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50"
+                        >
+                            <option value="">Todas</option>
+                            @foreach($companiesForFilter as $c)
+                                <option value="{{ $c->id }}" @selected(request('empresa_id') == $c->id)>{{ $c->nombre_comercial }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label for="entidad" class="block text-xs font-medium text-white/70 mb-1.5">Estado (México)</label>
+                        <select
+                            id="entidad"
+                            name="entidad"
+                            class="w-full rounded-xl border-0 bg-white/15 text-white text-sm py-2.5 px-3 focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50"
+                        >
+                            <option value="">Todos</option>
+                            @foreach($mexicanStates as $ent)
+                                <option value="{{ $ent }}" @selected(request('entidad') === $ent)>{{ $ent }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label for="contacto_id" class="block text-xs font-medium text-white/70 mb-1.5">Contacto</label>
+                        <select
+                            id="contacto_id"
+                            name="contacto_id"
+                            class="w-full rounded-xl border-0 bg-white/15 text-white text-sm py-2.5 px-3 focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50"
+                        >
+                            <option value="">Todos</option>
+                            @foreach($contactsForFilter as $ct)
+                                <option value="{{ $ct->id }}" @selected(request('contacto_id') == $ct->id)>{{ $ct->nombre_completo }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label for="cuenta_activa" class="block text-xs font-medium text-white/70 mb-1.5">Estado de cuenta</label>
+                        <select
+                            id="cuenta_activa"
+                            name="cuenta_activa"
+                            class="w-full rounded-xl border-0 bg-white/15 text-white text-sm py-2.5 px-3 focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50"
+                        >
+                            <option value="">Todos</option>
+                            <option value="activo" @selected(request('cuenta_activa') === 'activo')>Activo</option>
+                            <option value="inactivo" @selected(request('cuenta_activa') === 'inactivo')>Inactivo</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="ejecutivo_id" class="block text-xs font-medium text-white/70 mb-1.5">Ejecutivo</label>
+                        <select
+                            id="ejecutivo_id"
+                            name="ejecutivo_id"
+                            class="w-full rounded-xl border-0 bg-white/15 text-white text-sm py-2.5 px-3 focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50"
+                        >
+                            <option value="">Todos</option>
+                            @foreach($executivesForTransfer as $ex)
+                                <option value="{{ $ex->id }}" @selected((string) request('ejecutivo_id') === (string) $ex->id)>{{ $ex->name }} — {{ $ex->email }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
                 <div class="flex flex-wrap gap-2">
                     <a href="{{ route('executives.index', ['clear_filters' => 1]) }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/30 text-white/90 text-sm font-medium hover:bg-white/10">
@@ -235,10 +268,45 @@
                     </div>
                 </div>
 
+                @if($assignmentContacts->isNotEmpty())
+                <div class="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 sm:px-6 border-b border-white/10 bg-[#071A3D]/55">
+                    <label class="inline-flex items-center gap-2.5 cursor-pointer text-sm text-white/90 select-none">
+                        <input
+                            type="checkbox"
+                            class="h-4 w-4 shrink-0 rounded border-white/35 bg-white/10 text-[#FFE600] focus:ring-2 focus:ring-[#FFE600]/50 focus:ring-offset-0 focus:ring-offset-transparent"
+                            :checked="allOnPageSelected()"
+                            @change="selectAllOnPage($event.target.checked)"
+                        />
+                        <span class="font-medium">Seleccionar todo</span>
+                    </label>
+                    <span class="text-xs text-white/50 tabular-nums" x-show="selectedIds.length > 0" x-cloak x-text="selectedIds.length + ' seleccionado(s)'"></span>
+                    <button
+                        type="button"
+                        class="inline-flex items-center gap-2 rounded-full bg-[#FFE600] px-4 py-2 text-sm font-bold text-[#071A3D] shadow-md hover:bg-[#ffeb3b] sm:ml-auto disabled:opacity-40 disabled:cursor-not-allowed"
+                        x-show="selectedIds.length > 0"
+                        x-cloak
+                        @click="openBulkExportModal()"
+                    >
+                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M8 12l4 4m0 0l4-4m-4 4V4"/></svg>
+                        Exportar a ejecutivo
+                    </button>
+                </div>
+                @endif
+
                 <div class="divide-y divide-white/10">
                     @forelse($assignmentContacts as $cRow)
                         <div class="px-4 py-5 sm:px-6 hover:bg-white/[0.04] transition-colors">
-                            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-12 gap-5 sm:gap-6 xl:gap-4 xl:items-center">
+                            <div class="flex gap-3 sm:gap-4 xl:gap-5">
+                                <div class="pt-0.5 shrink-0">
+                                    <input
+                                        type="checkbox"
+                                        class="h-4 w-4 rounded border-white/35 bg-white/10 text-[#FFE600] focus:ring-2 focus:ring-[#FFE600]/50"
+                                        :checked="isContactSelected({{ (int) $cRow->id }})"
+                                        @change="toggleContactSelection({{ (int) $cRow->id }})"
+                                        aria-label="Seleccionar contacto {{ $cRow->nombre_completo }}"
+                                    />
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-12 gap-5 sm:gap-6 xl:gap-4 xl:items-center flex-1 min-w-0">
                                 <div class="xl:col-span-3 min-w-0">
                                     <p class="text-[11px] font-medium uppercase tracking-wider text-white/45 mb-1">Empresa</p>
                                     <p class="text-sm font-medium text-white leading-snug">{{ $cRow->company?->nombre_comercial ?? '—' }}</p>
@@ -277,6 +345,7 @@
                                         </button>
                                     @endif
                                 </div>
+                                </div>
                             </div>
                         </div>
                     @empty
@@ -289,6 +358,65 @@
 
             <div class="px-1">
                 {{ $assignmentContacts->links() }}
+            </div>
+
+            {{-- Modal: asignación masiva a ejecutivo --}}
+            <div
+                x-show="bulkExportModalOpen"
+                x-cloak
+                x-transition
+                class="fixed inset-0 z-[72] flex items-center justify-center p-4 bg-black/65 backdrop-blur-sm"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="exec-bulk-export-title"
+                @keydown.escape.window="bulkExportModalOpen && closeBulkExportModal()"
+            >
+                <div class="absolute inset-0" @click="closeBulkExportModal()" aria-hidden="true"></div>
+                <div
+                    class="relative w-full max-w-md rounded-2xl border-4 border-[#FFE600] bg-gradient-to-b from-[#1a3d6b] to-[#0f2850] shadow-2xl p-6 text-left"
+                    @click.stop
+                >
+                    <h3 id="exec-bulk-export-title" class="text-lg font-bold text-[#FFE600] mb-1">Exportar a ejecutivo</h3>
+                    <p class="text-sm text-white/85 mb-4">
+                        Los <span class="font-semibold text-white" x-text="selectedIds.length"></span> contacto(s) seleccionado(s) pasarán a la cartera del ejecutivo que elija.
+                    </p>
+                    <form method="POST" action="{{ route('executives.bulk-assign-contacts') }}" class="space-y-4">
+                        @csrf
+                        <input type="hidden" name="bulk_assign" value="1">
+                        <template x-for="id in selectedIds" :key="'bulk-cid-' + id">
+                            <input type="hidden" name="contact_ids[]" :value="id">
+                        </template>
+                        <div>
+                            <label for="exec-bulk-export-user" class="block text-xs font-semibold text-[#FFE600] mb-1.5">Ejecutivo destino</label>
+                            <select
+                                id="exec-bulk-export-user"
+                                name="user_id"
+                                x-model="bulkExportToUserId"
+                                required
+                                class="w-full rounded-xl border-2 border-gray-200 bg-white text-gray-900 text-sm py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-[#FFE600] [&>option]:text-gray-900"
+                            >
+                                <option value="">Seleccione un ejecutivo…</option>
+                                @foreach($executivesForTransfer as $u)
+                                    <option value="{{ $u->id }}">{{ $u->name }} — {{ $u->email }}</option>
+                                @endforeach
+                            </select>
+                            <x-input-error :messages="$errors->get('user_id')" class="mt-1 text-amber-200 text-xs" />
+                            <x-input-error :messages="$errors->get('contact_ids')" class="mt-1 text-amber-200 text-xs" />
+                        </div>
+                        <div class="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end pt-2">
+                            <button type="button" class="px-4 py-2.5 rounded-xl border-2 border-white/35 text-white text-sm font-medium hover:bg-white/10 w-full sm:w-auto" @click="closeBulkExportModal()">
+                                Cancelar
+                            </button>
+                            <button
+                                type="submit"
+                                class="px-5 py-2.5 rounded-xl font-bold bg-[#FFE600] text-[#071A3D] text-sm hover:bg-[#ffeb3b] w-full sm:w-auto disabled:opacity-45 disabled:cursor-not-allowed"
+                                :disabled="!bulkExportToUserId"
+                            >
+                                Confirmar
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
 
             {{-- Modal: transferir contacto --}}
@@ -351,11 +479,13 @@
         {{-- Tarjetas de ejecutivos (sin filtro empresa/contacto) --}}
         <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
             @forelse($executives as $exec)
-                    <a
-                        href="{{ \App\Support\CrmNavigation::withReturn(route('executives.show', $exec)) }}"
-                        class="group relative rounded-2xl bg-[#071A3D] border border-[#0a2454] shadow-lg overflow-hidden transition transform hover:-translate-y-0.5 hover:shadow-xl hover:border-[#FFE600]/40 focus:outline-none focus:ring-2 focus:ring-[#FFE600] focus:ring-offset-2 focus:ring-offset-white"
+                    <div
+                        class="group relative rounded-2xl bg-[#071A3D] border border-[#0a2454] shadow-lg overflow-hidden transition transform hover:-translate-y-0.5 hover:shadow-xl hover:border-[#FFE600]/40 focus-within:ring-2 focus-within:ring-[#FFE600] focus-within:ring-offset-2 focus-within:ring-offset-white"
                     >
-                        <div class="p-5 flex gap-4 items-start">
+                        <a
+                            href="{{ \App\Support\CrmNavigation::withReturn(route('executives.show', $exec)) }}"
+                            class="block p-5 flex gap-4 items-start focus:outline-none"
+                        >
                             @if($exec->profile_photo_url)
                                 <img src="{{ $exec->profile_photo_url }}" alt="" class="w-16 h-16 rounded-full object-cover border-2 border-[#FFE600]/50 flex-shrink-0" />
                             @else
@@ -363,7 +493,7 @@
                                     {{ $exec->initials }}
                                 </div>
                             @endif
-                            <div class="min-w-0 flex-1">
+                            <div class="min-w-0 flex-1 pr-10">
                                 <h3 class="text-lg font-semibold text-white truncate group-hover:text-[#FFE600] transition-colors">{{ $exec->name }}</h3>
                                 <p class="text-sm text-white/75 truncate mt-1">{{ $exec->email }}</p>
                                 <p class="mt-3">
@@ -374,8 +504,25 @@
                                     @endif
                                 </p>
                             </div>
-                        </div>
-                    </a>
+                        </a>
+                        <form
+                            method="POST"
+                            action="{{ route('executives.destroy', $exec) }}"
+                            class="absolute top-3 right-3 z-10"
+                            onsubmit="return confirm('¿Eliminar al ejecutivo «{{ $exec->name }}»? Se quitarán las asignaciones de empresas y contactos y se borrará la cuenta de usuario.');"
+                        >
+                            @csrf
+                            @method('DELETE')
+                            <button
+                                type="submit"
+                                class="inline-flex items-center justify-center rounded-xl border border-red-500/45 bg-red-950/45 p-2 text-red-200 hover:bg-red-900/55 hover:border-red-400/60 focus:outline-none focus:ring-2 focus:ring-red-400/50"
+                                title="Eliminar ejecutivo"
+                            >
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                <span class="sr-only">Eliminar ejecutivo</span>
+                            </button>
+                        </form>
+                    </div>
             @empty
                 <div class="col-span-full panel-card-dark text-center py-12 text-white/80">
                         No hay ejecutivos que coincidan con los filtros.

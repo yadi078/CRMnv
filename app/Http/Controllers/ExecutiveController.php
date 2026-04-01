@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\AssignContactExecutiveRequest;
+use App\Http\Requests\BulkAssignContactsExecutiveRequest;
 use App\Http\Requests\StoreExecutiveRequest;
 use App\Http\Requests\TransferExecutiveContactRequest;
 use App\Http\Requests\TransferExecutivePortfolioRequest;
@@ -10,6 +11,7 @@ use App\Http\Requests\UpdateExecutiveAssignmentsRequest;
 use App\Models\Company;
 use App\Models\Contact;
 use App\Models\User;
+use App\Support\MexicanStates;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -26,7 +28,8 @@ class ExecutiveController extends Controller
      * Listado de ejecutivos: mismas cuentas que los usuarios del CRM (modelo User),
      * excluyendo solo perfiles administrador (no son ejecutivos de cartera).
      *
-     * Los filtros (empresa, contacto, estado) se guardan en sesión hasta que el administrador pulse «Limpiar».
+     * Filtros: empresa, contacto, entidad (estado de México), estado de cuenta (activo/inactivo), ejecutivo.
+     * Se guardan en sesión hasta «Limpiar».
      */
     public function index(Request $request): View|RedirectResponse
     {
@@ -39,11 +42,12 @@ class ExecutiveController extends Controller
         $this->ensureWebRoleExists('usuario');
         $this->ensureWebRoleExists('administrador');
 
-        $hasFilterKeysInQuery = $request->hasAny(['empresa_id', 'contacto_id', 'estado']);
+        $filterKeys = ['empresa_id', 'contacto_id', 'entidad', 'cuenta_activa', 'ejecutivo_id', 'estado'];
+        $hasFilterKeysInQuery = $request->hasAny($filterKeys);
 
         if (! $hasFilterKeysInQuery) {
             $saved = $request->session()->get(self::SESSION_EXECUTIVES_INDEX_FILTERS, []);
-            $saved = is_array($saved) ? $saved : [];
+            $saved = is_array($saved) ? $this->normalizeSavedExecutiveFilters($saved) : [];
             $nonEmpty = array_filter($saved, fn ($v) => $v !== null && $v !== '');
             if ($nonEmpty !== []) {
                 return redirect()->route('executives.index', $nonEmpty);
@@ -51,9 +55,17 @@ class ExecutiveController extends Controller
         }
 
         $effective = array_filter(
-            $request->only(['empresa_id', 'contacto_id', 'estado']),
+            $request->only(['empresa_id', 'contacto_id', 'entidad', 'cuenta_activa', 'ejecutivo_id']),
             fn ($v) => $v !== null && $v !== ''
         );
+
+        // Compatibilidad: ?estado=activo|inactivo (antes era cuenta activa/inactiva)
+        if (! isset($effective['cuenta_activa']) && $request->filled('estado')) {
+            $legacy = (string) $request->input('estado');
+            if (in_array($legacy, ['activo', 'inactivo'], true)) {
+                $effective['cuenta_activa'] = $legacy;
+            }
+        }
 
         $request->session()->put(self::SESSION_EXECUTIVES_INDEX_FILTERS, $effective);
 
@@ -65,9 +77,20 @@ class ExecutiveController extends Controller
         if ($contactoId !== null && $contactoId < 1) {
             $contactoId = null;
         }
-        $estadoFiltro = $effective['estado'] ?? null;
-        if (! in_array($estadoFiltro, ['activo', 'inactivo'], true)) {
-            $estadoFiltro = null;
+
+        $ejecutivoId = isset($effective['ejecutivo_id']) ? (int) $effective['ejecutivo_id'] : null;
+        if ($ejecutivoId !== null && $ejecutivoId < 1) {
+            $ejecutivoId = null;
+        }
+
+        $entidadFiltro = isset($effective['entidad']) ? (string) $effective['entidad'] : null;
+        if (! MexicanStates::isValid($entidadFiltro)) {
+            $entidadFiltro = null;
+        }
+
+        $cuentaActivaFiltro = $effective['cuenta_activa'] ?? null;
+        if (! in_array($cuentaActivaFiltro, ['activo', 'inactivo'], true)) {
+            $cuentaActivaFiltro = null;
         }
 
         $companiesForFilter = Company::query()->orderBy('nombre_comercial')->get(['id', 'nombre_comercial']);
@@ -98,12 +121,23 @@ class ExecutiveController extends Controller
                 $cq->where('id', $contactoId);
             }
 
-            if ($estadoFiltro !== null) {
-                if ($estadoFiltro === 'activo') {
+            if ($entidadFiltro !== null) {
+                $cq->where(function ($q) use ($entidadFiltro): void {
+                    $q->where('contacts.estado', $entidadFiltro)
+                        ->orWhereHas('company', fn ($c) => $c->where('estado', $entidadFiltro));
+                });
+            }
+
+            if ($cuentaActivaFiltro !== null) {
+                if ($cuentaActivaFiltro === 'activo') {
                     $cq->whereHas('assignedExecutive', fn ($q) => $q->where('is_active', true));
                 } else {
                     $cq->whereHas('assignedExecutive', fn ($q) => $q->where('is_active', false));
                 }
+            }
+
+            if ($ejecutivoId !== null) {
+                $cq->where('assigned_user_id', $ejecutivoId);
             }
 
             $assignmentContacts = $cq->orderBy('nombre_completo')->paginate(20)->withQueryString();
@@ -127,12 +161,28 @@ class ExecutiveController extends Controller
                 ->with(['roles'])
                 ->orderBy('name');
 
-            if ($estadoFiltro !== null) {
-                if ($estadoFiltro === 'activo') {
+            if ($cuentaActivaFiltro !== null) {
+                if ($cuentaActivaFiltro === 'activo') {
                     $query->where('is_active', true);
                 } else {
                     $query->where('is_active', false);
                 }
+            }
+
+            if ($ejecutivoId !== null) {
+                $query->whereKey($ejecutivoId);
+            }
+
+            if ($entidadFiltro !== null) {
+                $query->where(function ($q) use ($entidadFiltro): void {
+                    $q->whereHas('assignedCompanies', fn ($c) => $c->where('estado', $entidadFiltro))
+                        ->orWhereHas('assignedContacts', function ($ct) use ($entidadFiltro): void {
+                            $ct->where(function ($x) use ($entidadFiltro): void {
+                                $x->where('contacts.estado', $entidadFiltro)
+                                    ->orWhereHas('company', fn ($co) => $co->where('estado', $entidadFiltro));
+                            });
+                        });
+                });
             }
 
             $executives = $query->paginate(12)->withQueryString();
@@ -145,7 +195,25 @@ class ExecutiveController extends Controller
             'companiesForFilter' => $companiesForFilter,
             'contactsForFilter' => $contactsForFilter,
             'executivesForTransfer' => $executivesForTransfer,
+            'mexicanStates' => MexicanStates::all(),
         ], ProfileController::adminPasswordAssistanceState($request)));
+    }
+
+    /**
+     * Migra filtros guardados con la clave antigua `estado` (activo/inactivo).
+     *
+     * @param  array<string, mixed>  $saved
+     * @return array<string, mixed>
+     */
+    private function normalizeSavedExecutiveFilters(array $saved): array
+    {
+        if (isset($saved['estado']) && in_array($saved['estado'], ['activo', 'inactivo'], true)
+            && (! isset($saved['cuenta_activa']) || $saved['cuenta_activa'] === '' || $saved['cuenta_activa'] === null)) {
+            $saved['cuenta_activa'] = $saved['estado'];
+        }
+        unset($saved['estado']);
+
+        return $saved;
     }
 
     /**
@@ -273,6 +341,35 @@ class ExecutiveController extends Controller
     }
 
     /**
+     * Asignar varios contactos a un ejecutivo (vista Asignaciones).
+     */
+    public function bulkAssignContactsToExecutive(BulkAssignContactsExecutiveRequest $request): RedirectResponse
+    {
+        $validated = $request->validated();
+        $executive = User::findOrFail((int) $validated['user_id']);
+
+        if ($executive->esAdmin()) {
+            return back()
+                ->with('error', 'No se puede asignar un administrador como ejecutivo de los contactos.');
+        }
+
+        $ids = array_map('intval', $validated['contact_ids']);
+        $ids = array_values(array_unique($ids));
+
+        $updated = Contact::query()
+            ->whereIn('id', $ids)
+            ->update(['assigned_user_id' => $executive->id]);
+
+        return back()
+            ->with(
+                'success',
+                $updated === 1
+                    ? '1 contacto asignado a «'.$executive->name.'».'
+                    : $updated.' contactos asignados a «'.$executive->name.'».'
+            );
+    }
+
+    /**
      * Alta de ejecutivo desde modal.
      */
     public function store(StoreExecutiveRequest $request): RedirectResponse
@@ -385,6 +482,43 @@ class ExecutiveController extends Controller
                 'success',
                 'Cartera transferida: '.$counts['companies'].' empresa(s) y '.$counts['contacts'].' contacto(s) pasaron de «'.$from->name.'» a «'.$to->name.'».'
             );
+    }
+
+    /**
+     * Eliminar cuenta de ejecutivo: libera asignaciones y borra el usuario (solo admin).
+     */
+    public function destroy(Request $request, User $user): RedirectResponse
+    {
+        if ($user->esAdmin()) {
+            abort(404);
+        }
+
+        if ((int) $user->id === (int) $request->user()->id) {
+            return redirect()
+                ->route('executives.index')
+                ->with('error', 'No puede eliminar su propia cuenta.');
+        }
+
+        $name = $user->name;
+
+        DB::transaction(function () use ($user): void {
+            Company::query()->where('assigned_user_id', $user->id)->update([
+                'assigned_user_id' => null,
+                'ejecutivo_asignado' => null,
+            ]);
+
+            Contact::query()->where('assigned_user_id', $user->id)->update([
+                'assigned_user_id' => null,
+            ]);
+
+            $user->permissions()->detach();
+            $user->roles()->detach();
+            $user->delete();
+        });
+
+        return redirect()
+            ->route('executives.index')
+            ->with('success', 'Ejecutivo «'.$name.'» eliminado. Sus asignaciones quedaron liberadas.');
     }
 
     /**

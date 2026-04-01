@@ -5,11 +5,11 @@
     $companyName = trim((string) ($executive->company_name ?? ''));
 @endphp
 
-<div {{ $attributes->class(['inline-flex']) }} x-data="{ showReminderModal: {{ old('reminder_context') ? 'true' : 'false' }} }">
+<div {{ $attributes->class(['inline-flex shrink-0 items-center']) }} x-data="{ showReminderModal: {{ old('reminder_context') ? 'true' : 'false' }} }">
     <button
         type="button"
         @click="showReminderModal = true"
-        class="inline-flex items-center gap-2 rounded-xl border-2 border-[#FFE600] bg-[#0b386a] text-[#FFE600] px-4 py-2 text-sm font-semibold shadow-sm hover:bg-[#082f59] transition-colors"
+        class="inline-flex items-center justify-center gap-2 h-11 min-h-[44px] rounded-xl border-2 border-[#FFE600] bg-[#0b386a] text-[#FFE600] px-3 sm:px-4 text-sm font-semibold shadow-sm hover:bg-[#082f59] transition-colors whitespace-nowrap"
     >
         <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />

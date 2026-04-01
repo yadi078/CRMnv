@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\DataTransferObjects\FilterSpec;
 use App\Models\Contact;
 use App\Models\Company;
+use App\Models\User;
 use App\Services\DynamicFilterService;
 use App\Services\FilterConfig;
 use Illuminate\Http\Request;
@@ -119,24 +120,10 @@ class FiltrosController extends Controller
         $contactFields['municipio']['options'] = $municipioOpts;
         $contactFields['estado']['options'] = $estadoOpts;
 
-        // Comercial: usar empresas que estén relacionadas con el alcance del usuario
-        $comercialQuery = Company::query()
-            ->whereNotNull('nombre_comercial')
-            ->where('nombre_comercial', '!=', '');
-        if (! $isAdmin && $userId) {
-            $comercialQuery->accessibleForExecutive($user);
-        }
-
-        $comercialValues = $comercialQuery
-            ->orderBy('nombre_comercial')
-            ->distinct()
-            ->pluck('nombre_comercial')
-            ->unique()
-            ->values();
-
-        $contactFields['comercial']['options'] = $comercialValues
-            ->mapWithKeys(fn ($v) => [(string)$v => (string)$v])
-            ->toArray();
+        // Comercial: usuarios (usuario/admin) + textos distintos de empresa.ejecutivo_asignado (p. ej. "Lic. Olivia…")
+        $comercialOpts = $this->comercialFilterOptions($user, $isAdmin);
+        $contactFields['comercial']['options'] = $comercialOpts;
+        $companyFields['comercial']['options'] = $comercialOpts;
 
         $contactFields['domicilio']['options'] = [
             'con_domicilio' => 'Con domicilio',
@@ -149,7 +136,6 @@ class FiltrosController extends Controller
 
         // Opciones (empresas)
         $companyFields['sector']['options'] = $distinctToOptions((clone $baseCompaniesForOptions), 'sector', 5000);
-        $companyFields['comercial']['options'] = $distinctToOptions((clone $baseCompaniesForOptions), 'nombre_comercial', 5000);
         $companyFields['datos_fiscales']['options'] = [
             'con_domicilio' => 'Con domicilio',
             'sin_domicilio' => 'Sin domicilio',
@@ -168,7 +154,7 @@ class FiltrosController extends Controller
             default => false,
         };
         if ($shouldQueryContacts) {
-            $contactsQuery = Contact::query()->with('company');
+            $contactsQuery = Contact::query()->with(['company.assignedExecutive', 'assignedExecutive']);
             if (! $isAdmin && $user) {
                 $contactsQuery->accessibleForExecutive($user);
             }
@@ -183,7 +169,7 @@ class FiltrosController extends Controller
             default => false,
         };
         if ($shouldQueryCompanies) {
-            $companiesQuery = Company::with('contacts');
+            $companiesQuery = Company::with(['contacts', 'assignedExecutive']);
             if (! $isAdmin && $userId) {
                 $companiesQuery->accessibleForExecutive($user);
             }
@@ -278,7 +264,7 @@ class FiltrosController extends Controller
             default => false,
         };
         if ($shouldQueryContacts) {
-            $contactsQuery = Contact::query()->with('company');
+            $contactsQuery = Contact::query()->with(['company.assignedExecutive', 'assignedExecutive']);
             if (! $isAdmin && $user) {
                 $contactsQuery->accessibleForExecutive($user);
             }
@@ -293,7 +279,7 @@ class FiltrosController extends Controller
             default => false,
         };
         if ($shouldQueryCompanies) {
-            $companiesQuery = Company::with('contacts');
+            $companiesQuery = Company::with(['contacts', 'assignedExecutive']);
             if (! $isAdmin && $userId) {
                 $companiesQuery->accessibleForExecutive($user);
             }
@@ -315,6 +301,54 @@ class FiltrosController extends Controller
                 'resultScope' => $resultScope,
             ])->render(),
         ]);
+    }
+
+    /**
+     * Opciones del filtro Comercial: cuentas de usuario (usuario/admin) + valores ya guardados en ejecutivo_asignado.
+     *
+     * @return array<string, string> clave (id numérico o E:base64) => etiqueta visible
+     */
+    private function comercialFilterOptions(?User $authUser, bool $isAdmin): array
+    {
+        $out = [];
+
+        $users = User::query()
+            ->whereHas('roles', function ($q): void {
+                $q->where('guard_name', 'web')
+                    ->whereIn('name', ['usuario', 'admin', 'administrador']);
+            })
+            ->orderBy('name')
+            ->get(['id', 'name', 'email']);
+
+        foreach ($users as $u) {
+            $label = $u->name;
+            if ($u->email) {
+                $label .= ' — '.$u->email;
+            }
+            $out[(string) $u->id] = $label;
+        }
+
+        $q = Company::query()
+            ->whereNotNull('ejecutivo_asignado')
+            ->where('ejecutivo_asignado', '!=', '');
+        if (! $isAdmin && $authUser) {
+            $q->accessibleForExecutive($authUser);
+        }
+
+        foreach ($q->distinct()->orderBy('ejecutivo_asignado')->pluck('ejecutivo_asignado') as $raw) {
+            $t = trim((string) $raw);
+            if ($t === '') {
+                continue;
+            }
+            $key = 'E:'.base64_encode($t);
+            if (! isset($out[$key])) {
+                $out[$key] = $t;
+            }
+        }
+
+        uasort($out, static fn ($a, $b): int => strcasecmp((string) $a, (string) $b));
+
+        return $out;
     }
 
     private function resolveResultScope(?string $rawScope): string
@@ -390,6 +424,29 @@ class FiltrosController extends Controller
                 } else {
                     $value = $statusLabels[(string) $value] ?? $value;
                 }
+            }
+
+            if ($fieldKey === 'comercial' && $value !== null) {
+                $opts = $fields['comercial']['options'] ?? [];
+                $vals = is_array($value) ? $value : [$value];
+                $value = array_map(function ($k) use ($opts) {
+                    $k = (string) $k;
+                    if (isset($opts[$k])) {
+                        return $opts[$k];
+                    }
+                    if (str_starts_with($k, 'E:')) {
+                        $d = base64_decode(substr($k, 2), true);
+
+                        return ($d !== false && $d !== '') ? $d : $k;
+                    }
+                    if (ctype_digit($k)) {
+                        $u = User::query()->find((int) $k);
+
+                        return $u ? ($u->name.($u->email ? ' — '.$u->email : '')) : $k;
+                    }
+
+                    return $k;
+                }, $vals);
             }
 
             $cfg = $fields[$fieldKey] ?? null;

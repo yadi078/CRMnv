@@ -115,6 +115,31 @@ class Contact extends Model
     }
 
     /**
+     * Ejecutivo comercial para listados: asignación del contacto (usuario) o, si no, la de la empresa.
+     */
+    public function comercialEjecutivoLabel(): string
+    {
+        $direct = $this->assignedExecutive?->name;
+        if (is_string($direct) && trim($direct) !== '') {
+            return trim($direct);
+        }
+
+        $co = $this->company;
+        if ($co !== null) {
+            $fromCompanyUser = $co->assignedExecutive?->name;
+            if (is_string($fromCompanyUser) && trim($fromCompanyUser) !== '') {
+                return trim($fromCompanyUser);
+            }
+            $ea = $co->ejecutivo_asignado ?? null;
+            if (is_string($ea) && trim($ea) !== '') {
+                return trim($ea);
+            }
+        }
+
+        return '—';
+    }
+
+    /**
      * Relación: Un contacto puede tener muchos seguimientos
      */
     public function followUps(): HasMany

@@ -5,7 +5,7 @@
             <h3 class="panel-card-dark__title panel-card-dark__title--accent !mb-0 text-xl md:text-2xl font-bold tracking-tight">Contactos</h3>
             <span class="text-sm text-white/60 font-medium tabular-nums">{{ $contacts->total() }} {{ $contacts->total() === 1 ? 'registro' : 'registros' }}</span>
         </div>
-        <div class="scroll-x-top w-full min-w-0 -mx-1 px-1" style="-webkit-overflow-scrolling: touch;">
+        <div class="crm-table-scroll-wrap crm-table-scroll w-full min-w-0 -mx-1 px-1">
             <table class="min-w-full divide-y divide-white/15">
                 <thead>
                     <tr class="table-header-panel-dark">
@@ -14,6 +14,7 @@
                         <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Empresa</th>
                         <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Tel / Cel</th>
                         <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Email</th>
+                        <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Ejecutivo</th>
                         <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Estado</th>
                     </tr>
                 </thead>
@@ -33,6 +34,7 @@
                             </td>
                             <td class="px-4 py-3.5 text-sm text-white/90">{{ $contact->telefono ?? $contact->celular ?? '—' }}</td>
                             <td class="px-4 py-3.5 text-sm text-white/90">{{ $contact->email ?? '—' }}</td>
+                            <td class="px-4 py-3.5 text-sm text-white/90">{{ $contact->comercialEjecutivoLabel() }}</td>
                             <td class="px-4 py-3.5">
                                 <span class="px-2 py-0.5 text-xs rounded-lg badge-prospect-{{ $contact->status_color ?? 'seguimiento' }}">
                                     {{ $contact->status_label ?? '—' }}
@@ -56,7 +58,7 @@
             <h3 class="panel-card-dark__title panel-card-dark__title--accent !mb-0 text-xl md:text-2xl font-bold tracking-tight">Empresas</h3>
             <span class="text-sm text-white/60 font-medium tabular-nums">{{ $companies->total() }} {{ $companies->total() === 1 ? 'registro' : 'registros' }}</span>
         </div>
-        <div class="scroll-x-top w-full min-w-0 -mx-1 px-1" style="-webkit-overflow-scrolling: touch;">
+        <div class="crm-table-scroll-wrap crm-table-scroll w-full min-w-0 -mx-1 px-1">
             <table class="min-w-full divide-y divide-white/15">
                 <thead>
                     <tr class="table-header-panel-dark">
@@ -78,7 +80,7 @@
                             <td class="px-4 py-3.5 align-top max-w-[14rem]">
                                 <x-company-prospect-status-badges :company="$company" variant="filtros" />
                             </td>
-                            <td class="px-4 py-3.5 text-sm text-white/90">{{ $company->ejecutivo_asignado ?? '—' }}</td>
+                            <td class="px-4 py-3.5 text-sm text-white/90">{{ $company->assignedExecutive?->name ?? $company->ejecutivo_asignado ?? '—' }}</td>
                         </tr>
                     @endforeach
                 </tbody>
