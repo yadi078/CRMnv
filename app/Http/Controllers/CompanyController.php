@@ -224,6 +224,8 @@ class CompanyController extends Controller
     {
         $this->authorize('create', Company::class);
 
+        set_time_limit(0);
+
         $validated = $request->validate([
             'file' => 'required|file|mimes:xlsx,xls,csv',
             'assign_to_user_id' => 'nullable|integer|exists:users,id',
