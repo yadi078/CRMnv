@@ -92,28 +92,30 @@
                     </div>
                 @endisset
 
-                {{-- Mensajes flash (pueden mostrarse varios: éxito + aviso) --}}
-                @if(session('success'))
-                    <x-alert type="success" :message="session('success')" />
-                @endif
-                @if(session('warning'))
-                    <x-alert type="warning" :message="session('warning')" />
-                @endif
-                @if(session('info'))
-                    <x-alert type="info" :message="session('info')" />
-                @endif
-                @if(session('error'))
-                    <x-alert type="error" :message="session('error')" />
-                @endif
-                @if(session('status'))
-                    <x-alert type="success" :message="match (session('status')) {
-                        'profile-updated' => 'Perfil actualizado correctamente.',
-                        'profile-photo-removed' => 'Foto de perfil eliminada.',
-                        'password-updated' => 'Contraseña actualizada correctamente.',
-                        'verification-link-sent' => 'Se ha enviado un nuevo enlace de verificación a tu correo.',
-                        default => session('status'),
-                    }" />
-                @endif
+                {{-- Mensajes flash: en Ejecutivos el listado muestra avisos inline (evita solaparse con modales z-50+). --}}
+                @unless(request()->routeIs('executives.index'))
+                    @if(session('success'))
+                        <x-alert type="success" :message="session('success')" />
+                    @endif
+                    @if(session('warning'))
+                        <x-alert type="warning" :message="session('warning')" />
+                    @endif
+                    @if(session('info'))
+                        <x-alert type="info" :message="session('info')" />
+                    @endif
+                    @if(session('error'))
+                        <x-alert type="error" :message="session('error')" />
+                    @endif
+                    @if(session('status'))
+                        <x-alert type="success" :message="match (session('status')) {
+                            'profile-updated' => 'Perfil actualizado correctamente.',
+                            'profile-photo-removed' => 'Foto de perfil eliminada.',
+                            'password-updated' => 'Contraseña actualizada correctamente.',
+                            'verification-link-sent' => 'Se ha enviado un nuevo enlace de verificación a tu correo.',
+                            default => session('status'),
+                        }" />
+                    @endif
+                @endunless
 
                 {{-- Contenido: padding-top en móvil para no quedar bajo la barra fija --}}
                 <main class="flex-1 p-4 sm:p-6 md:p-8 pt-[calc(2.75rem+1rem)] lg:pt-8 min-w-0 overflow-x-hidden">

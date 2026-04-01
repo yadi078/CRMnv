@@ -15,6 +15,11 @@
     </x-slot>
 
     <div class="space-y-6">
+        @if (session('success'))
+            <div class="rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
+                {{ session('success') }}
+            </div>
+        @endif
         @if (session('status'))
             <div class="rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
                 {{ session('status') }}
