@@ -51,8 +51,14 @@
                         </div>
 
                         <div>
-                            <x-input-label for="departamento" value="Departamento" />
-                            <x-text-input id="departamento" name="departamento" type="text" class="mt-1 block w-full" :value="old('departamento')" />
+                            <x-input-label for="departamento" value="Area de trabajo" />
+                            <input id="departamento" name="departamento" type="text" list="work-areas-list" class="mt-1 block w-full rounded-md border-gray-300" value="{{ old('departamento') }}" placeholder="Escriba para buscar..." />
+                            <datalist id="work-areas-list">
+                                @foreach($workAreas as $workArea)
+                                    <option value="{{ $workArea }}"></option>
+                                @endforeach
+                            </datalist>
+                            <p class="mt-1 text-xs text-white/60">Solo se permiten areas del catalogo.</p>
                             <x-input-error :messages="$errors->get('departamento')" class="mt-2" />
                         </div>
 
@@ -187,6 +193,8 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {
+        var allowedWorkAreas = @json($workAreas->values());
+        var departamentoInput = document.getElementById('departamento');
         var form = document.getElementById('form-nuevo-contacto');
         var modal = document.getElementById('modal-registro-exitoso');
         var modalError = document.getElementById('modal-error');
@@ -228,8 +236,33 @@
             showErrorModal(initialError.getAttribute('data-message'));
         }
 
+        function validateDepartamentoInput() {
+            if (!departamentoInput) return true;
+            var value = (departamentoInput.value || '').trim();
+            if (!value) {
+                departamentoInput.setCustomValidity('');
+                return true;
+            }
+            var normalized = value.toUpperCase();
+            var isValid = allowedWorkAreas.some(function(item) {
+                return (item || '').toUpperCase() === normalized;
+            });
+            departamentoInput.setCustomValidity(isValid ? '' : 'Seleccione un area valida del catalogo.');
+            return isValid;
+        }
+
+        if (departamentoInput) {
+            departamentoInput.addEventListener('input', validateDepartamentoInput);
+            departamentoInput.addEventListener('blur', validateDepartamentoInput);
+        }
+
         if (form) {
             form.addEventListener('submit', function(e) {
+                if (!validateDepartamentoInput()) {
+                    e.preventDefault();
+                    departamentoInput.reportValidity();
+                    return;
+                }
                 e.preventDefault();
 
                 var formData = new FormData(form);

@@ -22,15 +22,47 @@ class NotificationController extends Controller
     public function unreadCount(Request $request)
     {
         try {
-            $count = auth()->user()->unreadNonReminderNotificationsCount();
+            $user = auth()->user();
+            $count = $user->unreadNonReminderNotificationsCount();
             $display = $count > 99 ? '99+' : (string) $count;
+
+            $dueReminderAlerts = $user->unreadNotifications()
+                ->where('type', ReminderDueNotification::class)
+                ->latest()
+                ->limit(8)
+                ->get()
+                ->map(function ($notification) use ($user) {
+                    $raw = $notification->data;
+                    $data = is_array($raw) ? $raw : (is_string($raw) ? (json_decode($raw, true) ?: []) : []);
+                    $data = ReminderDueNotification::enrichStoredData($data, $user->id);
+
+                    $phase = (string) ($data['alert_phase'] ?? 'due');
+                    if ($phase !== 'due') {
+                        return null;
+                    }
+
+                    $detail = isset($data['reminder_detalle']) && is_array($data['reminder_detalle'])
+                        ? $data['reminder_detalle']
+                        : [];
+                    $title = trim((string) ($detail['titulo'] ?? $data['titulo'] ?? 'Recordatorio'));
+                    $fechaInicio = trim((string) ($detail['fecha_inicio'] ?? $data['fecha_prevista'] ?? ''));
+
+                    return [
+                        'id' => (string) $notification->id,
+                        'title' => $title !== '' ? $title : 'Recordatorio',
+                        'time' => $fechaInicio,
+                    ];
+                })
+                ->filter()
+                ->values();
 
             return response()->json([
                 'unread_count' => $count,
                 'display' => $display,
+                'due_reminder_alerts' => $dueReminderAlerts,
             ]);
         } catch (\Throwable $e) {
-            return response()->json(['unread_count' => 0, 'display' => '0'], 200);
+            return response()->json(['unread_count' => 0, 'display' => '0', 'due_reminder_alerts' => []], 200);
         }
     }
 

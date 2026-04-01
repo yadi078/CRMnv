@@ -189,14 +189,14 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         e.preventDefault();
-        const preferred = btn.getAttribute('data-crm-preferred-return');
-        if (preferred) {
-            window.location.assign(preferred);
-            return;
-        }
         const fallback = btn.getAttribute('data-crm-back') || '/';
         if (window.history.length > 1) {
             window.history.back();
+            return;
+        }
+        const preferred = btn.getAttribute('data-crm-preferred-return');
+        if (preferred) {
+            window.location.assign(preferred);
         } else {
             window.location.href = fallback;
         }

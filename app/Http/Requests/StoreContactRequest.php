@@ -19,10 +19,19 @@ class StoreContactRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        $merge = [];
+
         if ($this->has('email') && is_string($this->email)) {
-            $this->merge([
-                'email' => ContactEmailList::normalize($this->email),
-            ]);
+            $merge['email'] = ContactEmailList::normalize($this->email);
+        }
+
+        if ($this->has('departamento') && is_string($this->departamento)) {
+            $value = trim(preg_replace('/\s+/u', ' ', $this->departamento) ?? $this->departamento);
+            $merge['departamento'] = $value === '' ? null : mb_strtoupper($value, 'UTF-8');
+        }
+
+        if ($merge !== []) {
+            $this->merge($merge);
         }
     }
 
@@ -38,7 +47,7 @@ class StoreContactRequest extends FormRequest
             'nombre_completo' => 'required|string|max:255',
             'genero' => 'nullable|string|max:50',
             'puesto_de_trabajo' => 'nullable|string|max:255',
-            'departamento' => 'nullable|string|max:255',
+            'departamento' => 'nullable|string|max:255|exists:work_areas,name',
             'celular' => 'nullable|string|max:20',
             'telefono' => 'nullable|string|max:30',
             'extension' => 'nullable|string|max:10',
@@ -72,6 +81,7 @@ class StoreContactRequest extends FormRequest
             'extension.max' => 'La extensión no puede tener más de 10 caracteres.',
             'celular.max' => 'El celular no puede tener más de 20 caracteres.',
             'telefono.max' => 'El teléfono no puede tener más de 30 caracteres.',
+            'departamento.exists' => 'Debe seleccionar un area de trabajo valida del catalogo.',
         ];
     }
 }

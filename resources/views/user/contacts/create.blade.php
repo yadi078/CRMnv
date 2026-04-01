@@ -49,8 +49,14 @@
                             <input id="puesto_de_trabajo" name="puesto_de_trabajo" type="text" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3" value="{{ old('puesto_de_trabajo') }}" />
                         </div>
                         <div>
-                            <label for="departamento" class="block text-sm font-medium text-white/90 mb-1">Departamento</label>
-                            <input id="departamento" name="departamento" type="text" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3" value="{{ old('departamento') }}" />
+                            <label for="departamento" class="block text-sm font-medium text-white/90 mb-1">Area de trabajo</label>
+                            <input id="departamento" name="departamento" type="text" list="work-areas-list" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3" value="{{ old('departamento') }}" placeholder="Escriba para buscar..." />
+                            <datalist id="work-areas-list">
+                                @foreach($workAreas as $workArea)
+                                    <option value="{{ $workArea }}"></option>
+                                @endforeach
+                            </datalist>
+                            <p class="mt-1 text-xs text-white/60">Solo puede seleccionar areas del catalogo.</p>
                         </div>
                         <div>
                             <label for="email" class="block text-sm font-medium text-white/90 mb-1">Correo electrónico *</label>
@@ -141,6 +147,8 @@
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         var companiesData = @json($companies->map(fn ($c) => ['id' => $c->id, 'nombre_comercial' => $c->nombre_comercial]));
+        var allowedWorkAreas = @json($workAreas->values());
+        var departamentoInput = document.getElementById('departamento');
         var form = document.getElementById('form-nuevo-contacto');
         var modal = document.getElementById('modal-registro-exitoso');
         var modalError = document.getElementById('modal-error');
@@ -257,9 +265,33 @@
             showErrorModal(initialError.getAttribute('data-message'));
         }
 
+        function validateDepartamentoInput() {
+            if (!departamentoInput) return true;
+            var value = (departamentoInput.value || '').trim();
+            if (!value) {
+                departamentoInput.setCustomValidity('');
+                return true;
+            }
+            var normalized = value.toUpperCase();
+            var isValid = allowedWorkAreas.some(function(item) {
+                return (item || '').toUpperCase() === normalized;
+            });
+            departamentoInput.setCustomValidity(isValid ? '' : 'Seleccione un area valida del catalogo.');
+            return isValid;
+        }
+
+        if (departamentoInput) {
+            departamentoInput.addEventListener('input', validateDepartamentoInput);
+            departamentoInput.addEventListener('blur', validateDepartamentoInput);
+        }
+
         if (form) {
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
+                if (!validateDepartamentoInput()) {
+                    departamentoInput.reportValidity();
+                    return;
+                }
                 if (companyIdInput && companyInput && !companyIdInput.value && companyInput.value.trim()) {
                     var match = companiesData.find(function(c) {
                         return (c.nombre_comercial || '').trim().toLowerCase() === companyInput.value.trim().toLowerCase();

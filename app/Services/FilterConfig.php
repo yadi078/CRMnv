@@ -98,7 +98,14 @@ class FilterConfig
 
     public static function contactGeneroOptions(): array
     {
-        return ['' => 'Todos', 'Masculino' => 'Masculino', 'Femenino' => 'Femenino', 'Otro' => 'Otro'];
+        return [
+            'H' => 'H',
+            'M' => 'M',
+            // Compatibilidad con registros historicos previos al formato H/M
+            'Masculino' => 'Masculino',
+            'Femenino' => 'Femenino',
+            'Otro' => 'Otro',
+        ];
     }
 
     /**

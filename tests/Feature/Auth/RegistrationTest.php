@@ -25,7 +25,8 @@ class RegistrationTest extends TestCase
             'password_confirmation' => 'password',
         ]);
 
-        $response->assertNotFound();
+        // Solo existe GET /register (redirección); POST no está permitido.
+        $this->assertContains($response->status(), [404, 405]);
         $this->assertGuest();
     }
 }

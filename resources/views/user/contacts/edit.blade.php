@@ -69,8 +69,14 @@
                             <x-text-input id="puesto_de_trabajo" name="puesto_de_trabajo" type="text" class="mt-1 block w-full" :value="old('puesto_de_trabajo', $contact->puesto_de_trabajo)" />
                         </div>
                         <div>
-                            <x-input-label for="departamento" value="Departamento" />
-                            <x-text-input id="departamento" name="departamento" type="text" class="mt-1 block w-full" :value="old('departamento', $contact->departamento)" />
+                            <x-input-label for="departamento" value="Area de trabajo" />
+                            <input id="departamento" name="departamento" type="text" list="work-areas-list" class="mt-1 block w-full rounded-md border-gray-300" value="{{ old('departamento', $contact->departamento) }}" placeholder="Escriba para buscar..." />
+                            <datalist id="work-areas-list">
+                                @foreach($workAreas as $workArea)
+                                    <option value="{{ $workArea }}"></option>
+                                @endforeach
+                            </datalist>
+                            <p class="mt-1 text-xs text-white/60">Solo puede seleccionar areas del catalogo.</p>
                         </div>
                         <div>
                             <x-input-label for="email" value="Correo electrónico *" />
@@ -152,4 +158,101 @@
             </div>
         </div>
     </div>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var companiesData = @json($companies->map(fn ($c) => ['id' => $c->id, 'nombre_comercial' => $c->nombre_comercial]));
+        var allowedWorkAreas = @json($workAreas->values());
+        var departamentoInput = document.getElementById('departamento');
+        var form = document.getElementById('form-editar-contacto');
+        var companyInput = document.getElementById('company_autocomplete');
+        var companyIdInput = document.getElementById('company_id');
+        var companyList = document.getElementById('company_autocomplete_list');
+
+        function filterCompanies(q) {
+            var qq = (q || '').toLowerCase().trim();
+            if (!qq) return companiesData;
+            return companiesData.filter(function(c) {
+                return (c.nombre_comercial || '').toLowerCase().indexOf(qq) !== -1;
+            });
+        }
+
+        function renderCompanyList(items) {
+            if (!companyList) return;
+            companyList.innerHTML = '';
+            if (items.length === 0) {
+                companyList.classList.add('hidden');
+                return;
+            }
+            items.forEach(function(c) {
+                var div = document.createElement('div');
+                div.className = 'px-3 py-2.5 text-white/90 hover:bg-white/15 cursor-pointer text-sm';
+                div.setAttribute('role', 'option');
+                div.textContent = c.nombre_comercial;
+                div.addEventListener('mousedown', function(e) {
+                    e.preventDefault();
+                    companyIdInput.value = String(c.id);
+                    companyInput.value = c.nombre_comercial;
+                    companyList.classList.add('hidden');
+                });
+                companyList.appendChild(div);
+            });
+            companyList.classList.remove('hidden');
+        }
+
+        if (companyInput && companyList) {
+            companyInput.addEventListener('focus', function() {
+                renderCompanyList(filterCompanies(companyInput.value));
+            });
+            companyInput.addEventListener('input', function() {
+                companyIdInput.value = '';
+                renderCompanyList(filterCompanies(companyInput.value));
+            });
+            companyInput.addEventListener('blur', function() {
+                setTimeout(function() { companyList.classList.add('hidden'); }, 150);
+            });
+            document.addEventListener('click', function(e) {
+                if (companyList.classList.contains('hidden')) return;
+                if (!companyList.contains(e.target) && e.target !== companyInput) {
+                    companyList.classList.add('hidden');
+                }
+            });
+        }
+
+        function validateDepartamentoInput() {
+            if (!departamentoInput) return true;
+            var value = (departamentoInput.value || '').trim();
+            if (!value) {
+                departamentoInput.setCustomValidity('');
+                return true;
+            }
+            var normalized = value.toUpperCase();
+            var isValid = allowedWorkAreas.some(function(item) {
+                return (item || '').toUpperCase() === normalized;
+            });
+            departamentoInput.setCustomValidity(isValid ? '' : 'Seleccione un area valida del catalogo.');
+            return isValid;
+        }
+
+        if (departamentoInput) {
+            departamentoInput.addEventListener('input', validateDepartamentoInput);
+            departamentoInput.addEventListener('blur', validateDepartamentoInput);
+        }
+
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                if (!validateDepartamentoInput()) {
+                    e.preventDefault();
+                    departamentoInput.reportValidity();
+                    return;
+                }
+                if (companyIdInput && companyInput && !companyIdInput.value && companyInput.value.trim()) {
+                    var match = companiesData.find(function(c) {
+                        return (c.nombre_comercial || '').trim().toLowerCase() === companyInput.value.trim().toLowerCase();
+                    });
+                    if (match) companyIdInput.value = String(match.id);
+                }
+            });
+        }
+    });
+    </script>
 </x-app-user-layout>

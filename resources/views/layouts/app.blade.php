@@ -64,6 +64,7 @@
                                     {{ $header }}
                                 </div>
                                 <div class="flex items-center gap-2 flex-shrink-0">
+                                    <x-crm-back-button />
                                     <a href="{{ route('notifications.index') }}" class="relative flex items-center justify-center w-11 h-11 rounded-xl text-[#FFE600] hover:bg-white/10 transition-colors" aria-label="Notificaciones">
                                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
                                     <span class="js-header-notification-badge-wrap absolute top-0 right-0 flex items-center justify-center min-w-[1.25rem] h-5 px-1 rounded-full text-xs font-bold bg-red-500 text-white" style="{{ ($crmHeaderUnreadNotif ?? 0) > 0 ? '' : 'display: none;' }}">
@@ -119,6 +120,85 @@
         <script>
         (function() {
             var url = '{{ route("notifications.unread-count") }}';
+            var seenReminderAlertIds = {};
+
+            function escapeHtml(text) {
+                var div = document.createElement('div');
+                div.textContent = text == null ? '' : String(text);
+                return div.innerHTML;
+            }
+
+            function extractHourLabel(rawTime) {
+                var t = String(rawTime || '');
+                var match = t.match(/(\d{1,2}:\d{2})/);
+                if (match && match[1]) {
+                    return match[1];
+                }
+                return t || 'Ahora';
+            }
+
+            function showDueReminderSideAlert(alertData) {
+                var host = document.getElementById('crm-reminder-side-alerts');
+                if (!host) {
+                    host = document.createElement('div');
+                    host.id = 'crm-reminder-side-alerts';
+                    host.className = 'fixed top-4 right-4 z-[120] flex flex-col gap-3 w-[min(92vw,360px)] pointer-events-none';
+                    document.body.appendChild(host);
+                }
+
+                var id = 'due-reminder-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+                var hourText = extractHourLabel(alertData.time);
+                var html = ''
+                    + '<div id="' + id + '" class="pointer-events-auto rounded-2xl border-2 border-[#FFE600] bg-gradient-to-r from-[#b30000] via-[#123f8f] to-[#001b4d] text-white shadow-2xl ring-2 ring-[#FFE600]/60 overflow-hidden">'
+                    + '  <div class="px-4 py-3 border-b border-[#FFE600]/40 bg-black/20 flex items-center gap-2">'
+                    + '    <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-[#FFE600] text-[#b30000] shrink-0">'
+                    + '      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">'
+                    + '        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>'
+                    + '      </svg>'
+                    + '    </span>'
+                    + '    <p class="text-sm font-bold tracking-wide text-[#FFE600] flex-1">ALERTA DE RECORDATORIO</p>'
+                    + '    <button type="button" data-dismiss-id="' + id + '" class="inline-flex items-center justify-center w-7 h-7 rounded-full border border-[#FFE600]/70 text-[#FFE600] hover:bg-[#FFE600]/15" aria-label="Cerrar alerta">'
+                    + '      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>'
+                    + '    </button>'
+                    + '  </div>'
+                    + '  <div class="px-4 py-3">'
+                    + '    <p class="text-sm font-semibold leading-snug">' + escapeHtml(alertData.title || 'Recordatorio') + '</p>'
+                    + '    <p class="mt-1 text-xs text-white/90">Hora: <span class="font-bold text-[#FFE600]">' + escapeHtml(hourText) + '</span></p>'
+                    + '  </div>'
+                    + '</div>';
+
+                host.insertAdjacentHTML('beforeend', html);
+                var node = document.getElementById(id);
+                if (!node) {
+                    return;
+                }
+                var closeButton = node.querySelector('[data-dismiss-id="' + id + '"]');
+                if (closeButton) {
+                    closeButton.addEventListener('click', function() {
+                        dismissReminderNode(node);
+                    });
+                }
+                setTimeout(function() {
+                    dismissReminderNode(node);
+                }, 180000);
+            }
+
+            function dismissReminderNode(node) {
+                if (!node || !node.parentNode) {
+                    return;
+                }
+                if (node.dataset.dismissing === '1') {
+                    return;
+                }
+                node.dataset.dismissing = '1';
+                requestAnimationFrame(function() {
+                    node.style.transition = 'opacity 250ms ease, transform 250ms ease';
+                    node.style.opacity = '0';
+                    node.style.transform = 'translateX(12px)';
+                    setTimeout(function() { node.remove(); }, 280);
+                });
+            }
+
             function updateBadge() {
                 fetch(url, { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } })
                     .then(function(r) { return r.json(); })
@@ -133,6 +213,16 @@
                             sidebarBadge.textContent = display;
                             sidebarWrap.style.display = count > 0 ? '' : 'none';
                         }
+
+                        var dueAlerts = Array.isArray(data.due_reminder_alerts) ? data.due_reminder_alerts : [];
+                        dueAlerts.forEach(function(alertData) {
+                            var reminderId = String(alertData.id || '');
+                            if (!reminderId || seenReminderAlertIds[reminderId]) {
+                                return;
+                            }
+                            seenReminderAlertIds[reminderId] = true;
+                            showDueReminderSideAlert(alertData);
+                        });
                     })
                     .catch(function() {});
             }

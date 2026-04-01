@@ -14,6 +14,7 @@ use App\Http\Controllers\ExecutiveController;
 use App\Http\Controllers\FiltrosController;
 use App\Http\Controllers\SalesController;
 use App\Http\Controllers\Auth\AutoLoginController;
+use App\Http\Controllers\WorkAreaController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -146,6 +147,11 @@ Route::middleware(['auth', 'verified', 'ensure.role', 'admin'])->group(function 
     Route::get('/ejecutivos/{user}', [ExecutiveController::class, 'show'])->name('executives.show');
     Route::patch('/ejecutivos/{user}/asignaciones', [ExecutiveController::class, 'updateAssignments'])->name('executives.assignments');
     Route::post('/ejecutivos/{user}/contactos/transferir', [ExecutiveController::class, 'transferContact'])->name('executives.transfer-contact');
+
+    // Configuracion de catalogos (solo admin)
+    Route::post('/settings/work-areas', [WorkAreaController::class, 'store'])->name('settings.work-areas.store');
+    Route::put('/settings/work-areas/{workArea}', [WorkAreaController::class, 'update'])->name('settings.work-areas.update');
+    Route::delete('/settings/work-areas/{workArea}', [WorkAreaController::class, 'destroy'])->name('settings.work-areas.destroy');
 });
 
 require __DIR__.'/auth.php';

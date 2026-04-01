@@ -64,6 +64,12 @@
                 </div>
             </div>
 
+            <div class="panel-card-dark !p-0 overflow-hidden rounded-2xl">
+                <div class="p-8 sm:p-10 lg:p-12">
+                    @include('profile.partials.manage-work-areas')
+                </div>
+            </div>
+
             {{-- Tarjeta: Eliminar cuenta (zona de peligro) --}}
             <div class="panel-card-dark !p-0 overflow-hidden rounded-2xl border-l-4 border-l-red-400">
                 <div class="p-8 sm:p-10 lg:p-12">

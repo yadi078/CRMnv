@@ -10,6 +10,7 @@
             <p class="page-header-card__subtitle">{{ $executive->name }} — mismo usuario que inicia sesión en el CRM</p>
         </div>
         <div class="flex flex-wrap gap-2 ml-auto justify-end items-center">
+            <x-executive-reminder-button :executive="$executive" />
             <x-crm-back-button :fallback="route('executives.index')" />
         </div>
     </x-slot>

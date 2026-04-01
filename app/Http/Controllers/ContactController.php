@@ -7,6 +7,7 @@ use App\Models\Contact;
 use App\Models\Company;
 use App\Models\Sale;
 use App\Models\User;
+use App\Models\WorkArea;
 use App\Notifications\NewContactAddedNotification;
 use App\Http\Requests\StoreContactRequest;
 use App\Http\Requests\UpdateContactRequest;
@@ -79,8 +80,9 @@ class ContactController extends Controller
 
         $companyId = $request->company_id;
         $companies = Company::forExecutiveContactForm($request->user());
+        $workAreas = WorkArea::query()->orderBy('name')->pluck('name');
 
-        return $this->resolveView('contacts.create', 'user.contacts.create', compact('companies', 'companyId'));
+        return $this->resolveView('contacts.create', 'user.contacts.create', compact('companies', 'companyId', 'workAreas'));
     }
 
     /**
@@ -211,6 +213,7 @@ class ContactController extends Controller
         $contact->loadMissing('company');
 
         $companies = Company::forExecutiveContactForm(request()->user());
+        $workAreas = WorkArea::query()->orderBy('name')->pluck('name');
 
         // Asegurar que la empresa actual del contacto esté en el desplegable (p. ej. pendiente de aprobación o fuera del listado filtrado).
         if ($contact->company instanceof Company
@@ -218,7 +221,7 @@ class ContactController extends Controller
             $companies = $companies->push($contact->company)->sortBy('nombre_comercial')->values();
         }
 
-        return $this->resolveView('contacts.edit', 'user.contacts.edit', compact('contact', 'companies'));
+        return $this->resolveView('contacts.edit', 'user.contacts.edit', compact('contact', 'companies', 'workAreas'));
     }
 
     /**
