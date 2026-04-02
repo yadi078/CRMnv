@@ -29,6 +29,8 @@
             'registerModalOpen' => $errors->has('name') || $errors->has('email') || $errors->has('password') || $errors->has('role') || $errors->has('is_active'),
             'modalOpen' => ($errors->has('contact_id') || $errors->has('user_id')) && ! $errors->has('name') && ! $errors->has('email') && ! old('bulk_assign'),
             'bulkExportModalOpen' => $errors->has('contact_ids') || ($errors->has('user_id') && old('bulk_assign')),
+            'previewPortfolioTransferUrl' => route('executives.preview-portfolio-transfer'),
+            'executivesTransferToastMessage' => session('executives_transfer_toast'),
         ];
     @endphp
 
@@ -42,6 +44,24 @@
                 <p class="font-medium leading-snug">{{ session('success') }}</p>
             </div>
         @endif
+
+        <div
+            x-show="transferSuccessToast.show"
+            x-cloak
+            x-transition:enter="ease-out duration-200"
+            x-transition:enter-start="opacity-0 translate-y-2"
+            x-transition:enter-end="opacity-100 translate-y-0"
+            x-transition:leave="ease-in duration-200"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            class="fixed bottom-6 left-1/2 z-[75] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 rounded-2xl border-2 border-emerald-400/80 bg-emerald-950/95 px-4 py-3 text-sm text-white shadow-2xl"
+            role="alert"
+        >
+            <div class="flex items-start gap-3">
+                <svg class="w-6 h-6 text-emerald-300 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <p class="font-medium leading-snug" x-text="transferSuccessToast.message"></p>
+            </div>
+        </div>
         @if (session('status'))
             <div class="rounded-xl border-2 border-[#FFE600] bg-emerald-950/35 px-4 py-3 text-sm text-white shadow-lg flex items-start gap-3" role="status">
                 <svg class="w-6 h-6 text-[#FFE600] shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -555,13 +575,14 @@
                     @submit.prevent="if (!$refs.transferForm.checkValidity()) { $refs.transferForm.reportValidity(); return; } transferConfirmOpen = true"
                 >
                     @csrf
-                    <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-5 lg:gap-6">
-                        <div class="flex-1 min-w-0 space-y-2">
-                            <label for="transfer_from" class="block text-xs font-semibold text-[#FFE600]">Ejecutivo origen <span class="text-white/60 font-normal">(pierde la asignación)</span></label>
+                    <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-x-6 gap-y-4 lg:items-end">
+                        <div class="min-w-0 flex flex-col gap-2">
+                            <label for="transfer_from" class="block text-xs font-semibold text-[#FFE600] leading-snug">Ejecutivo origen <span class="text-white/60 font-normal">(pierde la asignación)</span></label>
                             <select
                                 id="transfer_from"
                                 name="from_user_id"
                                 required
+                                @change="refreshTransferPreview($event.target.value)"
                                 class="w-full rounded-xl border-2 border-gray-200 bg-white text-gray-900 text-sm py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-[#FFE600] [&>option]:text-gray-900"
                             >
                                 <option value="" disabled @selected(old('from_user_id') === null || old('from_user_id') === '')>Seleccione origen…</option>
@@ -569,16 +590,15 @@
                                     <option value="{{ $opt['value'] }}" @selected((string) old('from_user_id') === (string) $opt['value'])>{{ $opt['label'] }}</option>
                                 @endforeach
                             </select>
-                            <p class="text-[10px] text-white/50 leading-snug">Misma lista que el filtro «Ejecutivo»: cuentas del CRM e importes solo en ficha (sin usuario).</p>
-                            <x-input-error :messages="$errors->get('from_user_id')" class="mt-1 text-amber-200 text-xs" />
+                            <x-input-error :messages="$errors->get('from_user_id')" class="text-amber-200 text-xs" />
                         </div>
 
-                        <div class="hidden lg:flex items-center justify-center pb-2 text-[#FFE600]" aria-hidden="true">
+                        <div class="hidden lg:flex justify-center text-[#FFE600] self-end pb-2.5 shrink-0" aria-hidden="true">
                             <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
                         </div>
 
-                        <div class="flex-1 min-w-0 space-y-2">
-                            <label for="transfer_to" class="block text-xs font-semibold text-[#FFE600]">Ejecutivo destino <span class="text-white/60 font-normal">(recibe la cartera; solo activos y dados de alta)</span></label>
+                        <div class="min-w-0 flex flex-col gap-2">
+                            <label for="transfer_to" class="block text-xs font-semibold text-[#FFE600] leading-snug">Ejecutivo destino <span class="text-white/60 font-normal">(recibe la cartera; solo activos y dados de alta)</span></label>
                             <select
                                 id="transfer_to"
                                 name="to_user_id"
@@ -590,8 +610,25 @@
                                     <option value="{{ $u->id }}" @selected((string) old('to_user_id') === (string) $u->id)>{{ $u->name }} — {{ $u->email }}</option>
                                 @endforeach
                             </select>
-                            <x-input-error :messages="$errors->get('to_user_id')" class="mt-1 text-amber-200 text-xs" />
+                            <x-input-error :messages="$errors->get('to_user_id')" class="text-amber-200 text-xs" />
                         </div>
+                    </div>
+                    <p class="text-[10px] text-white/50 leading-snug mt-3">Misma lista de origen que el filtro «Ejecutivo»: cuentas del CRM y nombres solo en ficha. La operación también mueve los contactos vinculados; aquí solo se listan empresas.</p>
+
+                    <div class="mt-4 rounded-xl border border-white/15 bg-[#071A3D]/45 px-4 py-3">
+                        <h4 class="text-xs font-semibold text-[#FFE600] mb-2">Empresas que se transferirán</h4>
+                        <p class="text-xs text-white/45 mb-2" x-show="!transferPreviewFromValue">Elija un ejecutivo de origen para ver la lista.</p>
+                        <p class="text-xs text-white/60 mb-2 flex items-center gap-2" x-show="transferPreviewLoading">
+                            <span class="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-[#FFE600] border-t-transparent" aria-hidden="true"></span>
+                            Cargando…
+                        </p>
+                        <p class="text-xs text-white/65 mb-0" x-show="!transferPreviewLoading && transferPreviewFromValue && transferPreviewCompanies.length === 0">No hay empresas asignadas a ese origen.</p>
+                        <ul class="text-sm text-white/90 space-y-1 max-h-48 overflow-y-auto pr-1" x-show="!transferPreviewLoading && transferPreviewCompanies.length > 0" x-cloak>
+                            <template x-for="c in transferPreviewCompanies" :key="c.id">
+                                <li class="border-b border-white/10 pb-1 last:border-0" x-text="c.nombre_comercial"></li>
+                            </template>
+                        </ul>
+                        <p class="text-[10px] text-white/45 mt-2" x-show="transferPreviewCompanies.length >= 500" x-cloak>Máximo 500 empresas en vista previa.</p>
                     </div>
 
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-2 border-t border-white/10">

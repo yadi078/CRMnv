@@ -100,6 +100,11 @@ Alpine.data('profilePhotoUploader', () => ({
  */
 Alpine.data('executivesPage', (initial = {}) => ({
     transferConfirmOpen: false,
+    previewPortfolioTransferUrl: initial.previewPortfolioTransferUrl ?? '',
+    transferPreviewCompanies: [],
+    transferPreviewLoading: false,
+    transferPreviewFromValue: '',
+    transferSuccessToast: { show: false, message: '' },
     contactTransferOpen: Boolean(initial.contactTransferOpen),
     transferFromUserId: null,
     transferContactId: null,
@@ -119,6 +124,52 @@ Alpine.data('executivesPage', (initial = {}) => ({
     registerPasswordVisible: false,
     registerPasswordConfirmVisible: false,
     modalOpen: Boolean(initial.modalOpen),
+    init() {
+        const toastMsg = initial.executivesTransferToastMessage;
+        if (toastMsg) {
+            this.transferSuccessToast = { show: true, message: toastMsg };
+            setTimeout(() => {
+                this.transferSuccessToast.show = false;
+            }, 9000);
+        }
+        queueMicrotask(() => {
+            const el = document.getElementById('transfer_from');
+            if (el?.value) {
+                this.refreshTransferPreview(el.value);
+            }
+        });
+    },
+    async refreshTransferPreview(fromVal) {
+        if (!fromVal || fromVal === '') {
+            this.transferPreviewCompanies = [];
+            this.transferPreviewFromValue = '';
+            return;
+        }
+        this.transferPreviewFromValue = fromVal;
+        if (!this.previewPortfolioTransferUrl) {
+            this.transferPreviewCompanies = [];
+            return;
+        }
+        this.transferPreviewLoading = true;
+        try {
+            const url = new URL(this.previewPortfolioTransferUrl, window.location.origin);
+            url.searchParams.set('from_user_id', fromVal);
+            const r = await fetch(url.toString(), {
+                headers: { Accept: 'application/json' },
+                credentials: 'same-origin',
+            });
+            if (!r.ok) {
+                this.transferPreviewCompanies = [];
+                return;
+            }
+            const data = await r.json();
+            this.transferPreviewCompanies = Array.isArray(data.companies) ? data.companies : [];
+        } catch {
+            this.transferPreviewCompanies = [];
+        } finally {
+            this.transferPreviewLoading = false;
+        }
+    },
     openContactTransfer(execId, contactId) {
         this.transferFromUserId = execId;
         this.transferContactId = contactId;

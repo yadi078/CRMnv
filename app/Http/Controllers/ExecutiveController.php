@@ -14,6 +14,7 @@ use App\Models\Contact;
 use App\Models\User;
 use App\Support\MexicanStates;
 use Database\Seeders\RolePermissionSeeder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -594,6 +595,59 @@ class ExecutiveController extends Controller
     }
 
     /**
+     * Vista previa JSON: empresas cuya cartera se movería con el origen elegido (solo admin).
+     */
+    public function previewPortfolioTransfer(Request $request): JsonResponse
+    {
+        if (! $request->user()?->esAdmin()) {
+            abort(403);
+        }
+
+        $fromRaw = $request->query('from_user_id', '');
+        $fromStr = is_string($fromRaw) ? $fromRaw : (string) $fromRaw;
+        $fromStr = trim($fromStr);
+
+        if ($fromStr === '') {
+            return response()->json(['companies' => []]);
+        }
+
+        if (str_starts_with($fromStr, 'E:')) {
+            $decoded = base64_decode(substr($fromStr, 2), true);
+            $text = $decoded !== false ? trim((string) $decoded) : '';
+            if ($text === '') {
+                return response()->json(['companies' => []]);
+            }
+
+            $companies = Company::query()
+                ->where('ejecutivo_asignado', $text)
+                ->whereNull('assigned_user_id')
+                ->orderBy('nombre_comercial')
+                ->limit(500)
+                ->get(['id', 'nombre_comercial']);
+
+            return response()->json(['companies' => $companies]);
+        }
+
+        if (! ctype_digit($fromStr)) {
+            return response()->json(['companies' => []]);
+        }
+
+        $fromId = (int) $fromStr;
+        $from = User::find($fromId);
+        if ($from === null || $from->esAdmin()) {
+            return response()->json(['companies' => []]);
+        }
+
+        $companies = Company::query()
+            ->where('assigned_user_id', $fromId)
+            ->orderBy('nombre_comercial')
+            ->limit(500)
+            ->get(['id', 'nombre_comercial']);
+
+        return response()->json(['companies' => $companies]);
+    }
+
+    /**
      * Pasa empresas y contactos asignados de un ejecutivo a otro (solo admin).
      */
     public function transferPortfolio(TransferExecutivePortfolioRequest $request): RedirectResponse
@@ -646,11 +700,13 @@ class ExecutiveController extends Controller
                 return ['companies' => $companies, 'contacts' => $contacts];
             });
 
+            $detail = 'Se actualizaron '.$counts['companies'].' empresa(s) y '.$counts['contacts'].' contacto(s); destino: «'.$to->name.'».';
+
             return redirect()
                 ->route('executives.index')
                 ->with(
-                    'success',
-                    'Cartera transferida (ficha «'.$text.'»): '.$counts['companies'].' empresa(s) y '.$counts['contacts'].' contacto(s) pasaron a «'.$to->name.'».'
+                    'executives_transfer_toast',
+                    'Transferencia completada exitosamente. '.$detail
                 );
         }
 
@@ -678,11 +734,13 @@ class ExecutiveController extends Controller
             return ['companies' => $companies, 'contacts' => $contacts];
         });
 
+        $detail = $counts['companies'].' empresa(s) y '.$counts['contacts'].' contacto(s) pasaron de «'.$from->name.'» a «'.$to->name.'».';
+
         return redirect()
             ->route('executives.index')
             ->with(
-                'success',
-                'Cartera transferida: '.$counts['companies'].' empresa(s) y '.$counts['contacts'].' contacto(s) pasaron de «'.$from->name.'» a «'.$to->name.'».'
+                'executives_transfer_toast',
+                'Transferencia completada exitosamente. '.$detail
             );
     }
 
