@@ -192,7 +192,37 @@ class CompanyController extends Controller
     {
         $this->authorize('view', $company);
 
-        $company->load(['contacts', 'followUps.asignado', 'sales.creator', 'creator', 'approver']);
+        $user = auth()->user();
+
+        if ($user->esAdmin()) {
+            $company->load(['contacts', 'followUps.asignado', 'sales.creator', 'creator', 'approver']);
+        } else {
+            $company->load(['creator', 'approver']);
+            $company->load([
+                'contacts' => function ($q) use ($user) {
+                    $q->accessibleForExecutive($user)->orderBy('nombre_completo');
+                },
+            ]);
+            $company->contacts->load([
+                'followUps' => function ($q) use ($user) {
+                    $q->where(function ($q2) use ($user) {
+                        $q2->where('created_by', $user->id)
+                            ->orWhere('asignado_a', $user->id);
+                    })->orderByDesc('fecha_alarma');
+                },
+            ]);
+            $company->load([
+                'followUps' => function ($q) use ($user) {
+                    $q->where(function ($q2) use ($user) {
+                        $q2->where('created_by', $user->id)
+                            ->orWhere('asignado_a', $user->id);
+                    })->with('asignado')->orderByDesc('fecha_alarma');
+                },
+                'sales' => function ($q) use ($user) {
+                    $q->where('created_by', $user->id)->with('creator')->latest('fecha_venta');
+                },
+            ]);
+        }
 
         return $this->resolveView('companies.show', 'user.companies.show', compact('company'));
     }

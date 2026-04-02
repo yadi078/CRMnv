@@ -242,7 +242,13 @@ class Company extends Model
 
         return $query->where(function ($q) use ($user) {
             $q->where('assigned_user_id', $user->id)
-                ->orWhere('created_by', $user->id);
+                ->orWhere('created_by', $user->id)
+                ->orWhereHas('contacts', function ($cq) use ($user) {
+                    $cq->where(function ($q2) use ($user) {
+                        $q2->where('assigned_user_id', $user->id)
+                            ->orWhere('created_by', $user->id);
+                    });
+                });
         });
     }
 
@@ -320,7 +326,8 @@ class Company extends Model
     }
 
     /**
-     * Si el ejecutivo puede ver/usar esta empresa: asignada a él o registrada por él.
+     * Si el ejecutivo puede ver/usar esta empresa: asignada a él, registrada por él,
+     * o con al menos un contacto suyo (misma regla que el listado de contactos).
      */
     public function isAccessibleByExecutive(User $user): bool
     {
@@ -330,7 +337,15 @@ class Company extends Model
         if ((int) $this->assigned_user_id === (int) $user->id) {
             return true;
         }
+        if ((int) $this->created_by === (int) $user->id) {
+            return true;
+        }
 
-        return (int) $this->created_by === (int) $user->id;
+        return $this->contacts()
+            ->where(function ($q) use ($user) {
+                $q->where('assigned_user_id', $user->id)
+                    ->orWhere('created_by', $user->id);
+            })
+            ->exists();
     }
 }

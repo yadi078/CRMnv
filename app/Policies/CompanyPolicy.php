@@ -16,7 +16,7 @@ class CompanyPolicy
     }
 
     /**
-     * Admin ve todas (con permisos). Ejecutivo: asignadas a él o registradas por él.
+     * Admin ve todas (con permisos). Ejecutivo: empresa suya o con algún contacto asignado/creado por él.
      */
     public function view(User $user, Company $company): bool
     {

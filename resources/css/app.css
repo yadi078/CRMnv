@@ -1419,25 +1419,14 @@ body {
 }
 
 /**
- * Contenedor de tablas: scroll horizontal abajo y vertical a la derecha si hay muchas filas.
+ * Contenedor de tablas: scroll horizontal abajo (no arriba) y vertical a la derecha si hay muchas filas.
+ * Reemplaza el antiguo .scroll-x-top que invertía el eje y ponía la barra encima del encabezado.
  */
 .crm-table-scroll-wrap {
   overflow-x: auto;
   overflow-y: auto;
   max-height: min(78vh, 52rem);
   -webkit-overflow-scrolling: touch;
-}
-
-/**
- * Barra de scroll horizontal arriba del bloque (p. ej. Filtros → Contactos).
- * rotateX invierte el contenedor con overflow; el interior se corrige para que el texto y la tabla se vean bien.
- */
-.crm-table-scroll-wrap--scrollbar-top {
-  transform: rotateX(180deg);
-}
-
-.crm-table-scroll-wrap--scrollbar-top .crm-table-scroll-wrap__flip-inner {
-  transform: rotateX(180deg);
 }
 
 /**

@@ -56,7 +56,7 @@ class FilterConfig
             'status_color' => ['label' => 'Estado de prospecto (color)', 'column' => 'status_color', 'type' => 'select', 'multiple' => true, 'operators' => ['equals', 'not_equals', 'is_empty', 'is_not_empty']],
 
             // RELACIONAL: ejecutivo asignado (usuario + administradores; vía assigned_user_id / empresa)
-            'comercial' => ['label' => 'Ejecutivo', 'column' => null, 'type' => 'select', 'multiple' => true, 'operators' => ['equals', 'not_equals', 'is_empty', 'is_not_empty']],
+            'comercial' => ['label' => 'Comercial', 'column' => null, 'type' => 'select', 'multiple' => true, 'operators' => ['equals', 'not_equals', 'is_empty', 'is_not_empty']],
 
             // TEXT (LIKE / equals)
             'nombre_completo' => ['label' => 'Nombre', 'column' => 'nombre_completo', 'type' => 'text', 'operators' => $textAndExistence],
@@ -81,7 +81,7 @@ class FilterConfig
             'status_color' => ['label' => 'Estado de prospecto (color)', 'column' => 'status_color', 'type' => 'select', 'multiple' => true, 'operators' => ['equals', 'not_equals', 'is_empty', 'is_not_empty']],
 
             // Ejecutivo asignado (mismo catálogo que en contactos: roles usuario + admin)
-            'comercial' => ['label' => 'Ejecutivo', 'column' => null, 'type' => 'select', 'multiple' => true, 'operators' => ['equals', 'not_equals', 'is_empty', 'is_not_empty']],
+            'comercial' => ['label' => 'Comercial', 'column' => null, 'type' => 'select', 'multiple' => true, 'operators' => ['equals', 'not_equals', 'is_empty', 'is_not_empty']],
 
             'datos_fiscales' => ['label' => 'Domicilio', 'column' => 'datos_fiscales', 'type' => 'existence', 'operators' => self::existenceOperators()],
             'nombre_comercial' => ['label' => 'Comercial', 'column' => 'nombre_comercial', 'type' => 'text', 'operators' => $textAndExistence],
