@@ -1,5 +1,5 @@
 {{--
-  Sidebar usuario operativo: Inicio, Empresas (con Historial de ventas), Filtros, Contactos,
+  Sidebar usuario operativo: Inicio, Empresas, Filtros, Contactos,
   Gestión de datos, Notificaciones, Perfil. (Sin panel admin, ejecutivos ni aprobaciones.)
 --}}
 <nav
@@ -41,8 +41,7 @@
         @php
             $isCompaniesRoute = request()->routeIs('companies.*');
             $isFiltersView = request()->routeIs('companies.index') && request('view') === 'filtros';
-            $isSalesNav = request()->routeIs('user.sales.*');
-            $isCompaniesMainActive = $isCompaniesRoute && ! $isFiltersView && ! $isSalesNav;
+            $isCompaniesMainActive = $isCompaniesRoute && ! $isFiltersView;
         @endphp
         <li class="sidebar-nav__item">
             <a
@@ -60,25 +59,6 @@
                 <span class="sidebar-nav__label">Empresas</span>
             </a>
         </li>
-
-        @can('viewAny', \App\Models\Sale::class)
-        <li class="sidebar-nav__item">
-            <a
-                href="{{ route('user.sales.index') }}"
-                class="sidebar-nav__link {{ $isSalesNav ? 'sidebar-nav__link--active' : '' }}"
-                aria-label="Historial de ventas"
-                aria-current="{{ $isSalesNav ? 'page' : false }}"
-            >
-                <span class="sidebar-nav__icon-wrap">
-                    <span class="sidebar-nav__wave" aria-hidden="true"></span>
-                    <svg class="sidebar-nav__icon" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                    </svg>
-                </span>
-                <span class="sidebar-nav__label">Historial de ventas</span>
-            </a>
-        </li>
-        @endcan
 
         <li class="sidebar-nav__item">
             <a

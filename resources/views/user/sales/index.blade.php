@@ -6,9 +6,17 @@
         <div>
             <h2 class="page-header-card__title">Historial de Ventas</h2>
             <p class="page-header-card__subtitle">Cursos y servicios vendidos por empresa</p>
-            <p class="mt-1 text-sm text-white/70">
-                <a href="{{ route('companies.index') }}" class="text-[#FFE600] hover:underline font-medium">← Volver a Empresas</a>
-            </p>
+            <div class="mt-3">
+                <a
+                    href="{{ route('companies.index') }}"
+                    class="inline-flex items-center gap-2 rounded-xl border border-white/35 bg-white/[0.07] px-3.5 py-2 text-sm font-medium text-white/95 shadow-sm transition-all hover:border-[#FFE600]/45 hover:bg-white/12 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFE600]/50"
+                >
+                    <svg class="h-4 w-4 flex-shrink-0 text-[#FFE600]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                    <span>Volver a Empresas</span>
+                </a>
+            </div>
         </div>
     </x-slot>
 
