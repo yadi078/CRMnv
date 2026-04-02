@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 /**
  * Modelo Sale - Historial de Ventas
@@ -18,6 +19,7 @@ class Sale extends Model
         'company_id',
         'contact_id',
         'nombre_servicio',
+        'tipo_curso',
         'fecha_venta',
         'monto',
         'incluye_iva',
@@ -29,6 +31,12 @@ class Sale extends Model
         'forma_pago',
         'uso_cfdi',
         'orden_compra',
+        'condiciones_pago',
+        'modalidad',
+        'sede',
+        'fecha_evento',
+        'horario_evento',
+        'factura_referencia',
         'created_by',
     ];
 
@@ -36,6 +44,7 @@ class Sale extends Model
     {
         return [
             'fecha_venta' => 'date',
+            'fecha_evento' => 'date',
             'monto' => 'decimal:2',
             'incluye_iva' => 'boolean',
         ];
@@ -77,10 +86,14 @@ class Sale extends Model
      * Etiquetas para tipo de pago
      */
     public const TIPO_PAGO_LABELS = [
+        'oxxo' => 'OXXO',
+        'bancoppel_tarjeta' => 'Bancoppel (tarjeta)',
+        'spei' => 'Transferencia SPEI',
+        'tarjeta_debito' => 'Nueva tarjeta de débito',
+        'tarjeta_credito' => 'Nueva tarjeta de crédito',
+        'efectivo_puntos_pago' => 'Efectivo en puntos de pago',
         'efectivo' => 'Efectivo',
         'transferencia' => 'Transferencia',
-        'tarjeta_credito' => 'Tarjeta de crédito',
-        'tarjeta_debito' => 'Tarjeta de débito',
         'cheque' => 'Cheque',
         'deposito' => 'Depósito',
         'otro' => 'Otro',
@@ -106,6 +119,22 @@ class Sale extends Model
         'na' => 'N/A',
         'otro' => 'Otro',
     ];
+
+    /**
+     * Nombre del curso tal como debe imprimirse en la ficha (no muestra el texto automático de venta desde contacto).
+     */
+    public function getNombreCursoFichaAttribute(): string
+    {
+        $n = trim((string) $this->nombre_servicio);
+        if ($n === '') {
+            return '—';
+        }
+        if (Str::startsWith($n, 'Venta desde contacto:')) {
+            return '—';
+        }
+
+        return $n;
+    }
 
     public function getTipoPagoLabelAttribute(): ?string
     {

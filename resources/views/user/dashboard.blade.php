@@ -185,7 +185,7 @@
                         <span>Buscar</span>
                     </button>
                 </form>
-                <div class="overflow-x-auto">
+                <div class="crm-responsive-x">
                     <table class="min-w-full divide-y divide-white/20 text-sm">
                         <thead>
                             <tr class="table-header-panel-dark">
@@ -263,7 +263,7 @@
                 </a>
                 @endcan
                 @else
-                <div class="overflow-x-auto">
+                <div class="crm-responsive-x">
                     <table class="min-w-full divide-y divide-white/20 text-sm">
                         <thead>
                             <tr class="table-header-panel-dark">
@@ -301,7 +301,7 @@
                     </svg>
                 </a>
             </div>
-            <div class="overflow-x-auto">
+            <div class="crm-responsive-x">
                 <table class="min-w-full divide-y divide-white/20 text-sm">
                     <thead>
                         <tr class="table-header-panel-dark">

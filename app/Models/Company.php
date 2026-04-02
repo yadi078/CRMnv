@@ -27,6 +27,8 @@ class Company extends Model
         'sector',
         'municipio',
         'estado',
+        'telefono',
+        'celular',
         'ejecutivo_asignado',
         'assigned_user_id',
         'datos_fiscales',

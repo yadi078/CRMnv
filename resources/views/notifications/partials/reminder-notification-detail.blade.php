@@ -6,7 +6,8 @@
     $det = isset($d['reminder_detalle']) && is_array($d['reminder_detalle']) ? $d['reminder_detalle'] : [];
     $labels = [
         'titulo' => 'Título del recordatorio',
-        'descripcion' => 'Detalles',
+        'tipo_accion' => 'Tipo de acción',
+        'descripcion' => 'Bitácora de notas',
         'nombre_cliente' => 'Cliente',
         'empresa' => 'Empresa',
         'correo_electronico' => 'Correo electrónico',

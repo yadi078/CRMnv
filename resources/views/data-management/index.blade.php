@@ -116,7 +116,7 @@
                     Ver todas
                 </a>
             </div>
-            <div class="overflow-x-auto">
+            <div class="crm-responsive-x -mx-1 px-1">
                 <table class="min-w-full divide-y divide-white/10 rounded-2xl overflow-hidden bg-gradient-to-b from-[#06244a] via-[#082d5d] to-[#0a356e]">
                     <thead>
                         <tr class="bg-[#FFE600]">
@@ -129,7 +129,9 @@
                     <tbody class="divide-y divide-white/15">
                         @forelse($companies as $company)
                         <tr class="panel-card-dark__row odd:bg-white/5 even:bg-white/0 hover:bg-white/10 transition-colors">
-                            <td class="px-7 py-5 text-base text-white">{{ $company->nombre_comercial }}</td>
+                            <td class="px-7 py-5 text-base text-white">
+                                <a href="{{ \App\Support\CrmNavigation::withReturn(route('companies.show', $company)) }}" title="Ver ficha de la empresa" class="font-medium text-white hover:text-[#FFE600] hover:underline focus:outline-none focus:ring-2 focus:ring-[#FFE600]/35 rounded">{{ $company->nombre_comercial }}</a>
+                            </td>
                             <td class="px-7 py-5 text-base text-white/90">{{ $company->rfc ?? '-' }}</td>
                             <td class="px-7 py-5 text-base text-white/90">{{ $company->contacts_count }}</td>
                             <td class="px-7 py-5">
@@ -181,7 +183,7 @@
                     Ver todos
                 </a>
             </div>
-            <div class="overflow-x-auto">
+            <div class="crm-responsive-x -mx-1 px-1">
                 <table class="min-w-full divide-y divide-white/10 rounded-2xl overflow-hidden bg-gradient-to-b from-[#06244a] via-[#082d5d] to-[#0a356e]">
                     <thead>
                         <tr class="bg-[#FFE600]">
@@ -194,9 +196,17 @@
                     <tbody class="divide-y divide-white/15">
                         @forelse($contacts as $contact)
                         <tr class="panel-card-dark__row odd:bg-white/5 even:bg-white/0 hover:bg-white/10 transition-colors">
-                            <td class="px-7 py-5 text-base text-white">{{ $contact->nombre_completo }}</td>
+                            <td class="px-7 py-5 text-base text-white">
+                                <a href="{{ \App\Support\CrmNavigation::withReturn(route('contacts.show', $contact)) }}" title="Ver ficha del contacto" class="font-medium text-white hover:text-[#FFE600] hover:underline focus:outline-none focus:ring-2 focus:ring-[#FFE600]/35 rounded">{{ $contact->nombre_completo }}</a>
+                            </td>
                             <td class="px-7 py-5 text-base text-white/90">{{ $contact->email }}</td>
-                            <td class="px-7 py-5 text-base text-white/90">{{ $contact->company?->nombre_comercial ?? '—' }}</td>
+                            <td class="px-7 py-5 text-base text-white/90">
+                                @if($contact->company)
+                                    <a href="{{ \App\Support\CrmNavigation::withReturn(route('companies.show', $contact->company)) }}" title="Ver ficha de la empresa" class="hover:text-[#FFE600] hover:underline focus:outline-none focus:ring-2 focus:ring-[#FFE600]/35 rounded">{{ $contact->company->nombre_comercial }}</a>
+                                @else
+                                    —
+                                @endif
+                            </td>
                             <td class="px-7 py-5">
                                 <div class="flex flex-wrap items-center gap-6">
                                     <a href="{{ \App\Support\CrmNavigation::withReturn(route('contacts.show', $contact)) }}" class="inline-flex items-center gap-1 text-[#FFE600] font-medium hover:text-white">
@@ -343,6 +353,19 @@
                         <input type="text" x-model="formCompany.estado"
                                class="w-full rounded-xl border-0 bg-white/15 text-white focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-2 px-3">
                     </div>
+                    <div class="md:col-span-2">
+                        <p class="text-sm font-semibold text-white/95 border-b border-white/15 pb-2 mb-1">Contacto telefónico</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-white/90 mb-1">Teléfono</label>
+                        <input type="tel" x-model="formCompany.telefono" maxlength="50" autocomplete="tel"
+                               class="w-full rounded-xl border-0 bg-white/15 text-white focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-2 px-3">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-white/90 mb-1">Celular</label>
+                        <input type="tel" x-model="formCompany.celular" maxlength="50" autocomplete="tel"
+                               class="w-full rounded-xl border-0 bg-white/15 text-white focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-2 px-3">
+                    </div>
                     <div>
                         <label class="block text-sm font-medium text-white/90 mb-1">Ejecutivo asignado</label>
                         <input type="text" x-model="formCompany.ejecutivo_asignado"
@@ -392,6 +415,7 @@ document.addEventListener('alpine:init', () => {
         },
         formCompany: {
             nombre_comercial: '', rfc: '', sector: '', municipio: '', estado: '',
+            telefono: '', celular: '',
             ejecutivo_asignado: '', datos_fiscales: '', status_color: 'seguimiento'
         },
         contactUrls: {
@@ -490,6 +514,8 @@ document.addEventListener('alpine:init', () => {
                     sector: data.sector || '',
                     municipio: data.municipio || '',
                     estado: data.estado || '',
+                    telefono: data.telefono || '',
+                    celular: data.celular || '',
                     ejecutivo_asignado: data.ejecutivo_asignado || '',
                     datos_fiscales: data.datos_fiscales || '',
                     status_color: data.status_color || 'seguimiento'

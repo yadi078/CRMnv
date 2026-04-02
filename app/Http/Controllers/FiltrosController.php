@@ -9,10 +9,89 @@ use App\Models\User;
 use App\Services\DynamicFilterService;
 use App\Services\FilterConfig;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Schema;
 
 class FiltrosController extends Controller
 {
     private const FILTROS_SESSION_KEY = 'filtros.persisted_query';
+
+    /**
+     * Clave de sesión por usuario (evita mezclar estado si cambia la cuenta en el mismo navegador).
+     */
+    private function filtrosSessionKey(User $user): string
+    {
+        return self::FILTROS_SESSION_KEY.'.'.$user->getKey();
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function getStoredFiltrosFromSession(Request $request): ?array
+    {
+        $user = $request->user();
+        if (! $user) {
+            return null;
+        }
+
+        $key = $this->filtrosSessionKey($user);
+        $stored = $request->session()->get($key);
+        if (is_array($stored) && $stored !== []) {
+            return $stored;
+        }
+
+        // Compatibilidad: estado guardado con la clave antigua (sin sufijo de usuario)
+        $legacy = $request->session()->get(self::FILTROS_SESSION_KEY);
+        if (is_array($legacy) && $legacy !== []) {
+            $request->session()->put($key, $legacy);
+            $request->session()->forget(self::FILTROS_SESSION_KEY);
+
+            return $legacy;
+        }
+
+        return null;
+    }
+
+    /**
+     * Guarda en sesión y en BD el estado actual de filtros (GET "Aplicar" o POST automático desde la vista).
+     */
+    private function persistApplyFiltros(Request $request): void
+    {
+        $toStore = [
+            'filters' => $request->input('filters', []),
+            'filter_logic' => $request->input('filter_logic', 'and'),
+            'result_scope' => $request->input('result_scope', 'ambos'),
+        ];
+
+        if ($request->filled('page')) {
+            $toStore['page'] = $request->input('page');
+        }
+
+        $user = $request->user();
+        if ($user) {
+            $request->session()->put($this->filtrosSessionKey($user), $toStore);
+        }
+
+        if ($user && $this->filtrosSavedStateColumnExists()) {
+            $forDb = $toStore;
+            unset($forDb['page']);
+            $user->forceFill(['filtros_saved_state' => $forDb])->save();
+        }
+    }
+
+    /**
+     * Persistencia silenciosa desde el navegador al cambiar criterios (sin recargar la página).
+     */
+    public function persistState(Request $request): Response
+    {
+        $this->authorize('viewAny', Company::class);
+
+        if ($request->has('filter_logic')) {
+            $this->persistApplyFiltros($request);
+        }
+
+        return response()->noContent();
+    }
 
     /**
      * Vista de filtros avanzados: contactos y empresas (filtros dinámicos).
@@ -22,7 +101,14 @@ class FiltrosController extends Controller
         $this->authorize('viewAny', Company::class);
 
         if ($request->boolean('clear')) {
+            $u = $request->user();
+            if ($u) {
+                $request->session()->forget($this->filtrosSessionKey($u));
+            }
             $request->session()->forget(self::FILTROS_SESSION_KEY);
+            if ($u && $this->filtrosSavedStateColumnExists()) {
+                $u->forceFill(['filtros_saved_state' => null])->save();
+            }
 
             return redirect()->route('filtros.index');
         }
@@ -35,6 +121,7 @@ class FiltrosController extends Controller
 
         $filterLogic = DynamicFilterService::logicFromRequest($request);
         $filterSpecs = DynamicFilterService::parseFromRequest($request);
+        $filterSpecs = $this->filterSpecsWithoutComercialForNonAdmin($filterSpecs, $isAdmin);
         $resultScope = $this->resolveResultScope($request->input('result_scope'));
         $filterService = app(DynamicFilterService::class);
 
@@ -159,7 +246,7 @@ class FiltrosController extends Controller
                 $contactsQuery->accessibleForExecutive($user);
             }
             $filterService->applyToContactQuery($contactsQuery, $contactFilterSpecs, $filterLogic);
-            $contacts = $contactsQuery->latest()->paginate(20)->appends($this->filtrosPaginationAppends($request));
+            $contacts = $contactsQuery->latest()->paginate(25)->appends($this->filtrosPaginationAppends($request));
         }
 
         $companies = null;
@@ -174,7 +261,7 @@ class FiltrosController extends Controller
                 $companiesQuery->accessibleForExecutive($user);
             }
             $filterService->applyToCompanyQuery($companiesQuery, $companyFilterSpecs, $filterLogic);
-            $companies = $companiesQuery->latest()->paginate(20)->appends($this->filtrosPaginationAppends($request));
+            $companies = $companiesQuery->latest()->paginate(25)->appends($this->filtrosPaginationAppends($request));
         }
 
         // Sugerencias para autocompletar en inputs de texto (datalist).
@@ -212,6 +299,7 @@ class FiltrosController extends Controller
             'fieldSuggestions' => $fieldSuggestions,
             'resultScope' => $resultScope,
             'prospectStatusLabels' => FilterConfig::prospectStatusColorOptions(),
+            'isAdmin' => $isAdmin,
         ]);
     }
 
@@ -232,6 +320,7 @@ class FiltrosController extends Controller
 
         $filterLogic = DynamicFilterService::logicFromRequest($request);
         $filterSpecs = DynamicFilterService::parseFromRequest($request);
+        $filterSpecs = $this->filterSpecsWithoutComercialForNonAdmin($filterSpecs, $isAdmin);
         $resultScope = $this->resolveResultScope($request->input('result_scope'));
         $filterService = app(DynamicFilterService::class);
 
@@ -269,7 +358,7 @@ class FiltrosController extends Controller
                 $contactsQuery->accessibleForExecutive($user);
             }
             $filterService->applyToContactQuery($contactsQuery, $contactFilterSpecs, $filterLogic);
-            $contacts = $contactsQuery->latest()->paginate(20)->appends($this->filtrosPaginationAppends($request));
+            $contacts = $contactsQuery->latest()->paginate(25)->appends($this->filtrosPaginationAppends($request));
         }
 
         $companies = null;
@@ -284,7 +373,7 @@ class FiltrosController extends Controller
                 $companiesQuery->accessibleForExecutive($user);
             }
             $filterService->applyToCompanyQuery($companiesQuery, $companyFilterSpecs, $filterLogic);
-            $companies = $companiesQuery->latest()->paginate(20)->appends($this->filtrosPaginationAppends($request));
+            $companies = $companiesQuery->latest()->paginate(25)->appends($this->filtrosPaginationAppends($request));
         }
 
         $clearUrl = route('filtros.index', ['clear' => 1]);
@@ -361,27 +450,46 @@ class FiltrosController extends Controller
     }
 
     /**
-     * Guarda en sesión cada aplicación de filtros; si el usuario entra sin enviar el formulario, restaura el último estado.
+     * Evita error 500 si aún no se ejecutó la migración que añade filtros_saved_state.
+     */
+    private function filtrosSavedStateColumnExists(): bool
+    {
+        static $cached = null;
+        if ($cached !== null) {
+            return $cached;
+        }
+        try {
+            $cached = Schema::hasTable('users')
+                && Schema::hasColumn('users', 'filtros_saved_state');
+        } catch (\Throwable) {
+            $cached = false;
+        }
+
+        return $cached;
+    }
+
+    /**
+     * Guarda en sesión y en el usuario cada aplicación de filtros; al volver a entrar (incluso tras cerrar sesión) restaura el último estado guardado.
      */
     private function persistOrRestoreFiltrosQuery(Request $request): void
     {
         if ($request->has('filter_logic')) {
-            $toStore = [
-                'filters' => $request->input('filters', []),
-                'filter_logic' => $request->input('filter_logic', 'and'),
-                'result_scope' => $request->input('result_scope', 'ambos'),
-            ];
-
-            if ($request->filled('page')) {
-                $toStore['page'] = $request->input('page');
-            }
-
-            $request->session()->put(self::FILTROS_SESSION_KEY, $toStore);
+            $this->persistApplyFiltros($request);
 
             return;
         }
 
-        $stored = $request->session()->get(self::FILTROS_SESSION_KEY);
+        $stored = $this->getStoredFiltrosFromSession($request);
+
+        $user = $request->user();
+        if ((! is_array($stored) || $stored === []) && $user && $this->filtrosSavedStateColumnExists()) {
+            $user->refresh();
+            $fromDb = $user->filtros_saved_state;
+            if (is_array($fromDb) && $fromDb !== []) {
+                $stored = $fromDb;
+                $request->session()->put($this->filtrosSessionKey($user), $stored);
+            }
+        }
 
         if (! is_array($stored) || $stored === []) {
             return;
@@ -403,6 +511,21 @@ class FiltrosController extends Controller
         return collect($request->except(['_token', 'clear']))
             ->filter(static fn ($v) => $v !== null && $v !== '')
             ->all();
+    }
+
+    /**
+     * Ejecutivos no usan el filtro «Comercial» (asignado); solo administradores.
+     *
+     * @param  array<int, FilterSpec>  $specs
+     * @return array<int, FilterSpec>
+     */
+    private function filterSpecsWithoutComercialForNonAdmin(array $specs, bool $isAdmin): array
+    {
+        if ($isAdmin) {
+            return $specs;
+        }
+
+        return array_values(array_filter($specs, fn ($s) => $s->field !== 'comercial'));
     }
 
     /**

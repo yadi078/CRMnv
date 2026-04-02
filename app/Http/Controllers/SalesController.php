@@ -96,10 +96,11 @@ class SalesController extends Controller
             'company_id' => 'required|exists:companies,id',
             'contact_id' => $this->contactIdRules($request),
             'nombre_servicio' => 'required|string|max:255',
-            'fecha_venta' => 'required|date|after_or_equal:today',
+            'tipo_curso' => 'nullable|string|max:255',
+            'fecha_venta' => 'required|date',
             'monto' => 'nullable|numeric|min:0',
             'incluye_iva' => 'nullable|boolean',
-            'tipo_pago' => 'nullable|string|max:50',
+            'tipo_pago' => 'nullable|string|max:500',
             'participantes' => 'nullable|integer|min:1',
             'notas' => 'nullable|string|max:2000',
             'colonia_cp' => 'nullable|string|max:255',
@@ -107,6 +108,12 @@ class SalesController extends Controller
             'forma_pago' => 'nullable|string|max:100',
             'uso_cfdi' => 'nullable|string|max:100',
             'orden_compra' => 'nullable|string|max:100',
+            'condiciones_pago' => 'nullable|string|max:2000',
+            'modalidad' => 'nullable|string|max:255',
+            'sede' => 'nullable|string|max:255',
+            'fecha_evento' => 'nullable|date',
+            'horario_evento' => 'nullable|string|max:120',
+            'factura_referencia' => 'nullable|string|max:255',
             'participantes_nombres' => 'nullable|array',
             'participantes_nombres.*' => 'nullable|string|max:100|regex:/^[\pL\s]+$/u',
             'participantes_emails' => 'nullable|array',
@@ -117,13 +124,19 @@ class SalesController extends Controller
             'nombre_servicio.required' => 'El nombre del curso o servicio es obligatorio.',
             'fecha_venta.required' => 'La fecha de la venta es obligatoria.',
             'fecha_venta.date' => 'La fecha de la venta no tiene un formato válido.',
-            'fecha_venta.after_or_equal' => 'La fecha de la venta no puede ser anterior a hoy.',
             'participantes_nombres.*.regex' => 'El nombre de cada participante solo puede contener letras y espacios.',
             'participantes_nombres.*.max' => 'El nombre de cada participante no puede superar los 100 caracteres.',
             'participantes_emails.*.email' => 'Cada correo de participante debe ser un correo electrónico válido.',
             'required' => 'Este campo es obligatorio.',
             'email' => 'Ingrese un correo electrónico válido.',
         ]);
+
+        $fechaVenta = \Carbon\Carbon::parse($validated['fecha_venta'])->startOfDay();
+        if ($fechaVenta->lt(now()->startOfDay())) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'fecha_venta' => ['La fecha de la venta no puede ser anterior a hoy.'],
+            ]);
+        }
 
         $company = Company::findOrFail($validated['company_id']);
         $this->authorize('view', $company);
@@ -200,10 +213,11 @@ class SalesController extends Controller
             'company_id' => 'required|exists:companies,id',
             'contact_id' => $this->contactIdRules($request),
             'nombre_servicio' => 'required|string|max:255',
-            'fecha_venta' => 'required|date|after_or_equal:today',
+            'tipo_curso' => 'nullable|string|max:255',
+            'fecha_venta' => 'required|date',
             'monto' => 'nullable|numeric|min:0',
             'incluye_iva' => 'nullable|boolean',
-            'tipo_pago' => 'nullable|string|max:50',
+            'tipo_pago' => 'nullable|string|max:500',
             'participantes' => 'nullable|integer|min:1',
             'notas' => 'nullable|string|max:2000',
             'colonia_cp' => 'nullable|string|max:255',
@@ -211,6 +225,12 @@ class SalesController extends Controller
             'forma_pago' => 'nullable|string|max:100',
             'uso_cfdi' => 'nullable|string|max:100',
             'orden_compra' => 'nullable|string|max:100',
+            'condiciones_pago' => 'nullable|string|max:2000',
+            'modalidad' => 'nullable|string|max:255',
+            'sede' => 'nullable|string|max:255',
+            'fecha_evento' => 'nullable|date',
+            'horario_evento' => 'nullable|string|max:120',
+            'factura_referencia' => 'nullable|string|max:255',
             'participantes_nombres' => 'nullable|array',
             'participantes_nombres.*' => 'nullable|string|max:100|regex:/^[\pL\s]+$/u',
             'participantes_emails' => 'nullable|array',
@@ -221,7 +241,6 @@ class SalesController extends Controller
             'nombre_servicio.required' => 'El nombre del curso o servicio es obligatorio.',
             'fecha_venta.required' => 'La fecha de la venta es obligatoria.',
             'fecha_venta.date' => 'La fecha de la venta no tiene un formato válido.',
-            'fecha_venta.after_or_equal' => 'La fecha de la venta no puede ser anterior a hoy.',
             'participantes_nombres.*.regex' => 'El nombre de cada participante solo puede contener letras y espacios.',
             'participantes_nombres.*.max' => 'El nombre de cada participante no puede superar los 100 caracteres.',
             'participantes_emails.*.email' => 'Cada correo de participante debe ser un correo electrónico válido.',
@@ -280,7 +299,8 @@ class SalesController extends Controller
 
         $pdf = Pdf::loadView('user.sales.pdf.ficha-venta', compact('sale'));
 
-        $filename = 'Ficha_Inscripcion_' . \Str::slug($sale->nombre_servicio) . '_' . $sale->fecha_venta->format('Y-m-d') . '.pdf';
+        $fechaNombre = $sale->fecha_venta?->format('Y-m-d') ?? now()->format('Y-m-d');
+        $filename = 'Ficha_Inscripcion_' . \Str::slug($sale->nombre_servicio) . '_' . $fechaNombre . '.pdf';
 
         return $pdf->download($filename);
     }
@@ -296,7 +316,8 @@ class SalesController extends Controller
 
         $html = view('user.sales.pdf.ficha-venta', compact('sale'))->render();
 
-        $filename = 'Ficha_Inscripcion_' . \Str::slug($sale->nombre_servicio) . '_' . $sale->fecha_venta->format('Y-m-d') . '.doc';
+        $fechaDoc = $sale->fecha_venta?->format('Y-m-d') ?? now()->format('Y-m-d');
+        $filename = 'Ficha_Inscripcion_' . \Str::slug($sale->nombre_servicio) . '_' . $fechaDoc . '.doc';
 
         return response($html)
             ->header('Content-Type', 'application/msword; charset=UTF-8')

@@ -38,8 +38,14 @@ class ReminderDueNotification extends Notification
                 : $start->format('d/m/Y H:i');
         }
 
+        $tipoEtiqueta = null;
+        if ($r->tipo_accion) {
+            $tipoEtiqueta = Reminder::TIPO_ACCION_OPCIONES[$r->tipo_accion] ?? ucfirst((string) $r->tipo_accion);
+        }
+
         return [
             'titulo' => $r->title ?: null,
+            'tipo_accion' => $tipoEtiqueta,
             'descripcion' => $r->description ?: null,
             'nombre_cliente' => $r->nombre_cliente ?: null,
             'empresa' => $r->empresa ?: null,
@@ -99,6 +105,7 @@ class ReminderDueNotification extends Notification
         if (is_array($det)) {
             $parts = array_filter([
                 $det['titulo'] ?? null,
+                $det['tipo_accion'] ?? null,
                 $det['nombre_cliente'] ?? null,
                 $det['empresa'] ?? null,
                 $det['fecha_inicio'] ?? null,

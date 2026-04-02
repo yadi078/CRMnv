@@ -4,184 +4,175 @@
     <meta charset="utf-8">
     <title>Ficha de Inscripción - {{ $contact->nombre_completo }}</title>
     <style>
+        * { box-sizing: border-box; }
         body {
-            font-family: Arial, sans-serif;
-            color: #000836;
-            padding: 20px;
+            font-family: DejaVu Sans, Helvetica, Arial, sans-serif;
+            color: #1f2937;
+            padding: 18px 22px;
+            font-size: 10px;
+            line-height: 1.45;
         }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-            border-bottom: 3px solid #003366;
-            padding-bottom: 20px;
-        }
-        .logo {
-            font-size: 24px;
+        .header { text-align: center; margin-bottom: 18px; }
+        .header-title {
+            font-size: 17px;
             font-weight: bold;
-            color: #003366;
+            color: #1A3B66;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
         }
-        .slogan {
-            font-size: 12px;
-            color: #808080;
-            margin-top: 5px;
+        .header-slogan {
+            font-size: 10px;
+            color: #6b7280;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-top: 6px;
+            letter-spacing: 0.04em;
         }
-        .section {
-            margin-bottom: 25px;
+        .header-rule {
+            height: 4px;
+            background: #1A3B66;
+            width: 100%;
+            margin: 12px 0 16px;
         }
         .section-title {
-            background-color: #003366;
-            color: white;
-            padding: 8px 15px;
+            background: #1A3B66;
+            color: #fff;
+            padding: 8px 12px;
             font-weight: bold;
-            margin-bottom: 10px;
-        }
-        .info-row {
-            display: flex;
-            margin-bottom: 8px;
-        }
-        .info-label {
-            width: 150px;
-            font-weight: bold;
-            color: #000836;
-        }
-        .info-value {
-            flex: 1;
-            color: #333;
-        }
-        .footer {
-            margin-top: 40px;
-            text-align: center;
             font-size: 10px;
-            color: #808080;
-            border-top: 1px solid #808080;
-            padding-top: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 0;
+        }
+        table.block { width: 100%; border-collapse: collapse; margin-bottom: 18px; }
+        table.block td { padding: 6px 8px; border: 1px solid #d1d5db; vertical-align: top; }
+        table.block td.lbl {
+            width: 38%;
+            font-weight: bold;
+            color: #1A3B66;
+            text-transform: uppercase;
+            font-size: 9px;
+            background: #f9fafb;
+        }
+        table.block td.val { color: #111827; font-size: 10px; }
+        .footer {
+            margin-top: 24px;
+            text-align: center;
+            font-size: 8px;
+            color: #6b7280;
+            border-top: 1px solid #d1d5db;
+            padding-top: 12px;
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <div class="logo">CE CONSULTORÍA</div>
-        <div class="slogan">INVERTIR EN VALOR ¡ATRAE VALOR!</div>
+        <div class="header-title">C&amp;CE CONSULTORÍA</div>
+        <div class="header-slogan">INVERTIR EN VALOR ¡ATRAE VALOR!</div>
+        <div class="header-rule"></div>
     </div>
 
-    <div class="section">
-        <div class="section-title">FICHA DE INSCRIPCIÓN</div>
-        
-        <div class="info-row">
-            <div class="info-label">Nombre Completo:</div>
-            <div class="info-value">{{ $contact->nombre_completo }}</div>
-        </div>
-        
+    <div class="section-title">FICHA DE INSCRIPCIÓN</div>
+    <table class="block">
+        <tr>
+            <td class="lbl">Nombre completo</td>
+            <td class="val">{{ $contact->nombre_completo }}</td>
+        </tr>
         @if($contact->genero)
-        <div class="info-row">
-            <div class="info-label">Género:</div>
-            <div class="info-value">{{ $contact->genero }}</div>
-        </div>
+        <tr>
+            <td class="lbl">Género</td>
+            <td class="val">{{ $contact->genero }}</td>
+        </tr>
         @endif
-        
-        <div class="info-row">
-            <div class="info-label">Empresa:</div>
-            <div class="info-value">{{ $contact->company->nombre_comercial }}</div>
-        </div>
+        <tr>
+            <td class="lbl">Empresa</td>
+            <td class="val">{{ $contact->company->nombre_comercial }}</td>
+        </tr>
+    </table>
 
-        <div class="section-title" style="margin-top: 20px;">DATOS PARA FICHA DE REGISTRO / FACTURACIÓN</div>
-        <div class="info-row">
-            <div class="info-label">RAZÓN SOCIAL:</div>
-            <div class="info-value">{{ $contact->razon_social ?? $contact->company->nombre_comercial ?? '—' }}</div>
-        </div>
-        <div class="info-row">
-            <div class="info-label">Nombre comercial:</div>
-            <div class="info-value">{{ $contact->nombre_comercial ?? $contact->company->nombre_comercial ?? '—' }}</div>
-        </div>
-        <div class="info-row">
-            <div class="info-label">CALLE Y NÚMERO:</div>
-            <div class="info-value">{{ $contact->calle_numero ?? $contact->company->datos_fiscales ?? '—' }}</div>
-        </div>
-        <div class="info-row">
-            <div class="info-label">COLONIA Y C.P.:</div>
-            <div class="info-value">{{ $contact->colonia_cp ?? '—' }}</div>
-        </div>
-        <div class="info-row">
-            <div class="info-label">CIUDAD:</div>
-            <div class="info-value">{{ $contact->municipio ?? '—' }}</div>
-        </div>
-        <div class="info-row">
-            <div class="info-label">ESTADO:</div>
-            <div class="info-value">{{ $contact->estado ?? '—' }}</div>
-        </div>
-        <div class="info-row">
-            <div class="info-label">RFC:</div>
-            <div class="info-value">{{ $contact->rfc ?? $contact->company->rfc ?? '—' }}</div>
-        </div>
-        <div class="info-row">
-            <div class="info-label">TEL:</div>
-            <div class="info-value">{{ $contact->celular ?? $contact->telefono ?? '—' }}</div>
-        </div>
-        <div class="info-row">
-            <div class="info-label">RÉGIMEN EN QUE TRIBUTA:</div>
-            <div class="info-value">{{ $contact->regimen_fiscal ?? '—' }}</div>
-        </div>
-        
+    <div class="section-title">DATOS PARA FICHA DE REGISTRO / FACTURACIÓN</div>
+    <table class="block">
+        <tr>
+            <td class="lbl">RAZÓN SOCIAL</td>
+            <td class="val">{{ $contact->razon_social ?? $contact->company->nombre_comercial ?? '—' }}</td>
+        </tr>
+        <tr>
+            <td class="lbl">Nombre comercial</td>
+            <td class="val">{{ $contact->nombre_comercial ?? $contact->company->nombre_comercial ?? '—' }}</td>
+        </tr>
+        <tr>
+            <td class="lbl">CALLE Y NÚMERO</td>
+            <td class="val">{{ $contact->calle_numero ?? $contact->company->datos_fiscales ?? '—' }}</td>
+        </tr>
+        <tr>
+            <td class="lbl">COLONIA Y C.P.</td>
+            <td class="val">{{ $contact->colonia_cp ?? '—' }}</td>
+        </tr>
+        <tr>
+            <td class="lbl">CIUDAD</td>
+            <td class="val">{{ $contact->municipio ?? '—' }}</td>
+        </tr>
+        <tr>
+            <td class="lbl">ESTADO</td>
+            <td class="val">{{ $contact->estado ?? '—' }}</td>
+        </tr>
+        <tr>
+            <td class="lbl">RFC</td>
+            <td class="val">{{ $contact->rfc ?? $contact->company->rfc ?? '—' }}</td>
+        </tr>
+        <tr>
+            <td class="lbl">TEL</td>
+            <td class="val">{{ $contact->celular ?? $contact->telefono ?? '—' }}</td>
+        </tr>
+        <tr>
+            <td class="lbl">RÉGIMEN EN QUE TRIBUTA</td>
+            <td class="val">{{ $contact->regimen_fiscal ?? '—' }}</td>
+        </tr>
         @if($contact->puesto_de_trabajo)
-        <div class="info-row">
-            <div class="info-label">Puesto:</div>
-            <div class="info-value">{{ $contact->puesto_de_trabajo }}</div>
-        </div>
+        <tr>
+            <td class="lbl">Puesto</td>
+            <td class="val">{{ $contact->puesto_de_trabajo }}</td>
+        </tr>
         @endif
-        
         @if($contact->departamento)
-        <div class="info-row">
-            <div class="info-label">Departamento:</div>
-            <div class="info-value">{{ $contact->departamento }}</div>
-        </div>
+        <tr>
+            <td class="lbl">Departamento</td>
+            <td class="val">{{ $contact->departamento }}</td>
+        </tr>
         @endif
-        
-        <div class="info-row">
-            <div class="info-label">Correo electrónico:</div>
-            <div class="info-value">{{ $contact->email_activo ? $contact->email : 'Correo desactivado' }}</div>
-        </div>
-        
+        <tr>
+            <td class="lbl">Correo electrónico</td>
+            <td class="val">{{ $contact->email_activo ? $contact->email : 'Correo desactivado' }}</td>
+        </tr>
         @if($contact->telefono)
-        <div class="info-row">
-            <div class="info-label">Teléfono:</div>
-            <div class="info-value">{{ $contact->telefono }}</div>
-        </div>
+        <tr>
+            <td class="lbl">Teléfono</td>
+            <td class="val">{{ $contact->telefono }}</td>
+        </tr>
         @endif
-        
         @if($contact->celular)
-        <div class="info-row">
-            <div class="info-label">Celular:</div>
-            <div class="info-value">{{ $contact->celular }}</div>
-        </div>
+        <tr>
+            <td class="lbl">Celular</td>
+            <td class="val">{{ $contact->celular }}</td>
+        </tr>
         @endif
-        
         @if($contact->extension)
-        <div class="info-row">
-            <div class="info-label">Extensión:</div>
-            <div class="info-value">{{ $contact->extension }}</div>
-        </div>
+        <tr>
+            <td class="lbl">Extensión</td>
+            <td class="val">{{ $contact->extension }}</td>
+        </tr>
         @endif
-        
-        @if($contact->municipio || $contact->estado)
-        <div class="info-row">
-            <div class="info-label">Ubicación:</div>
-            <div class="info-value">{{ $contact->municipio ?? '' }}{{ $contact->municipio && $contact->estado ? ', ' : '' }}{{ $contact->estado ?? '' }}</div>
-        </div>
-        @endif
-        
         @if($contact->notas)
-        <div class="info-row">
-            <div class="info-label">Notas:</div>
-            <div class="info-value">{{ $contact->notas }}</div>
-        </div>
+        <tr>
+            <td class="lbl">Notas</td>
+            <td class="val">{{ $contact->notas }}</td>
+        </tr>
         @endif
-    </div>
+    </table>
 
     <div class="footer">
-        <p>CE Consultoría y Capacitación Empresarial</p>
-        <p>Correo: info@cactonultoricempresarial.com | Teléfono: (330) 0244-3678</p>
-        <p>Horario de atención: Lunes a viernes de 8 am a 6 pm</p>
-        <p>Generado el {{ now()->format('d/m/Y H:i') }}</p>
+        <p style="margin:0 0 4px;"><strong>C&amp;CE Consultoría y Capacitación Empresarial</strong></p>
+        <p style="margin:0;">Generado el {{ now()->format('d/m/Y H:i') }}</p>
     </div>
 </body>
 </html>

@@ -10,9 +10,16 @@ class Reminder extends Model
 {
     use HasFactory;
 
+    public const TIPO_ACCION_OPCIONES = [
+        'llamada' => 'Llamada',
+        'reunión' => 'Reunión',
+        'cierre' => 'Cierre',
+    ];
+
     protected $fillable = [
         'user_id',
         'title',
+        'tipo_accion',
         'description',
         'extension',
         'nombre_cliente',

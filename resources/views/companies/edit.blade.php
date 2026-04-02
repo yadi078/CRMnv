@@ -56,16 +56,35 @@
                         </div>
 
                         <div>
-                            <x-input-label for="estado" value="Estado" />
+                            <x-input-label for="estado" value="Entidad federativa" />
                             <x-text-input id="estado" name="estado" type="text" class="mt-1 block w-full" :value="old('estado', $company->estado)" />
                             <x-input-error :messages="$errors->get('estado')" class="mt-2" />
                         </div>
 
-                        <div>
-                            <x-input-label for="ejecutivo_asignado" value="Ejecutivo Asignado" />
-                            <x-text-input id="ejecutivo_asignado" name="ejecutivo_asignado" type="text" class="mt-1 block w-full" :value="old('ejecutivo_asignado', $company->ejecutivo_asignado)" />
-                            <x-input-error :messages="$errors->get('ejecutivo_asignado')" class="mt-2" />
+                        <div class="md:col-span-2">
+                            <p class="text-sm font-semibold text-white/95 border-b border-white/15 pb-2 mb-1">Contacto telefónico</p>
                         </div>
+                        <div>
+                            <x-input-label for="telefono" value="Teléfono" />
+                            <x-text-input id="telefono" name="telefono" type="tel" class="mt-1 block w-full" :value="old('telefono', $company->telefono)" maxlength="50" autocomplete="tel" />
+                            <x-input-error :messages="$errors->get('telefono')" class="mt-2" />
+                        </div>
+                        <div>
+                            <x-input-label for="celular" value="Celular" />
+                            <x-text-input id="celular" name="celular" type="tel" class="mt-1 block w-full" :value="old('celular', $company->celular)" maxlength="50" autocomplete="tel" />
+                            <x-input-error :messages="$errors->get('celular')" class="mt-2" />
+                        </div>
+
+                        <x-executive-assignment-field
+                            :executiveUsers="$executiveUsers"
+                            :isAdmin="$isAdmin"
+                            :selectedAssignedUserId="$selectedAssignedUserId"
+                            :readonlyExecutiveName="$readonlyExecutiveName"
+                            inputId="company_ejecutivo"
+                            selectClass="mt-1 block w-full rounded-md border-gray-300 bg-white text-[#1F2937] py-2 px-3"
+                            readonlyClass="mt-1 block w-full rounded-md border-gray-300 bg-gray-100 text-gray-900 py-2 px-3"
+                            hint="Solo cuentas con rol ejecutivo (usuario)."
+                        />
 
                         <div class="md:col-span-2">
                             <x-input-label for="datos_fiscales" value="Datos Fiscales" />

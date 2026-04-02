@@ -28,8 +28,22 @@
                         </div>
 
                         <div class="md:col-span-2">
+                            <x-executive-assignment-field
+                                :executiveUsers="$executiveUsers"
+                                :isAdmin="$isAdmin"
+                                :selectedAssignedUserId="$selectedAssignedUserId"
+                                :readonlyExecutiveName="$readonlyExecutiveName"
+                                inputId="contact_ejecutivo"
+                                labelClass="text-white/90"
+                                selectClass="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white [&>option]:bg-[#1a3d6b] py-2.5 px-3"
+                                readonlyClass="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white py-2.5 px-3"
+                                :hint="$isAdmin ? 'Como administrador puede asignar el contacto a cualquier ejecutivo.' : null"
+                            />
+                        </div>
+
+                        <div class="md:col-span-2">
                             <label for="nombre_completo" class="block text-sm font-medium text-white/90 mb-1">Nombre Completo *</label>
-                            <input id="nombre_completo" name="nombre_completo" type="text" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3" value="{{ old('nombre_completo') }}" required />
+                            <input id="nombre_completo" name="nombre_completo" type="text" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3 select-text" value="{{ old('nombre_completo') }}" required />
                             <x-input-error :messages="$errors->get('nombre_completo')" class="mt-2" />
                         </div>
 
@@ -106,7 +120,7 @@
                         </div>
 
                         <div>
-                            <x-input-label for="estado" value="Estado" />
+                            <x-input-label for="estado" value="Entidad federativa" />
                             <x-text-input id="estado" name="estado" type="text" class="mt-1 block w-full" :value="old('estado')" />
                             <x-input-error :messages="$errors->get('estado')" class="mt-2" />
                         </div>
@@ -155,7 +169,7 @@
                         </div>
 
                         <div class="md:col-span-2">
-                            <x-input-label for="status_color" value="Estado de prospecto" />
+                            <x-input-label for="status_color" value="Estatus de prospecto" />
                             <select id="status_color" name="status_color" class="mt-1 block w-full rounded-md border-gray-300">
                                 @foreach(\App\Models\Contact::PROSPECT_STATUS_LABELS as $value => $label)
                                 <option value="{{ $value }}" {{ old('status_color', 'seguimiento') === $value ? 'selected' : '' }}>{{ $label }}</option>

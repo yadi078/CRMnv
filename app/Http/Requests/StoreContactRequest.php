@@ -64,6 +64,7 @@ class StoreContactRequest extends FormRequest
             'regimen_fiscal' => 'nullable|string|max:255',
             'notas' => 'nullable|string',
             'status_color' => 'nullable|string|in:seguimiento,interesado,si_le_interesa_nos_llaman_o_no_compro,vendido,no_estaba',
+            'assigned_user_id' => Rule::when($this->user()->esAdmin(), ['nullable', 'integer', 'exists:users,id']),
         ];
     }
 

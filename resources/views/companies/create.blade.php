@@ -64,8 +64,9 @@
                                        x-model.trim="sectorInput"
                                        @keydown.enter.prevent="addSector()"
                                        @blur="addSector()"
-                                       class="block w-full border-0 p-0 text-[#1F2937] focus:ring-0"
-                                       placeholder="Escriba un giro y presione Enter" />
+                                       @paste="pasteSectors($event)"
+                                       class="block w-full border-0 p-0 text-[#1F2937] focus:ring-0 select-text"
+                                       placeholder="Escriba un giro, Enter, o pegue varios separados por coma" />
                                 <template x-for="(item, idx) in sectors" :key="'hidden-' + idx">
                                     <input type="hidden" name="sector[]" :value="item">
                                 </template>
@@ -89,7 +90,7 @@
                         </div>
 
                         <div>
-                            <x-input-label for="estado" value="Estado" class="text-white" />
+                            <x-input-label for="estado" value="Entidad federativa" class="text-white" />
                             <x-text-input
                                 id="estado"
                                 name="estado"
@@ -100,17 +101,47 @@
                             <x-input-error :messages="$errors->get('estado')" class="mt-2" />
                         </div>
 
-                        <div>
-                            <x-input-label for="ejecutivo_asignado" value="Ejecutivo Asignado" class="text-white" />
-                            <x-text-input
-                                id="ejecutivo_asignado"
-                                name="ejecutivo_asignado"
-                                type="text"
-                                class="mt-1 block w-full bg-white text-[#1F2937] border-[#E2E8F0] focus:border-[#FFE600] focus:ring-4 focus:ring-[#FFE600]/40"
-                                :value="old('ejecutivo_asignado')"
-                            />
-                            <x-input-error :messages="$errors->get('ejecutivo_asignado')" class="mt-2" />
+                        <div class="md:col-span-2">
+                            <p class="text-sm font-semibold text-white border-b border-white/15 pb-2 mb-1">Contacto telefónico</p>
                         </div>
+                        <div>
+                            <x-input-label for="telefono" value="Teléfono" class="text-white" />
+                            <x-text-input
+                                id="telefono"
+                                name="telefono"
+                                type="tel"
+                                class="mt-1 block w-full bg-white text-[#1F2937] border-[#E2E8F0] focus:border-[#FFE600] focus:ring-4 focus:ring-[#FFE600]/40"
+                                :value="old('telefono')"
+                                maxlength="50"
+                                autocomplete="tel"
+                            />
+                            <x-input-error :messages="$errors->get('telefono')" class="mt-2" />
+                        </div>
+                        <div>
+                            <x-input-label for="celular" value="Celular" class="text-white" />
+                            <x-text-input
+                                id="celular"
+                                name="celular"
+                                type="tel"
+                                class="mt-1 block w-full bg-white text-[#1F2937] border-[#E2E8F0] focus:border-[#FFE600] focus:ring-4 focus:ring-[#FFE600]/40"
+                                :value="old('celular')"
+                                maxlength="50"
+                                autocomplete="tel"
+                            />
+                            <x-input-error :messages="$errors->get('celular')" class="mt-2" />
+                        </div>
+
+                        <x-executive-assignment-field
+                            :executiveUsers="$executiveUsers"
+                            :isAdmin="$isAdmin"
+                            :selectedAssignedUserId="$selectedAssignedUserId"
+                            :readonlyExecutiveName="$readonlyExecutiveName"
+                            inputId="company_ejecutivo"
+                            labelClass="text-white"
+                            selectClass="mt-1 block w-full rounded-md bg-white text-[#1F2937] border-[#E2E8F0] focus:border-[#FFE600] focus:ring-4 focus:ring-[#FFE600]/40 py-2 px-3"
+                            readonlyClass="mt-1 block w-full rounded-md bg-white text-[#1F2937] border-[#E2E8F0] py-2 px-3"
+                            hint="Solo cuentas con rol ejecutivo (usuario). Como administrador puede reasignar la cartera."
+                        />
 
                         <div class="md:col-span-2">
                             <x-input-label for="datos_fiscales" value="Datos Fiscales" class="text-white" />
@@ -262,6 +293,22 @@
 
                 removeSector(index) {
                     this.sectors.splice(index, 1);
+                },
+
+                pasteSectors(event) {
+                    const cd = event.clipboardData || (typeof window !== 'undefined' ? window.clipboardData : null);
+                    if (!cd) return;
+                    const text = (cd.getData('text/plain') || '').trim();
+                    if (!text) return;
+                    event.preventDefault();
+                    const parts = text.split(/[,;\n\r\t]+/).map((s) => s.trim()).filter((s) => s.length > 0);
+                    if (parts.length === 0) return;
+                    parts.forEach((p) => {
+                        if (!this.sectors.some((s) => s.toLowerCase() === p.toLowerCase())) {
+                            this.sectors.push(p);
+                        }
+                    });
+                    this.sectorInput = '';
                 },
 
                 submitForm() {

@@ -41,17 +41,18 @@
             </a>
         </li>
 
-        <li class="sidebar-nav__item">
+        <li class="sidebar-nav__item sidebar-nav__item--with-sublinks">
             @php
                 $isCompaniesRoute = request()->routeIs('companies.*');
                 $isFiltersView = request()->routeIs('companies.index') && request('view') === 'filtros';
-                $isCompaniesActive = $isCompaniesRoute && ! $isFiltersView;
+                $isSalesNav = request()->routeIs('user.sales.*');
+                $isCompaniesMainActive = $isCompaniesRoute && ! $isFiltersView && ! $isSalesNav;
             @endphp
             <a
                 href="{{ route('companies.index') }}"
-                class="sidebar-nav__link sidebar-nav__link--icon-accent-when-active {{ $isCompaniesActive ? 'sidebar-nav__link--active' : '' }}"
+                class="sidebar-nav__link sidebar-nav__link--icon-accent-when-active {{ $isCompaniesMainActive ? 'sidebar-nav__link--active' : '' }}"
                 aria-label="Empresas"
-                aria-current="{{ $isCompaniesActive ? 'page' : false }}"
+                aria-current="{{ $isCompaniesMainActive ? 'page' : false }}"
             >
                 <span class="sidebar-nav__icon-wrap">
                     <span class="sidebar-nav__wave" aria-hidden="true"></span>
@@ -61,6 +62,14 @@
                 </span>
                 <span class="sidebar-nav__label">Empresas</span>
             </a>
+            @can('viewAny', \App\Models\Sale::class)
+            <a
+                href="{{ route('user.sales.index') }}"
+                class="sidebar-nav__sublink {{ $isSalesNav ? 'sidebar-nav__sublink--active' : '' }}"
+                aria-label="Historial de ventas"
+                aria-current="{{ $isSalesNav ? 'page' : false }}"
+            >Historial de ventas</a>
+            @endcan
         </li>
 
         <li class="sidebar-nav__item">
@@ -111,40 +120,6 @@
                     </svg>
                 </span>
                 <span class="sidebar-nav__label">Ejecutivos</span>
-            </a>
-        </li>
-
-        <li class="sidebar-nav__item">
-            <a
-                href="{{ route('follow-ups.index') }}"
-                class="sidebar-nav__link {{ request()->routeIs('follow-ups.*') ? 'sidebar-nav__link--active' : '' }}"
-                aria-label="Seguimientos"
-                aria-current="{{ request()->routeIs('follow-ups.*') ? 'page' : false }}"
-            >
-                <span class="sidebar-nav__icon-wrap">
-                    <span class="sidebar-nav__wave" aria-hidden="true"></span>
-                    <svg class="sidebar-nav__icon" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                    </svg>
-                </span>
-                <span class="sidebar-nav__label">Seguimientos</span>
-            </a>
-        </li>
-
-        <li class="sidebar-nav__item">
-            <a
-                href="{{ route('user.sales.index') }}"
-                class="sidebar-nav__link {{ request()->routeIs('user.sales.*') ? 'sidebar-nav__link--active' : '' }}"
-                aria-label="Historial de Ventas"
-                aria-current="{{ request()->routeIs('user.sales.*') ? 'page' : false }}"
-            >
-                <span class="sidebar-nav__icon-wrap">
-                    <span class="sidebar-nav__wave" aria-hidden="true"></span>
-                    <svg class="sidebar-nav__icon" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
-                </span>
-                <span class="sidebar-nav__label">Historial de Ventas</span>
             </a>
         </li>
 

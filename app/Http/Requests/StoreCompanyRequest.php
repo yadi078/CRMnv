@@ -49,7 +49,10 @@ class StoreCompanyRequest extends FormRequest
             'sector' => 'required|string|max:2000',
             'municipio' => 'nullable|string|max:255',
             'estado' => 'nullable|string|max:255',
+            'telefono' => 'nullable|string|max:50',
+            'celular' => 'nullable|string|max:50',
             'ejecutivo_asignado' => 'nullable|string|max:255',
+            'assigned_user_id' => Rule::when($this->user()->esAdmin(), ['nullable', 'integer', 'exists:users,id']),
             'datos_fiscales' => 'nullable|string',
             'status_color' => 'nullable|in:seguimiento,interesado,si_le_interesa_nos_llaman_o_no_compro,vendido,no_estaba',
         ];

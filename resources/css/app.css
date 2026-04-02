@@ -33,14 +33,18 @@
   --radius-card: 20px;
   --radius-panel: 16px;
   --touch-target: 2.9rem;
+  /* Tablas: ancho mínimo fluido (scroll horizontal en pantallas estrechas) */
+  --crm-table-min: clamp(33rem, 92vw, 61.25rem);
 }
 
 /* --------------------------------------------------------------------------
    Tipografía: Inter, jerarquía clara (unidades relativas, escalable)
    -------------------------------------------------------------------------- */
 html {
-  font-size: 100%;
+  /* Escala ligeramente entre móvil y escritorio (14px–~17px) */
+  font-size: clamp(0.875rem, 0.78rem + 0.45vw, 1.0625rem);
   -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
@@ -49,6 +53,33 @@ body {
   background: linear-gradient(180deg, var(--color-bg-top) 0%, var(--color-bg) 40%, var(--color-bg-bottom) 100%);
   min-height: 100vh;
   min-height: 100dvh;
+}
+
+/* Formularios CRM: selección y pegado explícitos (p. ej. Safari/WebKit sobre fondos oscuros) */
+.panel-card-dark textarea,
+.panel-card-dark select,
+.panel-card-dark input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]) {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* Mismo comportamiento en todo el contenido principal y formularios fuera de .panel-card-dark (p. ej. modales) */
+.sidebar-layout__main main textarea,
+.sidebar-layout__main main select,
+.sidebar-layout__main main input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]),
+form.company-edit-form-in-modal textarea,
+form.company-edit-form-in-modal select,
+form.company-edit-form-in-modal input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]) {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* Diálogos/modales (p. ej. portados o con position fixed): mismo criterio */
+[role="dialog"] textarea,
+[role="dialog"] select,
+[role="dialog"] input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]) {
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 /* Safe area para dispositivos con notch/home indicator */
@@ -517,6 +548,52 @@ body {
   margin-left: 0;
 }
 
+/* Subenlace bajo Empresas (Historial de ventas); oculto con menú colapsado */
+.sidebar-nav__sublink {
+  display: none;
+}
+
+.sidebar-layout--expanded .sidebar-nav__item--with-sublinks {
+  align-items: stretch;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.sidebar-layout--expanded .sidebar-nav__sublink {
+  display: flex;
+  align-items: center;
+  margin: 0 0 0 0.25rem;
+  padding: 0.4rem 0.75rem 0.4rem 3.35rem;
+  border-radius: 10px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.25;
+  color: rgba(255, 255, 255, 0.72);
+  text-decoration: none;
+  transition: background var(--sidebar-duration) ease, color var(--sidebar-duration) ease;
+}
+
+.sidebar-layout--expanded .sidebar-nav__sublink:hover {
+  color: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.sidebar-layout--expanded .sidebar-nav__sublink:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.35);
+  outline-offset: 2px;
+}
+
+.sidebar-layout--expanded .sidebar-nav__sublink--active {
+  color: var(--sidebar-active-text);
+  background: rgba(255, 230, 0, 0.22);
+  font-weight: 600;
+}
+
+.sidebar-layout--expanded .sidebar-nav__sublink--active:hover {
+  color: var(--sidebar-active-text);
+  background: rgba(255, 230, 0, 0.28);
+}
+
 @media (min-width: 1025px) {
   .sidebar-layout--expanded .sidebar-layout__main {
     margin-left: calc(var(--sidebar-width-expanded) + 32px);
@@ -574,9 +651,14 @@ body {
   box-sizing: border-box;
 }
 
-/* Espacio al final del contenido para que no quede tapado por la barra fija */
+/* Espacio al final del contenido para que no quede tapado por la barra fija del slogan */
 .sidebar-layout__main {
-  padding-bottom: 100px;
+  padding-bottom: calc(152px + env(safe-area-inset-bottom, 0px));
+}
+
+/* Filtros: el desplegable de opciones no debe recortarse por el panel */
+.panel-card-dark.filtros-form-card {
+  overflow: visible;
 }
 
 @media (min-width: 1025px) {
@@ -595,7 +677,7 @@ body {
 }
 
 .top-bar-gradient__slogan {
-  font-size: 1.25rem;
+  font-size: clamp(0.8rem, 0.65rem + 1.1vw, 1.25rem);
   font-weight: 700;
   color: var(--color-accent);
   margin: 0;
@@ -604,12 +686,8 @@ body {
   word-wrap: break-word;
   overflow-wrap: break-word;
   white-space: normal;
-}
-
-@media (max-width: 640px) {
-  .top-bar-gradient__slogan {
-    font-size: 1rem;
-  }
+  line-height: 1.25;
+  padding-inline: clamp(0.25rem, 2vw, 1rem);
 }
 
 .sidebar-layout__header {
@@ -698,9 +776,10 @@ body {
 }
 
 .page-header-card__subtitle {
-  font-size: 0.9rem;
+  font-size: clamp(0.8125rem, 0.74rem + 0.4vw, 0.95rem);
   font-weight: 500;
   color: #fff;
+  line-height: 1.4;
 }
 
 @media (max-width: 640px) {
@@ -1230,16 +1309,16 @@ body {
 .panel-card-dark {
   background: linear-gradient(145deg, #1e4976 0%, #1a3d6b 50%, #0f2744 100%);
   border-radius: var(--radius-card);
-  padding: 1.5rem 1.75rem;
+  padding: clamp(1rem, 2.5vw, 1.5rem) clamp(1rem, 3vw, 1.75rem);
   color: #fff;
   box-shadow: 0 4px 20px rgba(30, 73, 118, 0.4);
 }
 
 .panel-card-dark__title {
-  font-size: 1.125rem;
+  font-size: clamp(1rem, 0.9rem + 0.45vw, 1.125rem);
   font-weight: 600;
   color: #fff;
-  margin-bottom: 2rem;
+  margin-bottom: clamp(1.25rem, 3vw, 2rem);
 }
 
 /* Título con más espacio abajo (ej. Estado de prospectos) */
@@ -2468,4 +2547,37 @@ nav[aria-label="Pagination"] span[aria-current="page"] span {
 }
 .crm-row-marker[data-state="done"] .crm-row-marker__check {
   display: block;
+}
+
+/* ==========================================================================
+   CRM — Tablas responsivas y contenedores de desplazamiento
+   ========================================================================== */
+
+/**
+ * Ancho mínimo fluido para tablas con muchas columnas (reemplaza min-w-[980px] fijo).
+ */
+.crm-table-wide {
+  min-width: var(--crm-table-min);
+}
+
+/**
+ * Scroll horizontal táctil sin forzar altura máxima (listados, fichas claras).
+ */
+.crm-responsive-x {
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.crm-responsive-x > table {
+  font-size: clamp(0.8125rem, 0.76rem + 0.22vw, 0.9375rem);
+}
+
+/**
+ * Tipografía ligeramente fluida dentro de tablas en paneles oscuros.
+ */
+.panel-card-dark .crm-table-scroll-wrap table,
+.panel-card-dark .crm-responsive-x table {
+  font-size: clamp(0.75rem, 0.68rem + 0.28vw, 0.875rem);
 }

@@ -15,7 +15,7 @@
                         <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Tel / Cel</th>
                         <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Email</th>
                         <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Ejecutivo</th>
-                        <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Estado</th>
+                        <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Estatus</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-white/10">
@@ -65,7 +65,7 @@
                         <th scope="col" class="crm-row-marker-head w-11 min-w-[2.75rem] px-1 py-3.5 text-center text-[10px] font-semibold uppercase tracking-wide text-[#FFE600]/90" title="Seguimiento personal (solo en este navegador)">Seg.</th>
                         <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Nombre</th>
                         <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">RFC</th>
-                        <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Estado</th>
+                        <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Estatus</th>
                         <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Ejecutivo</th>
                     </tr>
                 </thead>

@@ -62,6 +62,7 @@ Route::middleware(['auth', 'verified', 'ensure.role'])->group(function () {
     Route::resource('companies', CompanyController::class);
     Route::post('/companies/import', [CompanyController::class, 'import'])->name('companies.import');
     Route::get('/filtros', [FiltrosController::class, 'index'])->name('filtros.index');
+    Route::post('/filtros/persist-state', [FiltrosController::class, 'persistState'])->name('filtros.persist-state');
     Route::post('/filtros/ajax', [FiltrosController::class, 'ajax'])->name('filtros.ajax');
     Route::get('/companies/{company}/edit-form', [CompanyController::class, 'editForm'])->name('companies.edit-form');
     Route::post('/companies/check-duplicates', [CompanyController::class, 'checkDuplicates'])->name('companies.check-duplicates');

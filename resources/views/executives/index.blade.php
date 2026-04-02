@@ -635,15 +635,27 @@
                         <p class="text-xs text-white/75 max-w-xl leading-relaxed">
                             Origen «solo ficha»: empresas con ese texto en ejecutivo y sin usuario CRM vinculado; se enlazan al destino. Origen con cuenta: mismas reglas que antes. Destino: solo cuentas <span class="text-[#FFE600] font-medium">activas</span> y <span class="text-[#FFE600] font-medium">aprobadas</span>.
                         </p>
-                        <button
-                            type="submit"
-                            class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-[#FFE600] text-[#071A3D] text-sm font-bold shadow-[0_4px_14px_rgba(0,0,0,0.2)] hover:bg-[#ffeb3b] transition-colors border border-[#fff9c4] shrink-0"
-                        >
-                            <svg class="w-5 h-5 text-emerald-700 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
-                            </svg>
-                            Transferir empresas y contactos
-                        </button>
+                        <div class="flex flex-wrap items-center gap-3 justify-end sm:justify-end w-full sm:w-auto">
+                            <button
+                                type="button"
+                                @click="clearTransferPortfolioForm()"
+                                class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full border-2 border-white/35 text-white text-sm font-semibold hover:bg-white/10 transition-colors shrink-0"
+                            >
+                                <svg class="w-5 h-5 shrink-0 opacity-90" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                                Limpiar
+                            </button>
+                            <button
+                                type="submit"
+                                class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-[#FFE600] text-[#071A3D] text-sm font-bold shadow-[0_4px_14px_rgba(0,0,0,0.2)] hover:bg-[#ffeb3b] transition-colors border border-[#fff9c4] shrink-0"
+                            >
+                                <svg class="w-5 h-5 text-emerald-700 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                                </svg>
+                                Transferir empresas y contactos
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>

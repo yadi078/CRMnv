@@ -5,8 +5,8 @@
             </svg></x-page-header-avatar>
         <div>
             <h2 class="page-header-card__title">Ficha de venta</h2>
-            @if(!Str::startsWith($sale->nombre_servicio ?? '', 'Venta desde contacto:'))
-                <p class="page-header-card__subtitle">{{ $sale->nombre_servicio }}</p>
+            @if($sale->nombre_curso_ficha !== '—')
+                <p class="page-header-card__subtitle">{{ $sale->nombre_curso_ficha }}</p>
             @endif
         </div>
         <div class="flex gap-2 ml-auto">
@@ -54,17 +54,20 @@
                     <p class="text-[10px] text-gray-500">CONSULTORÍA Y CAPACITACIÓN EMPRESARIAL</p>
                 </div>
             </div>
-            <div class="text-right">
+            <div class="text-right max-w-md ml-auto">
                 <p class="text-sm font-bold text-[#071A3D] uppercase">INVERTIR EN VALOR ¡ATRAE VALOR!</p>
-                <p class="text-xs text-gray-700 mt-2"><span class="font-semibold">CONSULTOR:</span> {{ $sale->creator?->name ?? '—' }}</p>
-                <p class="text-xs text-gray-700"><span class="font-semibold">FECHA:</span> {{ $sale->fecha_venta->format('d/m/Y') }}</p>
+                <div class="h-1 bg-[#7eb8e8] mt-2 mb-3 max-w-[85%] ml-auto"></div>
+                <div class="border-t border-gray-300 pt-3 text-sm text-gray-800">
+                    <p class="font-semibold"><span class="text-[#071A3D]">CONSULTOR:</span> {{ $sale->creator?->name ?? '—' }}</p>
+                    <p class="font-semibold mt-1"><span class="text-[#071A3D]">FECHA:</span> {{ $sale->fecha_venta?->format('d/m/Y') ?? '—' }}</p>
+                </div>
             </div>
         </div>
 
-        {{-- FICHA DE INSCRIPCIÓN (no se muestra cuando es "Venta desde contacto") --}}
-        @if(!Str::startsWith($sale->nombre_servicio ?? '', 'Venta desde contacto:'))
+        {{-- FICHA DE INSCRIPCIÓN --}}
         <div class="p-6 print:break-inside-avoid">
             <h2 class="text-center font-bold text-lg text-[#071A3D] mb-4">FICHA DE INSCRIPCIÓN</h2>
+            <div class="crm-responsive-x">
             <table class="w-full border border-gray-300 text-sm">
                 <thead>
                     <tr>
@@ -75,7 +78,10 @@
                 <tbody>
                     <tr>
                         <td class="border border-gray-300 px-4 py-3 align-top bg-[#071A3D]/5">
-                            <span class="font-medium text-[#071A3D]">1.</span> {{ $sale->nombre_servicio }}
+                            <p class="text-xs font-semibold text-[#071A3D] uppercase mb-1">Tipo de curso</p>
+                            <p class="mb-3 text-gray-900">{{ filled(trim((string) ($sale->tipo_curso ?? ''))) ? $sale->tipo_curso : '—' }}</p>
+                            <p class="text-xs font-semibold text-[#071A3D] uppercase mb-1">Curso</p>
+                            <p class="text-gray-900"><span class="font-medium text-[#071A3D]">1.</span> {{ $sale->nombre_curso_ficha }}</p>
                         </td>
                         <td class="border border-gray-300 px-4 py-3 align-top bg-gray-50 min-h-[80px] text-gray-800">
                             @if($sale->saleParticipants->isNotEmpty())
@@ -105,12 +111,13 @@
                     </tr>
                 </tbody>
             </table>
+            </div>
         </div>
-        @endif
 
         {{-- DATOS DE FACTURACIÓN --}}
         <div class="p-6 pt-0 print:break-inside-avoid">
             <h2 class="text-center font-bold text-lg text-[#071A3D] mb-4 border border-gray-300 rounded-t-lg px-4 py-2 bg-gray-50">DATOS DE FACTURACIÓN</h2>
+            <div class="crm-responsive-x">
             <table class="w-full border border-gray-300 text-sm">
                 <tr><td class="border border-gray-300 px-4 py-2 bg-gray-50 font-semibold text-gray-700 w-48">RAZÓN SOCIAL:</td><td class="border border-gray-300 px-4 py-2 text-gray-900">{{ $sale->company->nombre_comercial }}</td></tr>
                 <tr><td class="border border-gray-300 px-4 py-2 bg-gray-50 font-semibold text-gray-700">CALLE Y NÚMERO:</td><td class="border border-gray-300 px-4 py-2 text-gray-900">{{ Str::limit($sale->company->datos_fiscales, 80) ?: '—' }}</td></tr>
@@ -119,12 +126,13 @@
                 <tr><td class="border border-gray-300 px-4 py-2 bg-gray-50 font-semibold text-gray-700">RFC:</td><td class="border border-gray-300 px-4 py-2 text-gray-900">{{ $sale->company->rfc ?? '—' }}</td></tr>
                 <tr><td class="border border-gray-300 px-4 py-2 bg-gray-50 font-semibold text-gray-700">TEL:</td><td class="border border-gray-300 px-4 py-2 text-gray-900">{{ $sale->contact?->celular ?? $sale->contact?->telefono ?? '—' }}</td></tr>
                 <tr><td class="border border-gray-300 px-4 py-2 bg-gray-50 font-semibold text-gray-700">REGIMEN EN QUE TRIBUTA:</td><td class="border border-gray-300 px-4 py-2 text-gray-900">{{ $sale->regimen_fiscal ?? '—' }}</td></tr>
-                <tr><td class="border border-gray-300 px-4 py-2 bg-gray-50 font-semibold text-gray-700">MÉTODO PAGO:</td><td class="border border-gray-300 px-4 py-2 text-gray-900">{{ $sale->tipo_pago_label ?? '—' }}</td></tr>
+                <tr><td class="border border-gray-300 px-4 py-2 bg-gray-50 font-semibold text-gray-700">MÉTODO PAGO:</td><td class="border border-gray-300 px-4 py-2 text-gray-900 whitespace-pre-wrap">{{ $sale->tipo_pago_label ?? '—' }}</td></tr>
                 <tr><td class="border border-gray-300 px-4 py-2 bg-gray-50 font-semibold text-gray-700">FORMA DE PAGO:</td><td class="border border-gray-300 px-4 py-2 text-gray-900">{{ $sale->forma_pago_label ?? '—' }}</td></tr>
                 <tr><td class="border border-gray-300 px-4 py-2 bg-gray-50 font-semibold text-gray-700">USO DE CFDI:</td><td class="border border-gray-300 px-4 py-2 text-gray-900">{{ $sale->uso_cfdi ?? '—' }}</td></tr>
                 <tr><td class="border border-gray-300 px-4 py-2 bg-gray-50 font-semibold text-gray-700">ORDEN DE COMPRA:</td><td class="border border-gray-300 px-4 py-2 text-gray-900">{{ $sale->orden_compra_label ?? '—' }}</td></tr>
                 <tr><td class="border border-gray-300 px-4 py-2 bg-gray-50 font-semibold text-gray-700">CORREO:</td><td class="border border-gray-300 px-4 py-2 text-gray-900">{{ $sale->contact?->email ?? '—' }}</td></tr>
             </table>
+            </div>
         </div>
 
         @php
@@ -151,7 +159,7 @@
                 <p class="text-sm text-gray-900"><span class="font-semibold">CONDICIONES DE PAGO:</span> <span class="text-[#071A3D]">—</span></p>
                 <p class="text-sm text-gray-900 mt-2"><span class="font-semibold">MODALIDAD:</span> <span class="text-[#071A3D]">—</span></p>
                 <p class="text-sm text-gray-900 mt-2"><span class="font-semibold">SEDE:</span> <span class="text-[#071A3D]">—</span></p>
-                <p class="text-sm text-gray-900 mt-2"><span class="font-semibold">FECHA:</span> <span class="text-[#071A3D] font-medium">{{ $sale->fecha_venta->format('d/m/Y') }}</span></p>
+                <p class="text-sm text-gray-900 mt-2"><span class="font-semibold">FECHA:</span> <span class="text-[#071A3D] font-medium">{{ $sale->fecha_venta?->format('d/m/Y') ?? '—' }}</span></p>
                 <p class="text-sm text-gray-900 mt-2"><span class="font-semibold">HORARIO:</span> <span class="text-[#071A3D]">—</span></p>
                 <p class="text-sm text-gray-900 mt-2"><span class="font-semibold">FACTURA:</span> <span class="text-[#071A3D]">—</span></p>
             </div>

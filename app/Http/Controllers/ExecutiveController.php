@@ -42,6 +42,16 @@ class ExecutiveController extends Controller
             return redirect()->route('executives.index');
         }
 
+        if ($request->boolean('cerrar_asistencia_contrasenas')) {
+            $request->session()->forget('managed_user_id');
+            $query = collect($request->query())
+                ->except(['cerrar_asistencia_contrasenas', 'user_search'])
+                ->filter(fn ($v) => $v !== null && $v !== '')
+                ->all();
+
+            return redirect()->route('executives.index', $query);
+        }
+
         $this->ensureWebRoleExists('usuario');
         $this->ensureWebRoleExists('administrador');
 
@@ -403,38 +413,10 @@ class ExecutiveController extends Controller
         }
         $unifiedContactsForList = $unifiedContactsForList->sortBy('nombre_completo')->values();
 
-        $allCompanies = Company::query()->orderBy('nombre_comercial')->get(['id', 'nombre_comercial', 'assigned_user_id']);
-        $allContacts = Contact::query()->with('company')->orderBy('nombre_completo')->limit(1500)->get();
-
-        $unassignedCompaniesForDatalist = Company::query()
-            ->whereNull('assigned_user_id')
-            ->orderBy('nombre_comercial')
-            ->get(['id', 'nombre_comercial']);
-
-        $unassignedContactsForDatalist = Contact::query()
-            ->whereNull('assigned_user_id')
-            ->with('company')
-            ->orderBy('nombre_completo')
-            ->limit(1500)
-            ->get();
-
-        $otherExecutives = User::query()
-            ->whereDoesntHave('roles', function ($q): void {
-                $q->whereIn('name', ['admin', 'administrador']);
-            })
-            ->whereKeyNot($user->id)
-            ->orderBy('name')
-            ->get(['id', 'name', 'email']);
-
         return view('executives.show', [
             'executive' => $user,
-            'allCompanies' => $allCompanies,
-            'allContacts' => $allContacts,
             'orphanAssignedContacts' => $orphanAssignedContacts,
             'unifiedContactsForList' => $unifiedContactsForList,
-            'otherExecutives' => $otherExecutives,
-            'unassignedCompaniesForDatalist' => $unassignedCompaniesForDatalist,
-            'unassignedContactsForDatalist' => $unassignedContactsForDatalist,
         ]);
     }
 

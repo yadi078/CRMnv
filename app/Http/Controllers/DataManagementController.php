@@ -103,6 +103,8 @@ class DataManagementController extends Controller
             'sector' => 'nullable|string',
             'municipio' => 'nullable|string|max:255',
             'estado' => 'nullable|string|max:255',
+            'telefono' => 'nullable|string|max:50',
+            'celular' => 'nullable|string|max:50',
             'ejecutivo_asignado' => 'nullable|string|max:255',
             'datos_fiscales' => 'nullable|string',
             'status_color' => 'sometimes|in:seguimiento,interesado,si_le_interesa_nos_llaman_o_no_compro,vendido,no_estaba',

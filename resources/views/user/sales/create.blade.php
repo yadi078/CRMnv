@@ -37,6 +37,13 @@
                             <x-input-error :messages="$errors->get('fecha_venta')" class="mt-2" />
                         </div>
 
+                        <div class="md:col-span-3">
+                            <x-input-label for="tipo_curso" value="Tipo de curso" />
+                            <p class="text-xs text-white/60 mb-1">Se muestra en la ficha PDF (ej. diplomado, taller, certificación).</p>
+                            <x-text-input id="tipo_curso" name="tipo_curso" type="text" class="mt-1 block w-full" :value="old('tipo_curso')" placeholder="Ej. Diplomado ejecutivo" />
+                            <x-input-error :messages="$errors->get('tipo_curso')" class="mt-2" />
+                        </div>
+
                         {{-- Fila 2: Empresa (2/3) + Contacto (1/3) --}}
                         <div class="md:col-span-2">
                             <x-input-label for="company_name" value="Empresa *" class="text-base md:text-lg font-semibold text-white" />
@@ -76,20 +83,7 @@
                             <x-input-error :messages="$errors->get('contact_id')" class="mt-2" />
                         </div>
 
-                        {{-- Fila 3: Monto, Tipo de pago, Participantes --}}
-                        <div>
-                            <x-input-label for="fecha_venta" value="Fecha de venta *" />
-                            <x-text-input
-                                id="fecha_venta"
-                                name="fecha_venta"
-                                type="date"
-                                class="mt-1 block w-full text-gray-900"
-                                :value="old('fecha_venta', date('Y-m-d'))"
-                                required
-                            />
-                            <x-input-error :messages="$errors->get('fecha_venta')" class="mt-2" />
-                        </div>
-
+                        {{-- Fila 3: Monto, método de pago, participantes --}}
                         <div>
                             <x-input-label for="monto" value="Monto ($)" />
                             <x-text-input id="monto" name="monto" type="number" step="0.01" min="0" class="mt-1 block w-full" :value="old('monto')" placeholder="0.00" />
@@ -106,18 +100,17 @@
                             <span class="text-xs text-white/60">Desmarque si el monto no lleva IVA (ej. factura exenta).</span>
                         </div>
 
-                        <div>
-                            <x-input-label for="tipo_pago" value="Tipo de pago" class="text-base md:text-lg font-semibold text-white" />
-                            <select id="tipo_pago" name="tipo_pago" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500">
-                                <option value="">Seleccione</option>
-                                <option value="efectivo" {{ old('tipo_pago') === 'efectivo' ? 'selected' : '' }}>Efectivo</option>
-                                <option value="transferencia" {{ old('tipo_pago') === 'transferencia' ? 'selected' : '' }}>Transferencia</option>
-                                <option value="tarjeta_credito" {{ old('tipo_pago') === 'tarjeta_credito' ? 'selected' : '' }}>Tarjeta de crédito</option>
-                                <option value="tarjeta_debito" {{ old('tipo_pago') === 'tarjeta_debito' ? 'selected' : '' }}>Tarjeta de débito</option>
-                                <option value="cheque" {{ old('tipo_pago') === 'cheque' ? 'selected' : '' }}>Cheque</option>
-                                <option value="deposito" {{ old('tipo_pago') === 'deposito' ? 'selected' : '' }}>Depósito</option>
-                                <option value="otro" {{ old('tipo_pago') === 'otro' ? 'selected' : '' }}>Otro</option>
-                            </select>
+                        <div class="md:col-span-2">
+                            <x-input-label for="tipo_pago" value="Método de pago" class="text-base md:text-lg font-semibold text-white" />
+                            <p class="text-xs text-white/60 mt-1 mb-2">Describa el método acordado (uno o varios).</p>
+                            <textarea
+                                id="tipo_pago"
+                                name="tipo_pago"
+                                rows="3"
+                                maxlength="500"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-gray-900"
+                                placeholder="Ej. SPEI, efectivo en instalaciones, tarjeta a meses…"
+                            >{{ old('tipo_pago') }}</textarea>
                             <x-input-error :messages="$errors->get('tipo_pago')" class="mt-2" />
                         </div>
 
@@ -138,7 +131,7 @@
 
                         {{-- Fila final: Notas --}}
                         <div class="md:col-span-3">
-                            <x-input-label for "notas" value="Notas" class="text-base md:text-lg font-semibold text-white" />
+                            <x-input-label for="notas" value="Notas" class="text-base md:text-lg font-semibold text-white" />
                             <textarea id="notas" name="notas" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500" placeholder="Observaciones adicionales...">{{ old('notas') }}</textarea>
                             <x-input-error :messages="$errors->get('notas')" class="mt-2" />
                         </div>
@@ -346,7 +339,7 @@
         var stepFacturacion = document.getElementById('step-datos-facturacion');
         var accionesStep1 = document.getElementById('acciones-step-1');
         var form = document.querySelector('form[action="{{ route('user.sales.store') }}"]');
-        var tipoPagoSelect = document.getElementById('tipo_pago');
+        var tipoPagoInput = document.getElementById('tipo_pago');
         var metodoPagoPreview = document.getElementById('metodo-pago-preview');
 
         if (!btnContinuar || !stepFacturacion || !accionesStep1 || !form) return;
@@ -357,14 +350,9 @@
                 return;
             }
 
-            // Sincronizar el método de pago con la selección del formulario
-            if (tipoPagoSelect && metodoPagoPreview) {
-                var idx = tipoPagoSelect.selectedIndex;
-                if (idx > 0) {
-                    metodoPagoPreview.textContent = tipoPagoSelect.options[idx].text;
-                } else {
-                    metodoPagoPreview.textContent = '—';
-                }
+            if (tipoPagoInput && metodoPagoPreview) {
+                var t = (tipoPagoInput.value || '').trim();
+                metodoPagoPreview.textContent = t ? t : '—';
             }
 
             stepFacturacion.classList.remove('hidden');

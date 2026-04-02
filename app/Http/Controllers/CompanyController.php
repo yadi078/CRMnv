@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\ResolvesAdminUserView;
+use App\Http\Controllers\Concerns\ResolvesExecutiveAssignment;
 use App\Models\Company;
 use App\Models\Contact;
 use App\Models\Sale;
@@ -25,6 +26,7 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 class CompanyController extends Controller
 {
     use ResolvesAdminUserView;
+    use ResolvesExecutiveAssignment;
     /**
      * Mostrar listado del recurso.
      */
@@ -115,7 +117,7 @@ class CompanyController extends Controller
     {
         $this->authorize('create', Company::class);
 
-        return $this->resolveView('companies.create', 'user.companies.create');
+        return $this->resolveView('companies.create', 'user.companies.create', $this->companyExecutiveFormContext(null));
     }
 
     /**
@@ -131,13 +133,18 @@ class CompanyController extends Controller
         try {
             $approvalStatus = ($user->esAdmin() || $user->can('companies.approve')) ? 'aprobado' : 'pendiente';
 
+            $assignment = $this->resolveCompanyExecutiveForSave($request, $user, false, null);
+
             $company = Company::create([
                 'nombre_comercial' => $request->nombre_comercial,
                 'rfc' => $request->filled('rfc') ? strtoupper($request->rfc) : null,
                 'sector' => is_array($request->sector) ? implode(', ', $request->sector) : $request->sector,
                 'municipio' => $request->municipio,
                 'estado' => $request->estado,
-                'ejecutivo_asignado' => $request->ejecutivo_asignado,
+                'telefono' => $request->filled('telefono') ? trim((string) $request->telefono) : null,
+                'celular' => $request->filled('celular') ? trim((string) $request->celular) : null,
+                'ejecutivo_asignado' => $assignment['ejecutivo_asignado'],
+                'assigned_user_id' => $assignment['assigned_user_id'],
                 'datos_fiscales' => $request->datos_fiscales,
                 'status_color' => $request->status_color ?? 'seguimiento',
                 'approval_status' => $approvalStatus,
@@ -234,7 +241,12 @@ class CompanyController extends Controller
     {
         $this->authorize('update', $company);
 
-        return $this->resolveView('companies.edit', 'user.companies.edit', compact('company'));
+        $company->loadMissing('assignedExecutive');
+
+        return $this->resolveView('companies.edit', 'user.companies.edit', array_merge(
+            compact('company'),
+            $this->companyExecutiveFormContext($company)
+        ));
     }
 
     /**
@@ -696,7 +708,12 @@ class CompanyController extends Controller
     {
         $this->authorize('update', $company);
 
-        return view('companies.partials.edit-form', compact('company'));
+        $company->loadMissing('assignedExecutive');
+
+        return view('companies.partials.edit-form', array_merge(
+            compact('company'),
+            $this->companyExecutiveFormContext($company)
+        ));
     }
 
     /**
@@ -709,13 +726,18 @@ class CompanyController extends Controller
             $statusAnterior = $company->status_color;
             $nuevoStatus = $request->status_color ?? $company->status_color;
 
+            $assignment = $this->resolveCompanyExecutiveForSave($request, $request->user(), true, $company);
+
             $company->update([
                 'nombre_comercial' => $request->nombre_comercial,
                 'rfc' => $request->filled('rfc') ? strtoupper($request->rfc) : null,
                 'sector' => is_array($request->sector) ? implode(', ', $request->sector) : $request->sector,
                 'municipio' => $request->municipio,
                 'estado' => $request->estado,
-                'ejecutivo_asignado' => $request->ejecutivo_asignado,
+                'telefono' => $request->filled('telefono') ? trim((string) $request->telefono) : null,
+                'celular' => $request->filled('celular') ? trim((string) $request->celular) : null,
+                'ejecutivo_asignado' => $assignment['ejecutivo_asignado'],
+                'assigned_user_id' => $assignment['assigned_user_id'],
                 'datos_fiscales' => $request->datos_fiscales,
                 'status_color' => $nuevoStatus,
             ]);

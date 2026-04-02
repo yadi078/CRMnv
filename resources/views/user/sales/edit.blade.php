@@ -5,8 +5,8 @@
                 </svg></x-page-header-avatar>
             <div>
                 <h2 class="page-header-card__title">Editar Venta</h2>
-                @if(!Str::startsWith($sale->nombre_servicio ?? '', 'Venta desde contacto:'))
-                    <p class="page-header-card__subtitle">{{ $sale->nombre_servicio }}</p>
+                @if($sale->nombre_curso_ficha !== '—')
+                    <p class="page-header-card__subtitle">{{ $sale->nombre_curso_ficha }}</p>
                 @endif
             </div>
     </x-slot>
@@ -21,6 +21,7 @@
                         {{-- Fila 1: Nombre del curso (2/3) + Fecha (1/3) --}}
                         <div class="md:col-span-2">
                             <x-input-label for="nombre_servicio" value="Nombre del curso o servicio *" />
+                            <p class="text-xs text-white/60 mb-1">Si aún dice «Venta desde contacto…», cámbielo por el nombre real del curso (así sale en la ficha PDF).</p>
                             <x-text-input id="nombre_servicio" name="nombre_servicio" type="text" class="mt-1 block w-full" :value="old('nombre_servicio', $sale->nombre_servicio)" placeholder="Ej: Capacitación en Ventas, Curso de Liderazgo" required />
                             <x-input-error :messages="$errors->get('nombre_servicio')" class="mt-2" />
                         </div>
@@ -38,6 +39,13 @@
                                 required
                             />
                             <x-input-error :messages="$errors->get('fecha_venta')" class="mt-2" />
+                        </div>
+
+                        <div class="md:col-span-3">
+                            <x-input-label for="tipo_curso" value="Tipo de curso" />
+                            <p class="text-xs text-white/60 mb-1">Aparece en la columna CURSO de la ficha PDF (ej. diplomado, taller, certificación).</p>
+                            <x-text-input id="tipo_curso" name="tipo_curso" type="text" class="mt-1 block w-full" :value="old('tipo_curso', $sale->tipo_curso)" placeholder="Ej. Taller intensivo" />
+                            <x-input-error :messages="$errors->get('tipo_curso')" class="mt-2" />
                         </div>
 
                         {{-- Fila 2: Empresa (2/3) + Contacto (1/3) --}}
@@ -65,19 +73,6 @@
 
                         {{-- Fila 3: Monto, Tipo de pago, Participantes --}}
                         <div>
-                            <x-input-label for="fecha_venta" value="Fecha de venta *" />
-                            <x-text-input
-                                id="fecha_venta"
-                                name="fecha_venta"
-                                type="date"
-                                class="mt-1 block w-full text-gray-900"
-                                :value="old('fecha_venta', $sale->fecha_venta?->format('Y-m-d'))"
-                                required
-                            />
-                            <x-input-error :messages="$errors->get('fecha_venta')" class="mt-2" />
-                        </div>
-
-                        <div>
                             <x-input-label for="monto" value="Monto ($)" />
                             <x-text-input id="monto" name="monto" type="number" step="0.01" min="0" class="mt-1 block w-full" :value="old('monto', $sale->monto)" />
                             <x-input-error :messages="$errors->get('monto')" class="mt-2" />
@@ -93,18 +88,17 @@
                             <span class="text-xs text-white/60">Desmarque si el monto no lleva IVA (ej. factura exenta).</span>
                         </div>
 
-                        <div>
-                            <x-input-label for="tipo_pago" value="Tipo de pago" class="text-base md:text-lg font-semibold text-white" />
-                            <select id="tipo_pago" name="tipo_pago" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500">
-                                <option value="">Seleccione</option>
-                                <option value="efectivo" {{ old('tipo_pago', $sale->tipo_pago) === 'efectivo' ? 'selected' : '' }}>Efectivo</option>
-                                <option value="transferencia" {{ old('tipo_pago', $sale->tipo_pago) === 'transferencia' ? 'selected' : '' }}>Transferencia</option>
-                                <option value="tarjeta_credito" {{ old('tipo_pago', $sale->tipo_pago) === 'tarjeta_credito' ? 'selected' : '' }}>Tarjeta de crédito</option>
-                                <option value="tarjeta_debito" {{ old('tipo_pago', $sale->tipo_pago) === 'tarjeta_debito' ? 'selected' : '' }}>Tarjeta de débito</option>
-                                <option value="cheque" {{ old('tipo_pago', $sale->tipo_pago) === 'cheque' ? 'selected' : '' }}>Cheque</option>
-                                <option value="deposito" {{ old('tipo_pago', $sale->tipo_pago) === 'deposito' ? 'selected' : '' }}>Depósito</option>
-                                <option value="otro" {{ old('tipo_pago', $sale->tipo_pago) === 'otro' ? 'selected' : '' }}>Otro</option>
-                            </select>
+                        <div class="md:col-span-2">
+                            <label for="tipo_pago_venta" class="block text-base md:text-lg font-semibold text-white">Método de pago</label>
+                            <p class="text-xs text-white/60 mb-2">Escriba el método acordado; puede detallar varios medios o condiciones.</p>
+                            <textarea
+                                id="tipo_pago_venta"
+                                name="tipo_pago"
+                                rows="3"
+                                maxlength="500"
+                                class="mt-1 block w-full rounded-md border-gray-300 text-gray-900 shadow-sm focus:border-amber-500 focus:ring-amber-500"
+                                placeholder="Ej. Transferencia, OXXO, meses sin intereses…"
+                            >{{ old('tipo_pago', $sale->tipo_pago) }}</textarea>
                             <x-input-error :messages="$errors->get('tipo_pago')" class="mt-2" />
                         </div>
 
@@ -127,6 +121,36 @@
                             <x-input-label for="notas" value="Notas" class="text-base md:text-lg font-semibold text-white" />
                             <textarea id="notas" name="notas" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500">{{ old('notas', $sale->notas) }}</textarea>
                             <x-input-error :messages="$errors->get('notas')" class="mt-2" />
+                        </div>
+
+                        <div class="md:col-span-3 rounded-xl border-2 border-[#ca8a04] bg-[#FFEB3B]/10 p-4">
+                            <h3 class="text-base font-bold text-[#FFE600] mb-3 uppercase tracking-wide">Condiciones y logística del curso (PDF)</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="md:col-span-2">
+                                    <label for="condiciones_pago" class="block text-sm font-medium text-white/90 mb-1">Condiciones de pago</label>
+                                    <textarea id="condiciones_pago" name="condiciones_pago" rows="2" class="mt-1 block w-full rounded-md border-gray-300 text-gray-900">{{ old('condiciones_pago', $sale->condiciones_pago) }}</textarea>
+                                </div>
+                                <div>
+                                    <label for="modalidad" class="block text-sm font-medium text-white/90 mb-1">Modalidad</label>
+                                    <x-text-input id="modalidad" name="modalidad" type="text" class="mt-1 block w-full" :value="old('modalidad', $sale->modalidad)" />
+                                </div>
+                                <div>
+                                    <label for="sede" class="block text-sm font-medium text-white/90 mb-1">Sede</label>
+                                    <x-text-input id="sede" name="sede" type="text" class="mt-1 block w-full" :value="old('sede', $sale->sede)" />
+                                </div>
+                                <div>
+                                    <label for="fecha_evento" class="block text-sm font-medium text-white/90 mb-1">Fecha del curso / evento</label>
+                                    <x-text-input id="fecha_evento" name="fecha_evento" type="date" class="mt-1 block w-full text-gray-900" :value="old('fecha_evento', $sale->fecha_evento?->format('Y-m-d'))" />
+                                </div>
+                                <div>
+                                    <label for="horario_evento" class="block text-sm font-medium text-white/90 mb-1">Horario</label>
+                                    <x-text-input id="horario_evento" name="horario_evento" type="text" class="mt-1 block w-full" :value="old('horario_evento', $sale->horario_evento)" />
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label for="factura_referencia" class="block text-sm font-medium text-white/90 mb-1">Factura</label>
+                                    <x-text-input id="factura_referencia" name="factura_referencia" type="text" class="mt-1 block w-full" :value="old('factura_referencia', $sale->factura_referencia)" />
+                                </div>
+                            </div>
                         </div>
 
                         {{-- DATOS DE FACTURACIÓN (los que aparecen en la ficha final) --}}
@@ -167,7 +191,7 @@
                                 </div>
                                 <div>
                                     <span class="text-xs font-medium text-white/70 uppercase block">Método de pago</span>
-                                    <p class="text-white mt-0.5">{{ $sale->tipo_pago_label ?? '—' }}</p>
+                                    <p class="text-white mt-0.5 whitespace-pre-wrap">{{ $sale->tipo_pago_label ?? '—' }}</p>
                                 </div>
                                 <div>
                                     <x-input-label for="forma_pago" value="Forma de pago" />

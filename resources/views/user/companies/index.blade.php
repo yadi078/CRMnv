@@ -7,14 +7,24 @@
             <h2 class="page-header-card__title">Empresas</h2>
             <p class="page-header-card__subtitle">Cartera asignada y empresas que usted registre</p>
         </div>
-        @can('companies.create')
-        <a href="{{ route('companies.create') }}" class="btn-amber-app ml-auto">
+        <div class="flex flex-wrap items-center gap-2 ml-auto justify-end">
+            @can('viewAny', \App\Models\Sale::class)
+            <a href="{{ route('user.sales.index') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#FFE600]/70 text-[#FFE600] text-sm font-semibold hover:bg-[#FFE600]/15">
+                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                Historial de ventas
+            </a>
+            @endcan
+            @can('companies.create')
+            <a href="{{ route('companies.create') }}" class="btn-amber-app">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" />
                 </svg>
                 Nueva Empresa
-        </a>
-        @endcan
+            </a>
+            @endcan
+        </div>
     </x-slot>
 
     <div class="space-y-8">
@@ -148,14 +158,14 @@
                 </div>
                 @endif
 
-                <div class="overflow-x-auto">
-                    <table class="w-full min-w-[920px] table-fixed divide-y divide-white/20">
+                <div class="crm-table-scroll-wrap crm-table-scroll w-full min-w-0 -mx-4 sm:-mx-0">
+                    <table class="w-full crm-table-wide table-fixed divide-y divide-white/20">
                         <thead>
                             <tr class="table-header-panel-dark">
                                 <th scope="col" class="crm-row-marker-head w-11 min-w-[2.75rem] px-1 py-3 text-center text-[10px] font-semibold uppercase tracking-wide text-[#FFE600]/90" title="Seguimiento personal (solo en este navegador)">Seg.</th>
                                 <th class="w-[28%] min-w-[12rem] px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Nombre</th>
                                 <th class="w-[14%] min-w-[7rem] px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">RFC</th>
-                                <th class="w-[12%] min-w-[7rem] px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Estado</th>
+                                <th class="w-[12%] min-w-[7rem] px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Estatus</th>
                                 <th class="w-[18%] min-w-[8rem] px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Ejecutivo</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Acciones</th>
                             </tr>

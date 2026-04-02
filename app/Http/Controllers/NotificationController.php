@@ -66,6 +66,7 @@ class NotificationController extends Controller
                             'fecha_inicio' => $fechaInicio,
                             'fecha_limite' => trim((string) ($detail['fecha_limite'] ?? '')),
                             'repeticion' => trim((string) ($detail['repeticion'] ?? '')),
+                            'tipo_accion' => trim((string) ($detail['tipo_accion'] ?? '')),
                         ],
                     ];
                 })

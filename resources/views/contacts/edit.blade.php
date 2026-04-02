@@ -7,13 +7,29 @@
             <h2 class="page-header-card__title">Editar Contacto</h2>
             <p class="page-header-card__subtitle">{{ $contact->nombre_completo }}</p>
         </div>
+        <div class="flex flex-wrap gap-2 ml-auto justify-end items-center shrink-0">
+            @if(isset($sale) && $sale && $contact->fichaPdfCompleta())
+                @can('generatePdf', $contact)
+                    <a href="{{ route('contacts.pdf', $contact) }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/15 text-white border border-[#FFE600]/50 hover:bg-white/25 text-sm font-semibold">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        Generar PDF
+                    </a>
+                @endcan
+            @endif
+        </div>
     </x-slot>
 
+    @php
+        $detalleContactoExpandido = old('detalle_contacto_expandido') === '1'
+            || $errors->any()
+            || (bool) ($contact->ficha_registro_desbloqueada ?? false);
+    @endphp
     <div class="space-y-8">
         <div class="panel-card-dark p-6">
-                <form method="POST" action="{{ route('contacts.update', $contact) }}">
+                <form method="POST" action="{{ route('contacts.update', $contact) }}" x-data="{ detalleAbierto: @json($detalleContactoExpandido) }}">
                     @csrf
                     @method('PUT')
+                    <input type="hidden" name="detalle_contacto_expandido" x-bind:value="detalleAbierto ? '1' : '0'">
                     @if(($crmNavReturn = request('return')) && is_string($crmNavReturn) && \App\Support\CrmNavigation::isSafeReturnUrl($crmNavReturn))
                         <input type="hidden" name="return" value="{{ $crmNavReturn }}">
                     @endif
@@ -28,6 +44,19 @@
                                 @endforeach
                             </select>
                             <x-input-error :messages="$errors->get('company_id')" class="mt-2" />
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <x-executive-assignment-field
+                                :executiveUsers="$executiveUsers"
+                                :isAdmin="$isAdmin"
+                                :selectedAssignedUserId="$selectedAssignedUserId"
+                                :readonlyExecutiveName="$readonlyExecutiveName"
+                                inputId="contact_ejecutivo"
+                                selectClass="mt-1 block w-full rounded-md border-gray-300 bg-white py-2 px-3"
+                                readonlyClass="mt-1 block w-full rounded-md border-gray-300 bg-gray-100 py-2 px-3"
+                                :hint="$isAdmin ? 'Solo cuentas con rol ejecutivo (usuario).' : null"
+                            />
                         </div>
 
                         <div class="md:col-span-2">
@@ -70,6 +99,20 @@
                             <x-text-input id="email" name="email" type="text" inputmode="email" autocomplete="email" placeholder="correo@empresa.com, otro@empresa.com" class="mt-1 block w-full" :value="old('email', $contact->email)" required />
                             <x-input-error :messages="$errors->get('email')" class="mt-2" />
                         </div>
+
+                        <div class="md:col-span-2" x-show="!detalleAbierto" x-cloak>
+                            <button
+                                type="button"
+                                class="inline-flex w-full sm:w-auto items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#FFE600] text-[#071A3D] font-semibold text-sm hover:bg-yellow-300 transition shadow border-2 border-[#FFE600]"
+                                @click="detalleAbierto = true"
+                            >
+                                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                Generar ficha de inscripción
+                            </button>
+                            <p class="mt-2 text-sm text-white/70">Al continuar se mostrarán teléfonos, ubicación, notas, estatus y la ficha de registro del curso.</p>
+                        </div>
+
+                        <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6" x-show="detalleAbierto" x-cloak>
                         <div class="flex items-center gap-3 md:col-span-2">
                             <input id="email_activo" name="email_activo" type="checkbox" value="1" class="rounded border-gray-300 text-amber-500 shadow-sm focus:border-amber-500 focus:ring-amber-500" @checked(old('email_activo', $contact->email_activo ?? true)) />
                             <label for="email_activo" class="text-sm text-white/90 select-none">
@@ -109,46 +152,9 @@
                         </div>
 
                         <div>
-                            <x-input-label for="estado" value="Estado" />
+                            <x-input-label for="estado" value="Entidad federativa" />
                             <x-text-input id="estado" name="estado" type="text" class="mt-1 block w-full" :value="old('estado', $contact->estado)" />
                             <x-input-error :messages="$errors->get('estado')" class="mt-2" />
-                        </div>
-
-                        <div class="md:col-span-2 mt-2 pt-6 border-t border-white/20">
-                            <h3 class="text-lg font-semibold text-[#FFE600] mb-2">Datos para ficha de registro del cliente</h3>
-                            <p class="text-sm text-white/80 mb-4">Razón social, nombre comercial, domicilio fiscal, RFC y régimen. TEL se toma de Teléfono/Celular de arriba.</p>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div class="md:col-span-2">
-                                    <x-input-label for="razon_social" value="RAZÓN SOCIAL" />
-                                    <x-text-input id="razon_social" name="razon_social" type="text" class="mt-1 block w-full" :value="old('razon_social', $contact->razon_social)" />
-                                    <x-input-error :messages="$errors->get('razon_social')" class="mt-2" />
-                                </div>
-                                <div class="md:col-span-2">
-                                    <x-input-label for="nombre_comercial" value="Nombre comercial" />
-                                    <x-text-input id="nombre_comercial" name="nombre_comercial" type="text" class="mt-1 block w-full" :value="old('nombre_comercial', $contact->nombre_comercial)" />
-                                    <x-input-error :messages="$errors->get('nombre_comercial')" class="mt-2" />
-                                </div>
-                                <div class="md:col-span-2">
-                                    <x-input-label for="calle_numero" value="CALLE Y NÚMERO" />
-                                    <x-text-input id="calle_numero" name="calle_numero" type="text" class="mt-1 block w-full" :value="old('calle_numero', $contact->calle_numero)" />
-                                    <x-input-error :messages="$errors->get('calle_numero')" class="mt-2" />
-                                </div>
-                                <div>
-                                    <x-input-label for="colonia_cp" value="COLONIA Y C.P." />
-                                    <x-text-input id="colonia_cp" name="colonia_cp" type="text" class="mt-1 block w-full" :value="old('colonia_cp', $contact->colonia_cp)" />
-                                    <x-input-error :messages="$errors->get('colonia_cp')" class="mt-2" />
-                                </div>
-                                <div>
-                                    <x-input-label for="rfc" value="RFC" />
-                                    <x-text-input id="rfc" name="rfc" type="text" class="mt-1 block w-full" :value="old('rfc', $contact->rfc)" />
-                                    <x-input-error :messages="$errors->get('rfc')" class="mt-2" />
-                                </div>
-                                <div class="md:col-span-2">
-                                    <x-input-label for="regimen_fiscal" value="RÉGIMEN EN QUE TRIBUTA" />
-                                    <x-text-input id="regimen_fiscal" name="regimen_fiscal" type="text" class="mt-1 block w-full" :value="old('regimen_fiscal', $contact->regimen_fiscal)" />
-                                    <x-input-error :messages="$errors->get('regimen_fiscal')" class="mt-2" />
-                                </div>
-                            </div>
                         </div>
 
                         <div class="md:col-span-2">
@@ -157,14 +163,17 @@
                             <x-input-error :messages="$errors->get('notas')" class="mt-2" />
                         </div>
 
+                        @include('contacts.partials.contact-ficha-registro', ['contact' => $contact, 'sale' => $sale ?? null])
+
                         <div class="md:col-span-2">
-                            <x-input-label for="status_color" value="Estado de prospecto" />
+                            <x-input-label for="status_color" value="Estatus de prospecto" />
                             <select id="status_color" name="status_color" class="mt-1 block w-full rounded-md border-gray-300">
                                 @foreach(\App\Models\Contact::PROSPECT_STATUS_LABELS as $value => $label)
                                 <option value="{{ $value }}" {{ old('status_color', $contact->status_color ?? 'seguimiento') === $value ? 'selected' : '' }}>{{ $label }}</option>
                                 @endforeach
                             </select>
                             <x-input-error :messages="$errors->get('status_color')" class="mt-2" />
+                        </div>
                         </div>
                     </div>
 

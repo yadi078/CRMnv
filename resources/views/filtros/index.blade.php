@@ -24,14 +24,17 @@
                 'departamento' => 'Área de trabajo',
                 'puesto_de_trabajo' => 'Puesto de trabajo',
                 'municipio' => 'Ciudad',
-                'estado' => 'Estado',
-                'status_color' => 'Estado de prospecto (color)',
+                'estado' => 'Entidad federativa (ubicación)',
+                'status_color' => 'Estatus de prospecto (color)',
                 'comercial' => 'Comercial',
                 'sector' => 'Giro',
                 'notas' => 'Notas',
                 'domicilio' => 'Domicilio',
                 'no_recibir_correos' => 'No desea recibir correos',
             ];
+            if (! ($isAdmin ?? false)) {
+                unset($excelHeaders['comercial']);
+            }
 
             $fieldOptions = [];
             foreach ($excelHeaders as $key => $label) {
@@ -58,8 +61,8 @@
 
         <form method="GET" action="{{ route('filtros.index') }}" id="form-filtros" class="space-y-5">
             @csrf
-            <div class="panel-card-dark p-5 md:p-6 space-y-6 shadow-lg shadow-black/25 border border-white/10">
-                <div id="header-filter-buttons-wrap" class="relative">
+            <div class="panel-card-dark filtros-form-card p-5 md:p-6 space-y-6 shadow-lg shadow-black/25 border border-white/10 overflow-visible">
+                <div id="header-filter-buttons-wrap" class="relative overflow-visible">
                 <p class="text-sm text-white/75 mb-3">Elija campos y valores; luego aplique o limpie los filtros.</p>
                 <div id="header-filter-buttons" class="flex flex-wrap gap-2.5">
                     @foreach($excelHeaders as $fieldKey => $label)
@@ -74,7 +77,8 @@
                     @endforeach
                 </div>
 
-                <div id="excel-filter-panel" class="hidden absolute z-30 mt-2 w-[360px] max-w-[92vw] rounded-xl border border-[#0B2C66]/20 bg-white p-3 text-[#0B2C66] shadow-2xl">
+                {{-- El panel se mueve a document.body por JS para no quedar recortado por overflow/transform de ancestros --}}
+                <div id="excel-filter-panel" class="hidden fixed z-[9999] box-border w-[min(360px,calc(100vw-1.25rem))] max-w-[min(360px,calc(100vw-1.25rem))] max-h-[min(32rem,calc(100vh-8rem))] overflow-y-auto overflow-x-hidden rounded-xl border border-[#0B2C66]/20 bg-white p-3 text-[#0B2C66] shadow-2xl [overscroll-behavior:contain]">
                     <div class="flex items-center justify-between gap-3 mb-2">
                         <h4 id="excel-panel-title" class="text-base font-semibold">Filtro</h4>
                         <button
@@ -94,7 +98,7 @@
                         <input id="excel-select-all" type="checkbox" class="rounded border-gray-300 text-[#0B2C66] focus:ring-[#0B2C66]">
                         <span style="color:#0B2C66;">(Seleccionar todo)</span>
                     </label>
-                    <div id="excel-options-list" class="max-h-52 overflow-auto rounded border border-gray-200 bg-white p-2 space-y-1"></div>
+                    <div id="excel-options-list" class="max-h-52 overflow-y-auto rounded border border-gray-200 bg-white p-2 space-y-1"></div>
                     <div class="mt-2 flex justify-end gap-2">
                         <button type="button" id="excel-panel-accept" class="px-3 py-1.5 rounded-md bg-[#0B2C66] text-white text-sm">Aceptar</button>
                     </div>
@@ -154,7 +158,7 @@
                                 <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Tel / Cel</th>
                                 <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Email</th>
                                 <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Ejecutivo</th>
-                                <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Estado</th>
+                                <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Estatus</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-white/10">
@@ -200,7 +204,7 @@
                                 <th scope="col" class="crm-row-marker-head w-11 min-w-[2.75rem] px-1 py-3.5 text-center text-[10px] font-semibold uppercase tracking-wide text-[#FFE600]/90" title="Seguimiento personal (solo en este navegador)">Seg.</th>
                                 <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Nombre</th>
                                 <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">RFC</th>
-                                <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Estado</th>
+                                <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Estatus</th>
                                 <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Ejecutivo</th>
                             </tr>
                         </thead>
@@ -240,14 +244,37 @@
             const searchInput = document.getElementById('excel-option-search');
             const selectAllInput = document.getElementById('excel-select-all');
             const optionsList = document.getElementById('excel-options-list');
-            const buttonsWrap = document.getElementById('header-filter-buttons-wrap');
+            if (panelEl && panelEl.parentElement !== document.body) {
+                document.body.appendChild(panelEl);
+            }
             if (!form) return;
 
             const headerLabels = @json($excelHeaders ?? []);
             const fieldOptions = @json($fieldOptions ?? []);
             const selectedByField = @json($selectedByField ?? []);
             const prospectStatusLabels = @json($prospectStatusLabels ?? []);
+            const persistStateUrl = @json(route('filtros.persist-state'));
             let currentField = null;
+            let persistTimer = null;
+
+            function schedulePersistFiltrosState() {
+                clearTimeout(persistTimer);
+                persistTimer = setTimeout(() => {
+                    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                    if (!token) return;
+                    const fd = new FormData(form);
+                    fetch(persistStateUrl, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': token,
+                            Accept: 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                        body: fd,
+                        credentials: 'same-origin',
+                    }).catch(() => {});
+                }, 500);
+            }
 
             Object.keys(headerLabels).forEach((field) => {
                 if (!Array.isArray(selectedByField[field])) selectedByField[field] = [];
@@ -271,7 +298,7 @@
                 }
                 entries.forEach(([field, values]) => {
                     const chip = document.createElement('span');
-                    chip.className = 'inline-flex items-center rounded-lg border border-[#FFE600]/40 bg-[#FFE600]/20 px-2.5 py-1 text-xs text-[#FFE600]';
+                    chip.className = 'inline-flex items-center gap-1.5 max-w-full rounded-lg border border-[#FFE600]/40 bg-[#FFE600]/20 pl-2.5 pr-1 py-1 text-xs text-[#FFE600]';
                     const displayVals = values.map((v) => {
                         const key = String(v);
                         if (field === 'status_color' && prospectStatusLabels[key]) {
@@ -279,7 +306,31 @@
                         }
                         return key;
                     });
-                    chip.textContent = `${headerLabels[field]}: ${displayVals.join(', ')}`;
+                    const label = document.createElement('span');
+                    label.className = 'min-w-0 break-words';
+                    label.textContent = `${headerLabels[field]}: ${displayVals.join(', ')}`;
+                    chip.appendChild(label);
+
+                    const removeBtn = document.createElement('button');
+                    removeBtn.type = 'button';
+                    removeBtn.className =
+                        'shrink-0 inline-flex h-6 w-6 items-center justify-center rounded-md text-[#FFE600] hover:bg-[#0B2C66]/30 hover:text-white focus:outline-none focus:ring-2 focus:ring-[#FFE600]/50';
+                    removeBtn.setAttribute('aria-label', `Quitar filtro: ${headerLabels[field] || field}`);
+                    removeBtn.title = 'Quitar este filtro';
+                    removeBtn.innerHTML =
+                        '<svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>';
+                    removeBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        selectedByField[field] = [];
+                        if (currentField === field) {
+                            closePanel();
+                        }
+                        renderCounts();
+                        renderSummary();
+                        renderHiddenInputs();
+                    });
+                    chip.appendChild(removeBtn);
                     summaryEl.appendChild(chip);
                 });
             }
@@ -311,6 +362,7 @@
                     });
                     idx += 1;
                 });
+                schedulePersistFiltrosState();
             }
 
             function renderPanelOptions() {
@@ -340,23 +392,82 @@
                 selectAllInput.checked = allChecked;
             }
 
+            function viewportMetrics() {
+                const vv = window.visualViewport;
+                if (vv) {
+                    return {
+                        w: vv.width,
+                        h: vv.height,
+                        offsetTop: vv.offsetTop || 0,
+                    };
+                }
+                return {
+                    w: window.innerWidth,
+                    h: window.innerHeight,
+                    offsetTop: 0,
+                };
+            }
+
+            function positionFilterPanel(trigger) {
+                if (!trigger || !panelEl) return;
+                const btnRect = trigger.getBoundingClientRect();
+                const margin = 10;
+                const bottomReserve = 128;
+                const vp = viewportMetrics();
+                const vw = vp.w;
+                const vh = vp.h;
+                const panelW = Math.min(360, vw - margin * 2);
+                let left = btnRect.left;
+                left = Math.min(left, vw - panelW - margin);
+                left = Math.max(margin, left);
+                let top = btnRect.bottom + 6;
+                panelEl.style.position = 'fixed';
+                panelEl.style.left = `${left}px`;
+                panelEl.style.top = `${top}px`;
+                panelEl.style.width = `${panelW}px`;
+                panelEl.style.maxWidth = `${panelW}px`;
+                panelEl.style.right = 'auto';
+                panelEl.style.bottom = 'auto';
+                panelEl.style.zIndex = '9999';
+                panelEl.style.boxSizing = 'border-box';
+
+                requestAnimationFrame(() => {
+                    const pr = panelEl.getBoundingClientRect();
+                    const maxBottom = vh - margin - bottomReserve;
+                    if (pr.bottom > maxBottom) {
+                        const above = btnRect.top - pr.height - 6;
+                        if (above >= margin + vp.offsetTop) {
+                            panelEl.style.top = `${above}px`;
+                            panelEl.style.maxHeight = `min(32rem, calc(100vh - ${bottomReserve}px))`;
+                        } else {
+                            panelEl.style.top = `${margin + vp.offsetTop}px`;
+                            const maxH = Math.max(160, maxBottom - margin - vp.offsetTop);
+                            panelEl.style.maxHeight = `${maxH}px`;
+                        }
+                    } else {
+                        panelEl.style.maxHeight = `min(32rem, calc(100vh - ${bottomReserve}px))`;
+                    }
+                });
+            }
+
             function openPanelFor(field) {
                 currentField = field;
                 panelTitle.textContent = headerLabels[field] || 'Filtro';
                 searchInput.value = '';
                 const trigger = document.querySelector(`.excel-filter-btn[data-field="${field}"]`);
-                if (trigger && buttonsWrap) {
-                    const wrapRect = buttonsWrap.getBoundingClientRect();
-                    const btnRect = trigger.getBoundingClientRect();
-                    panelEl.style.left = `${Math.max(0, btnRect.left - wrapRect.left)}px`;
-                    panelEl.style.top = `${btnRect.bottom - wrapRect.top + 6}px`;
-                }
                 panelEl.classList.remove('hidden');
                 renderPanelOptions();
+                if (trigger) {
+                    positionFilterPanel(trigger);
+                    requestAnimationFrame(() => positionFilterPanel(trigger));
+                }
             }
 
             function closePanel() {
                 panelEl.classList.add('hidden');
+                panelEl.style.maxHeight = '';
+                panelEl.style.top = '';
+                panelEl.style.left = '';
                 currentField = null;
             }
 
@@ -391,6 +502,21 @@
                 if (panelEl.contains(target)) return;
                 if (target.closest('.excel-filter-btn')) return;
                 closePanel();
+            });
+
+            window.addEventListener(
+                'scroll',
+                () => {
+                    if (!panelEl.classList.contains('hidden')) {
+                        closePanel();
+                    }
+                },
+                true
+            );
+            window.addEventListener('resize', () => {
+                if (!panelEl.classList.contains('hidden')) {
+                    closePanel();
+                }
             });
 
             renderCounts();

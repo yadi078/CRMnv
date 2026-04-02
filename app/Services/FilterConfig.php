@@ -50,10 +50,10 @@ class FilterConfig
             'departamento' => ['label' => 'Área de trabajo', 'column' => 'departamento', 'type' => 'select', 'multiple' => true, 'operators' => ['equals', 'not_equals', 'is_empty', 'is_not_empty']],
             'puesto_de_trabajo' => ['label' => 'Puesto de trabajo', 'column' => 'puesto_de_trabajo', 'type' => 'select', 'multiple' => true, 'operators' => ['equals', 'not_equals', 'is_empty', 'is_not_empty']],
             'municipio' => ['label' => 'Ciudad', 'column' => 'municipio', 'type' => 'select', 'multiple' => true, 'operators' => ['equals', 'not_equals', 'is_empty', 'is_not_empty']],
-            'estado' => ['label' => 'Estado', 'column' => 'estado', 'type' => 'select', 'multiple' => true, 'operators' => ['equals', 'not_equals', 'is_empty', 'is_not_empty']],
+            'estado' => ['label' => 'Entidad federativa (ubicación)', 'column' => 'estado', 'type' => 'select', 'multiple' => true, 'operators' => ['equals', 'not_equals', 'is_empty', 'is_not_empty']],
 
             // Semáforo de prospecto (mismo status_color que en listados / badges)
-            'status_color' => ['label' => 'Estado de prospecto (color)', 'column' => 'status_color', 'type' => 'select', 'multiple' => true, 'operators' => ['equals', 'not_equals', 'is_empty', 'is_not_empty']],
+            'status_color' => ['label' => 'Estatus de prospecto (color)', 'column' => 'status_color', 'type' => 'select', 'multiple' => true, 'operators' => ['equals', 'not_equals', 'is_empty', 'is_not_empty']],
 
             // RELACIONAL: ejecutivo asignado (usuario + administradores; vía assigned_user_id / empresa)
             'comercial' => ['label' => 'Comercial', 'column' => null, 'type' => 'select', 'multiple' => true, 'operators' => ['equals', 'not_equals', 'is_empty', 'is_not_empty']],
@@ -77,8 +77,8 @@ class FilterConfig
         return [
             'sector' => ['label' => 'Giro', 'column' => 'sector', 'type' => 'select', 'multiple' => true, 'operators' => ['equals', 'not_equals', 'is_empty', 'is_not_empty']],
             'municipio' => ['label' => 'Ciudad', 'column' => 'municipio', 'type' => 'select', 'multiple' => true, 'operators' => ['equals', 'not_equals', 'is_empty', 'is_not_empty']],
-            'estado' => ['label' => 'Estado', 'column' => 'estado', 'type' => 'select', 'multiple' => true, 'operators' => ['equals', 'not_equals', 'is_empty', 'is_not_empty']],
-            'status_color' => ['label' => 'Estado de prospecto (color)', 'column' => 'status_color', 'type' => 'select', 'multiple' => true, 'operators' => ['equals', 'not_equals', 'is_empty', 'is_not_empty']],
+            'estado' => ['label' => 'Entidad federativa (ubicación)', 'column' => 'estado', 'type' => 'select', 'multiple' => true, 'operators' => ['equals', 'not_equals', 'is_empty', 'is_not_empty']],
+            'status_color' => ['label' => 'Estatus de prospecto (color)', 'column' => 'status_color', 'type' => 'select', 'multiple' => true, 'operators' => ['equals', 'not_equals', 'is_empty', 'is_not_empty']],
 
             // Ejecutivo asignado (mismo catálogo que en contactos: roles usuario + admin)
             'comercial' => ['label' => 'Comercial', 'column' => null, 'type' => 'select', 'multiple' => true, 'operators' => ['equals', 'not_equals', 'is_empty', 'is_not_empty']],

@@ -9,19 +9,38 @@
     $managedUsersSuggestions = $managedUsersSuggestions ?? collect();
 @endphp
 
+@php
+    $salirAsistenciaQuery = collect(request()->query())
+        ->except(['user_search'])
+        ->merge(['cerrar_asistencia_contrasenas' => 1])
+        ->filter(fn ($v) => $v !== null && $v !== '')
+        ->all();
+@endphp
+
 <section class="space-y-5">
-    <header class="flex items-start gap-4">
-        <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-[#FFE600]/20 flex items-center justify-center text-[#FFE600]">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c1.657 0 3-1.567 3-3.5S13.657 4 12 4 9 5.567 9 7.5 10.343 11 12 11zm0 0c-3.314 0-6 1.79-6 4v1h12v-1c0-2.21-2.686-4-6-4zm6.5-2.5h3m-1.5-1.5v3" />
+    <header class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div class="flex items-start gap-4 min-w-0">
+            <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-[#FFE600]/20 flex items-center justify-center text-[#FFE600]">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c1.657 0 3-1.567 3-3.5S13.657 4 12 4 9 5.567 9 7.5 10.343 11 12 11zm0 0c-3.314 0-6 1.79-6 4v1h12v-1c0-2.21-2.686-4-6-4zm6.5-2.5h3m-1.5-1.5v3" />
+                </svg>
+            </div>
+            <div class="min-w-0">
+                <h2 class="text-xl font-bold text-white tracking-tight">Asistencia de contraseñas de usuarios</h2>
+                <p class="mt-1 text-sm text-white/75 leading-relaxed">
+                    Busca un usuario por nombre o correo y restablece su contraseña cuando la olvide.
+                </p>
+            </div>
+        </div>
+        <a
+            href="{{ route('executives.index', $salirAsistenciaQuery) }}"
+            class="inline-flex shrink-0 items-center justify-center gap-2 px-4 py-2.5 rounded-xl border-2 border-white/35 text-white text-sm font-semibold hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-[#FFE600]/50 transition-colors self-start sm:self-auto"
+        >
+            <svg class="w-5 h-5 opacity-90" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
             </svg>
-        </div>
-        <div>
-            <h2 class="text-xl font-bold text-white tracking-tight">Asistencia de contraseñas de usuarios</h2>
-            <p class="mt-1 text-sm text-white/75 leading-relaxed">
-                Busca un usuario por nombre o correo y restablece su contraseña cuando la olvide.
-            </p>
-        </div>
+            Salir
+        </a>
     </header>
 
     <div class="rounded-2xl border border-white/20 bg-white/5 p-4 sm:p-5 space-y-4">

@@ -36,6 +36,7 @@ class User extends Authenticatable
         'approved_by',
         'approved_at',
         'is_active',
+        'filtros_saved_state',
     ];
 
     /**
@@ -46,6 +47,7 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'filtros_saved_state',
     ];
 
     /**
@@ -60,6 +62,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'approved_at' => 'datetime',
             'is_active' => 'boolean',
+            'filtros_saved_state' => 'array',
         ];
     }
 
@@ -175,6 +178,26 @@ class User extends Authenticatable
     public function esAdmin(): bool
     {
         return $this->hasRole(['admin', 'administrador']);
+    }
+
+    /**
+     * Usuarios con rol ejecutivo (usuario) para asignar empresas/contactos.
+     *
+     * @return Collection<int, User>
+     */
+    public static function ejecutivosAsignables(): Collection
+    {
+        $guard = config('auth.defaults.guard', 'web');
+
+        return static::query()
+            ->where(function ($q): void {
+                $q->whereNull('is_active')->orWhere('is_active', true);
+            })
+            ->whereHas('roles', function ($q) use ($guard): void {
+                $q->where('guard_name', $guard)->where('name', 'usuario');
+            })
+            ->orderBy('name')
+            ->get(['id', 'name', 'email']);
     }
 
     /**

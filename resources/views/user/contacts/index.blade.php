@@ -47,14 +47,14 @@
                     @endforeach
                 </datalist>
             @endif
-            <div class="overflow-x-auto">
-                <table class="w-full min-w-[980px] table-fixed divide-y divide-white/20">
+            <div class="crm-table-scroll-wrap crm-table-scroll w-full min-w-0 -mx-4 sm:-mx-0">
+                <table class="w-full crm-table-wide table-fixed divide-y divide-white/20">
                     <thead>
                         <tr class="table-header-panel-dark">
                             <th scope="col" class="crm-row-marker-head w-11 min-w-[2.75rem] px-1 py-3 text-center text-[10px] font-semibold uppercase tracking-wide text-[#FFE600]/90" title="Seguimiento personal (solo en este navegador)">Seg.</th>
                             <th class="w-[22%] min-w-[11rem] px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Nombre</th>
                             <th class="w-[20%] min-w-[10rem] px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Empresa</th>
-                            <th class="w-[11%] min-w-[6rem] px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Estado</th>
+                            <th class="w-[11%] min-w-[6rem] px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Estatus</th>
                             <th class="w-[18%] min-w-[9rem] px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Correo</th>
                             <th class="w-[12%] min-w-[7rem] px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Teléfono</th>
                         </tr>

@@ -14,7 +14,7 @@
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="font-sans antialiased text-fluid-base">
+    <body class="font-sans antialiased leading-normal">
         @auth
             @php($crmHeaderUnreadNotif = auth()->user()->unreadNotificationsCount())
         @endauth
@@ -118,7 +118,7 @@
                 @endunless
 
                 {{-- Contenido: padding-top en móvil para no quedar bajo la barra fija --}}
-                <main class="flex-1 p-4 sm:p-6 md:p-8 pt-[calc(2.75rem+1rem)] lg:pt-8 min-w-0 overflow-x-hidden">
+                <main class="flex-1 p-3 xs:p-4 sm:p-6 md:p-8 pt-[calc(2.75rem+1rem)] lg:pt-8 min-w-0 overflow-x-hidden">
                     <div class="max-w-7xl mx-auto w-full min-w-0">
                         {{ $slot }}
                     </div>
@@ -335,6 +335,7 @@
                     + '        </div>'
                     + '        <div class="rounded-xl border border-white/15 bg-[#0f376f] p-4">'
                     + '          <p class="text-sm font-bold text-[#FFE600] mb-2">Datos del recordatorio</p>'
+                    +            rowHtml('Tipo de acción', detail.tipo_accion)
                     +            rowHtml('Hora programada', detail.fecha_inicio || alertData.time)
                     +            rowHtml('Fecha límite', detail.fecha_limite)
                     +            rowHtml('Repetición', detail.repeticion)

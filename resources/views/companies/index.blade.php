@@ -11,65 +11,75 @@
 
     <div class="space-y-6">
         <div class="panel-card-dark">
-            <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between mb-4">
-                <div class="flex-1 min-w-0">
-                    <h3 class="text-sm font-semibold text-white/90 mb-2">Buscar empresa</h3>
-                    <form method="GET" action="{{ route('companies.index') }}" class="flex flex-col sm:flex-row sm:items-center gap-3">
-                        <div class="flex-1 min-w-0">
-                            <label for="search" class="sr-only">Nombre de la empresa</label>
-                            <input
-                                type="text"
-                                id="search"
-                                name="search"
-                                value="{{ request('search') }}"
-                                placeholder="Nombre de la empresa..."
-                                list="company_names"
-                                class="w-full rounded-xl border-0 bg-white/15 text-white text-sm py-2.5 px-3 placeholder-white/60 focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50"
-                            >
-                        </div>
-                        <div class="flex flex-wrap items-center gap-2 sm:gap-3">
-                            <a href="{{ route('companies.index') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/30 text-white/90 text-sm font-medium hover:bg-white/10">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                                Limpiar
-                            </a>
-                            <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#FFE600] text-[#071A3D] text-sm font-semibold shadow-md hover:bg-[#ffeb3b]">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z" />
-                                </svg>
-                                Buscar
-                            </button>
-                            @can('companies.create')
-                            <a href="{{ route('companies.create') }}" class="btn-amber-app flex-shrink-0">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" />
-                                </svg>
-                                Nueva Empresa
-                            </a>
-                            @endcan
-                        </div>
-                    </form>
-                    @if(isset($companyNames) && $companyNames->isNotEmpty())
-                        <datalist id="company_names">
-                            @foreach($companyNames as $companyName)
-                                <option value="{{ $companyName }}"></option>
-                            @endforeach
-                        </datalist>
-                    @endif
-                </div>
-                @can('companies.create')
-                <form action="{{ route('companies.import') }}" method="POST" enctype="multipart/form-data" class="flex-shrink-0">
-                    @csrf
-                    <label class="inline-flex items-center gap-2 px-3 py-2 rounded-full bg-white/10 border border-white/30 text-xs text-white/90 cursor-pointer hover:bg-white/15">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4h16v12H4zM4 16l4 4m0 0h8m-8 0l4-4" />
-                        </svg>
-                        <span>Cargar base (Excel)</span>
-                        <input type="file" name="file" class="hidden" accept=".xlsx,.xls,.csv" onchange="this.form.submit()">
-                    </label>
+            <div class="mb-4">
+                <h3 class="text-sm font-semibold text-white/90 mb-2">Buscar empresa</h3>
+                <form id="company-search-form" method="GET" action="{{ route('companies.index') }}">
+                    <label for="search" class="sr-only">Nombre de la empresa</label>
+                    <input
+                        type="text"
+                        id="search"
+                        name="search"
+                        value="{{ request('search') }}"
+                        placeholder="Nombre de la empresa..."
+                        list="company_names"
+                        class="w-full rounded-xl border-0 bg-white/15 text-white text-sm py-2.5 px-3 placeholder-white/60 focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50"
+                    >
                 </form>
-                @endcan
+                @if(isset($companyNames) && $companyNames->isNotEmpty())
+                    <datalist id="company_names">
+                        @foreach($companyNames as $companyName)
+                            <option value="{{ $companyName }}"></option>
+                        @endforeach
+                    </datalist>
+                @endif
+
+                {{-- Fila 1: Limpiar, Historial, Cargar Excel (formularios POST aparte) --}}
+                <div class="mt-3 flex flex-wrap items-center gap-2 sm:gap-3">
+                    <a href="{{ route('companies.index') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/30 text-white/90 text-sm font-medium hover:bg-white/10">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        Limpiar
+                    </a>
+                    @can('viewAny', \App\Models\Sale::class)
+                    <a href="{{ route('user.sales.index') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#FFE600]/70 text-[#FFE600] text-sm font-semibold hover:bg-[#FFE600]/15">
+                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                        Historial de ventas
+                    </a>
+                    @endcan
+                    @can('companies.create')
+                    <form action="{{ route('companies.import') }}" method="POST" enctype="multipart/form-data" class="inline-flex">
+                        @csrf
+                        <label class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 border border-white/30 text-sm text-white/90 cursor-pointer hover:bg-white/15">
+                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4h16v12H4zM4 16l4 4m0 0h8m-8 0l4-4" />
+                            </svg>
+                            <span>Cargar base (Excel)</span>
+                            <input type="file" name="file" class="hidden" accept=".xlsx,.xls,.csv" onchange="this.form.submit()">
+                        </label>
+                    </form>
+                    @endcan
+                </div>
+
+                {{-- Fila 2: Buscar + Nueva empresa (amarillos) --}}
+                <div class="mt-3 flex flex-wrap items-center gap-2 sm:gap-3">
+                    <button type="submit" form="company-search-form" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#FFE600] text-[#071A3D] text-sm font-semibold shadow-md hover:bg-[#ffeb3b]">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z" />
+                        </svg>
+                        Buscar
+                    </button>
+                    @can('companies.create')
+                    <a href="{{ route('companies.create') }}" class="btn-amber-app">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
+                        Nueva Empresa
+                    </a>
+                    @endcan
+                </div>
             </div>
         </div>
 
@@ -148,7 +158,7 @@
         <div class="panel-card-dark overflow-hidden">
             <h3 class="panel-card-dark__title panel-card-dark__title--accent mb-4">Listado</h3>
             <div class="crm-table-scroll-wrap crm-table-scroll w-full min-w-0 -mx-4 sm:-mx-0">
-                <table class="w-full min-w-[944px] table-fixed divide-y divide-white/20">
+                <table class="w-full crm-table-wide table-fixed divide-y divide-white/20">
                     <thead>
                         <tr class="table-header-panel-dark">
                             <th scope="col" class="crm-row-marker-head w-11 min-w-[2.75rem] px-1 py-3.5 text-center text-[10px] font-semibold uppercase tracking-wide text-[#FFE600]/90" title="Seguimiento personal (solo en este navegador)">Seg.</th>

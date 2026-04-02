@@ -170,6 +170,20 @@ Alpine.data('executivesPage', (initial = {}) => ({
             this.transferPreviewLoading = false;
         }
     },
+    clearTransferPortfolioForm() {
+        const from = document.getElementById('transfer_from');
+        const to = document.getElementById('transfer_to');
+        if (from) {
+            from.selectedIndex = 0;
+        }
+        if (to) {
+            to.selectedIndex = 0;
+        }
+        this.transferConfirmOpen = false;
+        this.transferPreviewCompanies = [];
+        this.transferPreviewFromValue = '';
+        this.transferPreviewLoading = false;
+    },
     openContactTransfer(execId, contactId) {
         this.transferFromUserId = execId;
         this.transferContactId = contactId;

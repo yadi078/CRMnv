@@ -65,6 +65,7 @@ class Contact extends Model
         'colonia_cp',
         'rfc',
         'regimen_fiscal',
+        'ficha_registro_desbloqueada',
         'notas',
         'status_color',
         'approval_status',
@@ -90,6 +91,7 @@ class Contact extends Model
     {
         return [
             'email_activo' => 'boolean',
+            'ficha_registro_desbloqueada' => 'boolean',
             'fecha_cumpleanos' => 'date',
             'approved_at' => 'datetime',
             'deletion_pending' => 'boolean',
@@ -156,6 +158,35 @@ class Contact extends Model
     }
 
     /**
+     * Última venta asociada (para ficha de inscripción desde el contacto).
+     */
+    public function latestSale(): ?Sale
+    {
+        return $this->sales()->latest('id')->first();
+    }
+
+    /**
+     * Datos mínimos de venta presentes para permitir descargar el PDF de ficha de inscripción.
+     */
+    public function fichaPdfCompleta(): bool
+    {
+        $sale = $this->latestSale();
+        if ($sale === null) {
+            return false;
+        }
+
+        $nombre = trim((string) $sale->nombre_servicio);
+
+        return $nombre !== ''
+            && ! Str::startsWith($nombre, 'Venta desde contacto:')
+            && filled(trim((string) ($sale->tipo_curso ?? '')))
+            && $sale->fecha_venta !== null
+            && $sale->monto !== null
+            && filled($sale->tipo_pago)
+            && (int) ($sale->participantes ?? 0) >= 1;
+    }
+
+    /**
      * Relación: Usuario que creó el registro
      */
     public function creator(): BelongsTo
@@ -206,6 +237,14 @@ class Contact extends Model
     public function scopePorStatus($query, string $status)
     {
         return $query->where('status_color', $status);
+    }
+
+    /**
+     * Indica si el alta del contacto está pendiente de aprobación por administrador.
+     */
+    public function estaPendiente(): bool
+    {
+        return $this->approval_status === 'pendiente';
     }
 
     /**

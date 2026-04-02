@@ -12,6 +12,7 @@ class ReminderController extends Controller
     {
         $data = $request->validate([
             'title' => ['required', 'string', 'max:255'],
+            'tipo_accion' => ['required', 'string', 'in:llamada,reunión,cierre'],
             'date' => ['nullable', 'date'],
             'time' => ['nullable', 'string'],
             'all_day' => ['sometimes', 'boolean'],
@@ -42,6 +43,7 @@ class ReminderController extends Controller
 
         $request->user()->reminders()->create([
             'title' => $data['title'],
+            'tipo_accion' => $data['tipo_accion'],
             'description' => $data['description'] ?? null,
             'extension' => $data['extension'] ?? null,
             'nombre_cliente' => $data['nombre_cliente'] ?? null,
@@ -67,6 +69,7 @@ class ReminderController extends Controller
 
         $data = $request->validate([
             'title' => ['required', 'string', 'max:255'],
+            'tipo_accion' => ['required', 'string', 'in:llamada,reunión,cierre'],
             'start_at' => ['nullable', 'date'],
             'end_at' => ['nullable', 'date', 'after_or_equal:start_at'],
             'all_day' => ['sometimes', 'boolean'],
@@ -99,6 +102,7 @@ class ReminderController extends Controller
 
         $payload = [
             'title' => $data['title'],
+            'tipo_accion' => $data['tipo_accion'],
             'description' => $data['description'] ?? $reminder->description,
             'extension' => $data['extension'] ?? $reminder->extension,
             'nombre_cliente' => $data['nombre_cliente'] ?? $reminder->nombre_cliente,

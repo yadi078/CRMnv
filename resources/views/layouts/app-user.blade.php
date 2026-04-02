@@ -2,7 +2,7 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
         <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
         <title>CE CRM - {{ config('app.name', 'Laravel') }}</title>
@@ -12,7 +12,7 @@
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="font-sans antialiased text-fluid-base">
+    <body class="font-sans antialiased leading-normal">
         <div class="sidebar-layout sidebar-layout--expanded" x-data="{ mobileMenuOpen: false }">
             <header class="mobile-header lg:hidden fixed top-0 left-0 right-0 z-30 flex items-center justify-between min-h-touch px-4 bg-[#000836] shadow-lg safe-area-inset">
                 <a href="{{ auth()->user()->esAdmin() ? route('dashboard') : route('user.dashboard') }}" class="flex items-center gap-2 shrink-0" aria-label="Ir al inicio">
@@ -75,7 +75,7 @@
                     }" />
                 @endif
 
-                <main class="flex-1 p-4 sm:p-6 md:p-8 pt-[calc(2.75rem+1rem)] lg:pt-8 min-w-0 overflow-x-hidden">
+                <main class="flex-1 p-3 xs:p-4 sm:p-6 md:p-8 pt-[calc(2.75rem+1rem)] lg:pt-8 min-w-0 overflow-x-hidden">
                     <div class="max-w-7xl mx-auto w-full min-w-0">
                         {{ $slot }}
                     </div>
@@ -284,6 +284,7 @@
                     + '        </div>'
                     + '        <div class="rounded-xl border border-white/15 bg-[#0f376f] p-4">'
                     + '          <p class="text-sm font-bold text-[#FFE600] mb-2">Datos del recordatorio</p>'
+                    +            rowHtml('Tipo de acción', detail.tipo_accion)
                     +            rowHtml('Hora programada', detail.fecha_inicio || alertData.time)
                     +            rowHtml('Fecha límite', detail.fecha_limite)
                     +            rowHtml('Repetición', detail.repeticion)

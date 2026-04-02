@@ -23,16 +23,28 @@
                                 $preselectedId = old('company_id', $companyId ?? null);
                                 $preselectedName = $preselectedId ? ($companies->firstWhere('id', (int) $preselectedId)?->nombre_comercial ?? '') : '';
                             @endphp
-                            <input type="text" id="company_autocomplete" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3 focus:ring-2 focus:ring-[#FFE600]/50" placeholder="Buscar o seleccionar empresa…" value="{{ $preselectedName }}" autocomplete="off" />
+                            <input type="text" id="company_autocomplete" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3 focus:ring-2 focus:ring-[#FFE600]/50 select-text" placeholder="Buscar o seleccionar empresa…" value="{{ $preselectedName }}" autocomplete="off" />
                             <div id="company_autocomplete_list" role="listbox" class="absolute left-0 right-0 top-full z-[100] mt-1 max-h-56 overflow-auto rounded-xl border border-white/20 bg-[#1a3d6b] shadow-lg hidden"></div>
                             @if($companies->isEmpty())
                                 <p class="mt-2 text-sm text-amber-200/90">No hay empresas en el catálogo. Registre una empresa o espere aprobación.</p>
                             @endif
                             <x-input-error :messages="$errors->get('company_id')" class="mt-2 text-red-300" />
                         </div>
+                        <div class="md:col-span-2">
+                            <x-executive-assignment-field
+                                :executiveUsers="$executiveUsers"
+                                :isAdmin="$isAdmin"
+                                :selectedAssignedUserId="$selectedAssignedUserId"
+                                :readonlyExecutiveName="$readonlyExecutiveName"
+                                inputId="contact_ejecutivo"
+                                labelClass="text-white/90"
+                                selectClass="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white [&>option]:bg-[#1a3d6b] py-2.5 px-3"
+                                readonlyClass="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white py-2.5 px-3"
+                            />
+                        </div>
                         <div>
                             <label for="nombre_completo" class="block text-sm font-medium text-white/90 mb-1">Nombre Completo *</label>
-                            <input id="nombre_completo" name="nombre_completo" type="text" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3" value="{{ old('nombre_completo') }}" minlength="4" maxlength="255" required title="Mínimo 4 caracteres" />
+                            <input id="nombre_completo" name="nombre_completo" type="text" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3 select-text" value="{{ old('nombre_completo') }}" minlength="4" maxlength="255" required title="Mínimo 4 caracteres" />
                             <x-input-error :messages="$errors->get('nombre_completo')" class="mt-2 text-red-300" />
                         </div>
                         <div>
@@ -91,7 +103,7 @@
                             <input id="municipio" name="municipio" type="text" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3" value="{{ old('municipio') }}" />
                         </div>
                         <div>
-                            <label for="estado" class="block text-sm font-medium text-white/90 mb-1">Estado</label>
+                            <label for="estado" class="block text-sm font-medium text-white/90 mb-1">Entidad federativa</label>
                             <input id="estado" name="estado" type="text" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3" value="{{ old('estado') }}" />
                         </div>
                         <div class="md:col-span-2 mt-2 pt-6 border-t border-white/20">

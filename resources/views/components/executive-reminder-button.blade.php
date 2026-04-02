@@ -90,39 +90,54 @@
                 </div>
 
                 <div class="pt-4 border-t border-white/15">
-                    <p class="text-xs font-semibold uppercase tracking-wider text-[#FFE600]/90 mb-3">Programacion</p>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                        <div>
-                            <label class="block text-sm font-medium text-white/90 mb-1">Fecha</label>
-                            <input type="date" name="date" value="{{ old('date') }}" style="color: #111827;" class="w-full rounded-xl border border-gray-300 bg-white focus:ring-2 focus:ring-[#FFE600]/60 py-3 px-4 text-sm min-h-[44px]">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-[#FFE600]/90 mb-3">Seguimiento</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-white/90 mb-1">Tipo de Acción *</label>
+                                <select name="tipo_accion" required class="w-full rounded-xl border-2 border-[#FFE600]/90 bg-[#0b386a] text-white focus:ring-2 focus:ring-[#FFE600]/60 py-2.5 px-3 text-sm [&>option]:bg-white [&>option]:text-gray-900">
+                                    <option value="">Seleccione un tipo</option>
+                                    @foreach(\App\Models\Reminder::TIPO_ACCION_OPCIONES as $val => $etiqueta)
+                                        <option value="{{ $val }}" @selected(old('tipo_accion') === $val)>{{ $etiqueta }}</option>
+                                    @endforeach
+                                </select>
+                                @error('tipo_accion')
+                                    <p class="mt-1 text-sm text-red-300">{{ $message }}</p>
+                                @enderror
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-white/90 mb-1">Bitácora de Notas</label>
+                                <textarea name="description" rows="6" style="color: #111827;" class="w-full rounded-xl border border-gray-300 bg-white placeholder-gray-400 focus:ring-2 focus:ring-[#FFE600]/60 py-2.5 px-3 text-sm" placeholder="Ingrese las notas y observaciones...">{{ old('description') }}</textarea>
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium text-white/90 mb-1">Hora</label>
-                            <input type="time" name="time" value="{{ old('time') }}" style="color: #111827;" class="w-full rounded-xl border border-gray-300 bg-white focus:ring-2 focus:ring-[#FFE600]/60 py-3 px-4 text-sm min-h-[44px]">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-white/90 mb-1">Repetir</label>
-                            <select name="repeat" style="color: #111827;" class="w-full rounded-xl border border-gray-300 bg-white focus:ring-2 focus:ring-[#FFE600]/60 py-2.5 px-3 text-sm">
-                                <option value="">No repetir</option>
-                                <option value="daily" @selected(old('repeat') === 'daily')>Diario</option>
-                                <option value="weekly" @selected(old('repeat') === 'weekly')>Semanal</option>
-                                <option value="monthly" @selected(old('repeat') === 'monthly')>Mensual</option>
-                            </select>
-                            <label class="inline-flex items-center gap-2 text-xs text-white/80 mt-2">
-                                <input type="checkbox" name="all_day" value="1" @checked(old('all_day')) class="rounded border-white/30 text-[#FFE600] bg-white focus:ring-[#FFE600]">
-                                Recordatorio todo el dia
-                            </label>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-white/90 mb-1">Fecha limite</label>
-                            <input type="date" name="deadline_date" value="{{ old('deadline_date') }}" style="color: #111827;" class="w-full rounded-xl border border-gray-300 bg-white focus:ring-2 focus:ring-[#FFE600]/60 py-3 px-4 text-sm min-h-[44px]">
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-white/90 mb-1">Fecha</label>
+                                <input type="date" name="date" value="{{ old('date') }}" style="color: #111827;" class="w-full rounded-xl border border-gray-300 bg-white focus:ring-2 focus:ring-[#FFE600]/60 py-3 px-4 text-sm min-h-[44px]">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-white/90 mb-1">Hora</label>
+                                <input type="time" name="time" value="{{ old('time') }}" style="color: #111827;" class="w-full rounded-xl border border-gray-300 bg-white focus:ring-2 focus:ring-[#FFE600]/60 py-3 px-4 text-sm min-h-[44px]">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-white/90 mb-1">Repetir</label>
+                                <select name="repeat" style="color: #111827;" class="w-full rounded-xl border border-gray-300 bg-white focus:ring-2 focus:ring-[#FFE600]/60 py-2.5 px-3 text-sm">
+                                    <option value="">No repetir</option>
+                                    <option value="daily" @selected(old('repeat') === 'daily')>Diario</option>
+                                    <option value="weekly" @selected(old('repeat') === 'weekly')>Semanal</option>
+                                    <option value="monthly" @selected(old('repeat') === 'monthly')>Mensual</option>
+                                </select>
+                                <label class="inline-flex items-center gap-2 text-xs text-white/80 mt-2">
+                                    <input type="checkbox" name="all_day" value="1" @checked(old('all_day')) class="rounded border-white/30 text-[#FFE600] bg-white focus:ring-[#FFE600]">
+                                    Recordatorio todo el dia
+                                </label>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-white/90 mb-1">Fecha limite</label>
+                                <input type="date" name="deadline_date" value="{{ old('deadline_date') }}" style="color: #111827;" class="w-full rounded-xl border border-gray-300 bg-white focus:ring-2 focus:ring-[#FFE600]/60 py-3 px-4 text-sm min-h-[44px]">
+                            </div>
                         </div>
                     </div>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-white/90 mb-1">Detalles del recordatorio</label>
-                    <textarea name="description" rows="3" style="color: #111827;" class="w-full rounded-xl border border-gray-300 bg-white placeholder-gray-400 focus:ring-2 focus:ring-[#FFE600]/60 py-2.5 px-3 text-sm" placeholder="Notas adicionales...">{{ old('description') }}</textarea>
                 </div>
 
                 <div class="flex justify-end gap-4 pt-4 border-t border-white/15">
