@@ -137,11 +137,10 @@
                             <option value="">Todos (con o sin ejecutivo)</option>
                             <option value="sin" @selected(request('ejecutivo_id') === 'sin')>Sin ejecutivo asignado</option>
                             <option value="con" @selected(request('ejecutivo_id') === 'con')>Con ejecutivo asignado</option>
-                            @foreach($executivesForTransfer as $ex)
-                                <option value="{{ $ex->id }}" @selected((string) request('ejecutivo_id') === (string) $ex->id)>{{ $ex->name }} — {{ $ex->email }}</option>
+                            @foreach($executiveFilterOptions as $opt)
+                                <option value="{{ $opt['value'] }}" @selected((string) request('ejecutivo_id') === (string) $opt['value'])>{{ $opt['label'] }}</option>
                             @endforeach
                         </select>
-                        <p class="mt-1.5 text-[11px] text-white/45 leading-snug">Use «Sin» o «Con» para listar contactos y asignarlos sin elegir empresa antes.</p>
                     </div>
                 </div>
                 <div class="flex flex-wrap gap-2">
@@ -154,6 +153,7 @@
                         Aplicar
                     </button>
                 </div>
+                <p class="text-[11px] text-white/45 leading-snug -mt-1 md:col-span-3">Use «Sin» o «Con» para listar contactos y asignarlos sin elegir empresa antes. Los nombres solo de ficha (sin cuenta en el CRM) sirven para filtrar por el campo ejecutivo de la empresa.</p>
             </form>
         </div>
 

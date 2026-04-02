@@ -82,10 +82,16 @@ class ExecutiveController extends Controller
         $ejecutivoRaw = $effective['ejecutivo_id'] ?? null;
         $ejecutivoModo = null;
         $ejecutivoUserId = null;
+        $ejecutivoTextoFiltro = null;
         if ($ejecutivoRaw === 'sin') {
             $ejecutivoModo = 'sin';
         } elseif ($ejecutivoRaw === 'con') {
             $ejecutivoModo = 'con';
+        } elseif (is_string($ejecutivoRaw) && str_starts_with($ejecutivoRaw, 'E:')) {
+            $decoded = base64_decode(substr($ejecutivoRaw, 2), true);
+            if ($decoded !== false && trim($decoded) !== '') {
+                $ejecutivoTextoFiltro = trim($decoded);
+            }
         } elseif ($ejecutivoRaw !== null && $ejecutivoRaw !== '' && is_numeric($ejecutivoRaw)) {
             $uid = (int) $ejecutivoRaw;
             if ($uid > 0) {
@@ -113,6 +119,8 @@ class ExecutiveController extends Controller
             ->orderBy('name')
             ->get(['id', 'name', 'email', 'is_active']);
 
+        $executiveFilterOptions = $this->buildExecutiveFilterOptions();
+
         /**
          * Listado por asignaciones (contactos): con empresa y/o contacto, o vista masiva (sin/con ejecutivo).
          */
@@ -121,7 +129,9 @@ class ExecutiveController extends Controller
 
         $showAssignments = $empresaId !== null
             || $contactoId !== null
-            || $ejecutivoModo !== null;
+            || $ejecutivoModo !== null
+            || $ejecutivoUserId !== null
+            || $ejecutivoTextoFiltro !== null;
 
         if ($showAssignments) {
             $cq = Contact::query()->with(['company', 'assignedExecutive']);
@@ -142,7 +152,8 @@ class ExecutiveController extends Controller
             }
 
             // Sin ejecutivo asignado: no aplica "estado de cuenta" del responsable (no hay usuario).
-            if ($cuentaActivaFiltro !== null && $ejecutivoModo !== 'sin') {
+            // Tampoco si el filtro es por texto de ficha (ejecutivo_asignado): puede no haber usuario vinculado.
+            if ($cuentaActivaFiltro !== null && $ejecutivoModo !== 'sin' && $ejecutivoTextoFiltro === null) {
                 if ($cuentaActivaFiltro === 'activo') {
                     $cq->whereHas('assignedExecutive', fn ($q) => $q->where('is_active', true));
                 } else {
@@ -156,6 +167,10 @@ class ExecutiveController extends Controller
                 $cq->whereNotNull('assigned_user_id');
             } elseif ($ejecutivoUserId !== null) {
                 $cq->where('assigned_user_id', $ejecutivoUserId);
+            } elseif ($ejecutivoTextoFiltro !== null) {
+                $cq->whereHas('company', function ($q) use ($ejecutivoTextoFiltro): void {
+                    $q->where('ejecutivo_asignado', $ejecutivoTextoFiltro);
+                });
             }
 
             $assignmentContacts = $cq->orderBy('nombre_completo')->paginate(20)->withQueryString();
@@ -213,8 +228,55 @@ class ExecutiveController extends Controller
             'companiesForFilter' => $companiesForFilter,
             'contactsForFilter' => $contactsForFilter,
             'executivesForTransfer' => $executivesForTransfer,
+            'executiveFilterOptions' => $executiveFilterOptions,
             'mexicanStates' => MexicanStates::all(),
         ], ProfileController::adminPasswordAssistanceState($request)));
+    }
+
+    /**
+     * Opciones del filtro «Ejecutivo (asignación)»: usuarios de cartera (no admin) + nombres ya guardados
+     * en empresa.ejecutivo_asignado sin cuenta vinculada (mismo criterio que el filtro Comercial en Filtros).
+     *
+     * @return \Illuminate\Support\Collection<int, array{value: string, label: string}>
+     */
+    private function buildExecutiveFilterOptions(): \Illuminate\Support\Collection
+    {
+        $rows = collect();
+
+        $users = User::query()
+            ->whereDoesntHave('roles', function ($q): void {
+                $q->whereIn('name', ['admin', 'administrador']);
+            })
+            ->orderBy('name')
+            ->get(['id', 'name', 'email']);
+
+        foreach ($users as $u) {
+            $label = $u->name;
+            if ($u->email !== null && trim((string) $u->email) !== '') {
+                $label .= ' — '.$u->email;
+            }
+            $rows->push(['value' => (string) $u->id, 'label' => $label]);
+        }
+
+        $texts = Company::query()
+            ->whereNotNull('ejecutivo_asignado')
+            ->where('ejecutivo_asignado', '!=', '')
+            ->distinct()
+            ->orderBy('ejecutivo_asignado')
+            ->pluck('ejecutivo_asignado');
+
+        foreach ($texts as $raw) {
+            $t = trim((string) $raw);
+            if ($t === '') {
+                continue;
+            }
+            $key = 'E:'.base64_encode($t);
+            $rows->push(['value' => $key, 'label' => $t]);
+        }
+
+        return $rows
+            ->sortBy(fn (array $row): string => mb_strtolower($row['label']))
+            ->values();
     }
 
     /**
