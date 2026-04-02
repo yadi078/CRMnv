@@ -53,6 +53,14 @@
                 @endisset
 
                 {{-- Mensajes flash (pueden mostrarse varios: éxito + aviso) --}}
+                @if(session('import_flash'))
+                    <x-alert
+                        type="success"
+                        :message="session('import_flash')['message']"
+                        :secondaryUrl="!empty(session('import_flash')['rejected_token']) ? route('companies.import.rejected', ['token' => session('import_flash')['rejected_token']]) : null"
+                        secondaryLabel="Descargar Excel con registros rechazados"
+                    />
+                @endif
                 @if(session('success'))
                     <x-alert type="success" :message="session('success')" />
                 @endif

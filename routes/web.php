@@ -61,6 +61,7 @@ Route::middleware(['auth', 'verified', 'ensure.role'])->group(function () {
     Route::post('/companies/{company}/request-deletion', [CompanyController::class, 'requestDeletion'])->name('companies.request-deletion');
     Route::resource('companies', CompanyController::class);
     Route::post('/companies/import', [CompanyController::class, 'import'])->name('companies.import');
+    Route::get('/companies/import/rejected', [CompanyController::class, 'downloadImportRejected'])->name('companies.import.rejected');
     Route::get('/filtros', [FiltrosController::class, 'index'])->name('filtros.index');
     Route::post('/filtros/persist-state', [FiltrosController::class, 'persistState'])->name('filtros.persist-state');
     Route::post('/filtros/ajax', [FiltrosController::class, 'ajax'])->name('filtros.ajax');

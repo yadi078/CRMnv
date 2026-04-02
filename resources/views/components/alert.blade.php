@@ -1,4 +1,4 @@
-@props(['type' => 'info', 'message'])
+@props(['type' => 'info', 'message', 'secondaryUrl' => null, 'secondaryLabel' => null])
 
 @if($message)
 @php
@@ -54,6 +54,12 @@
         </div>
         <h3 class="text-xl font-bold text-white mb-2">{{ $config['title'] }}</h3>
         <p class="text-white/90 text-sm mb-6">{{ $message }}</p>
+        @if($secondaryUrl && $secondaryLabel)
+            <a href="{{ $secondaryUrl }}"
+               class="mb-4 w-full inline-flex items-center justify-center py-3 px-4 rounded-xl font-semibold text-[#FFE600] border-2 border-[#FFE600]/90 hover:bg-[#FFE600]/10 focus:outline-none focus:ring-2 focus:ring-[#FFE600] focus:ring-offset-2 focus:ring-offset-[#1a3d6b] transition-colors text-sm">
+                {{ $secondaryLabel }}
+            </a>
+        @endif
         <button type="button"
                 @click="show = false"
                 class="w-full py-3 px-4 rounded-xl font-semibold text-gray-900 bg-[#FFE600] hover:bg-[#E6CF00] focus:outline-none focus:ring-2 focus:ring-[#FFE600] focus:ring-offset-2 focus:ring-offset-[#1a3d6b] transition-colors">

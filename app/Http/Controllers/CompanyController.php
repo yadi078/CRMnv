@@ -7,15 +7,23 @@ use App\Http\Controllers\Concerns\ResolvesExecutiveAssignment;
 use App\Models\Company;
 use App\Models\Contact;
 use App\Models\Sale;
+use App\Models\User;
 use App\Services\SpreadsheetProspectStatusResolver;
 use App\Http\Requests\StoreCompanyRequest;
 use App\Http\Requests\UpdateCompanyRequest;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Controlador de Empresas
@@ -252,15 +260,14 @@ class CompanyController extends Controller
     /**
      * Importar empresas y contactos desde un archivo Excel.
      *
-     * Reglas: columna "Área de trabajo" = EMPRESA define fila de empresa; cualquier otro valor, fila de contacto.
-     * Obligatorio: "Nombre de empresa" en todas las filas; en filas que no son EMPRESA, también "Nombre completo".
+     * Fila de empresa: área de trabajo EMPRESA o ESCUELA (o celdas fusionadas heredadas de esas filas).
+     * Fila de contacto: cualquier otra área; obligatorio nombre completo y nombre de empresa (si falta alguno → rechazo).
+     * Puesto y demás campos son opcionales. Si no existe empresa previa para ese nombre, se crea al importar el contacto.
      * Celdas vacías no sobrescriben datos ya guardados (solo se aplican valores presentes en el Excel).
-     * Duplicado de contacto: mismo email/teléfono/celular/nombre en la empresa solo si además coinciden
-     * área de trabajo (departamento) y puesto; si difieren, se crea otro contacto (misma persona, distinto rol).
-     * Las empresas se procesan primero para que cada contacto resuelva su company_id.
+     * Duplicado de contacto: mismo email/teléfono/celular/nombre en la empresa según departamento/puesto.
+     * Las empresas explícitas en archivo se procesan primero; luego contactos.
      *
-     * Estado de prospecto: columna de texto (p. ej. "Estado de prospecto") o color de relleno en la fila
-     * (mostaza/amarillo ≈ seguimiento). Los colores se leen en Excel (.xlsx/.xls); CSV no trae formato.
+     * Estado de prospecto: columna de texto o color de relleno en la fila (.xlsx/.xls); CSV no trae formato.
      */
     public function import(Request $request)
     {
@@ -303,6 +310,50 @@ class CompanyController extends Controller
                 $normalizedHeaders[(string) $normalized] = $column;
             }
 
+            $rejectedRows = [];
+            $recordRejected = function (array $p, string $motivo) use (&$rejectedRows, $headerRow): void {
+                $line = [
+                    'Motivo del rechazo' => $motivo,
+                    'Fila en Excel' => $p['excel_row'],
+                ];
+                foreach ($headerRow as $col => $label) {
+                    if ($label === null) {
+                        continue;
+                    }
+                    $k = trim((string) $label);
+                    if ($k === '') {
+                        continue;
+                    }
+                    if (array_key_exists($k, $line)) {
+                        continue;
+                    }
+                    $val = $p['row'][$col] ?? null;
+                    $line[$k] = $val === null ? '' : (is_scalar($val) ? (string) $val : '');
+                }
+                $rejectedRows[] = $line;
+            };
+            $recordRejectedRaw = function (int $excelRowNum, array $row, string $motivo) use (&$rejectedRows, $headerRow): void {
+                $line = [
+                    'Motivo del rechazo' => $motivo,
+                    'Fila en Excel' => $excelRowNum,
+                ];
+                foreach ($headerRow as $col => $label) {
+                    if ($label === null) {
+                        continue;
+                    }
+                    $k = trim((string) $label);
+                    if ($k === '') {
+                        continue;
+                    }
+                    if (array_key_exists($k, $line)) {
+                        continue;
+                    }
+                    $val = $row[$col] ?? null;
+                    $line[$k] = $val === null ? '' : (is_scalar($val) ? (string) $val : '');
+                }
+                $rejectedRows[] = $line;
+            };
+
             // Helper para obtener el valor de una columna por nombre lógico
             $getValue = function (array $row, array $candidates) use ($normalizedHeaders) {
                 foreach ($candidates as $candidate) {
@@ -317,7 +368,23 @@ class CompanyController extends Controller
                 return null;
             };
 
+            $resolveHeaderColumn = function (array $candidates) use ($normalizedHeaders): ?string {
+                foreach ($candidates as $candidate) {
+                    $key = Str::of($candidate)->lower()->trim()->replace(['á', 'é', 'í', 'ó', 'ú', 'ñ'], ['a', 'e', 'i', 'o', 'u', 'n'])->toString();
+                    if (isset($normalizedHeaders[$key])) {
+                        return $normalizedHeaders[$key];
+                    }
+                }
+
+                return null;
+            };
+
+            $areaDeTrabajoCol = $resolveHeaderColumn(['area de trabajo', 'área de trabajo', 'area trabajo']);
+            $puestoCol = $resolveHeaderColumn(['puesto de trabajo', 'puesto']);
+
             $parsedRows = [];
+            $ultimoAreaGlobal = null;
+            $ultimoNombreEmpresaParaFilaEmpresa = null;
             foreach ($allRows as $excelRowNum => $row) {
                 if ((int) $excelRowNum === 1) {
                     continue;
@@ -341,11 +408,44 @@ class CompanyController extends Controller
                 ]));
 
                 if ($companyName === '') {
+                    $recordRejectedRaw((int) $excelRowNum, $row, 'Falta nombre de empresa.');
+
                     continue;
                 }
 
-                $areaTrabajoValor = trim((string) ($getValue($row, ['area de trabajo', 'área de trabajo', 'area trabajo']) ?? ''));
-                $isEmpresaRow = Str::lower($areaTrabajoValor) === 'empresa';
+                $areaTrabajoValor = '';
+                if ($areaDeTrabajoCol !== null) {
+                    $areaTrabajoValor = $this->getSpreadsheetCellValueResolvingMerge($sheet, $areaDeTrabajoCol, (int) $excelRowNum);
+                }
+                if ($areaTrabajoValor === '') {
+                    $areaTrabajoValor = trim((string) ($getValue($row, ['area de trabajo', 'área de trabajo', 'area trabajo']) ?? ''));
+                }
+
+                $puestoRaw = '';
+                if ($puestoCol !== null) {
+                    $puestoRaw = $this->getSpreadsheetCellValueResolvingMerge($sheet, $puestoCol, (int) $excelRowNum);
+                }
+                if ($puestoRaw === '') {
+                    $puestoRaw = trim((string) ($getValue($row, ['puesto de trabajo', 'puesto']) ?? ''));
+                }
+
+                // Celdas fusionadas en columna de área (EMPRESA/ESCUELA): solo la primera fila trae texto; el resto llega vacío (misma empresa).
+                if ($areaTrabajoValor === ''
+                    && $ultimoAreaGlobal !== null
+                    && $this->isImportCompanyAreaValue((string) $ultimoAreaGlobal)
+                    && $ultimoNombreEmpresaParaFilaEmpresa !== null
+                    && strcasecmp(trim($companyName), $ultimoNombreEmpresaParaFilaEmpresa) === 0) {
+                    $areaTrabajoValor = is_string($ultimoAreaGlobal) ? $ultimoAreaGlobal : 'EMPRESA';
+                }
+
+                $isEmpresaRow = $this->isImportCompanyAreaValue($areaTrabajoValor);
+
+                if (trim($areaTrabajoValor) !== '') {
+                    $ultimoAreaGlobal = $areaTrabajoValor;
+                }
+                if ($isEmpresaRow) {
+                    $ultimoNombreEmpresaParaFilaEmpresa = trim($companyName);
+                }
 
                 $municipio = trim((string) ($getValue($row, ['ciudad', 'municipio']) ?? ''));
                 $estado = trim((string) ($getValue($row, ['estado']) ?? ''));
@@ -366,6 +466,7 @@ class CompanyController extends Controller
                     'row' => $row,
                     'company_name' => $companyName,
                     'area_trabajo' => $areaTrabajoValor,
+                    'puesto' => $puestoRaw,
                     'is_empresa' => $isEmpresaRow,
                     'municipio' => $municipio,
                     'estado' => $estado,
@@ -375,15 +476,36 @@ class CompanyController extends Controller
                 ];
             }
 
+            // Propagar área y puesto por nombre de empresa (filas con celdas fusionadas suelen llegar vacías en toArray).
+            $lastAreaPorEmpresa = [];
+            $lastPuestoPorEmpresa = [];
+            foreach ($parsedRows as $idx => $p) {
+                $nombreEmp = $p['company_name'];
+                if ($p['is_empresa']) {
+                    continue;
+                }
+                $a = trim((string) ($p['area_trabajo'] ?? ''));
+                $pu = trim((string) ($p['puesto'] ?? ''));
+                if ($a === '' && isset($lastAreaPorEmpresa[$nombreEmp])) {
+                    $parsedRows[$idx]['area_trabajo'] = $lastAreaPorEmpresa[$nombreEmp];
+                    $a = trim((string) $parsedRows[$idx]['area_trabajo']);
+                }
+                if ($pu === '' && isset($lastPuestoPorEmpresa[$nombreEmp])) {
+                    $parsedRows[$idx]['puesto'] = $lastPuestoPorEmpresa[$nombreEmp];
+                    $pu = trim((string) $parsedRows[$idx]['puesto']);
+                }
+                if ($a !== '' && ! $this->isImportCompanyAreaValue($a)) {
+                    $lastAreaPorEmpresa[$nombreEmp] = $a;
+                }
+                if ($pu !== '') {
+                    $lastPuestoPorEmpresa[$nombreEmp] = $pu;
+                }
+            }
+
             $createdCompanies = 0;
             $updatedCompanies = 0;
             $createdContacts = 0;
             $updatedContacts = 0;
-            /** @var int Filas EMPRESA que apuntan a una empresa ya existente y no aportan campos nuevos (duplicado en el Excel o sin datos opcionales). */
-            $redundantEmpresaRows = 0;
-            $skippedContactsNoCompany = 0;
-            $skippedContactsNoName = 0;
-
             $approvalStatus = ($user->esAdmin() || $user->can('companies.approve')) ? 'aprobado' : 'pendiente';
 
             /** @var array<int, array{name: string, canonical: string, company: Company}> $empresaRegistry */
@@ -464,11 +586,7 @@ class CompanyController extends Controller
                                     'created_by' => auth()->id(),
                                 ]);
                             }
-                        } else {
-                            $redundantEmpresaRows++;
                         }
-                    } else {
-                        $redundantEmpresaRows++;
                     }
                 } else {
                     $statusColor = $importStatus ?? 'seguimiento';
@@ -529,21 +647,29 @@ class CompanyController extends Controller
                 $municipio = $p['municipio'];
                 $estado = $p['estado'];
 
-                $company = $this->resolveCompanyForImportedContact($companyName, $p['estado'], $empresaRegistry);
-                if (! $company) {
-                    $skippedContactsNoCompany++;
-
-                    continue;
-                }
-
                 $contactName = trim((string) ($getValue($row, ['nombre contacto', 'nombre del contacto', 'nombre completo']) ?? ''));
                 if ($contactName === '') {
-                    $skippedContactsNoName++;
+                    $recordRejected($p, 'Fila de contacto sin nombre completo.');
 
                     continue;
                 }
 
-                $puesto = trim((string) ($getValue($row, ['puesto de trabajo', 'puesto']) ?? ''));
+                $company = $this->resolveCompanyForImportedContact($companyName, $p['estado'], $empresaRegistry);
+                if (! $company) {
+                    $company = $this->createCompanyFromImportParsedRow(
+                        $p,
+                        $user,
+                        $assignToExecutive,
+                        $approvalStatus,
+                        $importStatus
+                    );
+                    $createdCompanies++;
+                }
+
+                $puesto = trim((string) ($p['puesto'] ?? ''));
+                if ($puesto === '') {
+                    $puesto = trim((string) ($getValue($row, ['puesto de trabajo', 'puesto']) ?? ''));
+                }
                 $departamento = $areaTrabajoValor !== ''
                     ? $areaTrabajoValor
                     : trim((string) ($getValue($row, ['departamento']) ?? ''));
@@ -677,28 +803,125 @@ class CompanyController extends Controller
             }
 
             DB::commit();
-
-            $message = "Importación completada. Empresas nuevas: {$createdCompanies}, empresas actualizadas: {$updatedCompanies}";
-            if ($redundantEmpresaRows > 0) {
-                $message .= ", filas EMPRESA duplicadas/sin cambios (mismo nombre comercial, sin datos nuevos): {$redundantEmpresaRows}";
-            }
-            $message .= ". Contactos nuevos: {$createdContacts}, contactos actualizados (mismo criterio de duplicado): {$updatedContacts}.";
-            if ($skippedContactsNoCompany > 0) {
-                $message .= " Filas de contacto sin empresa coincidente (revisa nombres y que exista una fila con Área de trabajo = EMPRESA): {$skippedContactsNoCompany}.";
-            }
-            if ($skippedContactsNoName > 0) {
-                $message .= " Filas de contacto omitidas sin nombre completo: {$skippedContactsNoName}.";
-            }
-
-            return back()->with('success', $message);
         } catch (\Throwable $e) {
-            DB::rollBack();
-            Log::error('Error al importar empresas y contactos desde Excel: ' . $e->getMessage(), [
+            if (DB::transactionLevel() > 0) {
+                DB::rollBack();
+            }
+            Log::error('Error al importar empresas y contactos desde Excel: '.$e->getMessage(), [
+                'exception' => $e::class,
                 'trace' => $e->getTraceAsString(),
             ]);
 
             return back()->with('error', 'Ocurrió un error al procesar el archivo. Verifica el formato y vuelve a intentarlo.');
         }
+
+        // Tras commit, los datos ya están guardados: fallos en caché/sesión no deben mostrarse como "importación fallida".
+        $empresasTotal = $createdCompanies + $updatedCompanies;
+        $contactosTotal = $createdContacts + $updatedContacts;
+        $message = "Se importaron {$empresasTotal} empresas y {$contactosTotal} contactos.";
+
+        $rejectedToken = null;
+        if ($rejectedRows !== []) {
+            try {
+                $rejectedToken = (string) Str::uuid();
+                $relativePath = $this->importRejectedStoragePath(auth()->id(), $rejectedToken);
+                Storage::disk('local')->put(
+                    $relativePath,
+                    json_encode($rejectedRows, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE)
+                );
+            } catch (\Throwable $e) {
+                Log::warning('Importación guardada en base de datos; no se pudo guardar el listado de rechazados en disco.', [
+                    'message' => $e->getMessage(),
+                    'exception' => $e::class,
+                ]);
+            }
+        }
+
+        return back()->with('import_flash', [
+            'message' => $message,
+            'rejected_token' => $rejectedToken,
+        ]);
+    }
+
+    /**
+     * Descarga un Excel con las filas que no se importaron (motivo + datos originales).
+     * El token se genera al finalizar una importación y caduca en breve.
+     */
+    public function downloadImportRejected(Request $request): StreamedResponse|RedirectResponse
+    {
+        $this->authorize('create', Company::class);
+
+        $validated = $request->validate([
+            'token' => 'required|uuid',
+        ]);
+
+        $relativePath = $this->importRejectedStoragePath(auth()->id(), $validated['token']);
+        if (! Storage::disk('local')->exists($relativePath)) {
+            return redirect()->back()->with('error', 'El listado de registros rechazados ya no está disponible o expiró. Importe de nuevo el archivo si lo necesita.');
+        }
+
+        try {
+            $raw = Storage::disk('local')->get($relativePath);
+            $rows = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
+        } catch (\Throwable $e) {
+            Log::warning('No se pudo leer archivo de rechazados de importación.', ['message' => $e->getMessage()]);
+
+            return redirect()->back()->with('error', 'No se pudo leer el listado de rechazados. Importe de nuevo el archivo si lo necesita.');
+        }
+
+        if (! is_array($rows) || $rows === []) {
+            Storage::disk('local')->delete($relativePath);
+
+            return redirect()->back()->with('error', 'El listado de registros rechazados estaba vacío o corrupto.');
+        }
+
+        Storage::disk('local')->delete($relativePath);
+
+        $spreadsheet = $this->buildSpreadsheetFromImportRejectedRows($rows);
+        $writer = new Xlsx($spreadsheet);
+        $filename = 'registros-rechazados-importacion-'.now()->format('Y-m-d-His').'.xlsx';
+
+        return response()->streamDownload(function () use ($writer) {
+            $writer->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
+
+    /**
+     * Ruta relativa al disco `local` (storage/app/…) para el JSON de rechazados de una importación.
+     */
+    private function importRejectedStoragePath(int|string $userId, string $token): string
+    {
+        return 'import-rejected/'.$userId.'/'.$token.'.json';
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $rows
+     */
+    private function buildSpreadsheetFromImportRejectedRows(array $rows): Spreadsheet
+    {
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        if ($rows === []) {
+            $sheet->setCellValue('A1', 'Sin registros rechazados');
+
+            return $spreadsheet;
+        }
+
+        $headers = array_keys($rows[0]);
+        $table = [$headers];
+        foreach ($rows as $row) {
+            $line = [];
+            foreach ($headers as $h) {
+                $v = $row[$h] ?? '';
+                $line[] = is_scalar($v) ? (string) $v : '';
+            }
+            $table[] = $line;
+        }
+        $sheet->fromArray($table, null, 'A1');
+
+        return $spreadsheet;
     }
 
     /**
@@ -858,6 +1081,101 @@ class CompanyController extends Controller
             'has_duplicates' => !empty($duplicates),
             'duplicates' => $duplicates
         ]);
+    }
+
+    /**
+     * Área de trabajo que identifica una fila como empresa en la importación (cabecera de razón social).
+     */
+    private function isImportCompanyAreaValue(string $area): bool
+    {
+        $n = Str::lower(trim($area));
+
+        return $n === 'empresa' || $n === 'escuela';
+    }
+
+    /**
+     * Alta mínima de empresa cuando un contacto trae nombre de empresa sin fila EMPRESA/ESCUELA previa en el archivo.
+     *
+     * @param  array<string, mixed>  $p
+     */
+    private function createCompanyFromImportParsedRow(
+        array $p,
+        User $user,
+        ?User $assignToExecutive,
+        string $approvalStatus,
+        ?string $importStatus
+    ): Company {
+        $companyName = $p['company_name'];
+        $municipio = $p['municipio'];
+        $estado = $p['estado'];
+        $sector = $p['sector'];
+        $ejecutivo = $p['ejecutivo'];
+        $datosFiscales = $p['datos_fiscales'];
+        $statusColor = $importStatus ?? 'seguimiento';
+        $company = Company::create([
+            'nombre_comercial' => $companyName,
+            'rfc' => null,
+            'sector' => $sector !== '' ? $sector : null,
+            'municipio' => $municipio !== '' ? $municipio : null,
+            'estado' => $estado !== '' ? $estado : null,
+            'ejecutivo_asignado' => $assignToExecutive ? $assignToExecutive->name : ($ejecutivo !== '' ? $ejecutivo : null),
+            'assigned_user_id' => $assignToExecutive?->id,
+            'datos_fiscales' => $datosFiscales !== '' ? $datosFiscales : null,
+            'status_color' => $statusColor,
+            'approval_status' => $approvalStatus,
+            'created_by' => $assignToExecutive ? $assignToExecutive->id : $user->id,
+            'approved_by' => $approvalStatus === 'aprobado' ? $user->id : null,
+            'approved_at' => $approvalStatus === 'aprobado' ? now() : null,
+        ]);
+        if ($statusColor === 'vendido') {
+            Sale::create([
+                'company_id' => $company->id,
+                'nombre_servicio' => 'Venta registrada desde prospecto',
+                'fecha_venta' => now(),
+                'monto' => null,
+                'tipo_pago' => null,
+                'participantes' => null,
+                'notas' => 'Registrado automáticamente al importar estado de prospecto Vendido.',
+                'created_by' => auth()->id(),
+            ]);
+        }
+
+        return $company;
+    }
+
+    /**
+     * Obtiene el valor visible de una celda; si está en un rango combinado y no es la celda maestra,
+     * devuelve el valor de la esquina superior izquierda (donde Excel guarda el texto).
+     */
+    private function getSpreadsheetCellValueResolvingMerge(Worksheet $sheet, string $columnLetter, int $rowNumber): string
+    {
+        $coordinate = $columnLetter.$rowNumber;
+        $cell = $sheet->getCell($coordinate);
+        $raw = $cell->getValue();
+        $hasValue = $raw !== null && (! is_string($raw) || trim($raw) !== '');
+
+        if ($hasValue) {
+            $formatted = $cell->getFormattedValue();
+
+            return trim((string) ($formatted !== '' ? $formatted : $raw));
+        }
+
+        if ($cell->isInMergeRange() && ! $cell->isMergeRangeValueCell()) {
+            $mergeRange = $cell->getMergeRange();
+            if (is_string($mergeRange) && $mergeRange !== '') {
+                $ranges = Coordinate::splitRange($mergeRange);
+                $startCell = $ranges[0][0] ?? null;
+                if ($startCell !== null && $startCell !== '') {
+                    $master = $sheet->getCell($startCell);
+                    $mv = $master->getValue();
+                    $formatted = $master->getFormattedValue();
+
+                    return trim((string) (($formatted !== null && $formatted !== '') ? $formatted : $mv));
+                }
+            }
+        }
+
+        return '';
     }
 
     /**

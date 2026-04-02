@@ -94,6 +94,14 @@
 
                 {{-- Mensajes flash: en Ejecutivos el listado muestra avisos inline (evita solaparse con modales z-50+). --}}
                 @unless(request()->routeIs('executives.index'))
+                    @if(session('import_flash'))
+                        <x-alert
+                            type="success"
+                            :message="session('import_flash')['message']"
+                            :secondaryUrl="!empty(session('import_flash')['rejected_token']) ? route('companies.import.rejected', ['token' => session('import_flash')['rejected_token']]) : null"
+                            secondaryLabel="Descargar Excel con registros rechazados"
+                        />
+                    @endif
                     @if(session('success'))
                         <x-alert type="success" :message="session('success')" />
                     @endif
