@@ -74,9 +74,9 @@
                     Registrar nuevo ejecutivo
                 </button>
             </div>
-            <form method="GET" action="{{ route('executives.index') }}" class="space-y-4">
-                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5 gap-4 items-end">
-                    <div>
+            <form method="GET" action="{{ route('executives.index') }}" class="space-y-5">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-x-5 md:gap-y-4 items-end">
+                    <div class="min-w-0">
                         <label for="empresa_id" class="block text-xs font-medium text-white/70 mb-1.5">Empresa</label>
                         <select
                             id="empresa_id"
@@ -89,7 +89,7 @@
                             @endforeach
                         </select>
                     </div>
-                    <div>
+                    <div class="min-w-0">
                         <label for="entidad" class="block text-xs font-medium text-white/70 mb-1.5">Estado (México)</label>
                         <select
                             id="entidad"
@@ -102,7 +102,7 @@
                             @endforeach
                         </select>
                     </div>
-                    <div>
+                    <div class="min-w-0">
                         <label for="contacto_id" class="block text-xs font-medium text-white/70 mb-1.5">Contacto</label>
                         <select
                             id="contacto_id"
@@ -115,7 +115,9 @@
                             @endforeach
                         </select>
                     </div>
-                    <div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-x-5 md:gap-y-4 items-end pt-1 border-t border-white/10">
+                    <div class="min-w-0">
                         <label for="cuenta_activa" class="block text-xs font-medium text-white/70 mb-1.5">Estado de cuenta</label>
                         <select
                             id="cuenta_activa"
@@ -127,7 +129,7 @@
                             <option value="inactivo" @selected(request('cuenta_activa') === 'inactivo')>Inactivo</option>
                         </select>
                     </div>
-                    <div>
+                    <div class="min-w-0 md:col-span-1">
                         <label for="ejecutivo_id" class="block text-xs font-medium text-white/70 mb-1.5">Ejecutivo (asignación)</label>
                         <select
                             id="ejecutivo_id"
@@ -142,8 +144,7 @@
                             @endforeach
                         </select>
                     </div>
-                </div>
-                <div class="flex flex-wrap gap-2">
+                    <div class="min-w-0 flex flex-wrap gap-2 md:justify-end md:items-end">
                     <a href="{{ route('executives.index', ['clear_filters' => 1]) }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/30 text-white/90 text-sm font-medium hover:bg-white/10">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                         Limpiar
@@ -152,8 +153,9 @@
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z" /></svg>
                         Aplicar
                     </button>
+                    </div>
                 </div>
-                <p class="text-[11px] text-white/45 leading-snug -mt-1 md:col-span-3">Use «Sin» o «Con» para listar contactos y asignarlos sin elegir empresa antes. Los nombres solo de ficha (sin cuenta en el CRM) sirven para filtrar por el campo ejecutivo de la empresa.</p>
+                <p class="text-[11px] text-white/45 leading-snug">Use «Sin» o «Con» para listar contactos y asignarlos sin elegir empresa antes. Los nombres solo de ficha (sin cuenta en el CRM) sirven para filtrar por el campo ejecutivo de la empresa.</p>
             </form>
         </div>
 
@@ -539,7 +541,7 @@
         @endif
 
         {{-- Transferir cartera (al final, tras el listado) --}}
-        @if(isset($executivesForTransfer) && $executivesForTransfer->count() >= 2)
+        @if(!empty($canPortfolioTransfer))
             <div class="panel-card-dark">
                 <h3 class="text-center text-base font-bold text-white mb-1">Transferir cartera</h3>
                 <p class="text-center text-xs text-white/70 mb-5">Mueva las empresas y contactos asignados de un ejecutivo hacia otro en un solo paso</p>
@@ -562,11 +564,12 @@
                                 required
                                 class="w-full rounded-xl border-2 border-gray-200 bg-white text-gray-900 text-sm py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-[#FFE600] [&>option]:text-gray-900"
                             >
-                                <option value="" disabled @selected(old('from_user_id') === null || old('from_user_id') === '')>Seleccione ejecutivo…</option>
-                                @foreach($executivesForTransfer as $u)
-                                    <option value="{{ $u->id }}" @selected((string) old('from_user_id') === (string) $u->id)>{{ $u->name }} — {{ $u->email }}</option>
+                                <option value="" disabled @selected(old('from_user_id') === null || old('from_user_id') === '')>Seleccione origen…</option>
+                                @foreach($executiveFilterOptions as $opt)
+                                    <option value="{{ $opt['value'] }}" @selected((string) old('from_user_id') === (string) $opt['value'])>{{ $opt['label'] }}</option>
                                 @endforeach
                             </select>
+                            <p class="text-[10px] text-white/50 leading-snug">Misma lista que el filtro «Ejecutivo»: cuentas del CRM e importes solo en ficha (sin usuario).</p>
                             <x-input-error :messages="$errors->get('from_user_id')" class="mt-1 text-amber-200 text-xs" />
                         </div>
 
@@ -575,7 +578,7 @@
                         </div>
 
                         <div class="flex-1 min-w-0 space-y-2">
-                            <label for="transfer_to" class="block text-xs font-semibold text-[#FFE600]">Ejecutivo destino <span class="text-white/60 font-normal">(recibe la cartera)</span></label>
+                            <label for="transfer_to" class="block text-xs font-semibold text-[#FFE600]">Ejecutivo destino <span class="text-white/60 font-normal">(recibe la cartera; solo activos y dados de alta)</span></label>
                             <select
                                 id="transfer_to"
                                 name="to_user_id"
@@ -583,7 +586,7 @@
                                 class="w-full rounded-xl border-2 border-gray-200 bg-white text-gray-900 text-sm py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-[#FFE600] [&>option]:text-gray-900"
                             >
                                 <option value="" disabled @selected(old('to_user_id') === null || old('to_user_id') === '')>Seleccione ejecutivo…</option>
-                                @foreach($executivesForTransfer as $u)
+                                @foreach($executivesForPortfolioDestination as $u)
                                     <option value="{{ $u->id }}" @selected((string) old('to_user_id') === (string) $u->id)>{{ $u->name }} — {{ $u->email }}</option>
                                 @endforeach
                             </select>
@@ -593,7 +596,7 @@
 
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-2 border-t border-white/10">
                         <p class="text-xs text-white/75 max-w-xl leading-relaxed">
-                            Se actualizarán las empresas con <span class="text-[#FFE600] font-medium">ejecutivo asignado</span> y los contactos vinculados al origen. El destino figurará como responsable en el CRM.
+                            Origen «solo ficha»: empresas con ese texto en ejecutivo y sin usuario CRM vinculado; se enlazan al destino. Origen con cuenta: mismas reglas que antes. Destino: solo cuentas <span class="text-[#FFE600] font-medium">activas</span> y <span class="text-[#FFE600] font-medium">aprobadas</span>.
                         </p>
                         <button
                             type="submit"
@@ -657,9 +660,9 @@
                     </div>
                 </div>
             </div>
-        @elseif(isset($executivesForTransfer) && $executivesForTransfer->count() < 2)
+        @else
             <div class="panel-card-dark">
-                <p class="text-sm text-white/75 text-center">Para transferir cartera entre ejecutivos hacen falta al menos dos cuentas de ejecutivo en el sistema.</p>
+                <p class="text-sm text-white/75 text-center max-w-2xl mx-auto leading-relaxed">Para transferir cartera hace falta al menos un <strong class="text-white/90">origen</strong> (cuenta de cartera o nombre en ficha) y un <strong class="text-white/90">destino</strong> que sea ejecutivo <strong class="text-white/90">activo y aprobado</strong>. Si solo hay un ejecutivo de cartera dado de alta, registre otro o reactive una cuenta.</p>
             </div>
         @endif
 

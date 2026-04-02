@@ -16,6 +16,7 @@ use App\Support\MexicanStates;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
@@ -120,6 +121,17 @@ class ExecutiveController extends Controller
             ->get(['id', 'name', 'email', 'is_active']);
 
         $executiveFilterOptions = $this->buildExecutiveFilterOptions();
+
+        $executivesForPortfolioDestination = User::query()
+            ->whereDoesntHave('roles', function ($q): void {
+                $q->whereIn('name', ['admin', 'administrador']);
+            })
+            ->where('is_active', true)
+            ->where('approval_status', 'aprobado')
+            ->orderBy('name')
+            ->get(['id', 'name', 'email']);
+
+        $canPortfolioTransfer = $this->portfolioTransferHasValidPair($executiveFilterOptions, $executivesForPortfolioDestination);
 
         /**
          * Listado por asignaciones (contactos): con empresa y/o contacto, o vista masiva (sin/con ejecutivo).
@@ -229,8 +241,40 @@ class ExecutiveController extends Controller
             'contactsForFilter' => $contactsForFilter,
             'executivesForTransfer' => $executivesForTransfer,
             'executiveFilterOptions' => $executiveFilterOptions,
+            'executivesForPortfolioDestination' => $executivesForPortfolioDestination,
+            'canPortfolioTransfer' => $canPortfolioTransfer,
             'mexicanStates' => MexicanStates::all(),
         ], ProfileController::adminPasswordAssistanceState($request)));
+    }
+
+    /**
+     * Hay al menos un par válido origen → destino (origen distinto del destino cuando ambos son ID de usuario).
+     */
+    private function portfolioTransferHasValidPair(Collection $originOptions, Collection $destUsers): bool
+    {
+        if ($destUsers->isEmpty() || $originOptions->isEmpty()) {
+            return false;
+        }
+
+        foreach ($originOptions as $row) {
+            $val = (string) ($row['value'] ?? '');
+            if ($val === '') {
+                continue;
+            }
+            if (str_starts_with($val, 'E:')) {
+                return true;
+            }
+            if (ctype_digit($val)) {
+                $fromId = (int) $val;
+                foreach ($destUsers as $d) {
+                    if ((int) $d->id !== $fromId) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -554,8 +598,64 @@ class ExecutiveController extends Controller
      */
     public function transferPortfolio(TransferExecutivePortfolioRequest $request): RedirectResponse
     {
-        $from = User::findOrFail($request->validated('from_user_id'));
-        $to = User::findOrFail($request->validated('to_user_id'));
+        $validated = $request->validated();
+        $to = User::findOrFail((int) $validated['to_user_id']);
+
+        if ($to->esAdmin() || ! $to->is_active || $to->approval_status !== 'aprobado') {
+            return redirect()
+                ->route('executives.index')
+                ->with('error', 'El destino debe ser un ejecutivo activo y aprobado.');
+        }
+
+        $fromRaw = $validated['from_user_id'];
+
+        if (is_string($fromRaw) && str_starts_with($fromRaw, 'E:')) {
+            $decoded = base64_decode(substr($fromRaw, 2), true);
+            $text = $decoded !== false ? trim((string) $decoded) : '';
+            if ($text === '') {
+                return redirect()
+                    ->route('executives.index')
+                    ->with('error', 'El origen por ficha no es válido.');
+            }
+
+            $counts = DB::transaction(function () use ($text, $to): array {
+                $companyIds = Company::query()
+                    ->where('ejecutivo_asignado', $text)
+                    ->whereNull('assigned_user_id')
+                    ->pluck('id')
+                    ->all();
+
+                $companies = 0;
+                if ($companyIds !== []) {
+                    $companies = Company::query()
+                        ->whereIn('id', $companyIds)
+                        ->update([
+                            'assigned_user_id' => $to->id,
+                            'ejecutivo_asignado' => $to->name,
+                        ]);
+                }
+
+                $contacts = 0;
+                if ($companyIds !== []) {
+                    $contacts = Contact::query()
+                        ->whereIn('company_id', $companyIds)
+                        ->whereNull('assigned_user_id')
+                        ->update(['assigned_user_id' => $to->id]);
+                }
+
+                return ['companies' => $companies, 'contacts' => $contacts];
+            });
+
+            return redirect()
+                ->route('executives.index')
+                ->with(
+                    'success',
+                    'Cartera transferida (ficha «'.$text.'»): '.$counts['companies'].' empresa(s) y '.$counts['contacts'].' contacto(s) pasaron a «'.$to->name.'».'
+                );
+        }
+
+        $fromId = (int) $fromRaw;
+        $from = User::findOrFail($fromId);
 
         if ($from->esAdmin() || $to->esAdmin()) {
             return redirect()
