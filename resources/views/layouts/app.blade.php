@@ -73,6 +73,8 @@
                                         request()->routeIs('executives.index') ||
                                         request()->routeIs('follow-ups.index') ||
                                         request()->routeIs('user.sales.index') ||
+                                        request()->routeIs('user.sales.by-company') ||
+                                        request()->routeIs('user.sales.by-contact') ||
                                         request()->routeIs('approvals.*') ||
                                         request()->routeIs('notifications.index') ||
                                         request()->routeIs('data-management.index') ||

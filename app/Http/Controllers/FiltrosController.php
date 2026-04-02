@@ -208,7 +208,7 @@ class FiltrosController extends Controller
         $contactFields['estado']['options'] = $estadoOpts;
 
         // Comercial: usuarios (usuario/admin) + textos distintos de empresa.ejecutivo_asignado (p. ej. "Lic. Olivia…")
-        $comercialOpts = $this->comercialFilterOptions($user, $isAdmin);
+        $comercialOpts = $this->comercialFilterOptions();
         $contactFields['comercial']['options'] = $comercialOpts;
         $companyFields['comercial']['options'] = $comercialOpts;
 
@@ -393,46 +393,22 @@ class FiltrosController extends Controller
     }
 
     /**
-     * Opciones del filtro Comercial: cuentas de usuario (usuario/admin) + valores ya guardados en ejecutivo_asignado.
+     * Opciones del filtro Comercial: solo ejecutivos asignables (rol usuario, activos),
+     * mismo criterio que {@see User::ejecutivosAsignables()}. No se mezclan textos libres
+     * de empresa.ejecutivo_asignado (evita entradas basura o letras sueltas en el desplegable).
      *
-     * @return array<string, string> clave (id numérico o E:base64) => etiqueta visible
+     * @return array<string, string> clave id de usuario => etiqueta visible
      */
-    private function comercialFilterOptions(?User $authUser, bool $isAdmin): array
+    private function comercialFilterOptions(): array
     {
         $out = [];
 
-        $users = User::query()
-            ->whereHas('roles', function ($q): void {
-                $q->where('guard_name', 'web')
-                    ->whereIn('name', ['usuario', 'admin', 'administrador']);
-            })
-            ->orderBy('name')
-            ->get(['id', 'name', 'email']);
-
-        foreach ($users as $u) {
+        foreach (User::ejecutivosAsignables() as $u) {
             $label = $u->name;
             if ($u->email) {
                 $label .= ' — '.$u->email;
             }
             $out[(string) $u->id] = $label;
-        }
-
-        $q = Company::query()
-            ->whereNotNull('ejecutivo_asignado')
-            ->where('ejecutivo_asignado', '!=', '');
-        if (! $isAdmin && $authUser) {
-            $q->accessibleForExecutive($authUser);
-        }
-
-        foreach ($q->distinct()->orderBy('ejecutivo_asignado')->pluck('ejecutivo_asignado') as $raw) {
-            $t = trim((string) $raw);
-            if ($t === '') {
-                continue;
-            }
-            $key = 'E:'.base64_encode($t);
-            if (! isset($out[$key])) {
-                $out[$key] = $t;
-            }
         }
 
         uasort($out, static fn ($a, $b): int => strcasecmp((string) $a, (string) $b));

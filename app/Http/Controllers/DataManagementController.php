@@ -41,6 +41,7 @@ class DataManagementController extends Controller
             'companies' => $companies,
             'contacts' => $contacts,
             'isAdmin' => $isAdmin,
+            'empresasPorEstado' => Company::countsByEstadoForUser($user),
         ]);
     }
 

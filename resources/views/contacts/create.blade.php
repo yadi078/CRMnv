@@ -17,7 +17,10 @@
                     <h3 class="panel-card-dark__title panel-card-dark__title--accent mb-4">Datos del contacto</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="md:col-span-2">
-                            <label for="company_id" class="block text-sm font-medium text-white/90 mb-1">Empresa *</label>
+                            <div class="flex flex-wrap items-center justify-between gap-2 mb-1">
+                                <label for="company_id" class="block text-sm font-medium text-white/90 mb-0">Empresa *</label>
+                                <x-copy-field-button target-id="company_id" />
+                            </div>
                             <select id="company_id" name="company_id" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white [&>option]:bg-[#1a3d6b] [&>option]:text-white py-2.5 px-3" required>
                                 <option value="">Seleccione una empresa</option>
                                 @foreach($companies as $company)

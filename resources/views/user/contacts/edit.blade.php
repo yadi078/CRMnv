@@ -33,16 +33,20 @@
                         : route('contacts.show', $contact);
                     $selectedCompanyId = old('company_id', $contact->company_id ?? $contact->company?->id);
                 @endphp
-                <form id="form-editar-contacto" method="POST" action="{{ route('contacts.update', $contact) }}" x-data="{ detalleAbierto: @json($detalleContactoExpandido) }}">
+                <form id="form-editar-contacto" method="POST" action="{{ route('contacts.update', $contact) }}" x-data="{ detalleAbierto: @json($detalleContactoExpandido) }">
                     @csrf
                     @method('PUT')
                     <input type="hidden" name="detalle_contacto_expandido" x-bind:value="detalleAbierto ? '1' : '0'">
+                    <input type="hidden" name="ficha_registro_desbloqueada" x-bind:value="detalleAbierto ? '1' : '0'">
                     @if(($crmNavReturn = request('return')) && is_string($crmNavReturn) && \App\Support\CrmNavigation::isSafeReturnUrl($crmNavReturn))
                         <input type="hidden" name="return" value="{{ $crmNavReturn }}">
                     @endif
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="md:col-span-2">
-                            <x-input-label for="company_id" value="Empresa *" />
+                            <div class="flex flex-wrap items-center justify-between gap-2">
+                                <x-input-label for="company_id" value="Empresa *" class="mb-0" />
+                                <x-copy-field-button target-id="company_id" />
+                            </div>
                             <p class="text-xs text-white/65 mb-2">Despliegue la lista y elija la empresa. Incluye las empresas aprobadas; la empresa vinculada a este contacto siempre aparece aunque esté pendiente de aprobación.</p>
                             {{-- Fondo claro + texto oscuro: en Windows el <select> nativo a veces no muestra texto claro sobre fondo oscuro al estar cerrado. --}}
                             <select
@@ -108,19 +112,6 @@
                             <x-input-error :messages="$errors->get('email')" class="mt-2" />
                         </div>
 
-                        <div class="md:col-span-2" x-show="!detalleAbierto" x-cloak>
-                            <button
-                                type="button"
-                                class="inline-flex w-full sm:w-auto items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#FFE600] text-[#071A3D] font-semibold text-sm hover:bg-yellow-300 transition shadow border-2 border-[#FFE600]"
-                                @click="detalleAbierto = true"
-                            >
-                                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                                Generar ficha de inscripción
-                            </button>
-                            <p class="mt-2 text-sm text-white/70">Al continuar se mostrarán teléfonos, ubicación, notas y la ficha de registro del curso.</p>
-                        </div>
-
-                        <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6" x-show="detalleAbierto" x-cloak>
                         <div class="flex items-center gap-3 md:col-span-2">
                             <input id="email_activo" name="email_activo" type="checkbox" value="1" class="rounded border-gray-300 text-amber-500 shadow-sm focus:border-amber-500 focus:ring-amber-500" @checked(old('email_activo', $contact->email_activo ?? true)) />
                             <label for="email_activo" class="text-sm text-white/90 select-none">
@@ -157,8 +148,30 @@
                             <textarea id="notas" name="notas" rows="4" class="mt-1 block w-full rounded-md border-gray-300">{{ old('notas', $contact->notas) }}</textarea>
                         </div>
 
-                        @include('contacts.partials.contact-ficha-registro', ['contact' => $contact, 'sale' => $sale ?? null])
+                        <div class="md:col-span-2">
+                            <x-input-label for="status_color" value="Estatus de prospecto" />
+                            <select id="status_color" name="status_color" class="mt-1 block w-full rounded-md border-gray-300 bg-white text-gray-900 py-2 px-3 [&>option]:bg-white [&>option]:text-gray-900">
+                                @foreach(\App\Models\Contact::PROSPECT_STATUS_LABELS as $value => $label)
+                                <option value="{{ $value }}" {{ old('status_color', $contact->status_color ?? 'seguimiento') === $value ? 'selected' : '' }}>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                            <x-input-error :messages="$errors->get('status_color')" class="mt-2" />
+                        </div>
 
+                        <div class="md:col-span-2" x-show="!detalleAbierto" x-cloak>
+                            <button
+                                type="button"
+                                class="inline-flex w-full sm:w-auto items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#FFE600] text-[#071A3D] font-semibold text-sm hover:bg-yellow-300 transition shadow border-2 border-[#FFE600]"
+                                @click="detalleAbierto = true"
+                            >
+                                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                Crear ficha de inscripción
+                            </button>
+                            <p class="mt-2 text-sm text-white/70">Se mostrarán curso y venta, participantes, condiciones del curso, método de pago y datos fiscales para la ficha PDF.</p>
+                        </div>
+
+                        <div class="md:col-span-2 grid grid-cols-1 gap-0" x-show="detalleAbierto" x-cloak>
+                            @include('contacts.partials.contact-ficha-registro', ['contact' => $contact, 'sale' => $sale ?? null])
                         </div>
                     </div>
                     <div class="flex items-center justify-end mt-6 gap-3 flex-wrap">

@@ -33,8 +33,8 @@
   --radius-card: 20px;
   --radius-panel: 16px;
   --touch-target: 2.9rem;
-  /* Tablas: ancho mínimo fluido (scroll horizontal en pantallas estrechas) */
-  --crm-table-min: clamp(33rem, 92vw, 61.25rem);
+  /* Tablas: ancho mínimo amplio en móvil (scroll horizontal legible; evita columnas “aplastadas”) */
+  --crm-table-min: min(61.25rem, max(48rem, 92vw));
 }
 
 /* --------------------------------------------------------------------------
@@ -80,6 +80,14 @@ form.company-edit-form-in-modal input:not([type="checkbox"]):not([type="radio"])
 [role="dialog"] input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]) {
   -webkit-user-select: text;
   user-select: text;
+}
+
+/* Refuerzo: copiar/pegar y seleccionar texto en formularios de empresa y contacto (sombrea utilidades que impongan user-select: none) */
+.sidebar-layout__main main form input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]),
+.sidebar-layout__main main form textarea,
+.sidebar-layout__main main form select {
+  -webkit-user-select: text !important;
+  user-select: text !important;
 }
 
 /* Safe area para dispositivos con notch/home indicator */
@@ -1305,7 +1313,7 @@ form.company-edit-form-in-modal input:not([type="checkbox"]):not([type="radio"])
   background: var(--color-accent);
 }
 
-/* Paneles azul más claro (Últimas empresas, Próximos seguimientos, Estado de prospectos) */
+/* Paneles azul más claro (Últimas empresas, Próximos seguimientos, Estatus de prospectos) */
 .panel-card-dark {
   background: linear-gradient(145deg, #1e4976 0%, #1a3d6b 50%, #0f2744 100%);
   border-radius: var(--radius-card);
@@ -1321,7 +1329,7 @@ form.company-edit-form-in-modal input:not([type="checkbox"]):not([type="radio"])
   margin-bottom: clamp(1.25rem, 3vw, 2rem);
 }
 
-/* Título con más espacio abajo (ej. Estado de prospectos) */
+/* Título con más espacio abajo (ej. Estatus de prospectos) */
 .panel-card-dark__title--spaced {
   margin-bottom: 2.5rem;
 }
@@ -2555,9 +2563,20 @@ nav[aria-label="Pagination"] span[aria-current="page"] span {
 
 /**
  * Ancho mínimo fluido para tablas con muchas columnas (reemplaza min-w-[980px] fijo).
+ * table-layout: auto permite que min-width en columnas y el contenido respiren (evita teléfonos en vertical).
  */
 .crm-table-wide {
   min-width: var(--crm-table-min);
+  table-layout: auto;
+}
+
+/* Celdas más compactas en móvil dentro del scroll horizontal */
+@media (max-width: 639px) {
+  .panel-card-dark .crm-table-scroll-wrap th,
+  .panel-card-dark .crm-table-scroll-wrap td {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
 }
 
 /**

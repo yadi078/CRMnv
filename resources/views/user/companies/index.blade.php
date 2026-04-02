@@ -42,6 +42,9 @@
                 </p>
             </div>
             @endif
+
+            <x-companies-by-estado-cards :counts="$empresasPorEstado" />
+
             <div class="panel-card-dark overflow-hidden p-6">
                 <p class="text-white/90 text-sm mb-4">Las empresas que agregue quedarán en estado <span class="font-semibold text-[#FFE600]">Pendiente</span> hasta que un administrador las apruebe. Cada empresa tiene un estado de prospecto (Seguimiento, Interesado, Vendido, etc.) para llevar el avance en el proceso comercial.</p>
                 <form method="GET" action="{{ route('companies.index') }}" class="mb-6 flex flex-col sm:flex-row sm:items-end gap-3">
@@ -159,7 +162,7 @@
                 @endif
 
                 <div class="crm-table-scroll-wrap crm-table-scroll w-full min-w-0 -mx-4 sm:-mx-0">
-                    <table class="w-full crm-table-wide table-fixed divide-y divide-white/20">
+                    <table class="w-full crm-table-wide divide-y divide-white/20">
                         <thead>
                             <tr class="table-header-panel-dark">
                                 <th scope="col" class="crm-row-marker-head w-11 min-w-[2.75rem] px-1 py-3 text-center text-[10px] font-semibold uppercase tracking-wide text-[#FFE600]/90" title="Seguimiento personal (solo en este navegador)">Seg.</th>

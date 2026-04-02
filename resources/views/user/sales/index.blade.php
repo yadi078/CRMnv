@@ -4,8 +4,8 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
             </svg></x-page-header-avatar>
         <div>
-            <h2 class="page-header-card__title">Historial de Ventas</h2>
-            <p class="page-header-card__subtitle">Cursos y servicios vendidos por empresa</p>
+            <h2 class="page-header-card__title">Historial de ventas</h2>
+            <p class="page-header-card__subtitle">Empresa, contacto y curso vendido al marcar como vendido</p>
             <div class="mt-3">
                 <a
                     href="{{ route('companies.index') }}"
@@ -51,72 +51,9 @@
                         </svg>
                     Filtrar
                 </button>
-                @can('sales.create')
-                <a href="{{ route('user.sales.create') }}" class="btn-amber-app flex items-center justify-center gap-2 flex-shrink-0">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" /></svg>
-                    Nueva Venta
-                </a>
-                @endcan
             </form>
 
-            <div class="crm-responsive-x">
-                <table class="min-w-full border-collapse">
-                    <thead>
-                        <tr class="border-b border-[#5b8fc7]/50">
-                            <th class="text-left py-3 px-6 text-[#FFE600] font-semibold text-sm uppercase tracking-wide">EMPRESA</th>
-                            <th class="text-left py-3 px-6 text-[#FFE600] font-semibold text-sm uppercase tracking-wide">CONTACTO</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($sales as $sale)
-                        <tr class="border-b border-[#5b8fc7]/30 hover:bg-white/5 transition-colors">
-                            <td class="py-4 px-6 align-middle">
-                                <span class="text-[#FFE600] font-medium">{{ $sale->company->nombre_comercial }}</span>
-                            </td>
-                            <td class="py-4 px-6 align-middle">
-                                <div class="flex flex-wrap items-center justify-between gap-4">
-                                    <div class="text-white space-y-0.5 min-w-0">
-                                        @if($sale->contact)
-                                            <div class="font-bold text-white">{{ $sale->contact->nombre_completo }}</div>
-                                            @if($sale->contact->puesto_de_trabajo)
-                                                <div class="text-white/90 text-sm">{{ $sale->contact->puesto_de_trabajo }}</div>
-                                            @endif
-                                            <div class="text-white/80 text-sm">{{ $sale->contact->email ?? '—' }}</div>
-                                        @else
-                                            <span class="text-white/70">—</span>
-                                        @endif
-                                    </div>
-                                    <div class="flex items-center gap-4 flex-shrink-0">
-                                        <span class="text-white text-sm">{{ $sale->fecha_venta->format('d/m/Y') }}</span>
-                                        @if($sale->contact_id)
-                                            <a href="{{ route('contacts.edit', $sale->contact_id) }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#FFE600] text-[#071A3D] font-semibold text-sm hover:bg-yellow-300 transition shadow">
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                                                Ficha en contacto
-                                            </a>
-                                        @else
-                                            <a href="{{ route('user.sales.edit', $sale) }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#FFE600] text-[#071A3D] font-semibold text-sm hover:bg-yellow-300 transition shadow">
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" /></svg>
-                                                Editar venta
-                                            </a>
-                                        @endif
-                                    </div>
-                                </div>
-                            </td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="2" class="py-8 px-6 text-center text-white/80">
-                                No hay ventas registradas.
-                                @can('sales.create')
-                                <a href="{{ route('user.sales.create') }}" class="text-[#FFE600] hover:text-white underline ml-1">Registrar la primera</a>
-                                @endcan
-                            </td>
-                        </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-            <div class="mt-4 pt-4 border-t border-white/20">{{ $sales->links() }}</div>
+            @include('user.sales.partials.sales-table', ['sales' => $sales])
         </div>
     </div>
 </x-app-user-layout>

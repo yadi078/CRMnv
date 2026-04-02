@@ -7,6 +7,7 @@ use App\Models\Sale;
 use App\Models\SaleParticipant;
 use App\Models\Company;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -17,6 +18,83 @@ use Illuminate\Validation\Rule;
  */
 class SalesController extends Controller
 {
+    /**
+     * Ventas visibles en un ámbito (empresa o contacto): ejecutivo solo las propias;
+     * administrador ve todas las de ese ámbito (alineado con la ficha de empresa).
+     */
+    private function scopedSalesBaseQuery(Request $request): Builder
+    {
+        $query = Sale::with(['company', 'contact', 'creator']);
+
+        if (! $request->user()->esAdmin()) {
+            $query->where('created_by', $request->user()->id);
+        }
+
+        $filtroFecha = $request->get('filtro_fecha', 'todos');
+        if ($filtroFecha !== 'todos') {
+            $dias = match ($filtroFecha) {
+                '7' => 7,
+                '14' => 14,
+                '30' => 30,
+                default => null,
+            };
+            if ($dias !== null) {
+                $query->where('fecha_venta', '>=', now()->subDays($dias));
+            }
+        }
+
+        return $query;
+    }
+
+    /**
+     * Historial de ventas filtrado por empresa (paginado).
+     */
+    public function indexForCompany(Request $request, Company $company)
+    {
+        $this->authorize('viewAny', Sale::class);
+        $this->authorize('view', $company);
+
+        $sales = $this->scopedSalesBaseQuery($request)
+            ->where('company_id', $company->id)
+            ->latest('fecha_venta')
+            ->paginate(15)
+            ->withQueryString();
+
+        return view('user.sales.index-scoped', [
+            'scope' => 'company',
+            'company' => $company,
+            'contact' => null,
+            'sales' => $sales,
+            'formAction' => route('user.sales.by-company', $company),
+        ]);
+    }
+
+    /**
+     * Historial de ventas filtrado por contacto (y su empresa), paginado.
+     */
+    public function indexForContact(Request $request, Contact $contact)
+    {
+        $this->authorize('viewAny', Sale::class);
+        $this->authorize('view', $contact);
+
+        $contact->loadMissing('company');
+
+        $sales = $this->scopedSalesBaseQuery($request)
+            ->where('company_id', $contact->company_id)
+            ->where('contact_id', $contact->id)
+            ->latest('fecha_venta')
+            ->paginate(15)
+            ->withQueryString();
+
+        return view('user.sales.index-scoped', [
+            'scope' => 'contact',
+            'company' => $contact->company,
+            'contact' => $contact,
+            'sales' => $sales,
+            'formAction' => route('user.sales.by-contact', $contact),
+        ]);
+    }
+
     /**
      * Mostrar listado de ventas (solo las del usuario actual)
      */
@@ -80,9 +158,11 @@ class SalesController extends Controller
                 ->get()
             : collect();
         $company = $companyId ? Company::find($companyId) : null;
-        $contact = (old('contact_id') && $companyId) ? Contact::find(old('contact_id')) : null;
+        $prefillContactId = $request->get('contact_id');
+        $resolvedContactId = old('contact_id', $prefillContactId);
+        $contact = ($resolvedContactId && $companyId) ? Contact::find($resolvedContactId) : null;
 
-        return view('user.sales.create', compact('companies', 'companyId', 'contacts', 'company', 'contact'));
+        return view('user.sales.create', compact('companies', 'companyId', 'contacts', 'company', 'contact', 'prefillContactId'));
     }
 
     /**

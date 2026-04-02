@@ -108,6 +108,7 @@ class CompanyController extends Controller
                 'misPendientes' => $misPendientes,
                 'misEliminacionesPendientes' => $misEliminacionesPendientes,
                 'companyContactsCard' => $companyContactsCard,
+                'empresasPorEstado' => Company::countsByEstadoForUser($user),
             ]);
         }
 
@@ -115,6 +116,7 @@ class CompanyController extends Controller
             'companies' => $companies,
             'companyContactsCard' => $companyContactsCard,
             'companyNames' => $companyNames,
+            'empresasPorEstado' => Company::countsByEstadoForUser($user),
         ]);
     }
 

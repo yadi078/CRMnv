@@ -110,7 +110,7 @@
         </div>
 
         <div class="panel-card-dark">
-            <h3 class="panel-card-dark__title panel-card-dark__title--spaced section-title-underline">Estado de prospectos (tus contactos)</h3>
+            <h3 class="panel-card-dark__title panel-card-dark__title--spaced section-title-underline">Estatus de prospectos (tus contactos)</h3>
             <div class="flex flex-col sm:flex-row gap-3 sm:gap-3">
                 <a href="{{ route('contacts.index', ['status_color' => 'seguimiento']) }}" class="prospect-status-bar flex-1 min-h-[80px] sm:min-h-[100px] flex flex-col items-center justify-center gap-1 p-3 sm:p-4 rounded-xl border-4 border-[#15803D] bg-[#BBF7D0] hover:bg-[#86EFAC] transition-all cursor-pointer text-[#14532D] text-center">
                     <span class="text-2xl sm:text-3xl font-bold">{{ $contactosSeguimiento }}</span>

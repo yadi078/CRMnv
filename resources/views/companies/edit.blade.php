@@ -9,9 +9,13 @@
         </div>
     </x-slot>
 
-    <div class="space-y-8">
+    <div class="space-y-8" x-data="companyEditSectors()">
         <div class="panel-card-dark p-6">
-                <form method="POST" action="{{ route('companies.update', $company) }}">
+                <form
+                    method="POST"
+                    action="{{ route('companies.update', $company) }}"
+                    @submit="addSector(); if (sectors.length === 0) { $event.preventDefault(); window.alert('Agregue al menos un sector o giro (escriba y pulse Enter).'); }"
+                >
                     @csrf
                     @method('PUT')
                     @if(($crmNavReturn = request('return')) && is_string($crmNavReturn) && \App\Support\CrmNavigation::isSafeReturnUrl($crmNavReturn))
@@ -32,21 +36,44 @@
                         </div>
 
                         <div class="md:col-span-2">
-                            <x-input-label for="sector" value="Sector/Giro * (puede seleccionar varios)" />
-                            <select id="sector" name="sector[]" multiple
-                                    class="mt-1 block w-full rounded-md border-gray-300 bg-white text-[#1F2937] focus:border-[#FFE600] focus:ring-4 focus:ring-[#FFE600]/40">
-                                @php
-                                    $currentSectors = collect(old('sector', $company->sector ? explode(',', $company->sector) : []))
-                                        ->map(fn($s) => trim((string)$s))
+                            @php
+                                $rawSector = old('sector', $company->sector);
+                                if (is_array($rawSector)) {
+                                    $initialSectors = collect($rawSector)->map(fn ($s) => trim((string) $s))->filter()->values()->all();
+                                } else {
+                                    $initialSectors = collect(explode(',', (string) $rawSector))
+                                        ->map(fn ($s) => trim($s))
                                         ->filter()
-                                        ->values();
-                                @endphp
-                                @foreach($currentSectors as $s)
-                                    <option value="{{ $s }}" selected>{{ $s }}</option>
-                                @endforeach
-                            </select>
-                            <p class="mt-1 text-xs text-white/70">Puede asignar múltiples sectores/giro a la empresa.</p>
+                                        ->values()
+                                        ->all();
+                                }
+                            @endphp
+                            <x-input-label for="sector_input" value="Sector/Giro * (puede seleccionar varios)" />
+                            <div class="mt-1 rounded-md border border-[#E2E8F0] bg-white p-2 focus-within:border-[#FFE600] focus-within:ring-4 focus-within:ring-[#FFE600]/40">
+                                <div class="flex flex-wrap gap-2 mb-2" x-show="sectors.length > 0">
+                                    <template x-for="(item, idx) in sectors" :key="idx">
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-[#1a3d6b] text-white text-xs px-2 py-1">
+                                            <span x-text="item"></span>
+                                            <button type="button" @click="removeSector(idx)" class="text-[#FFE600] hover:text-white" aria-label="Quitar sector">x</button>
+                                        </span>
+                                    </template>
+                                </div>
+                                <input id="sector_input"
+                                       type="text"
+                                       x-model.trim="sectorInput"
+                                       @keydown.enter.prevent="addSector()"
+                                       @blur="addSector()"
+                                       @paste="pasteSectors($event)"
+                                       class="block w-full border-0 p-0 text-[#1F2937] focus:ring-0 select-text"
+                                       placeholder="Escriba un giro, Enter, o pegue varios separados por coma" />
+                                <template x-for="(item, idx) in sectors" :key="'hidden-' + idx">
+                                    <input type="hidden" name="sector[]" :value="item">
+                                </template>
+                            </div>
+                            <p class="mt-1 text-xs text-white/70">Escriba y presione Enter para agregar; puede quitar con la «x» en cada etiqueta.</p>
                             <x-input-error :messages="$errors->get('sector')" class="mt-2" />
+                            <x-input-error :messages="$errors->get('sector.*')" class="mt-2" />
+                            <script type="application/json" id="edit-sectors-data">{!! json_encode($initialSectors, JSON_UNESCAPED_UNICODE) !!}</script>
                         </div>
 
                         <div>
@@ -109,6 +136,53 @@
                     </div>
                 </form>
             </div>
-        </div>
     </div>
+
+    @push('scripts')
+    <script>
+        function companyEditSectors() {
+            return {
+                sectorInput: '',
+                sectors: [],
+                init() {
+                    const node = document.getElementById('edit-sectors-data');
+                    if (!node) return;
+                    try {
+                        const parsed = JSON.parse(node.textContent || '[]');
+                        if (Array.isArray(parsed)) {
+                            this.sectors = parsed
+                                .map((v) => String(v).trim())
+                                .filter((v) => v.length > 0);
+                        }
+                    } catch (_) {}
+                },
+                addSector() {
+                    const value = (this.sectorInput || '').trim();
+                    if (!value) return;
+                    if (!this.sectors.some((s) => s.toLowerCase() === value.toLowerCase())) {
+                        this.sectors.push(value);
+                    }
+                    this.sectorInput = '';
+                },
+                removeSector(index) {
+                    this.sectors.splice(index, 1);
+                },
+                pasteSectors(event) {
+                    const cd = event.clipboardData || (typeof window !== 'undefined' ? window.clipboardData : null);
+                    if (!cd) return;
+                    const text = (cd.getData('text/plain') || '').trim();
+                    if (!text) return;
+                    event.preventDefault();
+                    const parts = text.split(/[,;\n\r\t]+/).map((s) => s.trim()).filter((s) => s.length > 0);
+                    parts.forEach((p) => {
+                        if (!this.sectors.some((s) => s.toLowerCase() === p.toLowerCase())) {
+                            this.sectors.push(p);
+                        }
+                    });
+                    this.sectorInput = '';
+                },
+            };
+        }
+    </script>
+    @endpush
 </x-app-layout>

@@ -15,16 +15,33 @@
                     @csrf
                     <h3 class="panel-card-dark__title panel-card-dark__title--accent mb-4">Datos del contacto</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="md:col-span-2 relative">
-                            <label for="company_autocomplete" class="block text-sm font-medium text-white/90 mb-1">Empresa *</label>
+                        <div class="md:col-span-2">
+                            <div class="flex flex-wrap items-center justify-between gap-2">
+                                <label for="company_autocomplete" class="block text-sm font-medium text-white/90 mb-0">Empresa *</label>
+                                <x-copy-field-button target-id="company_autocomplete" />
+                            </div>
                             <p class="text-xs text-white/65 mb-2">Escriba para filtrar o elija de la lista. Incluye empresas aprobadas en el CRM y las que usted haya registrado.</p>
                             <input type="hidden" id="company_id" name="company_id" value="{{ old('company_id', $companyId ?? '') }}" required />
                             @php
                                 $preselectedId = old('company_id', $companyId ?? null);
                                 $preselectedName = $preselectedId ? ($companies->firstWhere('id', (int) $preselectedId)?->nombre_comercial ?? '') : '';
                             @endphp
-                            <input type="text" id="company_autocomplete" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3 focus:ring-2 focus:ring-[#FFE600]/50 select-text" placeholder="Buscar o seleccionar empresa…" value="{{ $preselectedName }}" autocomplete="off" />
-                            <div id="company_autocomplete_list" role="listbox" class="absolute left-0 right-0 top-full z-[100] mt-1 max-h-56 overflow-auto rounded-xl border border-white/20 bg-[#1a3d6b] shadow-lg hidden"></div>
+                            {{-- relative solo envuelve input + lista: top-full queda pegado al input; texto oscuro forzado (evita blanco sobre blanco con .panel-card-dark) --}}
+                            <div class="relative z-10 mt-1">
+                                <input
+                                    type="search"
+                                    id="company_autocomplete"
+                                    class="company-autocomplete-input block w-full rounded-xl border border-gray-200 bg-white !text-gray-900 placeholder-gray-500 py-2.5 px-3 shadow-sm focus:border-[#FFE600] focus:outline-none focus:ring-2 focus:ring-[#FFE600]/50 caret-gray-900"
+                                    placeholder="Buscar o seleccionar empresa…"
+                                    value="{{ $preselectedName }}"
+                                    autocomplete="off"
+                                    autocorrect="off"
+                                    autocapitalize="off"
+                                    spellcheck="false"
+                                    inputmode="search"
+                                />
+                                <div id="company_autocomplete_list" role="listbox" class="absolute left-0 right-0 top-full z-[100] mt-1 max-h-56 overflow-auto rounded-xl border border-white/20 bg-[#1a3d6b] shadow-lg hidden"></div>
+                            </div>
                             @if($companies->isEmpty())
                                 <p class="mt-2 text-sm text-amber-200/90">No hay empresas en el catálogo. Registre una empresa o espere aprobación.</p>
                             @endif
@@ -219,12 +236,20 @@
         }
 
         if (companyInput && companyList) {
+            var companyListRaf = null;
+            function scheduleCompanyListRender() {
+                if (companyListRaf) cancelAnimationFrame(companyListRaf);
+                companyListRaf = requestAnimationFrame(function() {
+                    companyListRaf = null;
+                    renderCompanyList(filterCompanies(companyInput.value));
+                });
+            }
             companyInput.addEventListener('focus', function() {
-                renderCompanyList(filterCompanies(companyInput.value));
+                scheduleCompanyListRender();
             });
             companyInput.addEventListener('input', function() {
                 companyIdInput.value = '';
-                renderCompanyList(filterCompanies(companyInput.value));
+                scheduleCompanyListRender();
             });
             companyInput.addEventListener('blur', function() {
                 setTimeout(function() { companyList.classList.add('hidden'); }, 150);

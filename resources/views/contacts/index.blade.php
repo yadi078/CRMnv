@@ -38,6 +38,12 @@
                             </svg>
                             Buscar
                         </button>
+                        @can('sales.create')
+                        <a href="{{ route('user.sales.create') }}" class="btn-amber-app flex-shrink-0">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                            Nueva Venta
+                        </a>
+                        @endcan
                         @can('contacts.create')
                         <a href="{{ route('contacts.create') }}" class="btn-amber-app flex-shrink-0">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" /></svg>
@@ -59,7 +65,7 @@
         <div class="panel-card-dark overflow-hidden">
             <h3 class="panel-card-dark__title panel-card-dark__title--accent mb-4">Listado</h3>
             <div class="crm-table-scroll-wrap crm-table-scroll w-full min-w-0 -mx-4 sm:-mx-0">
-                <table class="w-full crm-table-wide table-fixed divide-y divide-white/20">
+                <table class="w-full crm-table-wide divide-y divide-white/20">
                     <thead>
                         <tr class="table-header-panel-dark">
                             <th scope="col" class="crm-row-marker-head w-11 min-w-[2.75rem] px-1 py-3.5 text-center text-[10px] font-semibold uppercase tracking-wide text-[#FFE600]/90" title="Seguimiento personal (solo en este navegador)">Seg.</th>
@@ -67,7 +73,7 @@
                             <th class="w-[16rem] px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">Empresa</th>
                             <th class="w-[9rem] px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">Estatus</th>
                             <th class="w-[16rem] px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">Correo</th>
-                            <th class="w-[11rem] px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">Teléfono</th>
+                            <th class="w-[11rem] min-w-[9.5rem] px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider whitespace-nowrap">Teléfono</th>
                             <th class="w-[12rem] px-6 py-3.5 text-center text-xs font-semibold uppercase tracking-wider">Acciones</th>
                         </tr>
                     </thead>
@@ -93,7 +99,7 @@
                             <td class="px-6 py-4 align-top min-w-0 whitespace-normal break-words text-sm text-white/90 [overflow-wrap:anywhere]">
                                 {{ ($contact->email_activo ?? true) ? ($contact->email ?? '—') : '—' }}
                             </td>
-                            <td class="px-6 py-4 align-top whitespace-normal break-words text-sm text-white/90">{{ $contact->celular ?? '-' }}</td>
+                            <td class="px-6 py-4 align-top text-sm text-white/90 whitespace-nowrap tabular-nums">{{ $contact->celular ?? '-' }}</td>
                             <td class="px-6 py-4 align-top whitespace-nowrap text-sm font-medium">
                                 @can('delete', $contact)
                                 <form method="POST" action="{{ route('contacts.destroy', $contact) }}" class="inline-flex items-center gap-1"

@@ -141,6 +141,9 @@
                         <a href="{{ \App\Support\CrmNavigation::withReturn(route('contacts.show', $contact)) }}" class="company-show__list-title text-white hover:text-[#FFE600] hover:underline focus:outline-none focus:ring-2 focus:ring-[#FFE600]/35 rounded inline-block">{{ $contact->nombre_completo }}</a>
                         <p class="company-show__list-meta">{{ $contact->puesto_de_trabajo ?? '-' }} · {{ $contact->email }}</p>
                     </div>
+                    @can('sales.view')
+                    <a href="{{ route('user.sales.by-contact', $contact) }}" class="company-show__list-link shrink-0 text-xs font-semibold uppercase tracking-wide">Ventas</a>
+                    @endcan
                 </div>
                 @empty
                 <p class="company-show__empty">No hay contactos registrados</p>
@@ -152,12 +155,18 @@
         <section class="company-show__card company-show__card--sales">
             <div class="company-show__card-header">
                 <h3 class="company-show__card-title">Historial de Ventas</h3>
-                @can('sales.create')
-                <a href="{{ route('user.sales.create', ['company_id' => $company->id]) }}" class="company-show__btn-action">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" /></svg>
-                    Nueva Venta
-                </a>
-                @endcan
+                <div class="flex flex-wrap items-center gap-2">
+                    <a href="{{ route('user.sales.by-company', $company) }}" class="company-show__btn-action border border-white/35 bg-transparent hover:bg-white/10">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+                        Historial por empresa
+                    </a>
+                    @can('sales.create')
+                    <a href="{{ route('user.sales.create', ['company_id' => $company->id]) }}" class="company-show__btn-action">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                        Nueva Venta
+                    </a>
+                    @endcan
+                </div>
             </div>
             <div class="company-show__list">
                 @forelse($company->sales as $sale)

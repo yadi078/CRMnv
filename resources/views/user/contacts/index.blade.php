@@ -7,9 +7,17 @@
             <h2 class="page-header-card__title">Contactos</h2>
             <p class="page-header-card__subtitle">Directorio de contactos (consulta y captura)</p>
         </div>
-        @can('contacts.create')
-        <a href="{{ route('contacts.create') }}" class="btn-amber-app ml-auto">Nuevo Contacto</a>
-        @endcan
+        <div class="flex flex-wrap items-center justify-end gap-2 sm:gap-3 ml-auto shrink-0">
+            @can('sales.create')
+            <a href="{{ route('user.sales.create') }}" class="btn-amber-app">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                Nueva Venta
+            </a>
+            @endcan
+            @can('contacts.create')
+            <a href="{{ route('contacts.create') }}" class="btn-amber-app">Nuevo Contacto</a>
+            @endcan
+        </div>
     </x-slot>
 
     <div class="space-y-8">
@@ -48,7 +56,7 @@
                 </datalist>
             @endif
             <div class="crm-table-scroll-wrap crm-table-scroll w-full min-w-0 -mx-4 sm:-mx-0">
-                <table class="w-full crm-table-wide table-fixed divide-y divide-white/20">
+                <table class="w-full crm-table-wide divide-y divide-white/20">
                     <thead>
                         <tr class="table-header-panel-dark">
                             <th scope="col" class="crm-row-marker-head w-11 min-w-[2.75rem] px-1 py-3 text-center text-[10px] font-semibold uppercase tracking-wide text-[#FFE600]/90" title="Seguimiento personal (solo en este navegador)">Seg.</th>
@@ -56,7 +64,7 @@
                             <th class="w-[20%] min-w-[10rem] px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Empresa</th>
                             <th class="w-[11%] min-w-[6rem] px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Estatus</th>
                             <th class="w-[18%] min-w-[9rem] px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Correo</th>
-                            <th class="w-[12%] min-w-[7rem] px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Teléfono</th>
+                            <th class="w-[12%] min-w-[9.5rem] px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider whitespace-nowrap">Teléfono</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-white/15">
@@ -84,7 +92,7 @@
                             <td class="px-6 py-4 align-top min-w-0 text-sm text-white/90 whitespace-normal break-words [overflow-wrap:anywhere]">
                                 {{ ($contact->email_activo ?? true) ? ($contact->email ?? '—') : '—' }}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-white/90">{{ $contact->celular ?? '-' }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap tabular-nums text-sm text-white/90">{{ $contact->celular ?? '-' }}</td>
                         </tr>
                         @empty
                         <tr>

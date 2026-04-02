@@ -83,6 +83,8 @@
             </div>
         </div>
 
+        <x-companies-by-estado-cards :counts="$empresasPorEstado" />
+
         @if(isset($companyContactsCard) && $companyContactsCard)
         <!-- Ficha de contactos de la empresa seleccionada -->
         <div class="panel-card-dark">
@@ -158,7 +160,7 @@
         <div class="panel-card-dark overflow-hidden">
             <h3 class="panel-card-dark__title panel-card-dark__title--accent mb-4">Listado</h3>
             <div class="crm-table-scroll-wrap crm-table-scroll w-full min-w-0 -mx-4 sm:-mx-0">
-                <table class="w-full crm-table-wide table-fixed divide-y divide-white/20">
+                <table class="w-full crm-table-wide divide-y divide-white/20">
                     <thead>
                         <tr class="table-header-panel-dark">
                             <th scope="col" class="crm-row-marker-head w-11 min-w-[2.75rem] px-1 py-3.5 text-center text-[10px] font-semibold uppercase tracking-wide text-[#FFE600]/90" title="Seguimiento personal (solo en este navegador)">Seg.</th>

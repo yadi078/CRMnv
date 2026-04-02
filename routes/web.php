@@ -41,6 +41,8 @@ Route::middleware(['auth', 'verified', 'ensure.role'])->group(function () {
     // Historial de Ventas (admin y usuario pueden acceder)
     Route::prefix('user')->name('user.')->group(function () {
         Route::get('historial-ventas', [SalesController::class, 'index'])->name('sales.index');
+        Route::get('historial-ventas/por-empresa/{company}', [SalesController::class, 'indexForCompany'])->name('sales.by-company');
+        Route::get('historial-ventas/por-contacto/{contact}', [SalesController::class, 'indexForContact'])->name('sales.by-contact');
         Route::get('historial-ventas/create', [SalesController::class, 'create'])->name('sales.create');
         Route::post('historial-ventas', [SalesController::class, 'store'])->name('sales.store');
         Route::get('historial-ventas/{sale}', [SalesController::class, 'show'])->name('sales.show');

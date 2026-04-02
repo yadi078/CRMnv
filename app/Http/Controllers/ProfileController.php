@@ -149,6 +149,12 @@ class ProfileController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
+        if (! $request->user()?->esAdmin()) {
+            return Redirect::route('profile.edit')->withErrors([
+                'password' => 'Las cuentas de ejecutivo no pueden eliminarse desde aquí. Contacte a un administrador.',
+            ], 'userDeletion');
+        }
+
         $request->validateWithBag('userDeletion', [
             'password' => ['required', 'current_password'],
         ]);

@@ -15,6 +15,12 @@ class PasswordController extends Controller
      */
     public function update(Request $request): RedirectResponse
     {
+        if (! $request->user()?->esAdmin()) {
+            return back()->withErrors([
+                'current_password' => 'Los ejecutivos no pueden cambiar la contraseña desde el perfil. Contacte a un administrador.',
+            ], 'updatePassword');
+        }
+
         $validated = $request->validateWithBag('updatePassword', [
             'current_password' => ['required', 'current_password'],
             'password' => ['required', Password::defaults(), 'confirmed'],

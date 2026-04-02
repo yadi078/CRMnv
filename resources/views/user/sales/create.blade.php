@@ -76,8 +76,8 @@
                             <x-input-label for="contact_id" value="Contacto" class="text-base md:text-lg font-semibold text-white" />
                             <select id="contact_id" name="contact_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-gray-900">
                                 <option value="">Ninguno / No especificado</option>
-                                @foreach($contacts as $contact)
-                                <option value="{{ $contact->id }}" {{ old('contact_id') == $contact->id ? 'selected' : '' }}>{{ $contact->nombre_completo }}{{ $contact->puesto_de_trabajo ? ' — ' . $contact->puesto_de_trabajo : '' }}</option>
+                                @foreach($contacts as $c)
+                                <option value="{{ $c->id }}" {{ (string) old('contact_id', $prefillContactId ?? '') === (string) $c->id ? 'selected' : '' }}>{{ $c->nombre_completo }}{{ $c->puesto_de_trabajo ? ' — ' . $c->puesto_de_trabajo : '' }}</option>
                                 @endforeach
                             </select>
                             <x-input-error :messages="$errors->get('contact_id')" class="mt-2" />

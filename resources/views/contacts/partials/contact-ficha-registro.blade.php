@@ -1,30 +1,11 @@
-{{-- Flujo ficha en editar contacto: botón y bloque venta/facturación. Requiere: $contact, $sale (nullable) --}}
-@php
-    $fichaOpen = (bool) old('ficha_registro_desbloqueada', $contact->ficha_registro_desbloqueada);
-@endphp
-
-<div class="md:col-span-2 mt-4 pt-6 border-t border-white/20" x-data="{ fichaOpen: @json($fichaOpen) }">
-    <input type="hidden" name="ficha_registro_desbloqueada" :value="fichaOpen ? 1 : 0">
-
-    <div x-show="!fichaOpen" x-cloak class="flex flex-col sm:flex-row sm:items-center gap-3">
-        <button
-            type="button"
-            class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#FFE600] text-[#071A3D] font-semibold text-sm hover:bg-yellow-300 transition shadow"
-            @click="fichaOpen = true"
-        >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-            Generar ficha de registro
-        </button>
-        <p class="text-sm text-white/70">Los datos del curso, facturación y método de pago aparecen al activar esta opción.</p>
-    </div>
-
-    <div x-show="fichaOpen" x-cloak class="space-y-8 mt-4">
+{{-- Bloque venta/facturación para ficha PDF. Visible cuando el padre abre «Crear ficha de inscripción». Requiere: $contact, $sale (nullable) --}}
+<div class="md:col-span-2 mt-4 pt-6 border-t border-white/20 space-y-8">
         @if(!$sale)
             <div class="rounded-xl border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
                 Aún no hay una venta vinculada. La venta se crea automáticamente cuando el contacto pasa a estado <strong class="text-white">Vendido</strong>.
             </div>
         @else
-            <fieldset class="min-w-0 border-0 p-0 m-0 space-y-8" :disabled="!fichaOpen">
+            <fieldset class="min-w-0 border-0 p-0 m-0 space-y-8">
                 <input type="hidden" name="sale_id" value="{{ $sale->id }}">
 
                 <div>
@@ -196,7 +177,6 @@
                 </div>
             </fieldset>
         @endif
-    </div>
 </div>
 
 @if($sale)

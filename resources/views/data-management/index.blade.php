@@ -41,6 +41,8 @@
             </a>
         </div>
 
+        <x-companies-by-estado-cards :counts="$empresasPorEstado" />
+
         {{-- Admin: Exportar / Importar --}}
         @if($isAdmin)
         <div class="panel-card-dark">

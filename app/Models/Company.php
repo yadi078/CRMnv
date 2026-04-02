@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Modelo Company - Empresas/Prospectos
@@ -276,6 +278,45 @@ class Company extends Model
             ->accessibleForExecutive($user)
             ->orderBy('nombre_comercial')
             ->get();
+    }
+
+    /**
+     * Conteo de empresas por entidad federativa (campo {@see $fillable estado}), con el mismo alcance
+     * que el listado: administrador ve todo; ejecutivo solo su cartera ({@see scopeAccessibleForExecutive}).
+     * Incluye clave «Sin especificar» si hay registros sin estado.
+     *
+     * @return Collection<string, int> nombre de estado => cantidad
+     */
+    public static function countsByEstadoForUser(?User $user): Collection
+    {
+        $base = static::query();
+        if ($user && ! $user->esAdmin()) {
+            $base->accessibleForExecutive($user);
+        }
+
+        $byEstado = (clone $base)
+            ->selectRaw('TRIM(estado) as estado_key, COUNT(*) as aggregate')
+            ->whereNotNull('estado')
+            ->whereRaw("TRIM(COALESCE(estado, '')) != ''")
+            ->groupBy(DB::raw('TRIM(estado)'))
+            ->orderBy('estado_key')
+            ->pluck('aggregate', 'estado_key')
+            ->map(fn ($n) => (int) $n);
+
+        $sinEstado = (clone $base)
+            ->where(function ($q): void {
+                $q->whereNull('estado')
+                    ->orWhere('estado', '')
+                    ->orWhereRaw("TRIM(COALESCE(estado, '')) = ''");
+            })
+            ->count();
+
+        $byEstado = $byEstado->sortKeys();
+        if ($sinEstado > 0) {
+            $byEstado = $byEstado->put('Sin especificar', $sinEstado);
+        }
+
+        return $byEstado;
     }
 
     /**

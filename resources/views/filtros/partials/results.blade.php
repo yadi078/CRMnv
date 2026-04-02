@@ -6,16 +6,16 @@
             <span class="text-sm text-white/60 font-medium tabular-nums">{{ $contacts->total() }} {{ $contacts->total() === 1 ? 'registro' : 'registros' }}</span>
         </div>
         <div class="crm-table-scroll-wrap crm-table-scroll w-full min-w-0 -mx-1 px-1">
-            <table class="min-w-full divide-y divide-white/15">
+            <table class="w-full crm-table-wide divide-y divide-white/15">
                 <thead>
                     <tr class="table-header-panel-dark">
                         <th scope="col" class="crm-row-marker-head w-11 min-w-[2.75rem] px-1 py-3.5 text-center text-[10px] font-semibold uppercase tracking-wide text-[#FFE600]/90" title="Seguimiento personal (solo en este navegador)">Seg.</th>
-                        <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Nombre</th>
-                        <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Empresa</th>
-                        <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Tel / Cel</th>
-                        <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Email</th>
-                        <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Ejecutivo</th>
-                        <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Estatus</th>
+                        <th class="min-w-[11rem] px-4 py-3.5 text-left text-xs font-semibold uppercase">Nombre</th>
+                        <th class="min-w-[10rem] px-4 py-3.5 text-left text-xs font-semibold uppercase">Empresa</th>
+                        <th class="min-w-[10.5rem] px-4 py-3.5 text-left text-xs font-semibold uppercase whitespace-nowrap">Tel / Cel</th>
+                        <th class="min-w-[12rem] px-4 py-3.5 text-left text-xs font-semibold uppercase">Email</th>
+                        <th class="min-w-[9rem] px-4 py-3.5 text-left text-xs font-semibold uppercase">Ejecutivo</th>
+                        <th class="min-w-[8.5rem] px-4 py-3.5 text-left text-xs font-semibold uppercase">Estatus</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-white/10">
@@ -32,8 +32,8 @@
                                     —
                                 @endif
                             </td>
-                            <td class="px-4 py-3.5 text-sm text-white/90">{{ $contact->telefono ?? $contact->celular ?? '—' }}</td>
-                            <td class="px-4 py-3.5 text-sm text-white/90">{{ $contact->email ?? '—' }}</td>
+                            <td class="px-4 py-3.5 text-sm text-white/90 whitespace-nowrap tabular-nums">{{ $contact->telefono ?? $contact->celular ?? '—' }}</td>
+                            <td class="px-4 py-3.5 text-sm text-white/90 [overflow-wrap:anywhere]">{{ $contact->email ?? '—' }}</td>
                             <td class="px-4 py-3.5 text-sm text-white/90">{{ $contact->comercialEjecutivoLabel() }}</td>
                             <td class="px-4 py-3.5">
                                 <span class="px-2 py-0.5 text-xs rounded-lg badge-prospect-{{ $contact->status_color ?? 'seguimiento' }}">
@@ -59,14 +59,14 @@
             <span class="text-sm text-white/60 font-medium tabular-nums">{{ $companies->total() }} {{ $companies->total() === 1 ? 'registro' : 'registros' }}</span>
         </div>
         <div class="crm-table-scroll-wrap crm-table-scroll w-full min-w-0 -mx-1 px-1">
-            <table class="min-w-full divide-y divide-white/15">
+            <table class="w-full crm-table-wide divide-y divide-white/15">
                 <thead>
                     <tr class="table-header-panel-dark">
                         <th scope="col" class="crm-row-marker-head w-11 min-w-[2.75rem] px-1 py-3.5 text-center text-[10px] font-semibold uppercase tracking-wide text-[#FFE600]/90" title="Seguimiento personal (solo en este navegador)">Seg.</th>
-                        <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Nombre</th>
-                        <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">RFC</th>
-                        <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Estatus</th>
-                        <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase">Ejecutivo</th>
+                        <th class="min-w-[12rem] px-4 py-3.5 text-left text-xs font-semibold uppercase">Nombre</th>
+                        <th class="min-w-[8.5rem] px-4 py-3.5 text-left text-xs font-semibold uppercase whitespace-nowrap">RFC</th>
+                        <th class="min-w-[12rem] px-4 py-3.5 text-left text-xs font-semibold uppercase">Estatus</th>
+                        <th class="min-w-[9rem] px-4 py-3.5 text-left text-xs font-semibold uppercase">Ejecutivo</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-white/10">
