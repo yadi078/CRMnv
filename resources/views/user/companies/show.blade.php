@@ -7,7 +7,7 @@
             <h2 class="page-header-card__title">{{ $company->nombre_comercial }}</h2>
             <p class="page-header-card__subtitle">Detalle de empresa</p>
         </div>
-        <div class="flex gap-2 ml-auto">
+        <div class="flex flex-wrap gap-2 ml-auto justify-end items-center">
             @can('companies.edit')
             <a href="{{ \App\Support\CrmNavigation::withReturn(route('companies.edit', $company)) }}" class="btn-amber-app">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -17,7 +17,7 @@
             </a>
             @endcan
             @can('requestDeletion', $company)
-            <form method="POST" action="{{ route('companies.request-deletion', $company) }}" class="inline" onsubmit="return confirm('¿Enviar solicitud para eliminar esta empresa? Un administrador deberá aprobarlo.');">
+            <form method="POST" action="{{ route('companies.request-deletion', $company) }}" class="inline-flex" onsubmit="return confirm('¿Enviar solicitud para eliminar esta empresa? Un administrador deberá aprobarlo.');">
                 @csrf
                 <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl font-semibold bg-red-600/90 text-white hover:bg-red-500 border border-red-400/50">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
@@ -30,6 +30,18 @@
                 Eliminación pendiente de aprobación
             </span>
             @endif
+            @can('companies.delete')
+            <form action="{{ route('companies.destroy', $company) }}" method="POST" class="inline-flex" onsubmit="return confirm('¿Seguro que deseas eliminar esta empresa? Esta acción no se puede deshacer.');">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-red-400/55 bg-red-500/20 text-red-100 text-sm font-medium px-3 sm:px-4 py-2 hover:bg-red-500/35 focus:outline-none focus:ring-2 focus:ring-red-400/50">
+                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m-7 0h10a1 1 0 00-1-1h-3V4a1 1 0 00-1-1h-2a1 1 0 00-1 1v2H9a1 1 0 00-1 1z" />
+                    </svg>
+                    Eliminar empresa
+                </button>
+            </form>
+            @endcan
         </div>
     </x-slot>
 
@@ -139,7 +151,11 @@
                 <div class="company-show__list-item company-show__list-item--contact">
                     <div class="company-show__list-body">
                         <a href="{{ \App\Support\CrmNavigation::withReturn(route('contacts.show', $contact)) }}" class="company-show__list-title text-white hover:text-[#FFE600] hover:underline focus:outline-none focus:ring-2 focus:ring-[#FFE600]/35 rounded inline-block">{{ $contact->nombre_completo }}</a>
-                        <p class="company-show__list-meta">{{ $contact->puesto_de_trabajo ?? '-' }} · {{ $contact->email }}</p>
+                        <p class="company-show__list-meta">{{ $contact->puesto_de_trabajo ?? '-' }}</p>
+                        <p class="company-show__list-meta">{{ $contact->email }}</p>
+                        @if($contact->celular)
+                        <p class="company-show__list-meta">{{ $contact->celular }}</p>
+                        @endif
                     </div>
                     @can('sales.view')
                     <a href="{{ route('user.sales.by-contact', $contact) }}" class="company-show__list-link shrink-0 text-xs font-semibold uppercase tracking-wide">Ventas</a>
@@ -170,10 +186,18 @@
                     <div class="company-show__list-body">
                         <p class="company-show__list-title">{{ $sale->nombre_servicio }}</p>
                         <p class="company-show__list-meta">{{ $sale->fecha_venta->format('d/m/Y') }} · {{ $sale->monto_formateado }}</p>
+                        @if($sale->participantes)
+                        <p class="company-show__list-meta">{{ $sale->participantes }} participantes</p>
+                        @endif
                     </div>
-                    <a href="{{ \App\Support\CrmNavigation::withReturn(route('user.sales.show', $sale)) }}" class="company-show__list-link" aria-label="Ver venta" title="Ver venta">
-                        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                    </a>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <a href="{{ \App\Support\CrmNavigation::withReturn(route('user.sales.show', $sale)) }}" class="company-show__list-link text-xs font-semibold uppercase tracking-wide" aria-label="Ver venta" title="Ver venta">Ver</a>
+                        @can('view', $sale)
+                        <a href="{{ route('user.sales.ficha-pdf', $sale) }}" target="_blank" rel="noopener noreferrer" class="company-show__list-link" title="Descargar ficha de inscripción (PDF)" aria-label="Descargar ficha de inscripción (PDF)">
+                            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        </a>
+                        @endcan
+                    </div>
                 </div>
                 @empty
                 <p class="company-show__empty">No hay ventas registradas</p>

@@ -374,4 +374,6 @@
         })();
     </script>
     @endcan
+
+    @include('contacts.partials.ficha-venta-auto-download')
 </x-app-user-layout>

@@ -56,4 +56,6 @@
             @include('user.sales.partials.sales-table', ['sales' => $sales])
         </div>
     </div>
+
+    @include('contacts.partials.ficha-venta-auto-download')
 </x-app-user-layout>
