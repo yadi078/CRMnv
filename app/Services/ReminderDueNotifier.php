@@ -10,14 +10,15 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Reglas de aviso:
- * - Alertas previas: 10 y 5 minutos antes (una vez cada fase), en ventanas disjuntas.
- * - Alarma principal: en la hora programada o después (una sola vez).
- * - No se envía una alerta “previa” si el recordatorio se creó después de ese instante
- *   (evita que suene “al guardar” cuando la hora queda a pocos minutos).
+ * Reglas de aviso (una notificación por fase):
+ * - 5 minutos antes: durante el minuto calendario que empieza en T−5.
+ * - 2 minutos antes: durante el minuto calendario que empieza en T−2.
+ * - Hora exacta: cuando llega o pasa start_at efectivo.
+ * - +3 minutos después: durante el minuto calendario que empieza en T+3 (recordatorio de seguimiento).
  */
 class ReminderDueNotifier
 {
+
     /**
      * Procesa recordatorios pendientes y envía notificaciones según reglas.
      *
@@ -86,10 +87,7 @@ class ReminderDueNotifier
 
     protected function processTimed(Reminder $reminder, Carbon $now, Carbon $start): bool
     {
-        $tz = config('app.timezone');
-        $created = $reminder->created_at?->copy()->timezone($tz) ?? $now;
-
-        // 1) Aviso en hora (fase due).
+        // 1) Hora exacta.
         if ($now->gte($start) && ! $this->alreadySentPhase($reminder, 'due')) {
             $reminder->update([
                 'notification_sent_at' => $now,
@@ -99,12 +97,24 @@ class ReminderDueNotifier
             return true;
         }
 
-        $t5 = $start->copy()->subMinutes(5);
-        $t10 = $start->copy()->subMinutes(10);
+        // 2) Antes de la hora: T−2 y T−5 (ventanas de un minuto).
+        if ($now->lt($start)) {
+            $pre2MinuteStart = $start->copy()->subMinutes(2)->startOfMinute();
+            if ($now->gte($pre2MinuteStart)
+                && $now->lt($pre2MinuteStart->copy()->addMinute())
+                && ! $this->alreadySentPhase($reminder, 'pre2')) {
+                $reminder->update([
+                    'pre_notification_sent_at' => $now,
+                ]);
+                $reminder->user?->notify(new ReminderDueNotification($reminder, 'pre2'));
 
-        // 2) 5 minutos antes: [T-5, T)
-        if ($now->gte($t5) && $now->lt($start) && ! $this->alreadySentPhase($reminder, 'pre5')) {
-            if ($created->lte($t5)) {
+                return true;
+            }
+
+            $pre5MinuteStart = $start->copy()->subMinutes(5)->startOfMinute();
+            if ($now->gte($pre5MinuteStart)
+                && $now->lt($pre5MinuteStart->copy()->addMinute())
+                && ! $this->alreadySentPhase($reminder, 'pre5')) {
                 $reminder->update([
                     'pre_notification_sent_at' => $now,
                 ]);
@@ -112,18 +122,21 @@ class ReminderDueNotifier
 
                 return true;
             }
+
+            return false;
         }
 
-        // 3) 10 minutos antes: [T-10, T-5)
-        if ($now->gte($t10) && $now->lt($t5) && ! $this->alreadySentPhase($reminder, 'pre10')) {
-            if ($created->lte($t10)) {
-                $reminder->update([
-                    'pre_notification_sent_at' => $now,
-                ]);
-                $reminder->user?->notify(new ReminderDueNotification($reminder, 'pre10'));
+        // 3) Después de la hora: T+3 (un disparo en el minuto [T+3, T+4)).
+        $post3MinuteStart = $start->copy()->addMinutes(3)->startOfMinute();
+        if ($now->gte($post3MinuteStart)
+            && $now->lt($post3MinuteStart->copy()->addMinute())
+            && ! $this->alreadySentPhase($reminder, 'post3')) {
+            $reminder->update([
+                'pre_notification_sent_at' => $now,
+            ]);
+            $reminder->user?->notify(new ReminderDueNotification($reminder, 'post3'));
 
-                return true;
-            }
+            return true;
         }
 
         return false;

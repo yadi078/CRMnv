@@ -3,16 +3,18 @@
 namespace App\Notifications;
 
 use App\Models\Reminder;
+use Carbon\Carbon;
 use Illuminate\Notifications\Notification;
 
 class ReminderDueNotification extends Notification
 {
-    /** @param  'pre15'|'pre10'|'pre5'|'due'  $phase */
+    /** @param  'pre15'|'pre10'|'pre5'|'pre2'|'due'|'post3'  $phase */
     public function __construct(
         public Reminder $reminder,
         public string $phase = 'due',
     ) {
-        $this->phase = in_array($phase, ['pre15', 'pre10', 'pre5', 'due'], true) ? $phase : 'due';
+        $allowed = ['pre15', 'pre10', 'pre5', 'pre2', 'due', 'post3'];
+        $this->phase = in_array($phase, $allowed, true) ? $phase : 'due';
     }
 
     /**
@@ -44,6 +46,7 @@ class ReminderDueNotification extends Notification
         }
 
         return [
+            'reminder_id' => $r->id,
             'titulo' => $r->title ?: null,
             'tipo_accion' => $tipoEtiqueta,
             'descripcion' => $r->description ?: null,
@@ -73,17 +76,80 @@ class ReminderDueNotification extends Notification
         }
 
         $rid = isset($data['reminder_id']) ? (int) $data['reminder_id'] : 0;
+        if ($rid < 1 && isset($data['reminderId'])) {
+            $rid = (int) $data['reminderId'];
+        }
         if ($rid < 1) {
-            return $data;
+            $det = $data['reminder_detalle'] ?? [];
+            if (is_array($det) && isset($det['reminder_id'])) {
+                $rid = (int) $det['reminder_id'];
+            }
+        }
+        if ($rid < 1) {
+            $guessed = self::guessReminderIdForLegacyPayload($data, $userId);
+            if ($guessed !== null) {
+                $rid = $guessed;
+                $data['reminder_id'] = $rid;
+            }
         }
 
-        $r = Reminder::where('user_id', $userId)->find($rid);
-        if ($r) {
-            $data['reminder_id'] = $r->id;
-            $data['reminder_detalle'] = self::reminderSnapshot($r);
+        $hasDetail = ! empty($data['reminder_detalle']) && is_array($data['reminder_detalle']);
+        if ($rid >= 1 && ! $hasDetail) {
+            $r = Reminder::where('user_id', $userId)->find($rid);
+            if ($r) {
+                $data['reminder_detalle'] = self::reminderSnapshot($r);
+                $hasDetail = true;
+            }
+        }
+
+        if ($rid >= 1 && $hasDetail && is_array($data['reminder_detalle'])) {
+            $data['reminder_detalle']['reminder_id'] = $rid;
         }
 
         return $data;
+    }
+
+    /**
+     * Notificaciones antiguas sin reminder_id: intentar localizar el registro por título + fecha.
+     */
+    protected static function guessReminderIdForLegacyPayload(array $data, int $userId): ?int
+    {
+        $detail = is_array($data['reminder_detalle'] ?? null) ? $data['reminder_detalle'] : [];
+        $title = trim((string) ($detail['titulo'] ?? $data['titulo'] ?? ''));
+        if ($title === '') {
+            return null;
+        }
+
+        $fi = trim((string) ($detail['fecha_inicio'] ?? $data['fecha_prevista'] ?? ''));
+        $tz = config('app.timezone');
+        $candidateStart = null;
+        if (preg_match('/^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})$/', $fi, $m)) {
+            $candidateStart = Carbon::create((int) $m[3], (int) $m[2], (int) $m[1], (int) $m[4], (int) $m[5], 0, $tz);
+        } elseif ($fi !== '') {
+            try {
+                $candidateStart = Carbon::parse($fi, $tz);
+            } catch (\Throwable) {
+                $candidateStart = null;
+            }
+        }
+
+        $q = Reminder::query()
+            ->where('user_id', $userId)
+            ->where('title', $title)
+            ->where('is_done', false);
+
+        if ($candidateStart) {
+            $from = $candidateStart->copy()->subMinutes(3);
+            $to = $candidateStart->copy()->addMinutes(3);
+            $q->where(function ($qq) use ($from, $to) {
+                $qq->whereBetween('start_at', [$from, $to])
+                    ->orWhereBetween('scheduled_for', [$from, $to]);
+            });
+        }
+
+        $r = $q->orderByDesc('id')->first();
+
+        return $r?->id;
     }
 
     /**
@@ -98,6 +164,8 @@ class ReminderDueNotification extends Notification
             'pre15' => 'En 15 min: ',
             'pre10' => 'En 10 min: ',
             'pre5' => 'En 5 min: ',
+            'pre2' => 'En 2 min: ',
+            'post3' => '+3 min (seguimiento): ',
             default => '',
         };
 
@@ -134,6 +202,8 @@ class ReminderDueNotification extends Notification
             'pre15' => 'Recordatorio en 15 minutos',
             'pre10' => 'Recordatorio en 10 minutos',
             'pre5' => 'Recordatorio en 5 minutos',
+            'pre2' => 'Recordatorio en 2 minutos',
+            'post3' => 'Recordatorio: 3 min después de la hora',
             default => 'Recordatorio',
         };
 

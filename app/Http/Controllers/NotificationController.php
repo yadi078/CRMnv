@@ -38,17 +38,9 @@ class NotificationController extends Controller
                     $raw = $notification->data;
                     $data = is_array($raw) ? $raw : (is_string($raw) ? (json_decode($raw, true) ?: []) : []);
                     $data = ReminderDueNotification::enrichStoredData($data, $user->id);
-                    $ridAfter = (int) ($data['reminder_id'] ?? 0);
-                    if ($ridAfter < 1) {
-                        $fallback = is_array($raw) ? $raw : (is_string($raw) ? (json_decode($raw, true) ?: []) : []);
-                        if (! empty($fallback['reminder_id'])) {
-                            $data['reminder_id'] = (int) $fallback['reminder_id'];
-                            $data = ReminderDueNotification::enrichStoredData($data, $user->id);
-                        }
-                    }
 
                     $phase = (string) ($data['alert_phase'] ?? 'due');
-                    if (! in_array($phase, ['pre15', 'pre10', 'pre5', 'due'], true)) {
+                    if (! in_array($phase, ['pre15', 'pre10', 'pre5', 'pre2', 'due', 'post3'], true)) {
                         return null;
                     }
 

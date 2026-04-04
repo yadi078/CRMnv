@@ -8,9 +8,6 @@ use Illuminate\Http\Request;
 
 class ReminderController extends Controller
 {
-    /**
-     * Formulario para editar fecha y datos del recordatorio (p. ej. desde «Reprogramar» en la alerta).
-     */
     public function edit(Request $request, Reminder $reminder)
     {
         $this->authorizeReminder($request, $reminder);

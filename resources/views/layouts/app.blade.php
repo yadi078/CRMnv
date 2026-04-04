@@ -147,32 +147,45 @@
         <script>
         (function() {
             var url = '{{ route("notifications.unread-count") }}';
-            var crmRemindersBase = @json(url('/reminders'));
+            var crmReminderSnoozeZero = @json(route('reminders.snooze', ['reminder' => 0]));
+            var crmReminderEditZero = @json(route('reminders.edit', ['reminder' => 0]));
             function crmReminderSnoozeUrl(reminderId) {
-                return crmRemindersBase + '/' + encodeURIComponent(reminderId) + '/snooze';
+                return String(crmReminderSnoozeZero).replace(/\/0(\/snooze)/, '/' + encodeURIComponent(reminderId) + '$1');
             }
             function crmReminderEditUrl(reminderId) {
-                return crmRemindersBase + '/' + encodeURIComponent(reminderId) + '/edit';
+                return String(crmReminderEditZero).replace(/\/0(\/edit)/, '/' + encodeURIComponent(reminderId) + '$1');
             }
-            var seenReminderAlertIds = {};
+            var reminderVistoAckIds = {};
+            var lastReminderRingByNotifId = {};
+            var REMINDER_ALARM_REPEAT_MS = 23000;
             var audioUnlocked = false;
             var alarmCtx = null;
-            var seenStorageKey = 'crm_seen_reminder_alert_ids_v1';
+            var vistoAckStorageKey = 'crm_reminder_visto_ack_ids_v1';
 
             try {
-                var rawSeen = sessionStorage.getItem(seenStorageKey);
-                if (rawSeen) {
-                    var parsedSeen = JSON.parse(rawSeen);
-                    if (parsedSeen && typeof parsedSeen === 'object') {
-                        seenReminderAlertIds = parsedSeen;
+                var rawVisto = sessionStorage.getItem(vistoAckStorageKey);
+                if (rawVisto) {
+                    var parsedVisto = JSON.parse(rawVisto);
+                    if (parsedVisto && typeof parsedVisto === 'object') {
+                        reminderVistoAckIds = parsedVisto;
                     }
                 }
             } catch (e) {}
 
-            function persistSeenReminderIds() {
+            function persistReminderVistoAck() {
                 try {
-                    sessionStorage.setItem(seenStorageKey, JSON.stringify(seenReminderAlertIds));
+                    sessionStorage.setItem(vistoAckStorageKey, JSON.stringify(reminderVistoAckIds));
                 } catch (e) {}
+            }
+
+            function ackReminderVistoLocally(notificationId) {
+                var nid = String(notificationId || '');
+                if (!nid) {
+                    return;
+                }
+                reminderVistoAckIds[nid] = true;
+                delete lastReminderRingByNotifId[nid];
+                persistReminderVistoAck();
             }
 
             function escapeHtml(text) {
@@ -395,6 +408,7 @@
                                 .then(function(r) { return r.json(); })
                                 .then(function(data) {
                                     if (data && data.success) {
+                                        ackReminderVistoLocally(alertData.id);
                                         return markReminderAsRead(alertData.id);
                                     }
                                 })
@@ -414,6 +428,7 @@
                 var seenBtn = document.getElementById('crm-reminder-mark-seen');
                 if (seenBtn) {
                     seenBtn.addEventListener('click', function() {
+                        ackReminderVistoLocally(alertData.id);
                         markReminderAsRead(alertData.id).finally(function() {
                             closeReminderDetailModal();
                             updateBadge();
@@ -422,7 +437,25 @@
                 }
             }
 
+            function removeExistingSideAlertForNotif(notificationId) {
+                var nid = String(notificationId || '');
+                if (!nid) {
+                    return;
+                }
+                var host = document.getElementById('crm-reminder-side-alerts');
+                if (!host) {
+                    return;
+                }
+                var prev = host.querySelector('[data-crm-notif-id="' + nid.replace(/"/g, '') + '"]');
+                if (prev && prev.parentNode) {
+                    prev.remove();
+                }
+            }
+
             function showDueReminderSideAlert(alertData) {
+                var nid = String(alertData.id || '');
+                removeExistingSideAlertForNotif(nid);
+
                 var host = document.getElementById('crm-reminder-side-alerts');
                 if (!host) {
                     host = document.createElement('div');
@@ -434,7 +467,7 @@
                 var id = 'due-reminder-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
                 var hourText = extractHourLabel(alertData.time);
                 var html = ''
-                    + '<div id="' + id + '" class="pointer-events-auto rounded-2xl overflow-hidden" style="background:#0b2f69;border:2px solid #FFE600;box-shadow:0 14px 30px rgba(0,0,0,0.45);">'
+                    + '<div id="' + id + '" data-crm-notif-id="' + nid.replace(/"/g, '') + '" class="pointer-events-auto rounded-2xl overflow-hidden" style="background:#0b2f69;border:2px solid #FFE600;box-shadow:0 14px 30px rgba(0,0,0,0.45);">'
                     + '  <div class="px-4 py-3 flex items-center gap-2" style="background:#071A3D;color:#FFE600;border-bottom:1px solid rgba(255,230,0,0.45);">'
                     + '    <span class="inline-flex items-center justify-center w-8 h-8 rounded-full shrink-0" style="background:rgba(255,230,0,0.2);color:#FFE600;border:1px solid rgba(255,230,0,0.8);">'
                     + '      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">'
@@ -507,15 +540,18 @@
 
                         var dueAlerts = Array.isArray(data.due_reminder_alerts) ? data.due_reminder_alerts : [];
                         dueAlerts.forEach(function(alertData) {
-                            var reminderId = String(alertData.id || '');
-                            if (!reminderId || seenReminderAlertIds[reminderId]) {
+                            var nid = String(alertData.id || '');
+                            if (!nid || reminderVistoAckIds[nid]) {
                                 return;
                             }
-                            seenReminderAlertIds[reminderId] = true;
-                            persistSeenReminderIds();
                             showDueReminderSideAlert(alertData);
-                            playReminderAlarm();
-                            showBrowserReminderNotification(alertData);
+                            var now = Date.now();
+                            var lastRing = lastReminderRingByNotifId[nid] || 0;
+                            if (now - lastRing >= REMINDER_ALARM_REPEAT_MS) {
+                                lastReminderRingByNotifId[nid] = now;
+                                playReminderAlarm();
+                                showBrowserReminderNotification(alertData);
+                            }
                         });
                     })
                     .catch(function() {});

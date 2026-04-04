@@ -6,9 +6,10 @@
     $startAtValue = $startAtOld !== null && $startAtOld !== ''
         ? $startAtOld
         : ($startLocal ? $startLocal->format('Y-m-d\TH:i') : '');
+    $shellLayout = auth()->user()->esAdmin() ? 'app-layout' : 'app-user-layout';
 @endphp
 
-<x-app-layout>
+<x-dynamic-component :component="$shellLayout">
     <x-slot name="header">
         <x-page-header-avatar>
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -127,4 +128,4 @@
             </div>
         </form>
     </div>
-</x-app-layout>
+</x-dynamic-component>

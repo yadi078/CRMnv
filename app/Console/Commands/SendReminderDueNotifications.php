@@ -9,14 +9,13 @@ class SendReminderDueNotifications extends Command
 {
     protected $signature = 'reminders:send-due';
 
-    protected $description = 'Envía avisos de recordatorios: 10 min antes y en la hora programada';
+    protected $description = 'Envía avisos de recordatorios (5 min, 2 min antes y a la hora) para todos los usuarios';
 
     public function handle(ReminderDueNotifier $notifier): int
     {
-        $sent = $notifier->dispatchDue();
-
-        if ($sent > 0) {
-            $this->info('Enviadas ' . $sent . ' notificaciones de recordatorio.');
+        $sent = $notifier->dispatchDue(null);
+        if ($this->output->isVerbose()) {
+            $this->info("Notificaciones de recordatorio enviadas en esta ejecución: {$sent}");
         }
 
         return self::SUCCESS;
