@@ -104,10 +104,14 @@ class ReminderAlarmRepeater
             return;
         }
 
-        $payload = ['alarm_last_ring_at' => $effective->copy()];
+        $anchor = $reminder->notification_sent_at
+            ? $reminder->notification_sent_at->copy()->timezone(config('app.timezone'))
+            : $effective->copy();
+
+        $payload = ['alarm_last_ring_at' => $anchor];
         if ($reminder->alarm_repeat_type === Reminder::ALARM_REPEAT_DURATION
             && $reminder->alarm_window_started_at === null) {
-            $payload['alarm_window_started_at'] = $effective->copy();
+            $payload['alarm_window_started_at'] = $anchor->copy();
         }
         $reminder->update($payload);
         $reminder->refresh();

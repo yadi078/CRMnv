@@ -162,7 +162,7 @@
             }
             var reminderVistoAckIds = {};
             var lastReminderRingByNotifId = {};
-            var REMINDER_ALARM_REPEAT_MS = 23000;
+            var REMINDER_ALARM_REPEAT_MS = 12000;
             var audioUnlocked = false;
             var alarmCtx = null;
             var activeAlarmOscillators = [];
@@ -642,7 +642,7 @@
             });
             maybeRequestBrowserNotificationPermission();
             updateBadge();
-            setInterval(updateBadge, 25000);
+            setInterval(updateBadge, 10000);
             window.updateNotificationBadge = updateBadge;
         })();
         </script>

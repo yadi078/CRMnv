@@ -46,20 +46,7 @@ class ReminderController extends Controller
         unset($data['reminder_context']);
 
         $allDay = $request->boolean('all_day');
-        $startAt = null;
-        if (! empty($data['date'])) {
-            if ($allDay) {
-                $time = config('crm.reminder_all_day_notify_time', '09:00');
-            } else {
-                $time = ! empty($data['time'])
-                    ? $data['time']
-                    : config('crm.default_reminder_time', '09:00');
-            }
-            $time = is_string($time) ? trim($time) : '09:00';
-            $startAt = strlen($time) === 5
-                ? $data['date'].' '.$time.':00'
-                : $data['date'].' '.$time;
-        }
+        $startAt = $this->reminderStartAtFromRequest($data, $allDay);
 
         $deadlineAt = null;
         if (! empty($data['deadline_date'])) {
@@ -351,5 +338,51 @@ class ReminderController extends Controller
         $ownerId = (int) $reminder->user_id;
         $currentId = (int) $request->user()->getAuthIdentifier();
         abort_unless($ownerId === $currentId, 403);
+    }
+
+    /**
+     * Fecha/hora del recordatorio en la zona de la aplicación (evita H:MM sin cero a la izquierda mal interpretada).
+     *
+     * @param  array<string, mixed>  $data
+     */
+    protected function reminderStartAtFromRequest(array $data, bool $allDay): ?string
+    {
+        $date = trim((string) ($data['date'] ?? ''));
+        if ($date === '') {
+            return null;
+        }
+
+        $tz = config('app.timezone');
+
+        if ($allDay) {
+            $timeStr = trim((string) config('crm.reminder_all_day_notify_time', '09:00'));
+        } else {
+            $rawTime = trim((string) ($data['time'] ?? ''));
+            $timeStr = $rawTime !== ''
+                ? $rawTime
+                : trim((string) config('crm.default_reminder_time', '09:00'));
+        }
+
+        if (preg_match('/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/', $timeStr, $m)) {
+            $h = (int) $m[1];
+            $mi = (int) $m[2];
+            $s = isset($m[3]) ? (int) $m[3] : 0;
+            if ($h < 0 || $h > 23 || $mi < 0 || $mi > 59 || $s < 0 || $s > 59) {
+                return null;
+            }
+            $normalizedTime = sprintf('%02d:%02d:%02d', $h, $mi, $s);
+        } else {
+            try {
+                $normalizedTime = Carbon::parse($timeStr, $tz)->format('H:i:s');
+            } catch (\Throwable) {
+                $normalizedTime = '09:00:00';
+            }
+        }
+
+        try {
+            return Carbon::parse($date.' '.$normalizedTime, $tz)->format('Y-m-d H:i:s');
+        } catch (\Throwable) {
+            return null;
+        }
     }
 }

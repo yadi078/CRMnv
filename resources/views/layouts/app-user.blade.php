@@ -151,7 +151,7 @@
             /** Solo IDs marcados con «Visto» (o aplazado que ya marcó leída): dejan de alertar. Cerrar con ✕ no añade aquí. */
             var reminderVistoAckIds = {};
             var lastReminderRingByNotifId = {};
-            var REMINDER_ALARM_REPEAT_MS = 23000;
+            var REMINDER_ALARM_REPEAT_MS = 12000;
             var audioUnlocked = false;
             var alarmCtx = null;
             var activeAlarmOscillators = [];
@@ -621,7 +621,7 @@
             });
             maybeRequestBrowserNotificationPermission();
             pollReminderAlerts();
-            setInterval(pollReminderAlerts, 25000);
+            setInterval(pollReminderAlerts, 10000);
         })();
         </script>
         @endauth
