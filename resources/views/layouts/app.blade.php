@@ -165,6 +165,7 @@
             var REMINDER_ALARM_REPEAT_MS = 23000;
             var audioUnlocked = false;
             var alarmCtx = null;
+            var activeAlarmOscillators = [];
             var vistoAckStorageKey = 'crm_reminder_visto_ack_ids_v1';
 
             try {
@@ -183,14 +184,52 @@
                 } catch (e) {}
             }
 
-            function ackReminderVistoLocally(notificationId) {
-                var nid = String(notificationId || '');
-                if (!nid) {
+            function stopReminderAlarmPlayback() {
+                activeAlarmOscillators.forEach(function(osc) {
+                    try {
+                        osc.stop(0);
+                    } catch (e) {}
+                });
+                activeAlarmOscillators = [];
+            }
+
+            function removeSideAlertsForReminderId(reminderId) {
+                var rid = parseInt(reminderId, 10);
+                if (isNaN(rid) || rid < 1) {
                     return;
                 }
-                reminderVistoAckIds[nid] = true;
-                delete lastReminderRingByNotifId[nid];
+                var host = document.getElementById('crm-reminder-side-alerts');
+                if (!host) {
+                    return;
+                }
+                host.querySelectorAll('[data-crm-reminder-id="' + String(rid) + '"]').forEach(function(el) {
+                    el.remove();
+                });
+            }
+
+            function ackReminderVistoLocally(notificationId, reminderId) {
+                stopReminderAlarmPlayback();
+                var nid = String(notificationId || '');
+                if (nid) {
+                    reminderVistoAckIds[nid] = true;
+                    delete lastReminderRingByNotifId[nid];
+                }
+                var rid = reminderId != null && reminderId !== '' ? parseInt(reminderId, 10) : NaN;
+                if (!isNaN(rid) && rid >= 1) {
+                    reminderVistoAckIds['r:' + rid] = true;
+                    removeSideAlertsForReminderId(rid);
+                }
                 persistReminderVistoAck();
+            }
+
+            function isReminderAlertAcked(alertData) {
+                var nid = String(alertData.id || '');
+                if (nid && reminderVistoAckIds[nid]) {
+                    return true;
+                }
+                var ridRaw = alertData.reminder_id != null ? alertData.reminder_id : ((alertData.detail || {}).reminder_id);
+                var rid = ridRaw != null && ridRaw !== '' ? parseInt(ridRaw, 10) : NaN;
+                return !isNaN(rid) && rid >= 1 && reminderVistoAckIds['r:' + rid];
             }
 
             function escapeHtml(text) {
@@ -247,6 +286,7 @@
                             gain.gain.exponentialRampToValueAtTime(0.0001, startAt + offset + 0.21);
                             osc.connect(gain);
                             gain.connect(alarmCtx.destination);
+                            activeAlarmOscillators.push(osc);
                             osc.start(startAt + offset);
                             osc.stop(startAt + offset + 0.22);
                         });
@@ -399,6 +439,7 @@
                     var resBtn = document.getElementById('crm-reminder-reschedule');
                     if (snoozeBtn) {
                         snoozeBtn.addEventListener('click', function() {
+                            stopReminderAlarmPlayback();
                             snoozeBtn.disabled = true;
                             fetch(crmReminderSnoozeUrl(rid), {
                                 method: 'POST',
@@ -413,7 +454,7 @@
                                 .then(function(r) { return r.json(); })
                                 .then(function(data) {
                                     if (data && data.success) {
-                                        ackReminderVistoLocally(alertData.id);
+                                        ackReminderVistoLocally(alertData.id, rid);
                                         return markReminderAsRead(alertData.id);
                                     }
                                 })
@@ -433,9 +474,10 @@
                 var seenBtn = document.getElementById('crm-reminder-mark-seen');
                 if (seenBtn) {
                     seenBtn.addEventListener('click', function() {
+                        stopReminderAlarmPlayback();
                         seenBtn.disabled = true;
                         var afterRead = function() {
-                            ackReminderVistoLocally(alertData.id);
+                            ackReminderVistoLocally(alertData.id, rid);
                             markReminderAsRead(alertData.id).finally(function() {
                                 closeReminderDetailModal();
                                 updateBadge();
@@ -500,8 +542,9 @@
 
                 var id = 'due-reminder-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
                 var hourText = extractHourLabel(alertData.time);
+                var ridAttr = alertData.reminder_id != null && alertData.reminder_id !== '' ? String(alertData.reminder_id) : '';
                 var html = ''
-                    + '<div id="' + id + '" data-crm-notif-id="' + nid.replace(/"/g, '') + '" class="pointer-events-auto rounded-2xl overflow-hidden" style="background:#0b2f69;border:2px solid #FFE600;box-shadow:0 14px 30px rgba(0,0,0,0.45);">'
+                    + '<div id="' + id + '" data-crm-notif-id="' + nid.replace(/"/g, '') + '" data-crm-reminder-id="' + ridAttr.replace(/"/g, '') + '" class="pointer-events-auto rounded-2xl overflow-hidden" style="background:#0b2f69;border:2px solid #FFE600;box-shadow:0 14px 30px rgba(0,0,0,0.45);">'
                     + '  <div class="px-4 py-3 flex items-center gap-2" style="background:#071A3D;color:#FFE600;border-bottom:1px solid rgba(255,230,0,0.45);">'
                     + '    <span class="inline-flex items-center justify-center w-8 h-8 rounded-full shrink-0" style="background:rgba(255,230,0,0.2);color:#FFE600;border:1px solid rgba(255,230,0,0.8);">'
                     + '      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">'
@@ -575,7 +618,7 @@
                         var dueAlerts = Array.isArray(data.due_reminder_alerts) ? data.due_reminder_alerts : [];
                         dueAlerts.forEach(function(alertData) {
                             var nid = String(alertData.id || '');
-                            if (!nid || reminderVistoAckIds[nid]) {
+                            if (!nid || isReminderAlertAcked(alertData)) {
                                 return;
                             }
                             showDueReminderSideAlert(alertData);

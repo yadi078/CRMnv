@@ -6,6 +6,7 @@ use App\Models\Reminder;
 use App\Notifications\ReminderDueNotification;
 use App\Services\ContactBirthdayNotifier;
 use App\Services\ReminderAlarmRepeater;
+use App\Services\ReminderDueNotificationReadSync;
 use App\Services\ReminderDueNotifier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -204,6 +205,16 @@ class NotificationController extends Controller
             $user = auth()->user();
             $n = $user->notifications()->findOrFail($notification);
             $n->markAsRead();
+
+            if ($n->type === ReminderDueNotification::class) {
+                $raw = $n->data;
+                $d = is_array($raw) ? $raw : (is_string($raw) ? (json_decode($raw, true) ?: []) : []);
+                $rid = (int) ($d['reminder_id'] ?? 0);
+                if ($rid >= 1) {
+                    app(ReminderDueNotificationReadSync::class)->markAllUnreadForReminder($user, $rid);
+                }
+            }
+
             $unreadCount = $user->unreadNotificationsCount();
 
             if ($request->wantsJson() || $request->ajax()) {

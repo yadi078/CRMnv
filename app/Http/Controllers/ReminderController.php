@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Reminder;
+use App\Services\ReminderDueNotificationReadSync;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -209,6 +210,7 @@ class ReminderController extends Controller
         $this->authorizeReminder($request, $reminder);
 
         $reminder->update(['alarm_confirmed_at' => now()]);
+        app(ReminderDueNotificationReadSync::class)->markAllUnreadForReminder($request->user(), $reminder->id);
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json(['success' => true]);
@@ -246,6 +248,7 @@ class ReminderController extends Controller
             'alarm_rings_count' => 0,
             'alarm_window_started_at' => null,
         ]);
+        app(ReminderDueNotificationReadSync::class)->markAllUnreadForReminder($request->user(), $reminder->id);
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
