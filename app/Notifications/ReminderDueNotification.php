@@ -71,15 +71,15 @@ class ReminderDueNotification extends Notification
         if (($data['tipo'] ?? '') !== 'recordatorio') {
             return $data;
         }
-        if (! empty($data['reminder_detalle']) && is_array($data['reminder_detalle'])) {
+
+        $rid = isset($data['reminder_id']) ? (int) $data['reminder_id'] : 0;
+        if ($rid < 1) {
             return $data;
         }
-        $rid = $data['reminder_id'] ?? null;
-        if (! $rid) {
-            return $data;
-        }
+
         $r = Reminder::where('user_id', $userId)->find($rid);
         if ($r) {
+            $data['reminder_id'] = $r->id;
             $data['reminder_detalle'] = self::reminderSnapshot($r);
         }
 

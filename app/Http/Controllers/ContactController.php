@@ -208,12 +208,7 @@ class ContactController extends Controller
 
         $sale = $contact->latestSale();
 
-        $contactSales = null;
-        if (request()->user()->can('viewAny', Sale::class)) {
-            $contactSales = app(SalesController::class)->paginatedSalesForContact(request(), $contact);
-        }
-
-        return $this->resolveView('contacts.show', 'user.contacts.show', compact('contact', 'sale', 'contactSales'));
+        return $this->resolveView('contacts.show', 'user.contacts.show', compact('contact', 'sale'));
     }
 
     /**
@@ -235,6 +230,9 @@ class ContactController extends Controller
         }
 
         $sale = $contact->latestSale();
+        if ($sale) {
+            $sale->load(['saleParticipants', 'creator']);
+        }
 
         return $this->resolveView('contacts.edit', 'user.contacts.edit', array_merge(
             compact('contact', 'companies', 'workAreas', 'sale'),
@@ -255,6 +253,9 @@ class ContactController extends Controller
 
             $data = $request->validated();
             $data['email_activo'] = $request->boolean('email_activo', $contact->email_activo);
+            if ($request->has('ficha_registro_desbloqueada')) {
+                $data['ficha_registro_desbloqueada'] = $request->boolean('ficha_registro_desbloqueada');
+            }
 
             if ($request->user()->esAdmin()) {
                 $data['assigned_user_id'] = $this->resolveContactExecutiveForSave($request, $request->user(), true, $contact);
@@ -263,6 +264,12 @@ class ContactController extends Controller
             }
 
             $contact->update($data);
+
+            if ($request->boolean('ficha_registro_desbloqueada') && ($sale = $contact->latestSale())
+                && $request->filled('sale_id') && (int) $request->input('sale_id') === (int) $sale->id) {
+                $this->authorize('update', $sale);
+                $this->syncSaleFromContactForm($request, $contact, $sale);
+            }
 
             // Si el contacto pasa a "vendido", crear registro en Historial de Ventas
             // para que aparezca y se pueda completar la ficha de venta.
@@ -380,6 +387,78 @@ class ContactController extends Controller
     }
 
     /**
+     * Actualiza la venta vinculada desde el formulario de edición de contacto (ficha de registro).
+     */
+    protected function syncSaleFromContactForm(Request $request, Contact $contact, Sale $sale): void
+    {
+        $validated = $request->validate([
+            'sale_id' => 'required|integer|in:' . $sale->id,
+            'nombre_servicio' => 'nullable|string|max:255',
+            'tipo_curso' => 'nullable|string|max:255',
+            'fecha_venta' => 'nullable|date',
+            'monto' => 'nullable|numeric|min:0',
+            'incluye_iva' => 'nullable|boolean',
+            'tipo_pago' => 'nullable|string|max:500',
+            'participantes' => 'nullable|integer|min:1',
+            'sale_notas' => 'nullable|string|max:2000',
+            'sale_colonia_cp' => 'nullable|string|max:255',
+            'forma_pago' => 'nullable|string|max:100',
+            'uso_cfdi' => 'nullable|string|max:100',
+            'orden_compra' => 'nullable|string|max:100',
+            'condiciones_pago' => 'nullable|string|max:2000',
+            'modalidad' => 'nullable|string|max:255',
+            'sede' => 'nullable|string|max:255',
+            'fecha_evento' => 'nullable|date',
+            'horario_evento' => 'nullable|string|max:120',
+            'factura_referencia' => 'nullable|string|max:255',
+            'participantes_nombres' => 'nullable|array',
+            'participantes_nombres.*' => 'nullable|string|max:100|regex:/^[\pL\s]+$/u',
+            'participantes_emails' => 'nullable|array',
+            'participantes_emails.*' => 'nullable|email|max:255',
+        ], [
+            'participantes_nombres.*.regex' => 'El nombre de cada participante solo puede contener letras y espacios.',
+            'participantes_emails.*.email' => 'Cada correo de participante debe ser un correo electrónico válido.',
+        ]);
+
+        $sale->update([
+            'company_id' => $contact->company_id,
+            'contact_id' => $contact->id,
+            'nombre_servicio' => $validated['nombre_servicio'] ?? $sale->nombre_servicio,
+            'tipo_curso' => array_key_exists('tipo_curso', $validated) ? $validated['tipo_curso'] : $sale->tipo_curso,
+            'fecha_venta' => $validated['fecha_venta'] ?? $sale->fecha_venta?->format('Y-m-d'),
+            'monto' => array_key_exists('monto', $validated) ? $validated['monto'] : $sale->monto,
+            'incluye_iva' => $request->boolean('incluye_iva', $sale->incluye_iva ?? true),
+            'tipo_pago' => $validated['tipo_pago'] ?? $sale->tipo_pago,
+            'participantes' => $validated['participantes'] ?? $sale->participantes,
+            'notas' => array_key_exists('sale_notas', $validated) ? $validated['sale_notas'] : $sale->notas,
+            'colonia_cp' => $validated['sale_colonia_cp'] ?? $sale->colonia_cp,
+            'regimen_fiscal' => $contact->regimen_fiscal ?? $sale->regimen_fiscal,
+            'forma_pago' => $validated['forma_pago'] ?? $sale->forma_pago,
+            'uso_cfdi' => $validated['uso_cfdi'] ?? $sale->uso_cfdi,
+            'orden_compra' => $validated['orden_compra'] ?? $sale->orden_compra,
+            'condiciones_pago' => $validated['condiciones_pago'] ?? $sale->condiciones_pago,
+            'modalidad' => $validated['modalidad'] ?? $sale->modalidad,
+            'sede' => $validated['sede'] ?? $sale->sede,
+            'fecha_evento' => $validated['fecha_evento'] ?? $sale->fecha_evento,
+            'horario_evento' => $validated['horario_evento'] ?? $sale->horario_evento,
+            'factura_referencia' => $validated['factura_referencia'] ?? $sale->factura_referencia,
+        ]);
+
+        $sale->saleParticipants()->delete();
+        if ($request->filled('participantes_nombres') && is_array($request->participantes_nombres)) {
+            foreach ($request->participantes_nombres as $i => $nombre) {
+                if (trim((string) $nombre) !== '') {
+                    $sale->saleParticipants()->create([
+                        'nombre' => $nombre,
+                        'email' => $request->participantes_emails[$i] ?? null,
+                        'orden' => $i,
+                    ]);
+                }
+            }
+        }
+    }
+
+    /**
      * Genera PDF de Ficha de Inscripción del contacto
      */
     public function generatePdf(Contact $contact)
@@ -391,8 +470,7 @@ class ContactController extends Controller
         if ($sale && $contact->fichaPdfCompleta()) {
             $sale->load(['company', 'contact', 'creator', 'saleParticipants']);
 
-            $pdf = Pdf::loadView('user.sales.pdf.ficha-venta', compact('sale'))
-                ->setPaper('a4', 'portrait');
+            $pdf = Pdf::loadView('user.sales.pdf.ficha-venta', compact('sale'));
 
             $slug = \Illuminate\Support\Str::slug($sale->nombre_servicio);
             $fechaNombre = $sale->fecha_venta?->format('Y-m-d') ?? now()->format('Y-m-d');

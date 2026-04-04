@@ -147,6 +147,13 @@
         <script>
         (function() {
             var url = '{{ route("notifications.unread-count") }}';
+            var crmRemindersBase = @json(url('/reminders'));
+            function crmReminderSnoozeUrl(reminderId) {
+                return crmRemindersBase + '/' + encodeURIComponent(reminderId) + '/snooze';
+            }
+            function crmReminderEditUrl(reminderId) {
+                return crmRemindersBase + '/' + encodeURIComponent(reminderId) + '/edit';
+            }
             var seenReminderAlertIds = {};
             var audioUnlocked = false;
             var alarmCtx = null;
@@ -195,14 +202,6 @@
                     if (alarmCtx.state === 'suspended') {
                         alarmCtx.resume();
                     }
-                    var osc = alarmCtx.createOscillator();
-                    var gain = alarmCtx.createGain();
-                    gain.gain.value = 0.00001;
-                    osc.frequency.value = 440;
-                    osc.connect(gain);
-                    gain.connect(alarmCtx.destination);
-                    osc.start();
-                    osc.stop(alarmCtx.currentTime + 0.02);
                     audioUnlocked = true;
                 } catch (e) {}
             }
@@ -318,15 +317,28 @@
             function openReminderDetailModal(alertData) {
                 closeReminderDetailModal();
                 var detail = alertData.detail || {};
+                var ridRaw = alertData.reminder_id != null ? alertData.reminder_id : detail.reminder_id;
+                var rid = ridRaw != null && ridRaw !== '' ? parseInt(ridRaw, 10) : NaN;
+                if (isNaN(rid) || rid < 1) {
+                    rid = null;
+                }
+                var actionRow = ''
+                    + '<div class="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-end gap-2">'
+                    + (rid ? (
+                        '<button type="button" id="crm-reminder-snooze" class="px-4 py-2.5 rounded-xl border border-[#FFE600]/80 text-[#FFE600] text-sm font-semibold hover:bg-[#FFE600]/10">Aplazar 5 minutos</button>'
+                        + '<button type="button" id="crm-reminder-reschedule" class="px-4 py-2.5 rounded-xl border border-[#FFE600]/80 text-[#FFE600] text-sm font-semibold hover:bg-[#FFE600]/10">Reprogramar</button>'
+                    ) : '')
+                    + '<button type="button" id="crm-reminder-mark-seen" class="px-5 py-2.5 rounded-xl bg-[#FFE600] text-[#071A3D] text-sm font-bold hover:bg-[#ffeb3b]">Visto</button>'
+                    + '</div>';
                 var html = ''
                     + '<div id="crm-reminder-detail-modal" class="fixed inset-0 z-[130] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">'
                     + '  <div class="absolute inset-0" data-close-reminder-modal="1"></div>'
-                    + '  <div class="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border-2 border-[#FFE600] bg-[#0b2f69] shadow-2xl">'
-                    + '    <div class="px-5 py-3 bg-[#071A3D] border-b border-[#FFE600]/45 flex items-center justify-between">'
+                    + '  <div class="relative w-full max-w-2xl max-h-[90vh] flex flex-col rounded-2xl border-2 border-[#FFE600] bg-[#0b2f69] shadow-2xl overflow-hidden">'
+                    + '    <div class="px-5 py-3 bg-[#071A3D] border-b border-[#FFE600]/45 flex items-center justify-between flex-shrink-0">'
                     + '      <h3 class="text-base font-extrabold text-[#FFE600]">Detalle del recordatorio</h3>'
                     + '      <button type="button" class="w-8 h-8 rounded-full border border-[#FFE600]/70 text-[#FFE600] hover:bg-[#FFE600]/15" data-close-reminder-modal="1">×</button>'
                     + '    </div>'
-                    + '    <div class="p-5 space-y-4 text-white">'
+                    + '    <div class="flex-1 min-h-0 overflow-y-auto p-5 space-y-4 text-white">'
                     + '      <div class="rounded-xl border border-white/15 bg-[#123f8f] p-4">'
                     + '        <p class="text-sm text-white/80">Título</p>'
                     + '        <p class="text-lg font-bold">' + escapeHtml(alertData.title || 'Recordatorio') + '</p>'
@@ -351,9 +363,9 @@
                     +            rowHtml('Repetición', detail.repeticion)
                     + '        </div>'
                     + '      </div>'
-                    + '      <div class="flex justify-end pt-1">'
-                    + '        <button type="button" id="crm-reminder-mark-seen" class="px-5 py-2.5 rounded-xl bg-[#FFE600] text-[#071A3D] text-sm font-bold hover:bg-[#ffeb3b]">Visto</button>'
-                    + '      </div>'
+                    + '    </div>'
+                    + '    <div class="flex-shrink-0 px-5 py-3 border-t border-[#FFE600]/30 bg-[#071A3D]">'
+                    +        actionRow
                     + '    </div>'
                     + '  </div>'
                     + '</div>';
@@ -362,6 +374,43 @@
                 document.querySelectorAll('[data-close-reminder-modal="1"]').forEach(function(el) {
                     el.addEventListener('click', closeReminderDetailModal);
                 });
+                var tokenMeta = document.querySelector('meta[name="csrf-token"]');
+                var csrf = tokenMeta ? tokenMeta.getAttribute('content') : '';
+                if (rid) {
+                    var snoozeBtn = document.getElementById('crm-reminder-snooze');
+                    var resBtn = document.getElementById('crm-reminder-reschedule');
+                    if (snoozeBtn) {
+                        snoozeBtn.addEventListener('click', function() {
+                            snoozeBtn.disabled = true;
+                            fetch(crmReminderSnoozeUrl(rid), {
+                                method: 'POST',
+                                headers: {
+                                    'Accept': 'application/json',
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': csrf,
+                                    'X-Requested-With': 'XMLHttpRequest'
+                                },
+                                body: JSON.stringify({})
+                            })
+                                .then(function(r) { return r.json(); })
+                                .then(function(data) {
+                                    if (data && data.success) {
+                                        return markReminderAsRead(alertData.id);
+                                    }
+                                })
+                                .finally(function() {
+                                    closeReminderDetailModal();
+                                    updateBadge();
+                                    snoozeBtn.disabled = false;
+                                });
+                        });
+                    }
+                    if (resBtn) {
+                        resBtn.addEventListener('click', function() {
+                            window.location.href = crmReminderEditUrl(rid);
+                        });
+                    }
+                }
                 var seenBtn = document.getElementById('crm-reminder-mark-seen');
                 if (seenBtn) {
                     seenBtn.addEventListener('click', function() {

@@ -1302,17 +1302,6 @@ form.company-edit-form-in-modal input:not([type="checkbox"]):not([type="radio"])
   border-radius: 8px;
 }
 
-/* Tarjetas del listado por estado (admin): aún más compactas */
-.metric-card-dark--estado-tile {
-  padding: 0.35rem 0.5rem;
-}
-
-.metric-card-dark--estado-tile .metric-card-dark__icon-wrap {
-  width: 26px;
-  height: 26px;
-  border-radius: 7px;
-}
-
 .metric-card-dark--highlight::after {
   content: '';
   position: absolute;

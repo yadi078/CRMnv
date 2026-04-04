@@ -11,14 +11,13 @@ use Illuminate\Support\Facades\Log;
 
 /**
  * Reglas de aviso:
- * - Alertas previas: 15, 10 y 5 minutos antes (una vez cada fase).
+ * - Alertas previas: 10 y 5 minutos antes (una vez cada fase), en ventanas disjuntas.
  * - Alarma principal: en la hora programada o después (una sola vez).
+ * - No se envía una alerta “previa” si el recordatorio se creó después de ese instante
+ *   (evita que suene “al guardar” cuando la hora queda a pocos minutos).
  */
 class ReminderDueNotifier
 {
-    /** @var array<int> */
-    public const PRE_EVENT_MINUTES = [15, 10, 5];
-
     /**
      * Procesa recordatorios pendientes y envía notificaciones según reglas.
      *
@@ -63,11 +62,33 @@ class ReminderDueNotifier
 
         $start = $start->copy()->timezone(config('app.timezone'));
 
-        return $this->processTimed($reminder, $now, $start);
+        $effective = $this->effectiveNotificationStart($reminder, $start);
+
+        return $this->processTimed($reminder, $now, $effective);
+    }
+
+    /**
+     * Hora efectiva para avisos: "todo el día" usa una hora configurada, no 00:00.
+     */
+    protected function effectiveNotificationStart(Reminder $reminder, Carbon $start): Carbon
+    {
+        $tz = config('app.timezone');
+        $start = $start->copy()->timezone($tz);
+
+        if ($reminder->all_day) {
+            $timeStr = (string) config('crm.reminder_all_day_notify_time', '09:00');
+
+            return Carbon::parse($start->format('Y-m-d').' '.$timeStr, $tz);
+        }
+
+        return $start;
     }
 
     protected function processTimed(Reminder $reminder, Carbon $now, Carbon $start): bool
     {
+        $tz = config('app.timezone');
+        $created = $reminder->created_at?->copy()->timezone($tz) ?? $now;
+
         // 1) Aviso en hora (fase due).
         if ($now->gte($start) && ! $this->alreadySentPhase($reminder, 'due')) {
             $reminder->update([
@@ -78,15 +99,28 @@ class ReminderDueNotifier
             return true;
         }
 
-        // 2) Avisos previos (fases pre15/pre10/pre5).
-        foreach (self::PRE_EVENT_MINUTES as $minutes) {
-            $phase = 'pre' . $minutes;
-            $windowStart = $start->copy()->subMinutes($minutes);
-            if ($now->gte($windowStart) && $now->lt($start) && ! $this->alreadySentPhase($reminder, $phase)) {
+        $t5 = $start->copy()->subMinutes(5);
+        $t10 = $start->copy()->subMinutes(10);
+
+        // 2) 5 minutos antes: [T-5, T)
+        if ($now->gte($t5) && $now->lt($start) && ! $this->alreadySentPhase($reminder, 'pre5')) {
+            if ($created->lte($t5)) {
                 $reminder->update([
                     'pre_notification_sent_at' => $now,
                 ]);
-                $reminder->user?->notify(new ReminderDueNotification($reminder, $phase));
+                $reminder->user?->notify(new ReminderDueNotification($reminder, 'pre5'));
+
+                return true;
+            }
+        }
+
+        // 3) 10 minutos antes: [T-10, T-5)
+        if ($now->gte($t10) && $now->lt($t5) && ! $this->alreadySentPhase($reminder, 'pre10')) {
+            if ($created->lte($t10)) {
+                $reminder->update([
+                    'pre_notification_sent_at' => $now,
+                ]);
+                $reminder->user?->notify(new ReminderDueNotification($reminder, 'pre10'));
 
                 return true;
             }

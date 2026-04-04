@@ -17,6 +17,7 @@ class NotificationController extends Controller
 {
     /**
      * Solo para polling: devuelve el número de no leídas (máx. 99+ en display).
+     * Incluye reminder_id en cada alerta para Aplazar / Reprogramar en el modal.
      */
     public function unreadCount(Request $request)
     {
@@ -37,6 +38,14 @@ class NotificationController extends Controller
                     $raw = $notification->data;
                     $data = is_array($raw) ? $raw : (is_string($raw) ? (json_decode($raw, true) ?: []) : []);
                     $data = ReminderDueNotification::enrichStoredData($data, $user->id);
+                    $ridAfter = (int) ($data['reminder_id'] ?? 0);
+                    if ($ridAfter < 1) {
+                        $fallback = is_array($raw) ? $raw : (is_string($raw) ? (json_decode($raw, true) ?: []) : []);
+                        if (! empty($fallback['reminder_id'])) {
+                            $data['reminder_id'] = (int) $fallback['reminder_id'];
+                            $data = ReminderDueNotification::enrichStoredData($data, $user->id);
+                        }
+                    }
 
                     $phase = (string) ($data['alert_phase'] ?? 'due');
                     if (! in_array($phase, ['pre15', 'pre10', 'pre5', 'due'], true)) {
@@ -50,8 +59,11 @@ class NotificationController extends Controller
                     $fechaInicio = trim((string) ($detail['fecha_inicio'] ?? $data['fecha_prevista'] ?? ''));
                     $description = trim((string) ($detail['descripcion'] ?? $data['mensaje'] ?? ''));
 
+                    $reminderId = isset($data['reminder_id']) ? (int) $data['reminder_id'] : null;
+
                     return [
                         'id' => (string) $notification->id,
+                        'reminder_id' => $reminderId,
                         'title' => $title !== '' ? $title : 'Recordatorio',
                         'time' => $fechaInicio,
                         'description' => $description,
@@ -67,6 +79,7 @@ class NotificationController extends Controller
                             'fecha_limite' => trim((string) ($detail['fecha_limite'] ?? '')),
                             'repeticion' => trim((string) ($detail['repeticion'] ?? '')),
                             'tipo_accion' => trim((string) ($detail['tipo_accion'] ?? '')),
+                            'reminder_id' => $reminderId,
                         ],
                     ];
                 })
