@@ -16,6 +16,20 @@
                     Editar
                 </a>
                 @endcan
+                @can('requestDeletion', $company)
+                <form method="POST" action="{{ route('companies.request-deletion', $company) }}" class="inline-flex" onsubmit="return confirm('¿Enviar solicitud para eliminar esta empresa? Un administrador deberá aprobarlo.');">
+                    @csrf
+                    <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl font-semibold bg-red-600/90 text-white hover:bg-red-500 border border-red-400/50">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        Solicitar eliminación
+                    </button>
+                </form>
+                @endcan
+                @if($company->deletion_pending ?? false)
+                <span class="inline-flex items-center px-3 py-2 rounded-xl text-sm font-semibold bg-amber-500/20 text-amber-200 border border-amber-400/40">
+                    Eliminación pendiente de aprobación
+                </span>
+                @endif
                 @can('companies.delete')
                 <form action="{{ route('companies.destroy', $company) }}" method="POST" class="inline-flex" onsubmit="return confirm('¿Seguro que deseas eliminar esta empresa? Esta acción no se puede deshacer.');">
                     @csrf
@@ -32,6 +46,8 @@
     </x-slot>
 
     <div class="company-show company-show__sections">
+            <x-pending-approval-notice :model="$company" entity-label="empresa" />
+
             @if(($company->deletion_resolution ?? '') === 'denied'
                 && (int) ($company->deletion_decision_user_id ?? 0) === (int) auth()->id()
                 && filled($company->deletion_resolution_note))
@@ -177,7 +193,11 @@
                             <p class="company-show__list-meta">{{ $sale->participantes }} participantes</p>
                             @endif
                         </div>
-                        <a href="{{ \App\Support\CrmNavigation::withReturn(route('user.sales.show', $sale)) }}" class="company-show__list-link">Ver</a>
+                        @can('view', $sale)
+                        <a href="{{ route('user.sales.ficha-pdf', $sale) }}" target="_blank" rel="noopener noreferrer" class="company-show__list-link" title="Descargar ficha de inscripción (PDF)" aria-label="Descargar ficha de inscripción (PDF)">
+                            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        </a>
+                        @endcan
                     </div>
                     @empty
                     <p class="company-show__empty">No hay ventas registradas</p>

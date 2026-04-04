@@ -244,11 +244,17 @@ class SalesController extends Controller
         ]);
 
         if ($request->input('post_action') === 'ficha') {
-            return redirect()->route('user.sales.ficha-pdf', $sale);
+            if (! empty($sale->contact_id)) {
+                return redirect()->route('contacts.show', $sale->contact_id)
+                    ->with('download_ficha_sale_id', $sale->id);
+            }
+
+            return redirect()->route('user.sales.index')
+                ->with('download_ficha_sale_id', $sale->id);
         }
 
-        return redirect()->route('user.sales.show', $sale)
-            ->with('sale_created', true);
+        return redirect()->route('user.sales.index')
+            ->with('success', 'Venta registrada correctamente.');
     }
 
     /**
@@ -257,9 +263,8 @@ class SalesController extends Controller
     public function show(Sale $sale)
     {
         $this->authorize('view', $sale);
-        $sale->load(['company', 'contact', 'creator', 'saleParticipants']);
 
-        return view('user.sales.show', compact('sale'));
+        return redirect()->route('user.sales.ficha-pdf', $sale);
     }
 
     /**
@@ -343,7 +348,7 @@ class SalesController extends Controller
             'incluye_iva' => $request->boolean('incluye_iva', $sale->incluye_iva),
         ]);
 
-        return redirect()->route('user.sales.show', $sale)
+        return redirect()->route('companies.show', $sale->company_id)
             ->with('success', 'Venta actualizada correctamente.');
     }
 
@@ -362,17 +367,21 @@ class SalesController extends Controller
     /**
      * Descargar PDF de la ficha de venta (formato Ficha de Inscripción)
      */
-    public function fichaPdf(Sale $sale)
+    public function fichaPdf(Request $request, Sale $sale)
     {
         $this->authorize('view', $sale);
 
         $sale->load(['company', 'contact', 'creator', 'saleParticipants']);
 
         $pdf = Pdf::loadView('user.sales.pdf.ficha-venta', compact('sale'))
-            ->setPaper('a4', 'portrait');
+            ->setPaper('letter', 'portrait');
 
         $fechaNombre = $sale->fecha_venta?->format('Y-m-d') ?? now()->format('Y-m-d');
-        $filename = 'Ficha_Inscripcion_' . \Str::slug($sale->nombre_servicio) . '_' . $fechaNombre . '.pdf';
+        $filename = 'Ficha_Inscripcion_' . \Str::slug($sale->nombre_servicio ?? 'venta') . '_' . $fechaNombre . '.pdf';
+
+        if ($request->boolean('inline')) {
+            return $pdf->stream($filename);
+        }
 
         return $pdf->download($filename);
     }

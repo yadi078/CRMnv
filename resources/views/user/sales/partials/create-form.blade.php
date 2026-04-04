@@ -273,15 +273,9 @@
                     </svg>
                     Cancelar
                 </a>
-                <button type="submit" name="post_action" value="ficha" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-[#FFE600]/70 text-[#FFE600] text-sm font-semibold hover:bg-[#FFE600]/10 transition-colors">
+                <button type="submit" name="post_action" value="ficha" class="btn-amber-app inline-flex items-center gap-2">
                     <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                     Generar ficha de inscripción
-                </button>
-                <button type="submit" name="post_action" value="guardar" class="btn-amber-app">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                    Guardar venta
                 </button>
             </div>
         </div>
@@ -293,14 +287,6 @@
                 </svg>
                 Cancelar
             </a>
-            <button type="submit" name="post_action" value="ficha" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-[#FFE600]/70 text-[#FFE600] text-sm font-semibold hover:bg-[#FFE600]/10 transition-colors">
-                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                Generar ficha de inscripción
-            </button>
-            <button type="submit" name="post_action" value="guardar" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/40 bg-white/10 text-white text-sm font-semibold hover:bg-white/15 transition-colors">
-                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                Registrar nueva venta
-            </button>
             <button type="button" id="btn-continuar-facturacion" class="btn-amber-app">
                 Continuar a datos de facturación
             </button>

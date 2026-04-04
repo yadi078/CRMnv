@@ -58,7 +58,6 @@
         </div>
     </div>
 
-    {{-- Confirmación (mismo diseño que el CRM; sustituye al confirm() del navegador) --}}
     <div id="modal-confirmacion-eliminacion-contacto"
          class="hidden fixed inset-0 z-[210] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
          role="dialog"
@@ -134,4 +133,6 @@
         })();
     </script>
     @endcan
+
+    @include('contacts.partials.ficha-venta-auto-download')
 </x-app-user-layout>
