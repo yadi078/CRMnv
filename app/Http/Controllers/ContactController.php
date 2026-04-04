@@ -392,7 +392,7 @@ class ContactController extends Controller
             $sale->load(['company', 'contact', 'creator', 'saleParticipants']);
 
             $pdf = Pdf::loadView('user.sales.pdf.ficha-venta', compact('sale'))
-                ->setPaper('letter', 'portrait');
+                ->setPaper('a4', 'portrait');
 
             $slug = \Illuminate\Support\Str::slug($sale->nombre_servicio);
             $fechaNombre = $sale->fecha_venta?->format('Y-m-d') ?? now()->format('Y-m-d');

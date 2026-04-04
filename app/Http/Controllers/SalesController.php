@@ -369,7 +369,7 @@ class SalesController extends Controller
         $sale->load(['company', 'contact', 'creator', 'saleParticipants']);
 
         $pdf = Pdf::loadView('user.sales.pdf.ficha-venta', compact('sale'))
-            ->setPaper('letter', 'portrait');
+            ->setPaper('a4', 'portrait');
 
         $fechaNombre = $sale->fecha_venta?->format('Y-m-d') ?? now()->format('Y-m-d');
         $filename = 'Ficha_Inscripcion_' . \Str::slug($sale->nombre_servicio) . '_' . $fechaNombre . '.pdf';
