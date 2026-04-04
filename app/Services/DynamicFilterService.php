@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Builder;
 class DynamicFilterService
 {
     /**
-     * Valores del filtro Comercial: IDs de usuario ("123") o texto de ficha ("E:".base64).
+     * Valores del filtro Ejecutivo: IDs de usuario ("123") o texto de ficha ("E:".base64).
      *
      * @param  list<mixed>  $values
      * @return array{0: list<int>, 1: list<string>, 2: list<string>} ids, textos libres, nombres de usuario (ids) para coincidir en ejecutivo_asignado
@@ -156,7 +156,7 @@ class DynamicFilterService
             }
         }
 
-        // Comercial = ejecutivo asignado: IDs de usuario y/o texto de empresa.ejecutivo_asignado (p. ej. "Lic. Olivia…").
+        // Ejecutivo asignado: IDs de usuario y/o texto de empresa.ejecutivo_asignado (p. ej. "Lic. Olivia…").
         if ($col === 'comercial') {
             $values = is_array($val) ? $val : [$val];
             $values = array_values(array_filter(array_map(fn ($v) => is_string($v) ? trim($v) : $v, $values), fn ($v) => $v !== null && $v !== ''));
@@ -321,7 +321,7 @@ class DynamicFilterService
         $val = $s->value;
         $op = $s->operator;
 
-        // Comercial = ejecutivo asignado (empresa): IDs y/o texto en ejecutivo_asignado
+        // Ejecutivo asignado (empresa): IDs y/o texto en ejecutivo_asignado
         if ($col === 'comercial') {
             $values = is_array($val) ? $val : [$val];
             $values = array_values(array_filter(array_map(fn ($v) => is_string($v) ? trim($v) : $v, $values), fn ($v) => $v !== null && $v !== ''));

@@ -24,18 +24,14 @@
                 'departamento' => 'Área de trabajo',
                 'puesto_de_trabajo' => 'Puesto de trabajo',
                 'municipio' => 'Ciudad',
-                'estado' => 'Entidad federativa (ubicación)',
+                'estado' => 'Estado',
                 'status_color' => 'Estatus de prospecto (color)',
-                'comercial' => 'Comercial',
+                'comercial' => 'Ejecutivo',
                 'sector' => 'Giro',
                 'notas' => 'Notas',
                 'domicilio' => 'Domicilio',
                 'no_recibir_correos' => 'No desea recibir correos',
             ];
-            if (! ($isAdmin ?? false)) {
-                unset($excelHeaders['comercial']);
-            }
-
             $fieldOptions = [];
             foreach ($excelHeaders as $key => $label) {
                 $options = $fields[$key]['options'] ?? [];
@@ -303,6 +299,10 @@
                         const key = String(v);
                         if (field === 'status_color' && prospectStatusLabels[key]) {
                             return prospectStatusLabels[key];
+                        }
+                        const opts = fieldOptions[field];
+                        if (opts && Object.prototype.hasOwnProperty.call(opts, key)) {
+                            return opts[key];
                         }
                         return key;
                     });

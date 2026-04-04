@@ -241,6 +241,7 @@ class SalesController extends Controller
             ...collect($validated)->all(),
             'incluye_iva' => $request->boolean('incluye_iva', true),
             'created_by' => auth()->id(),
+            'nombre_consultor' => $request->user()?->name,
         ]);
 
         if ($request->input('post_action') === 'ficha') {
@@ -343,10 +344,17 @@ class SalesController extends Controller
             $this->authorize('view', Contact::findOrFail($validated['contact_id']));
         }
 
-        $sale->update([
+        $payload = [
             ...collect($validated)->all(),
             'incluye_iva' => $request->boolean('incluye_iva', $sale->incluye_iva),
-        ]);
+        ];
+        if ($sale->nombre_consultor === null) {
+            $nombre = $sale->creator?->name ?? $request->user()?->name;
+            if ($nombre) {
+                $payload['nombre_consultor'] = $nombre;
+            }
+        }
+        $sale->update($payload);
 
         return redirect()->route('companies.show', $sale->company_id)
             ->with('success', 'Venta actualizada correctamente.');

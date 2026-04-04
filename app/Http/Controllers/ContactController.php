@@ -286,6 +286,7 @@ class ContactController extends Controller
                     'participantes' => null,
                     'notas' => 'Registrado al marcar el contacto como Vendido. Complete los datos de la venta.',
                     'created_by' => auth()->id(),
+                    'nombre_consultor' => $request->user()?->name,
                 ]);
             }
 
@@ -425,6 +426,9 @@ class ContactController extends Controller
         $sale->update([
             'company_id' => $contact->company_id,
             'contact_id' => $contact->id,
+            'nombre_consultor' => $sale->nombre_consultor
+                ?? $sale->creator?->name
+                ?? $request->user()?->name,
             'nombre_servicio' => $validated['nombre_servicio'] ?? $sale->nombre_servicio,
             'tipo_curso' => array_key_exists('tipo_curso', $validated) ? $validated['tipo_curso'] : $sale->tipo_curso,
             'fecha_venta' => $validated['fecha_venta'] ?? $sale->fecha_venta?->format('Y-m-d'),

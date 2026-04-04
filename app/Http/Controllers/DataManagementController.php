@@ -197,6 +197,7 @@ class DataManagementController extends Controller
                 'participantes' => null,
                 'notas' => 'Registrado automáticamente al cambiar estado de prospecto a Vendido.',
                 'created_by' => auth()->id(),
+                'nombre_consultor' => $request->user()?->name,
             ]);
         }
 
@@ -225,12 +226,16 @@ class DataManagementController extends Controller
 
         $rules = [
             'table' => 'required|in:companies,contacts,companies_with_contacts',
-            'filter_by' => 'required|in:none,comercial,estado',
+            'filter_by' => 'required|in:none,comercial,estado,ambos',
         ];
 
         if ($filterByInput === 'estado') {
             $rules['estado_entidad'] = ['required', 'string', Rule::in(MexicanStates::all())];
         } elseif ($filterByInput === 'comercial') {
+            $permitidos = self::comercialesDisponiblesParaExport()->all();
+            $rules['ejecutivo_asignado'] = ['required', 'string', 'max:255', Rule::in($permitidos)];
+        } elseif ($filterByInput === 'ambos') {
+            $rules['estado_entidad'] = ['required', 'string', Rule::in(MexicanStates::all())];
             $permitidos = self::comercialesDisponiblesParaExport()->all();
             $rules['ejecutivo_asignado'] = ['required', 'string', 'max:255', Rule::in($permitidos)];
         }
@@ -271,6 +276,8 @@ class DataManagementController extends Controller
             $filename .= '_comercial_'.Str::slug($comercial);
         } elseif ($filterBy === 'estado') {
             $filename .= '_entidad_'.Str::slug($entidad);
+        } elseif ($filterBy === 'ambos') {
+            $filename .= '_entidad_'.Str::slug($entidad).'_ejecutivo_'.Str::slug($comercial);
         }
         $filename .= '.xlsx';
 
@@ -290,6 +297,8 @@ class DataManagementController extends Controller
                 $q->where('estado', $entidad);
             } elseif ($filterBy === 'comercial') {
                 $q->where('ejecutivo_asignado', $comercial);
+            } elseif ($filterBy === 'ambos') {
+                $q->where('estado', $entidad)->where('ejecutivo_asignado', $comercial);
             }
             foreach ($q->cursor() as $company) {
                 $sheet->fromArray(self::exportCsvRowFromCompany($company), null, "A{$row}", true);
@@ -309,6 +318,15 @@ class DataManagementController extends Controller
                         $u->where('name', $comercial);
                     });
                 });
+            } elseif ($filterBy === 'ambos') {
+                $q->where('estado', $entidad)
+                    ->where(function ($w) use ($comercial): void {
+                        $w->whereHas('company', function ($c) use ($comercial): void {
+                            $c->where('ejecutivo_asignado', $comercial);
+                        })->orWhereHas('assignedExecutive', function ($u) use ($comercial): void {
+                            $u->where('name', $comercial);
+                        });
+                    });
             }
             foreach ($q->cursor() as $contact) {
                 $sheet->fromArray(self::exportCsvRowFromContact($contact), null, "A{$row}", true);
@@ -492,6 +510,8 @@ class DataManagementController extends Controller
             $q->where('estado', $entidad);
         } elseif ($filterBy === 'comercial') {
             $q->where('ejecutivo_asignado', $comercial);
+        } elseif ($filterBy === 'ambos') {
+            $q->where('estado', $entidad)->where('ejecutivo_asignado', $comercial);
         }
 
         $spreadsheet = new Spreadsheet;
@@ -529,6 +549,8 @@ class DataManagementController extends Controller
             $filename .= '_ejecutivo_'.Str::slug($comercial);
         } elseif ($filterBy === 'estado') {
             $filename .= '_estado_'.Str::slug($entidad);
+        } elseif ($filterBy === 'ambos') {
+            $filename .= '_estado_'.Str::slug($entidad).'_ejecutivo_'.Str::slug($comercial);
         }
         $filename .= '.xlsx';
 

@@ -385,7 +385,7 @@
                 <div class="slogan">INVERTIR EN VALOR ¡ATRAE VALOR!</div>
             </div>
             <div class="meta">
-                <div><strong>CONSULTOR:</strong> {{ $sale->creator?->name ?? '—' }}</div>
+                <div><strong>CONSULTOR:</strong> {{ $sale->nombreConsultorParaFicha() }}</div>
                 <div><strong>FECHA:</strong> {{ $sale->fecha_venta?->format('d/m/Y') ?? '—' }}</div>
             </div>
         </td>

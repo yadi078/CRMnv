@@ -50,7 +50,7 @@
 
             <h4 class="text-lg font-bold text-[#FFE600] text-center tracking-wide mb-3">EXPORTAR</h4>
             <form action="{{ route('data-management.export') }}" method="POST" class="mb-8 w-full"
-                  x-data="{ filterBy: @js(old('filter_by', 'none')) }">
+                  x-data="{ filterBy: @js(old('filter_by', 'none')), estadoHabilitado() { return this.filterBy === 'estado' || this.filterBy === 'ambos'; }, ejecutivoHabilitado() { return this.filterBy === 'comercial' || this.filterBy === 'ambos'; } }">
                 @csrf
                 <div class="w-full space-y-5 mb-6">
                     <div>
@@ -80,13 +80,21 @@
                                 </span>
                                 <span class="text-sm text-white">Ejecutivo</span>
                             </label>
+                            <label class="inline-flex items-center gap-2.5 cursor-pointer select-none">
+                                <input type="radio" name="filter_by" value="ambos" x-model="filterBy" class="sr-only">
+                                <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 border-white/30 transition-colors"
+                                      :class="filterBy === 'ambos' ? 'border-[#FFE600] bg-[#FFE600]' : 'bg-white/5'">
+                                    <span class="h-2 w-2 rounded-full bg-white" x-show="filterBy === 'ambos'"></span>
+                                </span>
+                                <span class="text-sm text-white">Estado y ejecutivo</span>
+                            </label>
                         </div>
                     </div>
                     <div class="flex flex-col lg:flex-row gap-4 w-full items-end">
                         <div class="flex-1 min-w-0 w-full flex flex-col gap-1.5">
                             <label for="export_estado_entidad" class="text-xs font-semibold text-white/85">Estado</label>
                             <select id="export_estado_entidad" name="estado_entidad"
-                                    x-bind:disabled="filterBy !== 'estado'"
+                                    x-bind:disabled="! estadoHabilitado()"
                                     class="w-full rounded-xl border-0 bg-white text-[#003366] focus:bg-white focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3 text-sm disabled:opacity-40 disabled:cursor-not-allowed">
                                 <option value="">— Seleccione estado —</option>
                                 @foreach($entidadesMexicanas as $ent)
@@ -97,7 +105,7 @@
                         <div class="flex-1 min-w-0 w-full flex flex-col gap-1.5">
                             <label for="export_ejecutivo_asignado" class="text-xs font-semibold text-white/85">Ejecutivo</label>
                             <select id="export_ejecutivo_asignado" name="ejecutivo_asignado"
-                                    x-bind:disabled="filterBy !== 'comercial'"
+                                    x-bind:disabled="! ejecutivoHabilitado()"
                                     class="w-full rounded-xl border-0 bg-white text-[#003366] focus:bg-white focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3 text-sm disabled:opacity-40 disabled:cursor-not-allowed">
                                 <option value="">— Seleccione ejecutivo —</option>
                                 @foreach($comercialesExport as $nombre)

@@ -71,6 +71,8 @@ Route::middleware(['auth', 'verified', 'ensure.role'])->group(function () {
     Route::post('/companies/check-duplicates', [CompanyController::class, 'checkDuplicates'])->name('companies.check-duplicates');
 
     Route::resource('contacts', ContactController::class);
+    Route::get('/contacts/{contact}/pdf', [ContactController::class, 'generatePdf'])->name('contacts.pdf');
+    Route::get('/contacts/{contact}/word', [ContactController::class, 'generateWord'])->name('contacts.word');
     Route::post('/contacts/{contact}/request-deletion', [ContactController::class, 'requestDeletion'])->name('contacts.request-deletion');
     Route::patch('/contacts/{contact}/email-status', [ContactController::class, 'updateEmailStatus'])->name('contacts.email-status');
     Route::patch('/contacts/{contact}/notes', [ContactController::class, 'updateNotes'])->name('contacts.notes');
@@ -112,9 +114,6 @@ Route::middleware(['auth', 'verified', 'ensure.role'])->group(function () {
 Route::middleware(['auth', 'verified', 'ensure.role', 'admin'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('/profile/admin-reset-user-password', [ProfileController::class, 'adminResetUserPassword'])->name('profile.admin-reset-user-password');
-
-    Route::get('/contacts/{contact}/pdf', [ContactController::class, 'generatePdf'])->name('contacts.pdf');
-    Route::get('/contacts/{contact}/word', [ContactController::class, 'generateWord'])->name('contacts.word');
 
     Route::prefix('approvals')->name('approvals.')->group(function () {
         Route::get('/', [ApprovalController::class, 'index'])->name('index');

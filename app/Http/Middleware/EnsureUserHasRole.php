@@ -23,6 +23,7 @@ class EnsureUserHasRole
         'contacts.view',
         'contacts.create',
         'contacts.edit',
+        'contacts.generate-pdf',
         'follow-ups.view',
         'follow-ups.create',
         'follow-ups.edit',

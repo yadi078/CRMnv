@@ -42,6 +42,7 @@ class Sale extends Model
         'horario_evento',
         'factura_referencia',
         'created_by',
+        'nombre_consultor',
     ];
 
     protected function casts(): array
@@ -84,6 +85,20 @@ class Sale extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Nombre del consultor/ejecutivo para la ficha (guardado al crear la venta; respaldo: usuario creador).
+     */
+    public function nombreConsultorParaFicha(): string
+    {
+        $n = trim((string) ($this->nombre_consultor ?? ''));
+        if ($n !== '') {
+            return $n;
+        }
+        $fromCreator = trim((string) ($this->creator?->name ?? ''));
+
+        return $fromCreator !== '' ? $fromCreator : '—';
     }
 
     /**

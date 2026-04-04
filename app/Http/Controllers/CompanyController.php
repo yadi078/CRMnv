@@ -575,6 +575,7 @@ class CompanyController extends Controller
                                     'participantes' => null,
                                     'notas' => 'Registrado automáticamente al importar estado de prospecto Vendido.',
                                     'created_by' => auth()->id(),
+                                    'nombre_consultor' => $user->name,
                                 ]);
                             }
                         }
@@ -607,6 +608,7 @@ class CompanyController extends Controller
                             'participantes' => null,
                             'notas' => 'Registrado automáticamente al importar estado de prospecto Vendido.',
                             'created_by' => auth()->id(),
+                            'nombre_consultor' => $user->name,
                         ]);
                     }
                 }
@@ -966,6 +968,7 @@ class CompanyController extends Controller
                     'participantes' => null,
                     'notas' => 'Registrado automáticamente al cambiar estado de prospecto a Vendido.',
                     'created_by' => auth()->id(),
+                    'nombre_consultor' => $request->user()?->name,
                 ]);
             }
 
@@ -1128,6 +1131,7 @@ class CompanyController extends Controller
                 'participantes' => null,
                 'notas' => 'Registrado automáticamente al importar estado de prospecto Vendido.',
                 'created_by' => auth()->id(),
+                'nombre_consultor' => $user->name,
             ]);
         }
 

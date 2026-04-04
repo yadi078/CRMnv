@@ -121,7 +121,6 @@ class FiltrosController extends Controller
 
         $filterLogic = DynamicFilterService::logicFromRequest($request);
         $filterSpecs = DynamicFilterService::parseFromRequest($request);
-        $filterSpecs = $this->filterSpecsWithoutComercialForNonAdmin($filterSpecs, $isAdmin);
         $resultScope = $this->resolveResultScope($request->input('result_scope'));
         $filterService = app(DynamicFilterService::class);
 
@@ -165,68 +164,12 @@ class FiltrosController extends Controller
             $baseCompanies->accessibleForExecutive($user);
         }
 
-        $distinctToOptions = function ($query, string $col, int $limit = 200) {
-            return $query->whereNotNull($col)
-                ->where($col, '!=', '')
-                ->distinct()
-                ->orderBy($col)
-                ->limit($limit)
-                ->pluck($col)
-                ->unique()
-                ->values()
-                ->mapWithKeys(fn ($v) => [(string)$v => (string)$v])
-                ->toArray();
-        };
-
-        // Opciones (contactos)
-        $contactFields['nombre_completo']['options'] = $distinctToOptions((clone $baseContactsForOptions), 'nombre_completo', 5000);
-        $contactFields['telefono']['options'] = $distinctToOptions((clone $baseContactsForOptions), 'telefono', 5000);
-        $contactFields['celular']['options'] = $distinctToOptions((clone $baseContactsForOptions), 'celular', 5000);
-        $contactFields['email']['options'] = $distinctToOptions((clone $baseContactsForOptions), 'email', 5000);
-        $contactFields['notas']['options'] = $distinctToOptions((clone $baseContactsForOptions), 'notas', 5000);
-        $contactFields['departamento']['options'] = $distinctToOptions((clone $baseContactsForOptions), 'departamento', 5000);
-        $contactFields['puesto_de_trabajo']['options'] = $distinctToOptions((clone $baseContactsForOptions), 'puesto_de_trabajo', 5000);
-
-        // municipio/estado: unimos opciones de contactos y empresas para que "sea por igual"
-        $municipioOptsContacts = array_keys($distinctToOptions((clone $baseContactsForOptions), 'municipio', 5000));
-        $municipioOptsCompanies = array_keys($distinctToOptions((clone $baseCompaniesForOptions), 'municipio', 5000));
-        $municipioOpts = collect(array_merge($municipioOptsContacts, $municipioOptsCompanies))
-            ->unique()
-            ->values()
-            ->mapWithKeys(fn ($v) => [(string)$v => (string)$v])
-            ->toArray();
-
-        $estadoOptsContacts = array_keys($distinctToOptions((clone $baseContactsForOptions), 'estado', 5000));
-        $estadoOptsCompanies = array_keys($distinctToOptions((clone $baseCompaniesForOptions), 'estado', 5000));
-        $estadoOpts = collect(array_merge($estadoOptsContacts, $estadoOptsCompanies))
-            ->unique()
-            ->values()
-            ->mapWithKeys(fn ($v) => [(string)$v => (string)$v])
-            ->toArray();
-
-        $contactFields['municipio']['options'] = $municipioOpts;
-        $contactFields['estado']['options'] = $estadoOpts;
-
-        // Comercial: usuarios (usuario/admin) + textos distintos de empresa.ejecutivo_asignado (p. ej. "Lic. Olivia…")
-        $comercialOpts = $this->comercialFilterOptions();
-        $contactFields['comercial']['options'] = $comercialOpts;
-        $companyFields['comercial']['options'] = $comercialOpts;
-
-        $contactFields['domicilio']['options'] = [
-            'con_domicilio' => 'Con domicilio',
-            'sin_domicilio' => 'Sin domicilio',
-        ];
-        $contactFields['no_recibir_correos']['options'] = [
-            '1' => 'Sí',
-            '0' => 'No',
-        ];
-
-        // Opciones (empresas)
-        $companyFields['sector']['options'] = $distinctToOptions((clone $baseCompaniesForOptions), 'sector', 5000);
-        $companyFields['datos_fiscales']['options'] = [
-            'con_domicilio' => 'Con domicilio',
-            'sin_domicilio' => 'Sin domicilio',
-        ];
+        [$contactFields, $companyFields] = $this->hydrateFiltrosSelectOptions(
+            $contactFields,
+            $companyFields,
+            $baseContactsForOptions,
+            $baseCompaniesForOptions
+        );
 
         // Recálculo de referencia para que el formulario use las opciones actualizadas.
         $fields = array_merge($companyFields, $contactFields);
@@ -320,7 +263,6 @@ class FiltrosController extends Controller
 
         $filterLogic = DynamicFilterService::logicFromRequest($request);
         $filterSpecs = DynamicFilterService::parseFromRequest($request);
-        $filterSpecs = $this->filterSpecsWithoutComercialForNonAdmin($filterSpecs, $isAdmin);
         $resultScope = $this->resolveResultScope($request->input('result_scope'));
         $filterService = app(DynamicFilterService::class);
 
@@ -328,6 +270,15 @@ class FiltrosController extends Controller
         $companyFields = FilterConfig::companyFields();
         $companyFields['status_color']['options'] = FilterConfig::prospectStatusColorOptions();
         $operatorLabels = FilterConfig::allOperatorLabels();
+
+        $baseContactsForOptions = Contact::withTrashed();
+        $baseCompaniesForOptions = Company::query();
+        [$contactFields, $companyFields] = $this->hydrateFiltrosSelectOptions(
+            $contactFields,
+            $companyFields,
+            $baseContactsForOptions,
+            $baseCompaniesForOptions
+        );
 
         $fields = array_merge($companyFields, $contactFields);
 
@@ -393,22 +344,150 @@ class FiltrosController extends Controller
     }
 
     /**
-     * Opciones del filtro Comercial: solo ejecutivos asignables (rol usuario, activos),
-     * mismo criterio que {@see User::ejecutivosAsignables()}. No se mezclan textos libres
-     * de empresa.ejecutivo_asignado (evita entradas basura o letras sueltas en el desplegable).
+     * Rellena opciones de los desplegables (distinct + ejecutivo) y descarta valores de celda tipo fórmula Excel mal importados.
      *
-     * @return array<string, string> clave id de usuario => etiqueta visible
+     * @return array{0: array<string, mixed>, 1: array<string, mixed>}
+     */
+    private function hydrateFiltrosSelectOptions(
+        array $contactFields,
+        array $companyFields,
+        $baseContactsForOptions,
+        $baseCompaniesForOptions
+    ): array {
+        $distinctToOptions = function ($query, string $col, int $limit = 200) {
+            return $query->whereNotNull($col)
+                ->where($col, '!=', '')
+                ->distinct()
+                ->orderBy($col)
+                ->limit($limit)
+                ->pluck($col)
+                ->unique()
+                ->values()
+                ->map(fn ($v) => $this->filterCatalogValue($v))
+                ->filter()
+                ->mapWithKeys(fn (string $v) => [$v => $v])
+                ->toArray();
+        };
+
+        $contactFields['nombre_completo']['options'] = $distinctToOptions((clone $baseContactsForOptions), 'nombre_completo', 5000);
+        $contactFields['telefono']['options'] = $distinctToOptions((clone $baseContactsForOptions), 'telefono', 5000);
+        $contactFields['celular']['options'] = $distinctToOptions((clone $baseContactsForOptions), 'celular', 5000);
+        $contactFields['email']['options'] = $distinctToOptions((clone $baseContactsForOptions), 'email', 5000);
+        $contactFields['notas']['options'] = $distinctToOptions((clone $baseContactsForOptions), 'notas', 5000);
+        $contactFields['departamento']['options'] = $distinctToOptions((clone $baseContactsForOptions), 'departamento', 5000);
+        $contactFields['puesto_de_trabajo']['options'] = $distinctToOptions((clone $baseContactsForOptions), 'puesto_de_trabajo', 5000);
+
+        $municipioOptsContacts = array_keys($distinctToOptions((clone $baseContactsForOptions), 'municipio', 5000));
+        $municipioOptsCompanies = array_keys($distinctToOptions((clone $baseCompaniesForOptions), 'municipio', 5000));
+        $municipioOpts = collect(array_merge($municipioOptsContacts, $municipioOptsCompanies))
+            ->unique()
+            ->values()
+            ->mapWithKeys(fn ($v) => [(string) $v => (string) $v])
+            ->toArray();
+
+        $estadoOptsContacts = array_keys($distinctToOptions((clone $baseContactsForOptions), 'estado', 5000));
+        $estadoOptsCompanies = array_keys($distinctToOptions((clone $baseCompaniesForOptions), 'estado', 5000));
+        $estadoOpts = collect(array_merge($estadoOptsContacts, $estadoOptsCompanies))
+            ->unique()
+            ->values()
+            ->mapWithKeys(fn ($v) => [(string) $v => (string) $v])
+            ->toArray();
+
+        $contactFields['municipio']['options'] = $municipioOpts;
+        $contactFields['estado']['options'] = $estadoOpts;
+
+        $comercialOpts = $this->comercialFilterOptions();
+        $contactFields['comercial']['options'] = $comercialOpts;
+        $companyFields['comercial']['options'] = $comercialOpts;
+
+        $contactFields['domicilio']['options'] = [
+            'con_domicilio' => 'Con domicilio',
+            'sin_domicilio' => 'Sin domicilio',
+        ];
+        $contactFields['no_recibir_correos']['options'] = [
+            '1' => 'Sí',
+            '0' => 'No',
+        ];
+
+        $companyFields['sector']['options'] = $distinctToOptions((clone $baseCompaniesForOptions), 'sector', 5000);
+        $companyFields['datos_fiscales']['options'] = [
+            'con_domicilio' => 'Con domicilio',
+            'sin_domicilio' => 'Sin domicilio',
+        ];
+
+        return [$contactFields, $companyFields];
+    }
+
+    /**
+     * Valores de catálogo legibles: excluye fórmulas Excel u otros textos no aptos para mostrar en filtros.
+     */
+    private function filterCatalogValue(mixed $v): ?string
+    {
+        if (! is_string($v) && ! is_numeric($v)) {
+            return null;
+        }
+        $s = trim((string) $v);
+        if ($s === '') {
+            return null;
+        }
+        if (str_starts_with($s, '=')) {
+            return null;
+        }
+
+        return $s;
+    }
+
+    /**
+     * Ejecutivo: todos los usuarios (nombre) + textos distintos en empresa.ejecutivo_asignado no cubiertos por un nombre de usuario.
+     * Claves: id numérico de usuario o prefijo E: + base64 (texto libre), igual que {@see DynamicFilterService::splitComercialFilterValues()}.
+     *
+     * @return array<string, string>
      */
     private function comercialFilterOptions(): array
     {
         $out = [];
 
-        foreach (User::ejecutivosAsignables() as $u) {
-            $label = $u->name;
-            if ($u->email) {
-                $label .= ' — '.$u->email;
+        foreach (User::query()->orderBy('name')->get(['id', 'name']) as $u) {
+            $name = trim((string) $u->name);
+            if ($name === '') {
+                continue;
             }
-            $out[(string) $u->id] = $label;
+            $out[(string) $u->id] = $name;
+        }
+
+        $labelSet = array_fill_keys(array_values($out), true);
+
+        $texts = Company::query()
+            ->whereNotNull('ejecutivo_asignado')
+            ->where('ejecutivo_asignado', '!=', '')
+            ->distinct()
+            ->orderBy('ejecutivo_asignado')
+            ->pluck('ejecutivo_asignado');
+
+        foreach ($texts as $raw) {
+            $cand = $this->filterCatalogValue($raw);
+            if ($cand === null) {
+                continue;
+            }
+            $text = trim($cand);
+            if (isset($labelSet[$text])) {
+                continue;
+            }
+            $lower = mb_strtolower($text);
+            $dup = false;
+            foreach (array_keys($labelSet) as $existing) {
+                if (mb_strtolower((string) $existing) === $lower) {
+                    $dup = true;
+                    break;
+                }
+            }
+            if ($dup) {
+                continue;
+            }
+
+            $key = 'E:'.base64_encode($text);
+            $out[$key] = $text;
+            $labelSet[$text] = true;
         }
 
         uasort($out, static fn ($a, $b): int => strcasecmp((string) $a, (string) $b));
@@ -490,21 +569,6 @@ class FiltrosController extends Controller
     }
 
     /**
-     * Ejecutivos no usan el filtro «Comercial» (asignado); solo administradores.
-     *
-     * @param  array<int, FilterSpec>  $specs
-     * @return array<int, FilterSpec>
-     */
-    private function filterSpecsWithoutComercialForNonAdmin(array $specs, bool $isAdmin): array
-    {
-        if ($isAdmin) {
-            return $specs;
-        }
-
-        return array_values(array_filter($specs, fn ($s) => $s->field !== 'comercial'));
-    }
-
-    /**
      * @param  array<int, FilterSpec>  $filterSpecs
      * @return array<int, array<string, mixed>>
      */
@@ -541,7 +605,7 @@ class FiltrosController extends Controller
                     if (ctype_digit($k)) {
                         $u = User::query()->find((int) $k);
 
-                        return $u ? ($u->name.($u->email ? ' — '.$u->email : '')) : $k;
+                        return $u ? (string) $u->name : $k;
                     }
 
                     return $k;

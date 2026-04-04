@@ -89,12 +89,20 @@ class ContactPolicy
     }
 
     /**
-     * Determine whether the user can generate PDF.
-     * Solo admin tiene permiso contacts.generate-pdf; usuario no.
+     * Determine whether the user can generate PDF de ficha de inscripción.
+     * Requiere contacts.generate-pdf; alcance igual que view (ejecutivo: su contacto).
      */
     public function generatePdf(User $user, Contact $contact): bool
     {
-        return $user->can('contacts.generate-pdf');
+        if (! $user->can('contacts.generate-pdf')) {
+            return false;
+        }
+        if ($user->esAdmin()) {
+            return true;
+        }
+
+        return (int) $contact->created_by === (int) $user->id
+            || (int) $contact->assigned_user_id === (int) $user->id;
     }
 
     /**
