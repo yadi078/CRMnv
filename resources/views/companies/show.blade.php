@@ -158,18 +158,14 @@
             <section class="company-show__card company-show__card--sales">
                 <div class="company-show__card-header">
                     <h3 class="company-show__card-title">Historial de Ventas</h3>
+                    @can('sales.create')
                     <div class="flex flex-wrap items-center gap-2">
-                        <a href="{{ route('user.sales.by-company', $company) }}" class="company-show__btn-action border border-white/35 bg-transparent hover:bg-white/10">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
-                            Historial por empresa
-                        </a>
-                        @can('sales.create')
                         <a href="{{ route('user.sales.create', ['company_id' => $company->id]) }}" class="company-show__btn-action">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" /></svg>
                             Nueva Venta
                         </a>
-                        @endcan
                     </div>
+                    @endcan
                 </div>
                 <div class="company-show__list">
                     @forelse($company->sales as $sale)
@@ -181,7 +177,9 @@
                             <p class="company-show__list-meta">{{ $sale->participantes }} participantes</p>
                             @endif
                         </div>
-                        <a href="{{ \App\Support\CrmNavigation::withReturn(route('user.sales.show', $sale)) }}" class="company-show__list-link">Ver</a>
+                        <a href="{{ \App\Support\CrmNavigation::withReturn(route('user.sales.show', $sale)) }}" class="company-show__list-link" aria-label="Ver venta" title="Ver venta">
+                            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        </a>
                     </div>
                     @empty
                     <p class="company-show__empty">No hay ventas registradas</p>

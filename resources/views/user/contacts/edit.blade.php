@@ -1,16 +1,16 @@
 <x-app-user-layout>
     <x-slot name="header">
         <x-page-header-avatar><svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg></x-page-header-avatar>
-            <div>
-                <h2 class="page-header-card__title">Editar Contacto</h2>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg></x-page-header-avatar>
+        <div>
+            <h2 class="page-header-card__title">Editar Contacto</h2>
             <p class="page-header-card__subtitle">{{ $contact->nombre_completo }}</p>
-            </div>
+        </div>
         <div class="flex flex-wrap gap-2 ml-auto justify-end items-center shrink-0">
             @if(isset($sale) && $sale && $contact->fichaPdfCompleta())
-                @can('view', $sale)
-                    <a href="{{ route('user.sales.ficha-pdf', $sale) }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/15 text-white border border-white/30 hover:bg-white/25 text-sm font-semibold">
+                @can('generatePdf', $contact)
+                    <a href="{{ route('contacts.pdf', $contact) }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/15 text-white border border-[#FFE600]/50 hover:bg-white/25 text-sm font-semibold">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                         Generar PDF
                     </a>
@@ -19,54 +19,33 @@
         </div>
     </x-slot>
 
-    @php
-        $detalleContactoExpandido = old('detalle_contacto_expandido') === '1'
-            || $errors->any()
-            || (bool) ($contact->ficha_registro_desbloqueada ?? false);
-    @endphp
-    <div class="py-8 sm:py-10">
-        <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
-            <div class="panel-card-dark p-6">
-                @php
-                    $crmCancelHref = (($r = request('return')) && is_string($r) && \App\Support\CrmNavigation::isSafeReturnUrl($r))
-                        ? $r
-                        : route('contacts.show', $contact);
-                    $selectedCompanyId = old('company_id', $contact->company_id ?? $contact->company?->id);
-                @endphp
-                <form id="form-editar-contacto" method="POST" action="{{ route('contacts.update', $contact) }}" x-data="{ detalleAbierto: @json($detalleContactoExpandido) }">
+    <div class="space-y-8">
+        <div class="panel-card-dark p-6">
+                <form method="POST" action="{{ route('contacts.update', $contact) }}">
                     @csrf
                     @method('PUT')
-                    <input type="hidden" name="detalle_contacto_expandido" x-bind:value="detalleAbierto ? '1' : '0'">
-                    <input type="hidden" name="ficha_registro_desbloqueada" x-bind:value="detalleAbierto ? '1' : '0'">
                     @if(($crmNavReturn = request('return')) && is_string($crmNavReturn) && \App\Support\CrmNavigation::isSafeReturnUrl($crmNavReturn))
                         <input type="hidden" name="return" value="{{ $crmNavReturn }}">
                     @endif
+
+                    @php
+                        $selectedCompanyId = old('company_id', $contact->company_id ?? $contact->company?->id);
+                    @endphp
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="md:col-span-2">
-                            <div class="flex flex-wrap items-center justify-between gap-2">
+                            <div class="flex flex-wrap items-center justify-between gap-2 mb-1">
                                 <x-input-label for="company_id" value="Empresa *" class="mb-0" />
                                 <x-copy-field-button target-id="company_id" />
                             </div>
-                            <p class="text-xs text-white/65 mb-2">Despliegue la lista y elija la empresa. Incluye las empresas aprobadas; la empresa vinculada a este contacto siempre aparece aunque esté pendiente de aprobación.</p>
-                            {{-- Fondo claro + texto oscuro: en Windows el <select> nativo a veces no muestra texto claro sobre fondo oscuro al estar cerrado. --}}
-                            <select
-                                id="company_id"
-                                name="company_id"
-                                class="mt-1 block w-full rounded-xl border border-white/20 bg-white text-gray-900 py-2.5 px-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#FFE600]/70 [&>option]:bg-white [&>option]:text-gray-900"
-                                required
-                            >
+                            <select id="company_id" name="company_id" class="mt-1 block w-full rounded-md border-gray-300 bg-white text-gray-900 py-2 px-3 [&>option]:bg-white [&>option]:text-gray-900" required>
                                 <option value="">Seleccione una empresa</option>
                                 @foreach($companies as $company)
-                                    <option value="{{ $company->id }}" {{ (string) $selectedCompanyId === (string) $company->id ? 'selected' : '' }}>
-                                        {{ $company->nombre_comercial }}
-                                    </option>
+                                <option value="{{ $company->id }}" {{ (string) $selectedCompanyId === (string) $company->id ? 'selected' : '' }}>{{ $company->nombre_comercial }}</option>
                                 @endforeach
                             </select>
-                            @if($companies->isEmpty())
-                                <p class="mt-2 text-sm text-amber-200/90">No hay empresas aprobadas en el catálogo. Solicite al administrador una alta de empresa.</p>
-                            @endif
-                            <x-input-error :messages="$errors->get('company_id')" class="mt-2 text-red-300" />
+                            <x-input-error :messages="$errors->get('company_id')" class="mt-2" />
                         </div>
+
                         <div class="md:col-span-2">
                             <x-executive-assignment-field
                                 :executiveUsers="$executiveUsers"
@@ -74,15 +53,18 @@
                                 :selectedAssignedUserId="$selectedAssignedUserId"
                                 :readonlyExecutiveName="$readonlyExecutiveName"
                                 inputId="contact_ejecutivo"
-                                selectClass="mt-1 block w-full rounded-xl border border-white/20 bg-white text-gray-900 py-2.5 px-3 [&>option]:bg-white [&>option]:text-gray-900"
-                                readonlyClass="mt-1 block w-full rounded-xl border border-white/20 bg-white/15 text-white py-2.5 px-3"
+                                selectClass="mt-1 block w-full rounded-md border-gray-300 bg-white py-2 px-3"
+                                readonlyClass="mt-1 block w-full rounded-md border-gray-300 bg-gray-100 py-2 px-3"
+                                :hint="$isAdmin ? 'Solo cuentas con rol ejecutivo (usuario).' : null"
                             />
                         </div>
+
                         <div class="md:col-span-2">
                             <x-input-label for="nombre_completo" value="Nombre Completo *" />
-                            <x-text-input id="nombre_completo" name="nombre_completo" type="text" class="mt-1 block w-full" :value="old('nombre_completo', $contact->nombre_completo)" minlength="4" maxlength="255" required />
+                            <x-text-input id="nombre_completo" name="nombre_completo" type="text" class="mt-1 block w-full" :value="old('nombre_completo', $contact->nombre_completo)" required />
                             <x-input-error :messages="$errors->get('nombre_completo')" class="mt-2" />
                         </div>
+
                         <div>
                             <x-input-label for="genero" value="Género" />
                             <select id="genero" name="genero" class="mt-1 block w-full rounded-md border-gray-300">
@@ -91,11 +73,15 @@
                                 <option value="Femenino" {{ old('genero', $contact->genero) === 'Femenino' ? 'selected' : '' }}>Femenino</option>
                                 <option value="Otro" {{ old('genero', $contact->genero) === 'Otro' ? 'selected' : '' }}>Otro</option>
                             </select>
+                            <x-input-error :messages="$errors->get('genero')" class="mt-2" />
                         </div>
+
                         <div>
                             <x-input-label for="puesto_de_trabajo" value="Puesto de Trabajo" />
                             <x-text-input id="puesto_de_trabajo" name="puesto_de_trabajo" type="text" class="mt-1 block w-full" :value="old('puesto_de_trabajo', $contact->puesto_de_trabajo)" />
+                            <x-input-error :messages="$errors->get('puesto_de_trabajo')" class="mt-2" />
                         </div>
+
                         <div>
                             <x-input-label for="departamento" value="Area de trabajo" />
                             <input id="departamento" name="departamento" type="text" list="work-areas-list" class="mt-1 block w-full rounded-md border-gray-300" value="{{ old('departamento', $contact->departamento) }}" placeholder="Escriba para buscar..." />
@@ -105,7 +91,9 @@
                                 @endforeach
                             </datalist>
                             <p class="mt-1 text-xs text-white/60">Puede escribir el área o elegir una sugerencia del listado.</p>
+                            <x-input-error :messages="$errors->get('departamento')" class="mt-2" />
                         </div>
+
                         <div>
                             <x-input-label for="email" value="Correo electrónico *" />
                             <x-text-input id="email" name="email" type="text" inputmode="email" autocomplete="email" placeholder="correo@empresa.com, otro@empresa.com" class="mt-1 block w-full" :value="old('email', $contact->email)" required />
@@ -118,39 +106,53 @@
                                 Mostrar correo en fichas, listados y PDF
                             </label>
                         </div>
+
                         <div>
                             <x-input-label for="telefono" value="Teléfono" />
                             <x-text-input id="telefono" name="telefono" type="text" class="mt-1 block w-full" :value="old('telefono', $contact->telefono)" placeholder="Teléfono fijo" />
+                            <x-input-error :messages="$errors->get('telefono')" class="mt-2" />
                         </div>
+
                         <div>
                             <x-input-label for="celular" value="Celular" />
                             <x-text-input id="celular" name="celular" type="text" class="mt-1 block w-full" :value="old('celular', $contact->celular)" />
+                            <x-input-error :messages="$errors->get('celular')" class="mt-2" />
                         </div>
+
                         <div>
                             <x-input-label for="extension" value="Extensión" />
                             <x-text-input id="extension" name="extension" type="text" class="mt-1 block w-full" :value="old('extension', $contact->extension)" />
+                            <x-input-error :messages="$errors->get('extension')" class="mt-2" />
                         </div>
+
                         <div>
                             <x-input-label for="fecha_cumpleanos" value="Fecha de cumpleaños (opcional)" />
                             <x-text-input id="fecha_cumpleanos" name="fecha_cumpleanos" type="date" class="mt-1 block w-full text-gray-900" :value="old('fecha_cumpleanos', $contact->fecha_cumpleanos?->format('Y-m-d'))" />
                             <p class="mt-1 text-xs text-white/60">Para enviar felicitaciones al administrador el día del cumpleaños.</p>
+                            <x-input-error :messages="$errors->get('fecha_cumpleanos')" class="mt-2" />
                         </div>
+
                         <div>
                             <x-input-label for="municipio" value="Municipio / Ciudad" />
                             <x-text-input id="municipio" name="municipio" type="text" class="mt-1 block w-full" :value="old('municipio', $contact->municipio)" />
+                            <x-input-error :messages="$errors->get('municipio')" class="mt-2" />
                         </div>
+
                         <div>
                             <x-input-label for="estado" value="Entidad federativa" />
                             <x-text-input id="estado" name="estado" type="text" class="mt-1 block w-full" :value="old('estado', $contact->estado)" />
+                            <x-input-error :messages="$errors->get('estado')" class="mt-2" />
                         </div>
+
                         <div class="md:col-span-2">
                             <x-input-label for="notas" value="Notas" />
                             <textarea id="notas" name="notas" rows="4" class="mt-1 block w-full rounded-md border-gray-300">{{ old('notas', $contact->notas) }}</textarea>
+                            <x-input-error :messages="$errors->get('notas')" class="mt-2" />
                         </div>
 
                         <div class="md:col-span-2">
                             <x-input-label for="status_color" value="Estatus de prospecto" />
-                            <select id="status_color" name="status_color" class="mt-1 block w-full rounded-md border-gray-300 bg-white text-gray-900 py-2 px-3 [&>option]:bg-white [&>option]:text-gray-900">
+                            <select id="status_color" name="status_color" class="mt-1 block w-full rounded-md border-gray-300">
                                 @foreach(\App\Models\Contact::PROSPECT_STATUS_LABELS as $value => $label)
                                 <option value="{{ $value }}" {{ old('status_color', $contact->status_color ?? 'seguimiento') === $value ? 'selected' : '' }}>{{ $label }}</option>
                                 @endforeach
@@ -158,98 +160,24 @@
                             <x-input-error :messages="$errors->get('status_color')" class="mt-2" />
                         </div>
 
-                        <div class="md:col-span-2" x-show="!detalleAbierto" x-cloak>
-                            <button
-                                type="button"
-                                class="inline-flex w-full sm:w-auto items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#FFE600] text-[#071A3D] font-semibold text-sm hover:bg-yellow-300 transition shadow border-2 border-[#FFE600]"
-                                @click="detalleAbierto = true"
-                            >
-                                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                                Crear ficha de inscripción
-                            </button>
-                            <p class="mt-2 text-sm text-white/70">Se mostrarán curso y venta, participantes, condiciones del curso, método de pago y datos fiscales para la ficha PDF.</p>
-                        </div>
-
-                        <div class="md:col-span-2 grid grid-cols-1 gap-0" x-show="detalleAbierto" x-cloak>
-                            @include('contacts.partials.contact-ficha-registro', ['contact' => $contact, 'sale' => $sale ?? null])
-                        </div>
                     </div>
+
                     <div class="flex items-center justify-end mt-6 gap-3 flex-wrap">
-                        <a href="{{ $crmCancelHref }}" class="btn-icon-text text-gray-600 hover:text-gray-800 px-4 py-2 rounded-xl border border-gray-300 hover:bg-gray-50">Cancelar</a>
-                        <button type="submit" class="btn-amber-app">Actualizar</button>
+                        <a href="{{ \App\Support\CrmNavigation::withReturn(route('contacts.show', $contact)) }}" class="btn-panel-dark bg-white/10 text-white border-2 border-[#FFE600] hover:bg-white/20">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                            Cancelar
+                        </a>
+                        <button type="submit" class="btn-amber-app">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                            Actualizar
+                        </button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        var companiesData = @json($companies->map(fn ($c) => ['id' => $c->id, 'nombre_comercial' => $c->nombre_comercial]));
-        var form = document.getElementById('form-editar-contacto');
-        var companyInput = document.getElementById('company_autocomplete');
-        var companyIdInput = document.getElementById('company_id');
-        var companyList = document.getElementById('company_autocomplete_list');
-
-        function filterCompanies(q) {
-            var qq = (q || '').toLowerCase().trim();
-            if (!qq) return companiesData;
-            return companiesData.filter(function(c) {
-                return (c.nombre_comercial || '').toLowerCase().indexOf(qq) !== -1;
-            });
-        }
-
-        function renderCompanyList(items) {
-            if (!companyList) return;
-            companyList.innerHTML = '';
-            if (items.length === 0) {
-                companyList.classList.add('hidden');
-                return;
-            }
-            items.forEach(function(c) {
-                var div = document.createElement('div');
-                div.className = 'px-3 py-2.5 text-white/90 hover:bg-white/15 cursor-pointer text-sm';
-                div.setAttribute('role', 'option');
-                div.textContent = c.nombre_comercial;
-                div.addEventListener('mousedown', function(e) {
-                    e.preventDefault();
-                    companyIdInput.value = String(c.id);
-                    companyInput.value = c.nombre_comercial;
-                    companyList.classList.add('hidden');
-                });
-                companyList.appendChild(div);
-            });
-            companyList.classList.remove('hidden');
-        }
-
-        if (companyInput && companyList) {
-            companyInput.addEventListener('focus', function() {
-                renderCompanyList(filterCompanies(companyInput.value));
-            });
-            companyInput.addEventListener('input', function() {
-                companyIdInput.value = '';
-                renderCompanyList(filterCompanies(companyInput.value));
-            });
-            companyInput.addEventListener('blur', function() {
-                setTimeout(function() { companyList.classList.add('hidden'); }, 150);
-            });
-            document.addEventListener('click', function(e) {
-                if (companyList.classList.contains('hidden')) return;
-                if (!companyList.contains(e.target) && e.target !== companyInput) {
-                    companyList.classList.add('hidden');
-                }
-            });
-        }
-
-        if (form) {
-            form.addEventListener('submit', function(e) {
-                if (companyIdInput && companyInput && !companyIdInput.value && companyInput.value.trim()) {
-                    var match = companiesData.find(function(c) {
-                        return (c.nombre_comercial || '').trim().toLowerCase() === companyInput.value.trim().toLowerCase();
-                    });
-                    if (match) companyIdInput.value = String(match.id);
-                }
-            });
-        }
-    });
-    </script>
 </x-app-user-layout>

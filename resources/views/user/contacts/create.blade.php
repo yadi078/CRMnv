@@ -5,7 +5,7 @@
             </svg></x-page-header-avatar>
         <div>
             <h2 class="page-header-card__title">Nuevo Contacto</h2>
-            <p class="page-header-card__subtitle">Registrar nuevo contacto (vinculado a empresa)</p>
+            <p class="page-header-card__subtitle">Registrar nuevo contacto</p>
         </div>
     </x-slot>
 
@@ -13,40 +13,23 @@
         <div class="panel-card-dark p-6">
                 <form id="form-nuevo-contacto" method="POST" action="{{ route('contacts.store') }}">
                     @csrf
+
                     <h3 class="panel-card-dark__title panel-card-dark__title--accent mb-4">Datos del contacto</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="md:col-span-2">
-                            <div class="flex flex-wrap items-center justify-between gap-2">
-                                <label for="company_autocomplete" class="block text-sm font-medium text-white/90 mb-0">Empresa *</label>
-                                <x-copy-field-button target-id="company_autocomplete" />
+                            <div class="flex flex-wrap items-center justify-between gap-2 mb-1">
+                                <label for="company_id" class="block text-sm font-medium text-white/90 mb-0">Empresa *</label>
+                                <x-copy-field-button target-id="company_id" />
                             </div>
-                            <p class="text-xs text-white/65 mb-2">Escriba para filtrar o elija de la lista. Incluye empresas aprobadas en el CRM y las que usted haya registrado.</p>
-                            <input type="hidden" id="company_id" name="company_id" value="{{ old('company_id', $companyId ?? '') }}" required />
-                            @php
-                                $preselectedId = old('company_id', $companyId ?? null);
-                                $preselectedName = $preselectedId ? ($companies->firstWhere('id', (int) $preselectedId)?->nombre_comercial ?? '') : '';
-                            @endphp
-                            {{-- relative solo envuelve input + lista: top-full queda pegado al input; texto oscuro forzado (evita blanco sobre blanco con .panel-card-dark) --}}
-                            <div class="relative z-10 mt-1">
-                                <input
-                                    type="search"
-                                    id="company_autocomplete"
-                                    class="company-autocomplete-input block w-full rounded-xl border border-gray-200 bg-white !text-gray-900 placeholder-gray-500 py-2.5 px-3 shadow-sm focus:border-[#FFE600] focus:outline-none focus:ring-2 focus:ring-[#FFE600]/50 caret-gray-900"
-                                    placeholder="Buscar o seleccionar empresa…"
-                                    value="{{ $preselectedName }}"
-                                    autocomplete="off"
-                                    autocorrect="off"
-                                    autocapitalize="off"
-                                    spellcheck="false"
-                                    inputmode="search"
-                                />
-                                <div id="company_autocomplete_list" role="listbox" class="absolute left-0 right-0 top-full z-[100] mt-1 max-h-56 overflow-auto rounded-xl border border-white/20 bg-[#1a3d6b] shadow-lg hidden"></div>
-                            </div>
-                            @if($companies->isEmpty())
-                                <p class="mt-2 text-sm text-amber-200/90">No hay empresas en el catálogo. Registre una empresa o espere aprobación.</p>
-                            @endif
+                            <select id="company_id" name="company_id" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white [&>option]:bg-[#1a3d6b] [&>option]:text-white py-2.5 px-3" required>
+                                <option value="">Seleccione una empresa</option>
+                                @foreach($companies as $company)
+                                <option value="{{ $company->id }}" {{ (old('company_id', $companyId ?? null) == $company->id) ? 'selected' : '' }}>{{ $company->nombre_comercial }}</option>
+                                @endforeach
+                            </select>
                             <x-input-error :messages="$errors->get('company_id')" class="mt-2 text-red-300" />
                         </div>
+
                         <div class="md:col-span-2">
                             <x-executive-assignment-field
                                 :executiveUsers="$executiveUsers"
@@ -57,113 +40,165 @@
                                 labelClass="text-white/90"
                                 selectClass="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white [&>option]:bg-[#1a3d6b] py-2.5 px-3"
                                 readonlyClass="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white py-2.5 px-3"
+                                :hint="$isAdmin ? 'Como administrador puede asignar el contacto a cualquier ejecutivo.' : null"
                             />
                         </div>
-                        <div>
+
+                        <div class="md:col-span-2">
                             <label for="nombre_completo" class="block text-sm font-medium text-white/90 mb-1">Nombre Completo *</label>
-                            <input id="nombre_completo" name="nombre_completo" type="text" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3 select-text" value="{{ old('nombre_completo') }}" minlength="4" maxlength="255" required title="Mínimo 4 caracteres" />
-                            <x-input-error :messages="$errors->get('nombre_completo')" class="mt-2 text-red-300" />
+                            <input id="nombre_completo" name="nombre_completo" type="text" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3 select-text" value="{{ old('nombre_completo') }}" required />
+                            <x-input-error :messages="$errors->get('nombre_completo')" class="mt-2" />
                         </div>
+
                         <div>
-                            <label for="genero" class="block text-sm font-medium text-white/90 mb-1">Género</label>
-                            <select id="genero" name="genero" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white [&>option]:bg-[#1a3d6b] [&>option]:text-white py-2.5 px-3">
+                            <x-input-label for="genero" value="Género" />
+                            <select id="genero" name="genero" class="mt-1 block w-full rounded-md border-gray-300">
                                 <option value="">Seleccione</option>
                                 <option value="Masculino" {{ old('genero') === 'Masculino' ? 'selected' : '' }}>Masculino</option>
                                 <option value="Femenino" {{ old('genero') === 'Femenino' ? 'selected' : '' }}>Femenino</option>
                                 <option value="Otro" {{ old('genero') === 'Otro' ? 'selected' : '' }}>Otro</option>
                             </select>
+                            <x-input-error :messages="$errors->get('genero')" class="mt-2" />
                         </div>
+
                         <div>
-                            <label for="puesto_de_trabajo" class="block text-sm font-medium text-white/90 mb-1">Puesto de Trabajo</label>
-                            <input id="puesto_de_trabajo" name="puesto_de_trabajo" type="text" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3" value="{{ old('puesto_de_trabajo') }}" />
+                            <x-input-label for="puesto_de_trabajo" value="Puesto de Trabajo" />
+                            <x-text-input id="puesto_de_trabajo" name="puesto_de_trabajo" type="text" class="mt-1 block w-full" :value="old('puesto_de_trabajo')" />
+                            <x-input-error :messages="$errors->get('puesto_de_trabajo')" class="mt-2" />
                         </div>
+
                         <div>
-                            <label for="departamento" class="block text-sm font-medium text-white/90 mb-1">Area de trabajo</label>
-                            <input id="departamento" name="departamento" type="text" list="work-areas-list" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3" value="{{ old('departamento') }}" placeholder="Escriba para buscar..." />
+                            <x-input-label for="departamento" value="Area de trabajo" />
+                            <input id="departamento" name="departamento" type="text" list="work-areas-list" class="mt-1 block w-full rounded-md border-gray-300" value="{{ old('departamento') }}" placeholder="Escriba para buscar..." />
                             <datalist id="work-areas-list">
                                 @foreach($workAreas as $workArea)
                                     <option value="{{ $workArea }}"></option>
                                 @endforeach
                             </datalist>
                             <p class="mt-1 text-xs text-white/60">Puede escribir el área o elegir una sugerencia del listado.</p>
+                            <x-input-error :messages="$errors->get('departamento')" class="mt-2" />
                         </div>
+
                         <div>
-                            <label for="email" class="block text-sm font-medium text-white/90 mb-1">Correo electrónico *</label>
-                            <input id="email" name="email" type="text" inputmode="email" autocomplete="email" placeholder="correo@empresa.com, otro@empresa.com" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3" value="{{ old('email') }}" required />
-                            <x-input-error :messages="$errors->get('email')" class="mt-2 text-red-300" />
+                            <x-input-label for="email" value="Correo electrónico *" />
+                            <x-text-input id="email" name="email" type="text" inputmode="email" autocomplete="email" placeholder="correo@empresa.com, otro@empresa.com" class="mt-1 block w-full" :value="old('email')" required />
+                            <x-input-error :messages="$errors->get('email')" class="mt-2" />
                         </div>
-                        <div class="md:col-span-2 flex items-center gap-3">
+                        <div class="flex items-center gap-3 md:col-span-2">
                             <input id="email_activo" name="email_activo" type="checkbox" value="1" class="rounded border-gray-300 text-amber-500 shadow-sm focus:border-amber-500 focus:ring-amber-500" @checked(old('email_activo', true)) />
                             <label for="email_activo" class="text-sm text-white/90 select-none">
                                 Mostrar correo en fichas, listados y PDF
                             </label>
                         </div>
+
                         <div>
-                            <label for="telefono" class="block text-sm font-medium text-white/90 mb-1">Teléfono</label>
-                            <input id="telefono" name="telefono" type="text" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3" value="{{ old('telefono') }}" placeholder="Teléfono fijo" />
+                            <x-input-label for="telefono" value="Teléfono" />
+                            <x-text-input id="telefono" name="telefono" type="text" class="mt-1 block w-full" :value="old('telefono')" placeholder="Teléfono fijo" />
+                            <x-input-error :messages="$errors->get('telefono')" class="mt-2" />
                         </div>
+
                         <div>
-                            <label for="celular" class="block text-sm font-medium text-white/90 mb-1">Celular</label>
-                            <input id="celular" name="celular" type="text" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3" value="{{ old('celular') }}" />
+                            <x-input-label for="celular" value="Celular" />
+                            <x-text-input id="celular" name="celular" type="text" class="mt-1 block w-full" :value="old('celular')" />
+                            <x-input-error :messages="$errors->get('celular')" class="mt-2" />
                         </div>
+
                         <div>
-                            <label for="extension" class="block text-sm font-medium text-white/90 mb-1">Extensión</label>
-                            <input id="extension" name="extension" type="text" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3" value="{{ old('extension') }}" />
+                            <x-input-label for="extension" value="Extensión" />
+                            <x-text-input id="extension" name="extension" type="text" class="mt-1 block w-full" :value="old('extension')" />
+                            <x-input-error :messages="$errors->get('extension')" class="mt-2" />
                         </div>
+
                         <div>
-                            <label for="fecha_cumpleanos" class="block text-sm font-medium text-white/90 mb-1">Fecha de cumpleaños (opcional)</label>
-                            <input id="fecha_cumpleanos" name="fecha_cumpleanos" type="date" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white [&>option]:bg-[#1a3d6b] py-2.5 px-3" value="{{ old('fecha_cumpleanos') }}" />
+                            <x-input-label for="fecha_cumpleanos" value="Fecha de cumpleaños (opcional)" />
+                            <x-text-input id="fecha_cumpleanos" name="fecha_cumpleanos" type="date" class="mt-1 block w-full text-gray-900" :value="old('fecha_cumpleanos')" />
                             <p class="mt-1 text-xs text-white/60">Para enviar felicitaciones al administrador el día del cumpleaños.</p>
+                            <x-input-error :messages="$errors->get('fecha_cumpleanos')" class="mt-2" />
                         </div>
+
                         <div>
-                            <label for="municipio" class="block text-sm font-medium text-white/90 mb-1">Municipio / Ciudad</label>
-                            <input id="municipio" name="municipio" type="text" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3" value="{{ old('municipio') }}" />
+                            <x-input-label for="municipio" value="Municipio / Ciudad" />
+                            <x-text-input id="municipio" name="municipio" type="text" class="mt-1 block w-full" :value="old('municipio')" />
+                            <x-input-error :messages="$errors->get('municipio')" class="mt-2" />
                         </div>
+
                         <div>
-                            <label for="estado" class="block text-sm font-medium text-white/90 mb-1">Entidad federativa</label>
-                            <input id="estado" name="estado" type="text" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3" value="{{ old('estado') }}" />
+                            <x-input-label for="estado" value="Entidad federativa" />
+                            <x-text-input id="estado" name="estado" type="text" class="mt-1 block w-full" :value="old('estado')" />
+                            <x-input-error :messages="$errors->get('estado')" class="mt-2" />
                         </div>
+
                         <div class="md:col-span-2 mt-2 pt-6 border-t border-white/20">
                             <h3 class="text-lg font-semibold text-[#FFE600] mb-2">Datos para ficha de registro del cliente</h3>
                             <p class="text-sm text-white/80 mb-4">Razón social, nombre comercial, domicilio fiscal, RFC y régimen. TEL se toma de Teléfono/Celular de arriba.</p>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div class="md:col-span-2">
-                                    <label for="razon_social" class="block text-sm font-medium text-white/90 mb-1">RAZÓN SOCIAL</label>
-                                    <input id="razon_social" name="razon_social" type="text" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3" value="{{ old('razon_social') }}" />
+                                    <x-input-label for="razon_social" value="RAZÓN SOCIAL" />
+                                    <x-text-input id="razon_social" name="razon_social" type="text" class="mt-1 block w-full" :value="old('razon_social')" />
+                                    <x-input-error :messages="$errors->get('razon_social')" class="mt-2" />
                                 </div>
                                 <div class="md:col-span-2">
-                                    <label for="nombre_comercial" class="block text-sm font-medium text-white/90 mb-1">Nombre comercial</label>
-                                    <input id="nombre_comercial" name="nombre_comercial" type="text" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3" value="{{ old('nombre_comercial') }}" />
+                                    <x-input-label for="nombre_comercial" value="Nombre comercial" />
+                                    <x-text-input id="nombre_comercial" name="nombre_comercial" type="text" class="mt-1 block w-full" :value="old('nombre_comercial')" />
+                                    <x-input-error :messages="$errors->get('nombre_comercial')" class="mt-2" />
                                 </div>
                                 <div class="md:col-span-2">
-                                    <label for="calle_numero" class="block text-sm font-medium text-white/90 mb-1">CALLE Y NÚMERO</label>
-                                    <input id="calle_numero" name="calle_numero" type="text" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3" value="{{ old('calle_numero') }}" />
+                                    <x-input-label for="calle_numero" value="CALLE Y NÚMERO" />
+                                    <x-text-input id="calle_numero" name="calle_numero" type="text" class="mt-1 block w-full" :value="old('calle_numero')" />
+                                    <x-input-error :messages="$errors->get('calle_numero')" class="mt-2" />
                                 </div>
                                 <div>
-                                    <label for="colonia_cp" class="block text-sm font-medium text-white/90 mb-1">COLONIA Y C.P.</label>
-                                    <input id="colonia_cp" name="colonia_cp" type="text" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3" value="{{ old('colonia_cp') }}" />
+                                    <x-input-label for="colonia_cp" value="COLONIA Y C.P." />
+                                    <x-text-input id="colonia_cp" name="colonia_cp" type="text" class="mt-1 block w-full" :value="old('colonia_cp')" />
+                                    <x-input-error :messages="$errors->get('colonia_cp')" class="mt-2" />
                                 </div>
                                 <div>
-                                    <label for="rfc" class="block text-sm font-medium text-white/90 mb-1">RFC</label>
-                                    <input id="rfc" name="rfc" type="text" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3" value="{{ old('rfc') }}" />
+                                    <x-input-label for="rfc" value="RFC" />
+                                    <x-text-input id="rfc" name="rfc" type="text" class="mt-1 block w-full" :value="old('rfc')" />
+                                    <x-input-error :messages="$errors->get('rfc')" class="mt-2" />
                                 </div>
                                 <div class="md:col-span-2">
-                                    <label for="regimen_fiscal" class="block text-sm font-medium text-white/90 mb-1">RÉGIMEN EN QUE TRIBUTA</label>
-                                    <input id="regimen_fiscal" name="regimen_fiscal" type="text" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3" value="{{ old('regimen_fiscal') }}" />
+                                    <x-input-label for="regimen_fiscal" value="RÉGIMEN EN QUE TRIBUTA" />
+                                    <x-text-input id="regimen_fiscal" name="regimen_fiscal" type="text" class="mt-1 block w-full" :value="old('regimen_fiscal')" />
+                                    <x-input-error :messages="$errors->get('regimen_fiscal')" class="mt-2" />
                                 </div>
                             </div>
                         </div>
+
                         <div class="md:col-span-2">
-                            <label for="notas" class="block text-sm font-medium text-white/90 mb-1">Notas</label>
-                            <textarea id="notas" name="notas" rows="4" class="mt-1 block w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 py-2.5 px-3">{{ old('notas') }}</textarea>
+                            <x-input-label for="notas" value="Notas" />
+                            <textarea id="notas" name="notas" rows="4" class="mt-1 block w-full rounded-md border-gray-300">{{ old('notas') }}</textarea>
+                            <x-input-error :messages="$errors->get('notas')" class="mt-2" />
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <x-input-label for="status_color" value="Estatus de prospecto" />
+                            <select id="status_color" name="status_color" class="mt-1 block w-full rounded-md border-gray-300">
+                                @foreach(\App\Models\Contact::PROSPECT_STATUS_LABELS as $value => $label)
+                                <option value="{{ $value }}" {{ old('status_color', 'seguimiento') === $value ? 'selected' : '' }}>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                            <x-input-error :messages="$errors->get('status_color')" class="mt-2" />
                         </div>
                     </div>
+
                     <div class="flex items-center justify-end mt-6 gap-3 flex-wrap">
-                        <a href="{{ route('contacts.index') }}" class="btn-danger-app">Cancelar</a>
-                        <button type="submit" id="btn-guardar-contacto" class="btn-amber-app">Guardar</button>
+                        <a href="{{ route('contacts.index') }}" class="btn-panel-dark bg-white/10 text-white border-2 border-[#FFE600] hover:bg-white/20">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                            Cancelar
+                        </a>
+                        <button type="submit" id="btn-guardar-contacto" class="btn-amber-app">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                            Guardar
+                        </button>
                     </div>
                 </form>
             </div>
+        </div>
     </div>
 
     <x-modal-success id="modal-registro-exitoso" />
@@ -175,7 +210,6 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        var companiesData = @json($companies->map(fn ($c) => ['id' => $c->id, 'nombre_comercial' => $c->nombre_comercial]));
         var form = document.getElementById('form-nuevo-contacto');
         var modal = document.getElementById('modal-registro-exitoso');
         var modalError = document.getElementById('modal-error');
@@ -187,9 +221,6 @@
         var errorAcceptBtn = document.getElementById('modal-error-accept');
         var errorCloseBtn = document.getElementById('modal-error-close');
         var errorBackdrop = document.getElementById('modal-error-backdrop');
-        var companyInput = document.getElementById('company_autocomplete');
-        var companyIdInput = document.getElementById('company_id');
-        var companyList = document.getElementById('company_autocomplete_list');
 
         function showModal() {
             modal.classList.remove('hidden');
@@ -200,66 +231,8 @@
             modal.classList.add('hidden');
             document.body.style.overflow = '';
             form.reset();
-            if (companyIdInput) companyIdInput.value = '';
-            if (companyInput) companyInput.value = '';
-        }
-
-        function filterCompanies(q) {
-            var qq = (q || '').toLowerCase().trim();
-            if (!qq) return companiesData;
-            return companiesData.filter(function(c) {
-                return (c.nombre_comercial || '').toLowerCase().indexOf(qq) !== -1;
-            });
-        }
-
-        function renderCompanyList(items) {
-            if (!companyList) return;
-            companyList.innerHTML = '';
-            if (items.length === 0) {
-                companyList.classList.add('hidden');
-                return;
-            }
-            items.forEach(function(c) {
-                var div = document.createElement('div');
-                div.className = 'px-3 py-2.5 text-white/90 hover:bg-white/15 cursor-pointer text-sm';
-                div.setAttribute('role', 'option');
-                div.textContent = c.nombre_comercial;
-                div.addEventListener('mousedown', function(e) {
-                    e.preventDefault();
-                    companyIdInput.value = String(c.id);
-                    companyInput.value = c.nombre_comercial;
-                    companyList.classList.add('hidden');
-                });
-                companyList.appendChild(div);
-            });
-            companyList.classList.remove('hidden');
-        }
-
-        if (companyInput && companyList) {
-            var companyListRaf = null;
-            function scheduleCompanyListRender() {
-                if (companyListRaf) cancelAnimationFrame(companyListRaf);
-                companyListRaf = requestAnimationFrame(function() {
-                    companyListRaf = null;
-                    renderCompanyList(filterCompanies(companyInput.value));
-                });
-            }
-            companyInput.addEventListener('focus', function() {
-                scheduleCompanyListRender();
-            });
-            companyInput.addEventListener('input', function() {
-                companyIdInput.value = '';
-                scheduleCompanyListRender();
-            });
-            companyInput.addEventListener('blur', function() {
-                setTimeout(function() { companyList.classList.add('hidden'); }, 150);
-            });
-            document.addEventListener('click', function(e) {
-                if (companyList.classList.contains('hidden')) return;
-                if (!companyList.contains(e.target) && e.target !== companyInput) {
-                    companyList.classList.add('hidden');
-                }
-            });
+            var companySelect = document.getElementById('company_id');
+            if (companySelect) companySelect.selectedIndex = 0;
         }
 
         function showErrorModal(message) {
@@ -268,32 +241,10 @@
             document.body.style.overflow = 'hidden';
         }
 
-        function showPendingApprovalNotice(message) {
-            var notice = document.createElement('div');
-            notice.className = 'fixed inset-0 z-[70] flex items-center justify-center bg-black/40 px-4';
-            notice.innerHTML = `
-                <div class="w-full max-w-md rounded-2xl border border-amber-300/40 bg-[#1a3d6b] p-5 text-amber-100 shadow-2xl">
-                    <div class="flex items-start gap-3">
-                        <svg class="w-6 h-6 mt-0.5 animate-spin text-[#FFE600] shrink-0" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle>
-                            <path class="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8V1C6.477 1 2 5.477 2 11h2z"></path>
-                        </svg>
-                        <div>
-                            <p class="text-sm">${message || 'El contacto será visible hasta que el administrador lo apruebe.'}</p>
-                        </div>
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(notice);
-            return notice;
-        }
-
         function hideErrorModal() {
             modalError.classList.add('hidden');
             document.body.style.overflow = '';
         }
-
-        window.showErrorModal = showErrorModal;
 
         var initialError = document.getElementById('initial-error-message');
         if (initialError && initialError.getAttribute('data-message')) {
@@ -303,18 +254,13 @@
         if (form) {
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
-                if (companyIdInput && companyInput && !companyIdInput.value && companyInput.value.trim()) {
-                    var match = companiesData.find(function(c) {
-                        return (c.nombre_comercial || '').trim().toLowerCase() === companyInput.value.trim().toLowerCase();
-                    });
-                    if (match) companyIdInput.value = String(match.id);
-                }
+
                 var formData = new FormData(form);
                 var url = form.getAttribute('action');
                 var token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
                 btnGuardar.disabled = true;
-                btnGuardar.innerHTML = 'Guardando...';
+                btnGuardar.innerHTML = '<svg class="animate-spin h-5 w-5 inline" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Guardando...';
 
                 fetch(url, {
                     method: 'POST',
@@ -334,24 +280,10 @@
                 })
                 .then(function(result) {
                     btnGuardar.disabled = false;
-                    btnGuardar.innerHTML = 'Guardar';
+                    btnGuardar.innerHTML = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg> Guardar';
 
                     if (result.status === 201 && result.data.success) {
-                        if (result.data.redirect) {
-                            if (result.data.pending_approval) {
-                                var pendingNotice = showPendingApprovalNotice(result.data.message);
-                                setTimeout(function() {
-                                    if (pendingNotice && pendingNotice.parentNode) {
-                                        pendingNotice.parentNode.removeChild(pendingNotice);
-                                    }
-                                    window.location.href = result.data.redirect;
-                                }, 3500);
-                            } else {
-                                window.location.href = result.data.redirect;
-                            }
-                        } else {
-                            showModal();
-                        }
+                        showModal();
                     } else if (result.status === 422) {
                         var msg = (result.data && result.data.message) || 'Por favor corrige los errores. El contacto no se registró.';
                         if (result.data && result.data.errors) {
@@ -365,7 +297,7 @@
                 })
                 .catch(function() {
                     btnGuardar.disabled = false;
-                    btnGuardar.innerHTML = 'Guardar';
+                    btnGuardar.innerHTML = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg> Guardar';
                     showErrorModal('Error de conexión. Por favor, intente nuevamente.');
                 });
             });
