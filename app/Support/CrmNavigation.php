@@ -46,7 +46,8 @@ class CrmNavigation
      */
     public static function withReturn(string $targetUrl): string
     {
-        $current = request()->fullUrl();
+        // Sin query string en la URL de retorno: evita URIs enormes y errores al abrir Editar/Volver.
+        $current = request()->url();
         $separator = str_contains($targetUrl, '?') ? '&' : '?';
 
         return $targetUrl.$separator.'return='.rawurlencode($current);

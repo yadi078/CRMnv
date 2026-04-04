@@ -208,7 +208,9 @@ class ContactController extends Controller
 
         $sale = $contact->latestSale();
 
-        return $this->resolveView('contacts.show', 'user.contacts.show', compact('contact', 'sale'));
+        $contactSales = app(SalesController::class)->paginatedSalesForContact(request(), $contact);
+
+        return $this->resolveView('contacts.show', 'user.contacts.show', compact('contact', 'sale', 'contactSales'));
     }
 
     /**
