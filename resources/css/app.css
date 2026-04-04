@@ -608,16 +608,6 @@ form.company-edit-form-in-modal input:not([type="checkbox"]):not([type="radio"])
   }
 }
 
-/*
- * Reserva bajo el contenido para el pie institucional fijo (.institutional-footer).
- * Debe ser >= altura real del footer + safe-area (iOS).
- */
-:root {
-  /* Alias opcional para el mismo valor (pie institucional fijo) */
-  --institutional-footer-reserve: max(12.5rem, calc(9.25rem + env(safe-area-inset-bottom, 0px)));
-  --crm-slogan-bar-reserve: var(--institutional-footer-reserve);
-}
-
 /* Área principal: margen por sidebar flotante solo en desktop; min-width 0 evita que se “moche” */
 .sidebar-layout__main {
   flex: 1;
@@ -629,7 +619,6 @@ form.company-edit-form-in-modal input:not([type="checkbox"]):not([type="radio"])
   flex-direction: column;
   width: 100%;
   overflow-x: hidden;
-  padding-bottom: var(--institutional-footer-reserve);
 }
 
 @media (min-width: 1025px) {
@@ -642,100 +631,43 @@ form.company-edit-form-in-modal input:not([type="checkbox"]):not([type="radio"])
 }
 
 /*
- * Pie institucional: fijo al fondo del viewport, ancho completo, por encima del fondo
- * y por debajo de modales (z-50+). El área principal reserva espacio con padding-bottom.
+ * Pie institucional al final del flujo (después de <main>): no tapa el contenido.
+ * margin-top: auto empuja el pie al borde inferior del viewport si la página es corta.
  */
 .institutional-footer {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  width: 100%;
-  z-index: 25;
-  padding: 0 0 env(safe-area-inset-bottom, 0);
-  pointer-events: none;
-  box-sizing: border-box;
-}
-
-.institutional-footer__inner {
-  pointer-events: auto;
-  width: 100%;
-  max-width: none;
-  margin: 0;
-  min-width: 0;
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem 1rem;
-  min-height: 3.5rem;
-  padding: 0.65rem 1rem 0.75rem;
-  border-radius: 0;
-  border-left: none;
-  border-right: none;
-  border-bottom: none;
-  box-sizing: border-box;
-}
-
-.institutional-footer__icon-wrap {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   flex-shrink: 0;
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 9999px;
-  background: rgba(255, 230, 0, 0.14);
-  border: 2px solid var(--color-accent);
-  color: var(--color-accent);
+  width: 100%;
+  margin-top: auto;
+  padding: 1.5rem 1rem 1.75rem;
+  padding-bottom: max(1.75rem, calc(1rem + env(safe-area-inset-bottom, 0px)));
+  box-sizing: border-box;
+}
+
+.institutional-footer__wrap {
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: 1.1rem 1.5rem;
+  border-radius: 18px;
+  background: linear-gradient(148deg, #1e4a7a 0%, #153a62 40%, #0c2748 78%, #071a3d 100%);
+  border: 2px solid rgba(255, 230, 0, 0.9);
   box-shadow:
-    0 0 0 1px rgba(255, 230, 0, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    0 8px 32px rgba(7, 26, 61, 0.12),
+    0 2px 12px rgba(30, 73, 118, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
 }
 
-@media (min-width: 640px) {
-  .institutional-footer__icon-wrap {
-    width: 2.875rem;
-    height: 2.875rem;
-  }
-}
-
-.institutional-footer__icon {
-  width: 1.25rem;
-  height: 1.25rem;
-}
-
-@media (min-width: 640px) {
-  .institutional-footer__icon {
-    width: 1.4rem;
-    height: 1.4rem;
-  }
-}
-
-.institutional-footer__body {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.15rem;
-  min-width: 0;
-  text-align: center;
-}
-
-@media (min-width: 640px) {
-  .institutional-footer__body {
-    align-items: flex-start;
-    text-align: left;
-  }
-}
-
-.institutional-footer__eyebrow {
+.institutional-footer__slogan {
   margin: 0;
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
+  text-align: center;
+  font-size: clamp(0.8125rem, 0.68rem + 0.85vw, 1.1875rem);
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  line-height: 1.4;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.72);
+  color: #ffe600;
+  text-shadow:
+    0 0 20px rgba(255, 230, 0, 0.25),
+    0 2px 4px rgba(0, 0, 0, 0.35);
 }
 
 /* Filtros: el desplegable de opciones no debe recortarse por el panel */
@@ -764,32 +696,6 @@ form.company-edit-form-in-modal input:not([type="checkbox"]):not([type="radio"])
   white-space: normal;
   line-height: 1.25;
   padding-inline: clamp(0.25rem, 2vw, 1rem);
-}
-
-/* Degradado y borde solo superior (franja a ancho completo; anula border 3px de .top-bar-gradient) */
-.institutional-footer .institutional-footer__inner.top-bar-gradient.crm-slogan-notice {
-  background: linear-gradient(155deg, #1e4a7a 0%, #153a62 38%, #0c2748 72%, #071a3d 100%);
-  border: none;
-  border-top: 3px solid var(--color-accent);
-  box-shadow:
-    0 -6px 28px rgba(7, 26, 61, 0.45),
-    0 4px 20px rgba(30, 73, 118, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
-}
-
-.crm-slogan-notice__title.top-bar-gradient__slogan,
-.crm-slogan-notice .crm-slogan-notice__title {
-  padding-inline: 0;
-  line-height: 1.2;
-  text-align: center;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
-}
-
-@media (min-width: 640px) {
-  .institutional-footer .crm-slogan-notice__title.top-bar-gradient__slogan,
-  .institutional-footer .crm-slogan-notice .crm-slogan-notice__title {
-    text-align: left;
-  }
 }
 
 .sidebar-layout__header {
