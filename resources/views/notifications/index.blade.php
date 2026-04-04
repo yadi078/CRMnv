@@ -140,20 +140,42 @@
                     <span class="text-sm text-[#FFE600] font-semibold" x-text="selectedNotificationIds.length + ' seleccionadas'"></span>
                 </div>
                 <div class="flex flex-wrap items-center gap-2">
-                    <form method="POST" action="{{ route('notifications.bulk-read') }}">
+                    {{-- Los <template x-for> no siempre incluyen los hidden en el POST; se inyectan en submit. --}}
+                    <form method="POST" action="{{ route('notifications.bulk-read') }}"
+                          @submit.prevent="
+                              if (selectedNotificationIds.length === 0) return;
+                              $el.querySelectorAll('input.js-bulk-notif-hidden').forEach(function (n) { n.remove(); });
+                              selectedNotificationIds.forEach(function (id) {
+                                  var i = document.createElement('input');
+                                  i.type = 'hidden';
+                                  i.name = 'notification_ids[]';
+                                  i.value = id;
+                                  i.className = 'js-bulk-notif-hidden';
+                                  $el.appendChild(i);
+                              });
+                              HTMLFormElement.prototype.submit.call($el);
+                          ">
                         @csrf
-                        <template x-for="id in selectedNotificationIds" :key="'read-' + id">
-                            <input type="hidden" name="notification_ids[]" :value="id">
-                        </template>
                         <button type="submit" class="inline-flex items-center px-4 py-2 text-sm rounded-xl font-semibold text-[#003366] bg-[#FFE600] hover:bg-[#E6CF00] transition-colors">
                             Marcar seleccionadas como leídas
                         </button>
                     </form>
-                    <form method="POST" action="{{ route('notifications.bulk-delete') }}" onsubmit="return confirm('¿Eliminar las notificaciones seleccionadas?');">
+                    <form method="POST" action="{{ route('notifications.bulk-delete') }}"
+                          @submit.prevent="
+                              if (selectedNotificationIds.length === 0) return;
+                              if (!confirm('¿Eliminar las notificaciones seleccionadas?')) return;
+                              $el.querySelectorAll('input.js-bulk-notif-hidden').forEach(function (n) { n.remove(); });
+                              selectedNotificationIds.forEach(function (id) {
+                                  var i = document.createElement('input');
+                                  i.type = 'hidden';
+                                  i.name = 'notification_ids[]';
+                                  i.value = id;
+                                  i.className = 'js-bulk-notif-hidden';
+                                  $el.appendChild(i);
+                              });
+                              HTMLFormElement.prototype.submit.call($el);
+                          ">
                         @csrf
-                        <template x-for="id in selectedNotificationIds" :key="'del-' + id">
-                            <input type="hidden" name="notification_ids[]" :value="id">
-                        </template>
                         <button type="submit" class="inline-flex items-center px-4 py-2 text-sm rounded-xl font-semibold text-white bg-red-500 hover:bg-red-600 transition-colors">
                             Eliminar seleccionadas
                         </button>
