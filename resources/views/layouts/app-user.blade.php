@@ -594,6 +594,7 @@
                     .then(function(r) { return r.json(); })
                     .then(function(data) {
                         var dueAlerts = Array.isArray(data.due_reminder_alerts) ? data.due_reminder_alerts : [];
+                        var playedAlarmThisPoll = false;
                         dueAlerts.forEach(function(alertData) {
                             var nid = String(alertData.id || '');
                             if (!nid || isReminderAlertAcked(alertData)) {
@@ -604,7 +605,10 @@
                             var lastRing = lastReminderRingByNotifId[nid] || 0;
                             if (now - lastRing >= REMINDER_ALARM_REPEAT_MS) {
                                 lastReminderRingByNotifId[nid] = now;
-                                playReminderAlarm();
+                                if (!playedAlarmThisPoll) {
+                                    playedAlarmThisPoll = true;
+                                    playReminderAlarm();
+                                }
                                 showBrowserReminderNotification(alertData);
                             }
                         });

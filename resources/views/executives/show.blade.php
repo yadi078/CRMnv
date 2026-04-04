@@ -33,7 +33,7 @@
         </div>
     </x-slot>
 
-    <div class="space-y-6">
+    <div class="space-y-6" x-data="executiveProfileSearch(@js($execSearchPayload))">
         @if (session('success'))
             <div class="rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
                 {{ session('success') }}
@@ -131,6 +131,55 @@
             </div>
         </div>
 
+        <x-executive-portfolio-stats
+            title="Cartera de este ejecutivo"
+            :companies-count="$executive->assignedCompanies->count()"
+            :contacts-count="$unifiedContactsForList->count()"
+            footnote="Empresas donde es responsable de cartera y contactos vinculados (cada persona cuenta una sola vez)."
+        />
+
+        <div class="panel-card-dark">
+            <h3 class="panel-card-dark__title panel-card-dark__title--accent mb-1 text-base sm:text-lg">Buscar en la cartera</h3>
+            <p class="text-xs text-white/70 leading-relaxed max-w-3xl">
+                Filtra por nombre comercial de la empresa o por nombre del contacto. Solo se incluyen empresas y personas asignadas a este ejecutivo.
+            </p>
+            <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="exec-profile-search-empresa" class="block text-xs font-semibold text-[#FFE600] mb-1.5">Empresa</label>
+                    <input
+                        id="exec-profile-search-empresa"
+                        type="search"
+                        autocomplete="off"
+                        x-model.debounce.300ms="searchEmpresa"
+                        placeholder="Ej. nombre comercial…"
+                        class="w-full rounded-xl border-2 border-white/20 bg-white/10 text-white placeholder:text-white/40 text-sm py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-[#FFE600]/50"
+                    />
+                </div>
+                <div>
+                    <label for="exec-profile-search-contacto" class="block text-xs font-semibold text-[#FFE600] mb-1.5">Contacto</label>
+                    <input
+                        id="exec-profile-search-contacto"
+                        type="search"
+                        autocomplete="off"
+                        x-model.debounce.300ms="searchContacto"
+                        placeholder="Ej. nombre del contacto…"
+                        class="w-full rounded-xl border-2 border-white/20 bg-white/10 text-white placeholder:text-white/40 text-sm py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-[#FFE600]/50"
+                    />
+                </div>
+            </div>
+            <div class="mt-3 flex flex-wrap items-center gap-3">
+                <button
+                    type="button"
+                    class="text-xs font-semibold text-[#FFE600] hover:text-white underline underline-offset-2"
+                    x-show="searchEmpresa || searchContacto"
+                    x-cloak
+                    @click="searchEmpresa = ''; searchContacto = ''"
+                >
+                    Limpiar búsqueda
+                </button>
+            </div>
+        </div>
+
         {{-- Empresas asignadas: ficha azul oscuro + tarjetas de contacto (referencia CRM) --}}
         <div class="space-y-8">
             <h3 class="text-lg font-bold text-[#071A3D] px-1 tracking-tight">Empresas asignadas</h3>
@@ -140,8 +189,19 @@
                     <p class="text-white/75 text-sm">Ninguna empresa asignada aún.</p>
                 </div>
             @else
+                <p
+                    class="rounded-xl border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100"
+                    x-show="showNoPortfolioResults"
+                    x-cloak
+                >
+                    No hay empresas ni contactos que coincidan con la búsqueda.
+                </p>
                 @foreach($executive->assignedCompanies as $company)
-                    <article class="rounded-2xl bg-gradient-to-br from-[#0f2744] via-[#0c2240] to-[#071A3D] border border-[#1e4976]/50 shadow-[0_8px_32px_rgba(0,0,0,0.35)] overflow-hidden">
+                    <article
+                        class="rounded-2xl bg-gradient-to-br from-[#0f2744] via-[#0c2240] to-[#071A3D] border border-[#1e4976]/50 shadow-[0_8px_32px_rgba(0,0,0,0.35)] overflow-hidden"
+                        x-show="companyBlockVisible(@js($company->nombre_comercial), @js($company->contacts->pluck('nombre_completo')->values()->all()))"
+                        x-cloak
+                    >
                         {{-- Bloque empresa: título amarillo + datos en blanco + separadores --}}
                         <div class="px-5 sm:px-7 pt-6 sm:pt-7 pb-4">
                             <a href="{{ \App\Support\CrmNavigation::withReturn(route('companies.show', $company)) }}" class="block group focus:outline-none focus:ring-2 focus:ring-[#FFE600]/50 rounded-lg">
@@ -188,6 +248,8 @@
                                         <a
                                             href="{{ \App\Support\CrmNavigation::withReturn(route('contacts.show', $contact)) }}"
                                             class="group flex flex-col bg-white rounded-2xl shadow-[0_6px_20px_rgba(0,0,0,0.2)] px-4 py-4 min-h-[200px] border border-gray-200/90 border-t-[5px] border-t-[#FFE600] transition transform hover:-translate-y-1 hover:shadow-xl cursor-pointer text-left"
+                                            x-show="contactRowVisible(@js($company->nombre_comercial), @js($contact->nombre_completo))"
+                                            x-cloak
                                         >
                                             <span class="text-base font-bold text-gray-900 leading-snug group-hover:text-[#071A3D]">
                                                 {{ $contact->nombre_completo }}
@@ -220,13 +282,19 @@
             @endif
 
             @if(isset($orphanAssignedContacts) && $orphanAssignedContacts->isNotEmpty())
-                <div class="rounded-2xl bg-gradient-to-br from-[#0f2744] via-[#0c2240] to-[#071A3D] border border-[#1e4976]/50 shadow-xl p-5 sm:p-7">
+                <div
+                    class="rounded-2xl bg-gradient-to-br from-[#0f2744] via-[#0c2240] to-[#071A3D] border border-[#1e4976]/50 shadow-xl p-5 sm:p-7"
+                    x-show="orphanSectionVisible()"
+                    x-cloak
+                >
                     <h3 class="text-lg font-bold text-[#FFE600] mb-4">Contactos asignados (otras empresas o sin empresa en cartera)</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         @foreach($orphanAssignedContacts as $ct)
                             <a
                                 href="{{ \App\Support\CrmNavigation::withReturn(route('contacts.show', $ct)) }}"
                                 class="flex flex-col bg-white rounded-2xl shadow-md px-4 py-4 border border-gray-200 border-t-[5px] border-t-[#FFE600] hover:shadow-lg transition"
+                                x-show="orphanCardVisible(@js($ct->nombre_completo), @js($ct->company?->nombre_comercial ?? ''))"
+                                x-cloak
                             >
                                 <span class="text-base font-bold text-gray-900">{{ $ct->nombre_completo }}</span>
                                 <p class="text-sm text-gray-500 mt-1">{{ $ct->company?->nombre_comercial ?? 'Sin empresa' }}</p>
@@ -307,8 +375,19 @@
                 </div>
             </div>
             <div class="px-4 sm:px-6 py-5 space-y-3">
+                <p
+                    class="text-sm text-amber-200/95 text-center py-4 border border-amber-400/30 rounded-xl bg-amber-500/10"
+                    x-show="showEmpresaPanelNoFilterResults"
+                    x-cloak
+                >
+                    Ninguna empresa coincide con «Empresa» en este listado.
+                </p>
                 @forelse($executive->assignedCompanies as $company)
-                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl bg-[#0f2744]/95 border border-[#1e3a5f]/80 border-l-[6px] border-l-[#FFE600] pl-4 pr-3 py-3.5 shadow-inner">
+                    <div
+                        class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl bg-[#0f2744]/95 border border-[#1e3a5f]/80 border-l-[6px] border-l-[#FFE600] pl-4 pr-3 py-3.5 shadow-inner"
+                        x-show="listEmpresaRowVisible(@js($company->nombre_comercial))"
+                        x-cloak
+                    >
                         <div class="min-w-0 flex-1">
                             <p class="font-bold text-white text-sm sm:text-base leading-snug">{{ $company->nombre_comercial }}</p>
                             <div class="mt-1.5 space-y-0.5 text-xs sm:text-sm text-white/65">
@@ -353,8 +432,19 @@
                 </div>
             </div>
             <div class="px-4 sm:px-6 py-5 space-y-3">
+                <p
+                    class="text-sm text-amber-200/95 text-center py-4 border border-amber-400/30 rounded-xl bg-amber-500/10"
+                    x-show="showContactoPanelNoFilterResults"
+                    x-cloak
+                >
+                    Ningún contacto coincide con «Contacto» en este listado.
+                </p>
                 @forelse($unifiedContactsForList as $contact)
-                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl bg-[#0f2744]/95 border border-[#1e3a5f]/80 border-l-[6px] border-l-[#FFE600] pl-4 pr-3 py-3.5 shadow-inner">
+                    <div
+                        class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl bg-[#0f2744]/95 border border-[#1e3a5f]/80 border-l-[6px] border-l-[#FFE600] pl-4 pr-3 py-3.5 shadow-inner"
+                        x-show="listContactoRowVisible(@js($contact->nombre_completo))"
+                        x-cloak
+                    >
                         <div class="min-w-0 flex-1">
                             <p class="font-bold text-white text-sm sm:text-base leading-snug">{{ $contact->nombre_completo }}</p>
                             <div class="mt-1.5 space-y-0.5 text-xs sm:text-sm text-white/65">

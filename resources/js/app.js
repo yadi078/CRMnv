@@ -104,6 +104,9 @@ Alpine.data('executivesPage', (initial = {}) => ({
     transferPreviewCompanies: [],
     transferPreviewLoading: false,
     transferPreviewFromValue: '',
+    transferPreviewCompanyCount: 0,
+    transferPreviewContactCount: 0,
+    transferPreviewCompaniesPreviewTruncated: false,
     transferSuccessToast: { show: false, message: '' },
     contactTransferOpen: Boolean(initial.contactTransferOpen),
     transferFromUserId: null,
@@ -143,11 +146,17 @@ Alpine.data('executivesPage', (initial = {}) => ({
         if (!fromVal || fromVal === '') {
             this.transferPreviewCompanies = [];
             this.transferPreviewFromValue = '';
+            this.transferPreviewCompanyCount = 0;
+            this.transferPreviewContactCount = 0;
+            this.transferPreviewCompaniesPreviewTruncated = false;
             return;
         }
         this.transferPreviewFromValue = fromVal;
         if (!this.previewPortfolioTransferUrl) {
             this.transferPreviewCompanies = [];
+            this.transferPreviewCompanyCount = 0;
+            this.transferPreviewContactCount = 0;
+            this.transferPreviewCompaniesPreviewTruncated = false;
             return;
         }
         this.transferPreviewLoading = true;
@@ -160,12 +169,23 @@ Alpine.data('executivesPage', (initial = {}) => ({
             });
             if (!r.ok) {
                 this.transferPreviewCompanies = [];
+                this.transferPreviewCompanyCount = 0;
+                this.transferPreviewContactCount = 0;
+                this.transferPreviewCompaniesPreviewTruncated = false;
                 return;
             }
             const data = await r.json();
             this.transferPreviewCompanies = Array.isArray(data.companies) ? data.companies : [];
+            const cc = data.company_count;
+            const ct = data.contact_count;
+            this.transferPreviewCompanyCount = typeof cc === 'number' ? cc : this.transferPreviewCompanies.length;
+            this.transferPreviewContactCount = typeof ct === 'number' ? ct : 0;
+            this.transferPreviewCompaniesPreviewTruncated = Boolean(data.companies_preview_truncated);
         } catch {
             this.transferPreviewCompanies = [];
+            this.transferPreviewCompanyCount = 0;
+            this.transferPreviewContactCount = 0;
+            this.transferPreviewCompaniesPreviewTruncated = false;
         } finally {
             this.transferPreviewLoading = false;
         }
@@ -183,6 +203,9 @@ Alpine.data('executivesPage', (initial = {}) => ({
         this.transferPreviewCompanies = [];
         this.transferPreviewFromValue = '';
         this.transferPreviewLoading = false;
+        this.transferPreviewCompanyCount = 0;
+        this.transferPreviewContactCount = 0;
+        this.transferPreviewCompaniesPreviewTruncated = false;
     },
     openContactTransfer(execId, contactId) {
         this.transferFromUserId = execId;
@@ -267,6 +290,109 @@ Alpine.data('executivesPage', (initial = {}) => ({
     },
 }));
 
+/**
+ * Perfil ejecutivo: filtrar por nombre de empresa y/o contacto (solo cartera asignada).
+ */
+Alpine.data('executiveProfileSearch', (payload = {}) => ({
+    searchEmpresa: '',
+    searchContacto: '',
+    companies: Array.isArray(payload.companies) ? payload.companies : [],
+    orphans: Array.isArray(payload.orphans) ? payload.orphans : [],
+    unifiedContacts: Array.isArray(payload.unifiedContacts) ? payload.unifiedContacts : [],
+    norm(s) {
+        return String(s ?? '')
+            .trim()
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '');
+    },
+    companyBlockVisible(companyName, contactNames) {
+        const e = this.norm(this.searchEmpresa);
+        const c = this.norm(this.searchContacto);
+        if (!e && !c) {
+            return true;
+        }
+        if (e && !c) {
+            return this.norm(companyName).includes(e);
+        }
+        if (!e && c) {
+            return contactNames.some((n) => this.norm(n).includes(c));
+        }
+        return this.norm(companyName).includes(e) && contactNames.some((n) => this.norm(n).includes(c));
+    },
+    contactRowVisible(companyName, contactName) {
+        const e = this.norm(this.searchEmpresa);
+        const c = this.norm(this.searchContacto);
+        if (!e && !c) {
+            return true;
+        }
+        if (e && !c) {
+            return this.norm(companyName).includes(e);
+        }
+        if (!e && c) {
+            return this.norm(contactName).includes(c);
+        }
+        return this.norm(companyName).includes(e) && this.norm(contactName).includes(c);
+    },
+    orphanCardVisible(contactName, companyNameOnCard) {
+        const e = this.norm(this.searchEmpresa);
+        const c = this.norm(this.searchContacto);
+        if (!e && !c) {
+            return true;
+        }
+        if (e && !c) {
+            return this.norm(companyNameOnCard).includes(e);
+        }
+        if (!e && c) {
+            return this.norm(contactName).includes(c);
+        }
+        return this.norm(companyNameOnCard).includes(e) && this.norm(contactName).includes(c);
+    },
+    orphanSectionVisible() {
+        if (!this.orphans.length) {
+            return false;
+        }
+        const e = this.norm(this.searchEmpresa);
+        const c = this.norm(this.searchContacto);
+        if (!e && !c) {
+            return true;
+        }
+        return this.orphans.some((o) => this.orphanCardVisible(o.nombre, o.empresa));
+    },
+    listEmpresaRowVisible(companyName) {
+        const e = this.norm(this.searchEmpresa);
+        return !e || this.norm(companyName).includes(e);
+    },
+    listContactoRowVisible(contactName) {
+        const c = this.norm(this.searchContacto);
+        return !c || this.norm(contactName).includes(c);
+    },
+    get showNoPortfolioResults() {
+        const e = this.norm(this.searchEmpresa);
+        const c = this.norm(this.searchContacto);
+        if (!e && !c) {
+            return false;
+        }
+        const topMatch = this.companies.some((comp) => this.companyBlockVisible(comp.nombre, comp.contactos));
+        const orphanMatch = this.orphans.some((o) => this.orphanCardVisible(o.nombre, o.empresa));
+        return !topMatch && !orphanMatch;
+    },
+    get showEmpresaPanelNoFilterResults() {
+        const e = this.norm(this.searchEmpresa);
+        if (!e || !this.companies.length) {
+            return false;
+        }
+        return !this.companies.some((comp) => this.listEmpresaRowVisible(comp.nombre));
+    },
+    get showContactoPanelNoFilterResults() {
+        const c = this.norm(this.searchContacto);
+        if (!c || !this.unifiedContacts.length) {
+            return false;
+        }
+        return !this.unifiedContacts.some((ct) => this.listContactoRowVisible(ct.nombre));
+    },
+}));
+
 window.Alpine = Alpine;
 
 Alpine.start();
@@ -309,6 +435,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const preferred = btn.getAttribute('data-crm-preferred-return');
         if (preferred) {
             window.location.assign(preferred);
+            return;
+        }
+        if (btn.hasAttribute('data-crm-skip-history')) {
+            window.location.href = fallback;
             return;
         }
         if (window.history.length > 1) {

@@ -13,19 +13,41 @@ class CrmNavigation
             return false;
         }
 
+        if (str_starts_with($url, '//')) {
+            return false;
+        }
+
         $parsed = parse_url($url);
-        if ($parsed === false || empty($parsed['scheme']) || empty($parsed['host'])) {
+        if ($parsed === false) {
             return false;
         }
 
-        if (! in_array(strtolower($parsed['scheme']), ['http', 'https'], true)) {
-            return false;
+        if (! empty($parsed['scheme'])) {
+            if (! in_array(strtolower($parsed['scheme']), ['http', 'https'], true)) {
+                return false;
+            }
+            if (empty($parsed['host'])) {
+                return false;
+            }
+            $configHost = parse_url((string) config('app.url'), PHP_URL_HOST);
+
+            return $parsed['host'] === $configHost
+                || $parsed['host'] === request()->getHost();
         }
 
-        $configHost = parse_url((string) config('app.url'), PHP_URL_HOST);
+        // Ruta relativa del mismo sitio (p. ej. /CRMnv/public/ejecutivos) cuando ?return= no trae host.
+        if (isset($parsed['path']) && str_starts_with($url, '/')) {
+            $basePath = rtrim((string) request()->getBasePath(), '/');
+            $pathOnly = (string) $parsed['path'];
 
-        return $parsed['host'] === $configHost
-            || $parsed['host'] === request()->getHost();
+            if ($basePath === '') {
+                return true;
+            }
+
+            return $pathOnly === $basePath || str_starts_with($pathOnly, $basePath.'/');
+        }
+
+        return false;
     }
 
     /**

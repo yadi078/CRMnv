@@ -80,7 +80,10 @@
                                         request()->routeIs('data-management.index') ||
                                         request()->routeIs('profile.edit')
                                     )
-                                        <x-crm-back-button />
+                                        <x-crm-back-button
+                                            :skip-history="request()->routeIs('executives.show')"
+                                            :fallback="request()->routeIs('executives.show') ? route('executives.index') : null"
+                                        />
                                     @endunless
                                     <a href="{{ route('notifications.index') }}" class="relative flex items-center justify-center w-11 h-11 rounded-xl text-[#FFE600] hover:bg-white/10 transition-colors" aria-label="Notificaciones">
                                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
@@ -616,6 +619,7 @@
                         }
 
                         var dueAlerts = Array.isArray(data.due_reminder_alerts) ? data.due_reminder_alerts : [];
+                        var playedAlarmThisPoll = false;
                         dueAlerts.forEach(function(alertData) {
                             var nid = String(alertData.id || '');
                             if (!nid || isReminderAlertAcked(alertData)) {
@@ -626,7 +630,10 @@
                             var lastRing = lastReminderRingByNotifId[nid] || 0;
                             if (now - lastRing >= REMINDER_ALARM_REPEAT_MS) {
                                 lastReminderRingByNotifId[nid] = now;
-                                playReminderAlarm();
+                                if (!playedAlarmThisPoll) {
+                                    playedAlarmThisPoll = true;
+                                    playReminderAlarm();
+                                }
                                 showBrowserReminderNotification(alertData);
                             }
                         });

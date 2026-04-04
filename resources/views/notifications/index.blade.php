@@ -140,20 +140,35 @@
                     <span class="text-sm text-[#FFE600] font-semibold" x-text="selectedNotificationIds.length + ' seleccionadas'"></span>
                 </div>
                 <div class="flex flex-wrap items-center gap-2">
-                    {{-- Los <template x-for> no siempre incluyen los hidden en el POST; se inyectan en submit. --}}
+                    {{-- POST vía fetch: el submit nativo con hiddens inyectados fallaba en algunos casos y el polling disparaba N alarmas si las filas seguían en BD. --}}
                     <form method="POST" action="{{ route('notifications.bulk-read') }}"
                           @submit.prevent="
                               if (selectedNotificationIds.length === 0) return;
-                              $el.querySelectorAll('input.js-bulk-notif-hidden').forEach(function (n) { n.remove(); });
-                              selectedNotificationIds.forEach(function (id) {
-                                  var i = document.createElement('input');
-                                  i.type = 'hidden';
-                                  i.name = 'notification_ids[]';
-                                  i.value = id;
-                                  i.className = 'js-bulk-notif-hidden';
-                                  $el.appendChild(i);
-                              });
-                              HTMLFormElement.prototype.submit.call($el);
+                              var tok = ($el.querySelector('input[name=_token]') || {}).value || '';
+                              var fd = new FormData();
+                              fd.append('_token', tok);
+                              selectedNotificationIds.forEach(function (id) { fd.append('notification_ids[]', id); });
+                              fetch($el.getAttribute('action'), {
+                                  method: 'POST',
+                                  body: fd,
+                                  headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': tok }
+                              }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+                              .then(function (res) {
+                                  if (res.ok && res.j && res.j.success) {
+                                      selectedNotificationIds.forEach(function (id) {
+                                          var row = document.querySelector('.notification-row[data-notification-id=\'' + String(id).replace(/'/g, '') + '\']');
+                                          if (row && window.__crmSetNotificationRowRead) window.__crmSetNotificationRowRead(row);
+                                      });
+                                      selectedNotificationIds = [];
+                                      if (res.j.unread_count !== undefined) {
+                                          var el = document.getElementById('notifications-header-subtitle');
+                                          if (el) el.textContent = res.j.unread_count === 0 ? 'Centro de notificaciones' : res.j.unread_count + ' sin leer';
+                                      }
+                                      if (typeof window.updateNotificationBadge === 'function') window.updateNotificationBadge();
+                                      return;
+                                  }
+                                  alert('No se pudieron marcar como leídas.');
+                              }).catch(function () { window.location.reload(); });
                           ">
                         @csrf
                         <button type="submit" class="inline-flex items-center px-4 py-2 text-sm rounded-xl font-semibold text-[#003366] bg-[#FFE600] hover:bg-[#E6CF00] transition-colors">
@@ -164,16 +179,19 @@
                           @submit.prevent="
                               if (selectedNotificationIds.length === 0) return;
                               if (!confirm('¿Eliminar las notificaciones seleccionadas?')) return;
-                              $el.querySelectorAll('input.js-bulk-notif-hidden').forEach(function (n) { n.remove(); });
-                              selectedNotificationIds.forEach(function (id) {
-                                  var i = document.createElement('input');
-                                  i.type = 'hidden';
-                                  i.name = 'notification_ids[]';
-                                  i.value = id;
-                                  i.className = 'js-bulk-notif-hidden';
-                                  $el.appendChild(i);
-                              });
-                              HTMLFormElement.prototype.submit.call($el);
+                              var tok = ($el.querySelector('input[name=_token]') || {}).value || '';
+                              var fd = new FormData();
+                              fd.append('_token', tok);
+                              selectedNotificationIds.forEach(function (id) { fd.append('notification_ids[]', id); });
+                              fetch($el.getAttribute('action'), {
+                                  method: 'POST',
+                                  body: fd,
+                                  headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': tok }
+                              }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+                              .then(function (res) {
+                                  if (res.ok && res.j && res.j.success) { window.location.reload(); return; }
+                                  alert((res.j && res.j.message) ? res.j.message : 'No se pudieron eliminar las notificaciones.');
+                              }).catch(function () { window.location.reload(); });
                           ">
                         @csrf
                         <button type="submit" class="inline-flex items-center px-4 py-2 text-sm rounded-xl font-semibold text-white bg-red-500 hover:bg-red-600 transition-colors">
@@ -448,6 +466,7 @@
             var markReadForm = row.querySelector('.js-mark-read-form');
             if (markReadForm) markReadForm.remove();
         }
+        window.__crmSetNotificationRowRead = setRowAsRead;
 
         document.addEventListener('submit', function(e) {
             var form = e.target;

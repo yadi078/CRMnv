@@ -63,7 +63,13 @@ class ExecutiveController extends Controller
             $saved = is_array($saved) ? $this->normalizeSavedExecutiveFilters($saved) : [];
             $nonEmpty = array_filter($saved, fn ($v) => $v !== null && $v !== '');
             if ($nonEmpty !== []) {
-                return redirect()->route('executives.index', $nonEmpty);
+                $query = $nonEmpty;
+                // No perder la búsqueda de asistencia de contraseñas al rehidratar filtros desde sesión.
+                if ($request->filled('user_search')) {
+                    $query['user_search'] = (string) $request->query('user_search');
+                }
+
+                return redirect()->route('executives.index', $query);
             }
         }
 
@@ -148,6 +154,7 @@ class ExecutiveController extends Controller
          * Listado por asignaciones (contactos): con empresa y/o contacto, o vista masiva (sin/con ejecutivo).
          */
         $assignmentContacts = null;
+        $assignmentFilterStats = null;
         $executives = null;
 
         $showAssignments = $empresaId !== null
@@ -190,12 +197,19 @@ class ExecutiveController extends Controller
                 $cq->whereNotNull('assigned_user_id');
             } elseif ($ejecutivoUserId !== null) {
                 $cq->where('assigned_user_id', $ejecutivoUserId);
-            } elseif ($ejecutivoTextoFiltro !== null) {
+            } else            if ($ejecutivoTextoFiltro !== null) {
                 $cq->whereHas('company', function ($q) use ($ejecutivoTextoFiltro): void {
                     $q->where('ejecutivo_asignado', $ejecutivoTextoFiltro);
                 });
             }
 
+            $assignmentFilterStats = [
+                'contacts' => (clone $cq)->count(),
+                'companies' => (int) (clone $cq)
+                    ->whereNotNull('contacts.company_id')
+                    ->selectRaw('count(distinct contacts.company_id) as aggregate')
+                    ->value('aggregate'),
+            ];
             $assignmentContacts = $cq->orderBy('nombre_completo')->paginate(20)->withQueryString();
         }
 
@@ -247,6 +261,7 @@ class ExecutiveController extends Controller
         return view('executives.index', array_merge([
             'executives' => $executives,
             'assignmentContacts' => $assignmentContacts,
+            'assignmentFilterStats' => $assignmentFilterStats,
             'autoAssignContactId' => $autoAssignContactId,
             'companiesForFilter' => $companiesForFilter,
             'contactsForFilter' => $contactsForFilter,
@@ -376,10 +391,12 @@ class ExecutiveController extends Controller
     /**
      * Perfil del ejecutivo y asignaciones (solo admin).
      */
-    public function show(User $user): View
+    public function show(User $user): View|RedirectResponse
     {
         if ($user->esAdmin()) {
-            abort(404);
+            return redirect()
+                ->route('executives.index')
+                ->with('warning', 'Los usuarios administradores no tienen ficha de ejecutivo en este módulo.');
         }
 
         $user->load([
@@ -413,10 +430,26 @@ class ExecutiveController extends Controller
         }
         $unifiedContactsForList = $unifiedContactsForList->sortBy('nombre_completo')->values();
 
+        $execSearchPayload = [
+            'companies' => $user->assignedCompanies->map(static fn ($c) => [
+                'nombre' => (string) $c->nombre_comercial,
+                'contactos' => $c->contacts->map(static fn ($ct) => (string) $ct->nombre_completo)->values()->all(),
+            ])->values()->all(),
+            'orphans' => $orphanAssignedContacts->map(static fn ($ct) => [
+                'nombre' => (string) $ct->nombre_completo,
+                'empresa' => (string) ($ct->company?->nombre_comercial ?? ''),
+            ])->values()->all(),
+            'unifiedContacts' => $unifiedContactsForList->map(static fn ($c) => [
+                'nombre' => (string) $c->nombre_completo,
+                'empresa' => (string) ($c->company?->nombre_comercial ?? ''),
+            ])->values()->all(),
+        ];
+
         return view('executives.show', [
             'executive' => $user,
             'orphanAssignedContacts' => $orphanAssignedContacts,
             'unifiedContactsForList' => $unifiedContactsForList,
+            'execSearchPayload' => $execSearchPayload,
         ]);
     }
 
@@ -590,35 +623,71 @@ class ExecutiveController extends Controller
         $fromStr = trim($fromStr);
 
         if ($fromStr === '') {
-            return response()->json(['companies' => []]);
+            return response()->json([
+                'companies' => [],
+                'company_count' => 0,
+                'contact_count' => 0,
+                'companies_preview_truncated' => false,
+            ]);
         }
 
         if (str_starts_with($fromStr, 'E:')) {
             $decoded = base64_decode(substr($fromStr, 2), true);
             $text = $decoded !== false ? trim((string) $decoded) : '';
             if ($text === '') {
-                return response()->json(['companies' => []]);
+                return response()->json([
+                    'companies' => [],
+                    'company_count' => 0,
+                    'contact_count' => 0,
+                    'companies_preview_truncated' => false,
+                ]);
             }
 
-            $companies = Company::query()
+            $companyQuery = Company::query()
                 ->where('ejecutivo_asignado', $text)
+                ->whereNull('assigned_user_id');
+
+            $companyCount = (clone $companyQuery)->count();
+            $contactCount = Contact::query()
                 ->whereNull('assigned_user_id')
+                ->whereIn('company_id', (clone $companyQuery)->select('id'))
+                ->count();
+
+            $companies = (clone $companyQuery)
                 ->orderBy('nombre_comercial')
                 ->limit(500)
                 ->get(['id', 'nombre_comercial']);
 
-            return response()->json(['companies' => $companies]);
+            return response()->json([
+                'companies' => $companies,
+                'company_count' => $companyCount,
+                'contact_count' => $contactCount,
+                'companies_preview_truncated' => $companyCount > 500,
+            ]);
         }
 
         if (! ctype_digit($fromStr)) {
-            return response()->json(['companies' => []]);
+            return response()->json([
+                'companies' => [],
+                'company_count' => 0,
+                'contact_count' => 0,
+                'companies_preview_truncated' => false,
+            ]);
         }
 
         $fromId = (int) $fromStr;
         $from = User::find($fromId);
         if ($from === null || $from->esAdmin()) {
-            return response()->json(['companies' => []]);
+            return response()->json([
+                'companies' => [],
+                'company_count' => 0,
+                'contact_count' => 0,
+                'companies_preview_truncated' => false,
+            ]);
         }
+
+        $companyCount = Company::query()->where('assigned_user_id', $fromId)->count();
+        $contactCount = Contact::query()->where('assigned_user_id', $fromId)->count();
 
         $companies = Company::query()
             ->where('assigned_user_id', $fromId)
@@ -626,7 +695,12 @@ class ExecutiveController extends Controller
             ->limit(500)
             ->get(['id', 'nombre_comercial']);
 
-        return response()->json(['companies' => $companies]);
+        return response()->json([
+            'companies' => $companies,
+            'company_count' => $companyCount,
+            'contact_count' => $contactCount,
+            'companies_preview_truncated' => $companyCount > 500,
+        ]);
     }
 
     /**

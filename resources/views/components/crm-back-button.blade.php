@@ -1,6 +1,7 @@
 @props([
     'fallback' => null,
     'compact' => false,
+    'skipHistory' => false,
 ])
 @php
     $crmBackFallback = $fallback ?? (auth()->user()->esAdmin() ? route('dashboard') : route('user.dashboard'));
@@ -14,6 +15,9 @@
         'px-3 sm:px-4 py-2' => ! $compact,
     ])
     data-crm-back="{{ $crmBackFallback }}"
+    @if($skipHistory)
+        data-crm-skip-history="1"
+    @endif
     @if($crmPreferredReturn)
         data-crm-preferred-return="{{ $crmPreferredReturn }}"
     @endif
