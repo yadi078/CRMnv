@@ -49,38 +49,88 @@
             <h3 class="panel-card-dark__title panel-card-dark__title--accent mb-4 text-center">Gestión de exportación e importación</h3>
 
             <h4 class="text-lg font-bold text-[#FFE600] text-center tracking-wide mb-3">EXPORTAR</h4>
-            <div class="flex flex-wrap justify-center gap-4 mb-8">
-                <form action="{{ route('data-management.export') }}" method="POST" class="inline">
-                    @csrf
-                    <input type="hidden" name="table" value="companies">
-                    <button type="submit" class="btn-amber-app flex items-center gap-2">
+            <form action="{{ route('data-management.export') }}" method="POST" class="mb-8 w-full"
+                  x-data="{ filterBy: @js(old('filter_by', 'none')) }">
+                @csrf
+                <div class="w-full space-y-5 mb-6">
+                    <div>
+                        <p class="text-sm font-semibold text-white mb-3">Descargar por</p>
+                        <div class="flex flex-wrap items-center gap-x-8 gap-y-3">
+                            <label class="inline-flex items-center gap-2.5 cursor-pointer select-none">
+                                <input type="radio" name="filter_by" value="none" x-model="filterBy" class="sr-only">
+                                <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 border-white/30 transition-colors"
+                                      :class="filterBy === 'none' ? 'border-[#FFE600] bg-[#FFE600]' : 'bg-white/5'">
+                                    <span class="h-2 w-2 rounded-full bg-white" x-show="filterBy === 'none'"></span>
+                                </span>
+                                <span class="text-sm text-white">Todos los registros</span>
+                            </label>
+                            <label class="inline-flex items-center gap-2.5 cursor-pointer select-none">
+                                <input type="radio" name="filter_by" value="estado" x-model="filterBy" class="sr-only">
+                                <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 border-white/30 transition-colors"
+                                      :class="filterBy === 'estado' ? 'border-[#FFE600] bg-[#FFE600]' : 'bg-white/5'">
+                                    <span class="h-2 w-2 rounded-full bg-white" x-show="filterBy === 'estado'"></span>
+                                </span>
+                                <span class="text-sm text-white">Estado</span>
+                            </label>
+                            <label class="inline-flex items-center gap-2.5 cursor-pointer select-none">
+                                <input type="radio" name="filter_by" value="comercial" x-model="filterBy" class="sr-only">
+                                <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 border-white/30 transition-colors"
+                                      :class="filterBy === 'comercial' ? 'border-[#FFE600] bg-[#FFE600]' : 'bg-white/5'">
+                                    <span class="h-2 w-2 rounded-full bg-white" x-show="filterBy === 'comercial'"></span>
+                                </span>
+                                <span class="text-sm text-white">Ejecutivo</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="flex flex-col lg:flex-row gap-4 w-full items-end">
+                        <div class="flex-1 min-w-0 w-full flex flex-col gap-1.5">
+                            <label for="export_estado_entidad" class="text-xs font-semibold text-white/85">Estado</label>
+                            <select id="export_estado_entidad" name="estado_entidad"
+                                    x-bind:disabled="filterBy !== 'estado'"
+                                    class="w-full rounded-xl border-0 bg-white text-[#003366] focus:bg-white focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3 text-sm disabled:opacity-40 disabled:cursor-not-allowed">
+                                <option value="">— Seleccione estado —</option>
+                                @foreach($entidadesMexicanas as $ent)
+                                    <option value="{{ $ent }}" @selected(old('estado_entidad') === $ent)>{{ $ent }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="flex-1 min-w-0 w-full flex flex-col gap-1.5">
+                            <label for="export_ejecutivo_asignado" class="text-xs font-semibold text-white/85">Ejecutivo</label>
+                            <select id="export_ejecutivo_asignado" name="ejecutivo_asignado"
+                                    x-bind:disabled="filterBy !== 'comercial'"
+                                    class="w-full rounded-xl border-0 bg-white text-[#003366] focus:bg-white focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3 text-sm disabled:opacity-40 disabled:cursor-not-allowed">
+                                <option value="">— Seleccione ejecutivo —</option>
+                                @foreach($comercialesExport as $nombre)
+                                    <option value="{{ $nombre }}" @selected(old('ejecutivo_asignado') === $nombre)>{{ $nombre }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                @error('filter_by')<p class="text-red-400 text-sm text-center mb-2">{{ $message }}</p>@enderror
+                @error('estado_entidad')<p class="text-red-400 text-sm text-center mb-2">{{ $message }}</p>@enderror
+                @error('ejecutivo_asignado')<p class="text-red-400 text-sm text-center mb-2">{{ $message }}</p>@enderror
+                <div class="flex flex-wrap justify-center gap-4">
+                    <button type="submit" name="table" value="companies" class="btn-amber-app flex items-center gap-2">
                         <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M16 12l-4 4m0 0l-4-4m4 4V4" />
                         </svg>
-                        <span>Exportar empresas (CSV)</span>
+                        <span>Exportar empresas (Excel)</span>
                     </button>
-                </form>
-                <form action="{{ route('data-management.export') }}" method="POST" class="inline">
-                    @csrf
-                    <input type="hidden" name="table" value="contacts">
-                    <button type="submit" class="btn-amber-app flex items-center gap-2">
+                    <button type="submit" name="table" value="contacts" class="btn-amber-app flex items-center gap-2">
                         <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M16 12l-4 4m0 0l-4-4m4 4V4" />
                         </svg>
-                        <span>Exportar contactos (CSV)</span>
+                        <span>Exportar contactos (Excel)</span>
                     </button>
-                </form>
-                <form action="{{ route('data-management.export') }}" method="POST" class="inline">
-                    @csrf
-                    <input type="hidden" name="table" value="follow_ups">
-                    <button type="submit" class="btn-amber-app flex items-center gap-2">
+                    <button type="submit" name="table" value="companies_with_contacts" class="btn-amber-app flex items-center gap-2">
                         <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M16 12l-4 4m0 0l-4-4m4 4V4" />
                         </svg>
-                        <span>Exportar seguimientos (CSV)</span>
+                        <span>Exportar empresas con sus contactos (Excel)</span>
                     </button>
-                </form>
-            </div>
+                </div>
+            </form>
 
             <h4 class="text-lg font-bold text-[#FFE600] text-center tracking-wide mt-2 mb-3">IMPORTAR</h4>
             <form action="{{ route('companies.import') }}" method="POST" enctype="multipart/form-data" class="mt-6 flex flex-wrap items-end justify-center gap-6" x-data="{ fileName: 'Ningún archivo seleccionado' }">
