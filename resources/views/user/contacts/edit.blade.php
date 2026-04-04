@@ -19,11 +19,6 @@
         </div>
     </x-slot>
 
-    @php
-        $detalleContactoExpandido = old('detalle_contacto_expandido') === '1'
-            || $errors->any()
-            || (bool) ($contact->ficha_registro_desbloqueada ?? false);
-    @endphp
     <div class="py-8 sm:py-10">
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
             <div class="panel-card-dark p-6">
@@ -33,11 +28,9 @@
                         : route('contacts.show', $contact);
                     $selectedCompanyId = old('company_id', $contact->company_id ?? $contact->company?->id);
                 @endphp
-                <form id="form-editar-contacto" method="POST" action="{{ route('contacts.update', $contact) }}" x-data="{ detalleAbierto: @json($detalleContactoExpandido) }">
+                <form id="form-editar-contacto" method="POST" action="{{ route('contacts.update', $contact) }}">
                     @csrf
                     @method('PUT')
-                    <input type="hidden" name="detalle_contacto_expandido" x-bind:value="detalleAbierto ? '1' : '0'">
-                    <input type="hidden" name="ficha_registro_desbloqueada" x-bind:value="detalleAbierto ? '1' : '0'">
                     @if(($crmNavReturn = request('return')) && is_string($crmNavReturn) && \App\Support\CrmNavigation::isSafeReturnUrl($crmNavReturn))
                         <input type="hidden" name="return" value="{{ $crmNavReturn }}">
                     @endif
@@ -158,21 +151,6 @@
                             <x-input-error :messages="$errors->get('status_color')" class="mt-2" />
                         </div>
 
-                        <div class="md:col-span-2" x-show="!detalleAbierto" x-cloak>
-                            <button
-                                type="button"
-                                class="inline-flex w-full sm:w-auto items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#FFE600] text-[#071A3D] font-semibold text-sm hover:bg-yellow-300 transition shadow border-2 border-[#FFE600]"
-                                @click="detalleAbierto = true"
-                            >
-                                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                                Crear ficha de inscripción
-                            </button>
-                            <p class="mt-2 text-sm text-white/70">Se mostrarán curso y venta, participantes, condiciones del curso, método de pago y datos fiscales para la ficha PDF.</p>
-                        </div>
-
-                        <div class="md:col-span-2 grid grid-cols-1 gap-0" x-show="detalleAbierto" x-cloak>
-                            @include('contacts.partials.contact-ficha-registro', ['contact' => $contact, 'sale' => $sale ?? null])
-                        </div>
                     </div>
                     <div class="flex items-center justify-end mt-6 gap-3 flex-wrap">
                         <a href="{{ $crmCancelHref }}" class="btn-icon-text text-gray-600 hover:text-gray-800 px-4 py-2 rounded-xl border border-gray-300 hover:bg-gray-50">Cancelar</a>

@@ -25,12 +25,16 @@ class Sale extends Model
         'incluye_iva',
         'tipo_pago',
         'participantes',
+        'participantes_texto',
         'notas',
         'colonia_cp',
         'regimen_fiscal',
         'forma_pago',
         'uso_cfdi',
         'orden_compra',
+        'facturacion_calle_numero',
+        'facturacion_rfc',
+        'email_facturacion',
         'condiciones_pago',
         'modalidad',
         'sede',
@@ -157,6 +161,54 @@ class Sale extends Model
             return null;
         }
         return self::ORDEN_COMPRA_LABELS[$this->orden_compra] ?? $this->orden_compra;
+    }
+
+    /** Calle y número para ficha/PDF: valor guardado en venta o contacto/empresa. */
+    public function calleNumeroFacturacionResuelto(): string
+    {
+        $raw = $this->facturacion_calle_numero;
+        if ($raw !== null && trim((string) $raw) !== '') {
+            return trim((string) $raw);
+        }
+        if ($raw !== null && trim((string) $raw) === '') {
+            return '—';
+        }
+        $fb = trim((string) ($this->contact?->calle_numero ?? ''));
+        if ($fb === '') {
+            $fb = trim((string) ($this->company?->datos_fiscales ?? ''));
+        }
+
+        return $fb !== '' ? $fb : '—';
+    }
+
+    /** RFC para ficha/PDF. */
+    public function rfcFacturacionResuelto(): string
+    {
+        $raw = $this->facturacion_rfc;
+        if ($raw !== null && trim((string) $raw) !== '') {
+            return trim((string) $raw);
+        }
+        if ($raw !== null && trim((string) $raw) === '') {
+            return '—';
+        }
+        $fb = trim((string) ($this->contact?->rfc ?? $this->company?->rfc ?? ''));
+
+        return $fb !== '' ? $fb : '—';
+    }
+
+    /** Correo de facturación: guardado o contacto. */
+    public function emailFacturacionResuelto(): string
+    {
+        $raw = $this->email_facturacion;
+        if ($raw !== null && trim((string) $raw) !== '') {
+            return trim((string) $raw);
+        }
+        if ($raw !== null && trim((string) $raw) === '') {
+            return '—';
+        }
+        $fb = trim((string) ($this->contact?->email ?? ''));
+
+        return $fb !== '' ? $fb : '—';
     }
 
     /**

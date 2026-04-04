@@ -11,7 +11,7 @@
             @can('sales.create')
             <a href="{{ route('user.sales.create') }}" class="btn-amber-app">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" /></svg>
-                Nueva Venta
+                Generar ficha de inscripción
             </a>
             @endcan
             @can('contacts.create')

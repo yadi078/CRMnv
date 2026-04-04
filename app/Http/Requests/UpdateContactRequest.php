@@ -77,7 +77,6 @@ class UpdateContactRequest extends FormRequest
             'colonia_cp' => 'nullable|string|max:255',
             'rfc' => 'nullable|string|max:20',
             'regimen_fiscal' => 'nullable|string|max:255',
-            'ficha_registro_desbloqueada' => 'sometimes|boolean',
             'notas' => 'nullable|string',
             'status_color' => 'nullable|string|in:seguimiento,interesado,si_le_interesa_nos_llaman_o_no_compro,vendido,no_estaba',
             'assigned_user_id' => Rule::when($this->user()->esAdmin(), ['nullable', 'integer', 'exists:users,id']),

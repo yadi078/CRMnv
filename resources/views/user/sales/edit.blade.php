@@ -18,12 +18,15 @@
                     @method('PUT')
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {{-- Fila 1: Nombre del curso (2/3) + Fecha (1/3) --}}
+                        {{-- Tipo de curso (2/3) + Fecha (1/3); nombre_servicio se sincroniza en el servidor --}}
                         <div class="md:col-span-2">
-                            <x-input-label for="nombre_servicio" value="Nombre del curso o servicio *" />
-                            <p class="text-xs text-white/60 mb-1">Si aún dice «Venta desde contacto…», cámbielo por el nombre real del curso (así sale en la ficha PDF).</p>
-                            <x-text-input id="nombre_servicio" name="nombre_servicio" type="text" class="mt-1 block w-full" :value="old('nombre_servicio', $sale->nombre_servicio)" placeholder="Ej: Capacitación en Ventas, Curso de Liderazgo" required />
-                            <x-input-error :messages="$errors->get('nombre_servicio')" class="mt-2" />
+                            <label for="tipo_curso" class="mb-1 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                                <span class="text-base md:text-lg font-semibold text-white">Nombre del curso o servicio *</span>
+                                <span class="text-xs md:text-sm font-normal text-white/60">Se muestra en la ficha de inscripción.</span>
+                            </label>
+                            <p class="text-sm text-white/65 mb-1 mt-0.5">Si venía «Venta desde contacto…», sustitúyalo por el curso real.</p>
+                            <x-text-input id="tipo_curso" name="tipo_curso" type="text" class="mt-1 block w-full" :value="old('tipo_curso', filled(trim((string) ($sale->tipo_curso ?? ''))) ? $sale->tipo_curso : $sale->nombre_servicio)" placeholder="Ej. Capacitación en ventas, diplomado ejecutivo" required />
+                            <x-input-error :messages="$errors->get('tipo_curso')" class="mt-2" />
                         </div>
 
                         <div>
@@ -41,14 +44,7 @@
                             <x-input-error :messages="$errors->get('fecha_venta')" class="mt-2" />
                         </div>
 
-                        <div class="md:col-span-3">
-                            <x-input-label for="tipo_curso" value="Tipo de curso" />
-                            <p class="text-xs text-white/60 mb-1">Aparece en la columna CURSO de la ficha PDF (ej. diplomado, taller, certificación).</p>
-                            <x-text-input id="tipo_curso" name="tipo_curso" type="text" class="mt-1 block w-full" :value="old('tipo_curso', $sale->tipo_curso)" placeholder="Ej. Taller intensivo" />
-                            <x-input-error :messages="$errors->get('tipo_curso')" class="mt-2" />
-                        </div>
-
-                        {{-- Fila 2: Empresa (2/3) + Contacto (1/3) --}}
+                        {{-- Empresa (2/3) + Contacto (1/3) --}}
                         <div class="md:col-span-2">
                             <x-input-label for="company_id" value="Empresa *" class="text-base md:text-lg font-semibold text-white" />
                             <select id="company_id" name="company_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-gray-900" required>
@@ -108,13 +104,23 @@
                             <x-input-error :messages="$errors->get('participantes')" class="mt-2" />
                         </div>
 
-                        {{-- Nombres y correos de participantes (visible cuando hay más de 1) --}}
-                        <div id="participantes-datos-wrap" class="md:col-span-2 hidden flex flex-col items-center">
-                            <div class="w-full md:w-4/5 lg:w-3/4">
-                                <h3 class="text-lg md:text-xl font-semibold text-[#FFE600] mb-3 text-center">Datos de los participantes</h3>
-                                <p class="text-base text-white/80 mb-3 text-center">Indique nombre completo y correo de cada participante.</p>
-                                <div id="participantes-datos-list" class="space-y-4 p-4 rounded-xl bg-white/5 border border-white/10"></div>
-                            </div>
+                        <div class="md:col-span-3">
+                            @php
+                                $participantesTextoEdit = old('participantes_texto', $sale->participantes_texto);
+                                if ($participantesTextoEdit === null && $sale->saleParticipants->isNotEmpty()) {
+                                    $participantesTextoEdit = $sale->saleParticipants
+                                        ->map(fn ($p) => trim($p->nombre . ($p->email ? ' — ' . $p->email : '')))
+                                        ->filter()
+                                        ->join("\n");
+                                }
+                            @endphp
+                            <x-input-label for="participantes_texto" value="Nombre y correo de participantes" class="text-base md:text-lg font-semibold text-white" />
+                            <p class="mt-1 mb-2 text-xs md:text-sm text-white/60 leading-relaxed">
+                                Una línea por participante. Puede separar nombre y correo con coma o guión. Por ejemplo:<br>
+                                <span class="text-white/75">Yadira Suarez, yadi@gmail.com</span><br>
+                                <span class="text-white/75">Columba Silva - columba@gmail.com</span>
+                            </p>
+                            <textarea id="participantes_texto" name="participantes_texto" rows="5" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-gray-900" placeholder="Una línea por participante (nombre y correo).">{{ $participantesTextoEdit }}</textarea>
                         </div>
 
                         <div class="md:col-span-3">
@@ -123,49 +129,24 @@
                             <x-input-error :messages="$errors->get('notas')" class="mt-2" />
                         </div>
 
-                        <div class="md:col-span-3 rounded-xl border-2 border-[#ca8a04] bg-[#FFEB3B]/10 p-4">
-                            <h3 class="text-base font-bold text-[#FFE600] mb-3 uppercase tracking-wide">Condiciones y logística del curso (PDF)</h3>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div class="md:col-span-2">
-                                    <label for="condiciones_pago" class="block text-sm font-medium text-white/90 mb-1">Condiciones de pago</label>
-                                    <textarea id="condiciones_pago" name="condiciones_pago" rows="2" class="mt-1 block w-full rounded-md border-gray-300 text-gray-900">{{ old('condiciones_pago', $sale->condiciones_pago) }}</textarea>
-                                </div>
-                                <div>
-                                    <label for="modalidad" class="block text-sm font-medium text-white/90 mb-1">Modalidad</label>
-                                    <x-text-input id="modalidad" name="modalidad" type="text" class="mt-1 block w-full" :value="old('modalidad', $sale->modalidad)" />
-                                </div>
-                                <div>
-                                    <label for="sede" class="block text-sm font-medium text-white/90 mb-1">Sede</label>
-                                    <x-text-input id="sede" name="sede" type="text" class="mt-1 block w-full" :value="old('sede', $sale->sede)" />
-                                </div>
-                                <div>
-                                    <label for="fecha_evento" class="block text-sm font-medium text-white/90 mb-1">Fecha del curso / evento</label>
-                                    <x-text-input id="fecha_evento" name="fecha_evento" type="date" class="mt-1 block w-full text-gray-900" :value="old('fecha_evento', $sale->fecha_evento?->format('Y-m-d'))" />
-                                </div>
-                                <div>
-                                    <label for="horario_evento" class="block text-sm font-medium text-white/90 mb-1">Horario</label>
-                                    <x-text-input id="horario_evento" name="horario_evento" type="text" class="mt-1 block w-full" :value="old('horario_evento', $sale->horario_evento)" />
-                                </div>
-                                <div class="md:col-span-2">
-                                    <label for="factura_referencia" class="block text-sm font-medium text-white/90 mb-1">Factura</label>
-                                    <x-text-input id="factura_referencia" name="factura_referencia" type="text" class="mt-1 block w-full" :value="old('factura_referencia', $sale->factura_referencia)" />
-                                </div>
-                            </div>
-                        </div>
-
                         {{-- DATOS DE FACTURACIÓN (los que aparecen en la ficha final) --}}
-                        {{-- DATOS DE FACTURACIÓN (los que aparecen en la ficha final) --}}
+                        @php
+                            $calleFactEdit = old('facturacion_calle_numero', $sale->facturacion_calle_numero ?? $sale->contact?->calle_numero ?? $sale->company?->datos_fiscales ?? '');
+                            $rfcFactEdit = old('facturacion_rfc', $sale->facturacion_rfc ?? $sale->contact?->rfc ?? $sale->company?->rfc ?? '');
+                            $emailFactEdit = old('email_facturacion', $sale->email_facturacion ?? $sale->contact?->email ?? '');
+                        @endphp
                         <div class="md:col-span-3 mt-2 pt-6 border-t border-white/20">
                             <h3 class="text-lg font-semibold text-[#FFE600] mb-4">Datos de facturación</h3>
-                            <p class="text-sm text-white/80 mb-4">Estos datos se mostrarán en la ficha final. Los que vienen de la empresa y contacto seleccionados se actualizan automáticamente.</p>
+                            <p class="text-sm text-white/80 mb-4">Estos datos se mostrarán en la ficha final. Los que vienen de la empresa y contacto seleccionados se pueden completar o ajustar aquí.</p>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-xl bg-white/5 border border-white/10">
                                 <div class="md:col-span-2">
                                     <span class="text-xs font-medium text-white/70 uppercase">Razón social</span>
-                                    <p class="text-white font-medium mt-0.5">{{ $sale->company->nombre_comercial ?? '—' }}</p>
+                                    <p class="text-white font-medium mt-0.5">{{ $sale->contact?->razon_social ?? $sale->company->nombre_comercial ?? '—' }}</p>
                                 </div>
                                 <div class="md:col-span-2">
-                                    <span class="text-xs font-medium text-white/70 uppercase">Calle y número</span>
-                                    <p class="text-white mt-0.5">{{ Str::limit($sale->company->datos_fiscales ?? '—', 80) }}</p>
+                                    <x-input-label for="facturacion_calle_numero" value="Domicilio fiscal (calle y número)" />
+                                    <x-text-input id="facturacion_calle_numero" name="facturacion_calle_numero" type="text" class="mt-1 block w-full text-gray-900" :value="$calleFactEdit" placeholder="Calle, número, interior…" />
+                                    <x-input-error :messages="$errors->get('facturacion_calle_numero')" class="mt-2" />
                                 </div>
                                 <div>
                                     <x-input-label for="colonia_cp" value="Colonia y C.P." />
@@ -174,11 +155,19 @@
                                 </div>
                                 <div>
                                     <span class="text-xs font-medium text-white/70 uppercase block mt-2 md:mt-0">Ciudad, Estado</span>
-                                    <p class="text-white mt-0.5">{{ trim(($sale->company->municipio ?? '') . ', ' . ($sale->company->estado ?? ''), ' ,') ?: '—' }}</p>
+                                    <p class="text-white mt-0.5">
+                                        @php
+                                            $ciudadEd = $sale->contact?->municipio ?? $sale->company->municipio ?? '';
+                                            $estadoEd = $sale->contact?->estado ?? $sale->company->estado ?? '';
+                                            $ciudadEstadoEd = trim(($ciudadEd ? $ciudadEd : '') . ($estadoEd ? ', ' . $estadoEd : ''), ' ,');
+                                        @endphp
+                                        {{ $ciudadEstadoEd ?: '—' }}
+                                    </p>
                                 </div>
                                 <div>
-                                    <span class="text-xs font-medium text-white/70 uppercase block">RFC</span>
-                                    <p class="text-white mt-0.5">{{ $sale->company->rfc ?? '—' }}</p>
+                                    <x-input-label for="facturacion_rfc" value="RFC" />
+                                    <x-text-input id="facturacion_rfc" name="facturacion_rfc" type="text" class="mt-1 block w-full text-gray-900" :value="$rfcFactEdit" placeholder="—" />
+                                    <x-input-error :messages="$errors->get('facturacion_rfc')" class="mt-2" />
                                 </div>
                                 <div>
                                     <span class="text-xs font-medium text-white/70 uppercase block">TEL</span>
@@ -195,12 +184,7 @@
                                 </div>
                                 <div>
                                     <x-input-label for="forma_pago" value="Forma de pago" />
-                                    <select id="forma_pago" name="forma_pago" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-gray-900">
-                                        <option value="">—</option>
-                                        @foreach(\App\Models\Sale::FORMA_DE_PAGO_LABELS as $valor => $etiqueta)
-                                            <option value="{{ $valor }}" {{ old('forma_pago', $sale->forma_pago) == $valor ? 'selected' : '' }}>{{ $etiqueta }}</option>
-                                        @endforeach
-                                    </select>
+                                    <x-text-input id="forma_pago" name="forma_pago" type="text" class="mt-1 block w-full text-gray-900" :value="old('forma_pago', $sale->forma_pago)" placeholder="" />
                                     <x-input-error :messages="$errors->get('forma_pago')" class="mt-2" />
                                 </div>
                                 <div>
@@ -208,19 +192,45 @@
                                     <x-text-input id="uso_cfdi" name="uso_cfdi" type="text" class="mt-1 block w-full" :value="old('uso_cfdi', $sale->uso_cfdi)" placeholder="—" />
                                     <x-input-error :messages="$errors->get('uso_cfdi')" class="mt-2" />
                                 </div>
+                                <div class="md:col-span-2">
+                                    <x-input-label for="condiciones_pago" value="Condiciones de pago" />
+                                    <textarea id="condiciones_pago" name="condiciones_pago" rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-gray-900">{{ old('condiciones_pago', $sale->condiciones_pago) }}</textarea>
+                                    <x-input-error :messages="$errors->get('condiciones_pago')" class="mt-2" />
+                                </div>
                                 <div>
-                                    <x-input-label for="orden_compra" value="Orden de compra" />
-                                    <select id="orden_compra" name="orden_compra" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-gray-900">
-                                        <option value="">—</option>
-                                        @foreach(\App\Models\Sale::ORDEN_COMPRA_LABELS as $valor => $etiqueta)
-                                            <option value="{{ $valor }}" {{ old('orden_compra', $sale->orden_compra) == $valor ? 'selected' : '' }}>{{ $etiqueta }}</option>
-                                        @endforeach
-                                    </select>
-                                    <x-input-error :messages="$errors->get('orden_compra')" class="mt-2" />
+                                    <x-input-label for="modalidad" value="Modalidad" />
+                                    <x-text-input id="modalidad" name="modalidad" type="text" class="mt-1 block w-full text-gray-900" :value="old('modalidad', $sale->modalidad)" placeholder="—" />
+                                    <x-input-error :messages="$errors->get('modalidad')" class="mt-2" />
+                                </div>
+                                <div>
+                                    <x-input-label for="sede" value="Sede" />
+                                    <x-text-input id="sede" name="sede" type="text" class="mt-1 block w-full text-gray-900" :value="old('sede', $sale->sede)" placeholder="—" />
+                                    <x-input-error :messages="$errors->get('sede')" class="mt-2" />
+                                </div>
+                                <div>
+                                    <x-input-label for="fecha_evento" value="Fecha" />
+                                    <x-text-input id="fecha_evento" name="fecha_evento" type="date" class="mt-1 block w-full text-gray-900" :value="old('fecha_evento', $sale->fecha_evento?->format('Y-m-d'))" />
+                                    <x-input-error :messages="$errors->get('fecha_evento')" class="mt-2" />
+                                </div>
+                                <div>
+                                    <x-input-label for="horario_evento" value="Horario" />
+                                    <x-text-input id="horario_evento" name="horario_evento" type="text" class="mt-1 block w-full text-gray-900" :value="old('horario_evento', $sale->horario_evento)" placeholder="Ej. 9:00–14:00" />
+                                    <x-input-error :messages="$errors->get('horario_evento')" class="mt-2" />
                                 </div>
                                 <div class="md:col-span-2">
-                                    <span class="text-xs font-medium text-white/70 uppercase block">Correo</span>
-                                    <p class="text-white mt-0.5">{{ $sale->contact?->email ?? '—' }}</p>
+                                    <x-input-label for="factura_referencia" value="Factura" />
+                                    <x-text-input id="factura_referencia" name="factura_referencia" type="text" class="mt-1 block w-full text-gray-900" :value="old('factura_referencia', $sale->factura_referencia)" placeholder="Referencia o folio" />
+                                    <x-input-error :messages="$errors->get('factura_referencia')" class="mt-2" />
+                                </div>
+                                <div>
+                                    <x-input-label for="orden_compra" value="Orden de compra" />
+                                    <x-text-input id="orden_compra" name="orden_compra" type="text" class="mt-1 block w-full text-gray-900" :value="old('orden_compra', $sale->orden_compra)" placeholder="" />
+                                    <x-input-error :messages="$errors->get('orden_compra')" class="mt-2" />
+                                </div>
+                                <div>
+                                    <x-input-label for="email_facturacion" value="Correo" />
+                                    <x-text-input id="email_facturacion" name="email_facturacion" type="text" class="mt-1 block w-full text-gray-900" :value="$emailFactEdit" placeholder="correo@ejemplo.com; varios separados por ;" />
+                                    <x-input-error :messages="$errors->get('email_facturacion')" class="mt-2" />
                                 </div>
                             </div>
                         </div>
@@ -242,70 +252,4 @@
         </div>
     </div>
 
-    @php
-        $participantesIniciales = [];
-        if (old('participantes_nombres')) {
-            foreach (old('participantes_nombres') as $i => $n) {
-                $participantesIniciales[] = ['nombre' => $n, 'email' => old('participantes_emails')[$i] ?? ''];
-            }
-        } else {
-            $participantesIniciales = $sale->saleParticipants->map(fn($p) => ['nombre' => $p->nombre, 'email' => $p->email ?? ''])->values()->all();
-        }
-    @endphp
-    <script>
-    (function() {
-        var participantesInput = document.getElementById('participantes');
-        var wrap = document.getElementById('participantes-datos-wrap');
-        var list = document.getElementById('participantes-datos-list');
-        var initialData = @json($participantesIniciales);
-
-        function buildRows(n) {
-            list.innerHTML = '';
-            for (var i = 0; i < n; i++) {
-                var data = initialData[i] || { nombre: '', email: '' };
-                var div = document.createElement('div');
-                div.className = 'grid grid-cols-1 md:grid-cols-2 gap-3';
-                div.innerHTML = '<label class="block text-sm font-medium text-white/90">Participante ' + (i + 1) + '</label>' +
-                    '<div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-3">' +
-                    '<div><label class="block text-xs text-white/70 mb-1">Nombre completo</label><input type="text" name="participantes_nombres[]" maxlength="100" pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\\s]+" title="Solo se permiten letras y espacios, máximo 100 caracteres." class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-gray-900" value="' + (data.nombre || '').replace(/\"/g, '&quot;') + '" placeholder="Nombre completo"></div>' +
-                    '<div><label class="block text-xs text-white/70 mb-1">Correo</label><input type="email" name="participantes_emails[]" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-gray-900" value="' + (data.email || '').replace(/"/g, '&quot;') + '" placeholder="correo@ejemplo.com"></div>' +
-                    '</div>';
-                list.appendChild(div);
-
-                var nombreInput = div.querySelector('input[name="participantes_nombres[]"]');
-                if (nombreInput) {
-                    nombreInput.addEventListener('invalid', function () {
-                        this.setCustomValidity('');
-                        if (this.validity.valueMissing) {
-                            this.setCustomValidity('Este campo es obligatorio.');
-                        } else if (this.validity.patternMismatch) {
-                            this.setCustomValidity('Solo se permiten letras y espacios, máximo 100 caracteres.');
-                        }
-                    });
-                    nombreInput.addEventListener('input', function () {
-                        this.setCustomValidity('');
-                    });
-                }
-            }
-            initialData = [];
-        }
-
-        function updateParticipantesSection() {
-            var n = parseInt(participantesInput.value, 10) || 0;
-            if (n > 1) {
-                wrap.classList.remove('hidden');
-                buildRows(n);
-            } else {
-                wrap.classList.add('hidden');
-                list.innerHTML = '';
-            }
-        }
-
-        if (participantesInput) {
-            participantesInput.addEventListener('input', updateParticipantesSection);
-            participantesInput.addEventListener('change', updateParticipantesSection);
-            updateParticipantesSection();
-        }
-    })();
-    </script>
 </x-app-user-layout>

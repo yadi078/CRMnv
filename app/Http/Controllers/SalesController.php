@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\ResolvesAdminUserView;
 use App\Models\Contact;
 use App\Models\Sale;
 use App\Models\SaleParticipant;
@@ -18,6 +19,8 @@ use Illuminate\Validation\Rule;
  */
 class SalesController extends Controller
 {
+    use ResolvesAdminUserView;
+
     /**
      * Ventas visibles en un ámbito (empresa o contacto): ejecutivo solo las propias;
      * administrador ve todas las de ese ámbito (alineado con la ficha de empresa).
@@ -77,14 +80,7 @@ class SalesController extends Controller
         $this->authorize('viewAny', Sale::class);
         $this->authorize('view', $contact);
 
-        $contact->loadMissing('company');
-
-        $sales = $this->scopedSalesBaseQuery($request)
-            ->where('company_id', $contact->company_id)
-            ->where('contact_id', $contact->id)
-            ->latest('fecha_venta')
-            ->paginate(15)
-            ->withQueryString();
+        $sales = $this->paginatedSalesForContact($request, $contact);
 
         return view('user.sales.index-scoped', [
             'scope' => 'contact',
@@ -93,6 +89,24 @@ class SalesController extends Controller
             'sales' => $sales,
             'formAction' => route('user.sales.by-contact', $contact),
         ]);
+    }
+
+    /**
+     * Misma consulta que indexForContact, reutilizable en la ficha de contacto.
+     */
+    public function paginatedSalesForContact(Request $request, Contact $contact)
+    {
+        $this->authorize('viewAny', Sale::class);
+        $this->authorize('view', $contact);
+
+        $contact->loadMissing('company');
+
+        return $this->scopedSalesBaseQuery($request)
+            ->where('company_id', $contact->company_id)
+            ->where('contact_id', $contact->id)
+            ->latest('fecha_venta')
+            ->paginate(15)
+            ->withQueryString();
     }
 
     /**
@@ -162,7 +176,7 @@ class SalesController extends Controller
         $resolvedContactId = old('contact_id', $prefillContactId);
         $contact = ($resolvedContactId && $companyId) ? Contact::find($resolvedContactId) : null;
 
-        return view('user.sales.create', compact('companies', 'companyId', 'contacts', 'company', 'contact', 'prefillContactId'));
+        return $this->resolveView('sales.create', 'user.sales.create', compact('companies', 'companyId', 'contacts', 'company', 'contact', 'prefillContactId'));
     }
 
     /**
@@ -175,8 +189,8 @@ class SalesController extends Controller
         $validated = $request->validate([
             'company_id' => 'required|exists:companies,id',
             'contact_id' => $this->contactIdRules($request),
-            'nombre_servicio' => 'required|string|max:255',
-            'tipo_curso' => 'nullable|string|max:255',
+            'tipo_curso' => 'required|string|max:255',
+            'nombre_servicio' => 'nullable|string|max:255',
             'fecha_venta' => 'required|date',
             'monto' => 'nullable|numeric|min:0',
             'incluye_iva' => 'nullable|boolean',
@@ -185,31 +199,30 @@ class SalesController extends Controller
             'notas' => 'nullable|string|max:2000',
             'colonia_cp' => 'nullable|string|max:255',
             'regimen_fiscal' => 'nullable|string|max:255',
-            'forma_pago' => 'nullable|string|max:100',
+            'forma_pago' => 'nullable|string|max:500',
             'uso_cfdi' => 'nullable|string|max:100',
-            'orden_compra' => 'nullable|string|max:100',
+            'orden_compra' => 'nullable|string|max:500',
+            'facturacion_calle_numero' => 'nullable|string|max:500',
+            'facturacion_rfc' => 'nullable|string|max:20',
+            'email_facturacion' => 'nullable|string|max:500',
             'condiciones_pago' => 'nullable|string|max:2000',
             'modalidad' => 'nullable|string|max:255',
             'sede' => 'nullable|string|max:255',
             'fecha_evento' => 'nullable|date',
             'horario_evento' => 'nullable|string|max:120',
             'factura_referencia' => 'nullable|string|max:255',
-            'participantes_nombres' => 'nullable|array',
-            'participantes_nombres.*' => 'nullable|string|max:100|regex:/^[\pL\s]+$/u',
-            'participantes_emails' => 'nullable|array',
-            'participantes_emails.*' => 'nullable|email|max:255',
+            'participantes_texto' => 'nullable|string',
         ], [
             'company_id.required' => 'La empresa es obligatoria.',
             'company_id.exists' => 'La empresa seleccionada no es válida.',
-            'nombre_servicio.required' => 'El nombre del curso o servicio es obligatorio.',
+            'tipo_curso.required' => 'El nombre del curso o servicio es obligatorio.',
             'fecha_venta.required' => 'La fecha de la venta es obligatoria.',
             'fecha_venta.date' => 'La fecha de la venta no tiene un formato válido.',
-            'participantes_nombres.*.regex' => 'El nombre de cada participante solo puede contener letras y espacios.',
-            'participantes_nombres.*.max' => 'El nombre de cada participante no puede superar los 100 caracteres.',
-            'participantes_emails.*.email' => 'Cada correo de participante debe ser un correo electrónico válido.',
             'required' => 'Este campo es obligatorio.',
             'email' => 'Ingrese un correo electrónico válido.',
         ]);
+
+        $validated['nombre_servicio'] = $validated['tipo_curso'];
 
         $fechaVenta = \Carbon\Carbon::parse($validated['fecha_venta'])->startOfDay();
         if ($fechaVenta->lt(now()->startOfDay())) {
@@ -225,21 +238,13 @@ class SalesController extends Controller
         }
 
         $sale = Sale::create([
-            ...collect($validated)->except(['participantes_nombres', 'participantes_emails'])->all(),
+            ...collect($validated)->all(),
             'incluye_iva' => $request->boolean('incluye_iva', true),
             'created_by' => auth()->id(),
         ]);
 
-        if ($request->filled('participantes_nombres') && is_array($request->participantes_nombres)) {
-            foreach ($request->participantes_nombres as $i => $nombre) {
-                if (trim((string) $nombre) !== '') {
-                    $sale->saleParticipants()->create([
-                        'nombre' => $nombre,
-                        'email' => $request->participantes_emails[$i] ?? null,
-                        'orden' => $i,
-                    ]);
-                }
-            }
+        if ($request->input('post_action') === 'ficha') {
+            return redirect()->route('user.sales.ficha-pdf', $sale);
         }
 
         return redirect()->route('user.sales.show', $sale)
@@ -278,7 +283,7 @@ class SalesController extends Controller
             }
         }
 
-        $sale->load('saleParticipants');
+        $sale->load(['saleParticipants', 'contact', 'company']);
         return view('user.sales.edit', compact('sale', 'companies', 'contacts'));
     }
 
@@ -292,8 +297,8 @@ class SalesController extends Controller
         $validated = $request->validate([
             'company_id' => 'required|exists:companies,id',
             'contact_id' => $this->contactIdRules($request),
-            'nombre_servicio' => 'required|string|max:255',
-            'tipo_curso' => 'nullable|string|max:255',
+            'tipo_curso' => 'required|string|max:255',
+            'nombre_servicio' => 'nullable|string|max:255',
             'fecha_venta' => 'required|date',
             'monto' => 'nullable|numeric|min:0',
             'incluye_iva' => 'nullable|boolean',
@@ -302,31 +307,30 @@ class SalesController extends Controller
             'notas' => 'nullable|string|max:2000',
             'colonia_cp' => 'nullable|string|max:255',
             'regimen_fiscal' => 'nullable|string|max:255',
-            'forma_pago' => 'nullable|string|max:100',
+            'forma_pago' => 'nullable|string|max:500',
             'uso_cfdi' => 'nullable|string|max:100',
-            'orden_compra' => 'nullable|string|max:100',
+            'orden_compra' => 'nullable|string|max:500',
+            'facturacion_calle_numero' => 'nullable|string|max:500',
+            'facturacion_rfc' => 'nullable|string|max:20',
+            'email_facturacion' => 'nullable|string|max:500',
             'condiciones_pago' => 'nullable|string|max:2000',
             'modalidad' => 'nullable|string|max:255',
             'sede' => 'nullable|string|max:255',
             'fecha_evento' => 'nullable|date',
             'horario_evento' => 'nullable|string|max:120',
             'factura_referencia' => 'nullable|string|max:255',
-            'participantes_nombres' => 'nullable|array',
-            'participantes_nombres.*' => 'nullable|string|max:100|regex:/^[\pL\s]+$/u',
-            'participantes_emails' => 'nullable|array',
-            'participantes_emails.*' => 'nullable|email|max:255',
+            'participantes_texto' => 'nullable|string',
         ], [
             'company_id.required' => 'La empresa es obligatoria.',
             'company_id.exists' => 'La empresa seleccionada no es válida.',
-            'nombre_servicio.required' => 'El nombre del curso o servicio es obligatorio.',
+            'tipo_curso.required' => 'El nombre del curso o servicio es obligatorio.',
             'fecha_venta.required' => 'La fecha de la venta es obligatoria.',
             'fecha_venta.date' => 'La fecha de la venta no tiene un formato válido.',
-            'participantes_nombres.*.regex' => 'El nombre de cada participante solo puede contener letras y espacios.',
-            'participantes_nombres.*.max' => 'El nombre de cada participante no puede superar los 100 caracteres.',
-            'participantes_emails.*.email' => 'Cada correo de participante debe ser un correo electrónico válido.',
             'required' => 'Este campo es obligatorio.',
             'email' => 'Ingrese un correo electrónico válido.',
         ]);
+
+        $validated['nombre_servicio'] = $validated['tipo_curso'];
 
         $company = Company::findOrFail($validated['company_id']);
         $this->authorize('view', $company);
@@ -335,22 +339,9 @@ class SalesController extends Controller
         }
 
         $sale->update([
-            ...collect($validated)->except(['participantes_nombres', 'participantes_emails'])->all(),
+            ...collect($validated)->all(),
             'incluye_iva' => $request->boolean('incluye_iva', $sale->incluye_iva),
         ]);
-
-        $sale->saleParticipants()->delete();
-        if ($request->filled('participantes_nombres') && is_array($request->participantes_nombres)) {
-            foreach ($request->participantes_nombres as $i => $nombre) {
-                if (trim((string) $nombre) !== '') {
-                    $sale->saleParticipants()->create([
-                        'nombre' => $nombre,
-                        'email' => $request->participantes_emails[$i] ?? null,
-                        'orden' => $i,
-                    ]);
-                }
-            }
-        }
 
         return redirect()->route('user.sales.show', $sale)
             ->with('success', 'Venta actualizada correctamente.');
@@ -377,7 +368,8 @@ class SalesController extends Controller
 
         $sale->load(['company', 'contact', 'creator', 'saleParticipants']);
 
-        $pdf = Pdf::loadView('user.sales.pdf.ficha-venta', compact('sale'));
+        $pdf = Pdf::loadView('user.sales.pdf.ficha-venta', compact('sale'))
+            ->setPaper('letter', 'portrait');
 
         $fechaNombre = $sale->fecha_venta?->format('Y-m-d') ?? now()->format('Y-m-d');
         $filename = 'Ficha_Inscripcion_' . \Str::slug($sale->nombre_servicio) . '_' . $fechaNombre . '.pdf';
