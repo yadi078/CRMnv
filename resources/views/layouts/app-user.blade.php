@@ -126,19 +126,19 @@
             </div>
         </div>
 
-        <div class="slogan-bar-fixed" role="contentinfo" aria-label="Slogan corporativo">
-            <div class="top-bar-gradient slogan-bar-fixed__inner crm-slogan-notice">
-                <span class="crm-slogan-notice__icon-wrap" aria-hidden="true">
-                    <svg class="crm-slogan-notice__icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <footer class="institutional-footer" role="contentinfo" aria-label="Slogan corporativo">
+            <div class="institutional-footer__inner top-bar-gradient crm-slogan-notice">
+                <span class="institutional-footer__icon-wrap" aria-hidden="true">
+                    <svg class="institutional-footer__icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
                 </span>
-                <div class="crm-slogan-notice__body">
-                    <p class="crm-slogan-notice__eyebrow">Mensaje institucional</p>
+                <div class="institutional-footer__body">
+                    <p class="institutional-footer__eyebrow">Mensaje institucional</p>
                     <h1 class="top-bar-gradient__slogan crm-slogan-notice__title">INVERTIR EN VALOR ¡ATRAE VALOR!</h1>
                 </div>
             </div>
-        </div>
+        </footer>
 
         @auth
         <script>
@@ -146,11 +146,15 @@
             var url = '{{ route("notifications.unread-count") }}';
             var crmReminderSnoozeZero = @json(route('reminders.snooze', ['reminder' => 0]));
             var crmReminderEditZero = @json(route('reminders.edit', ['reminder' => 0]));
+            var crmReminderConfirmZero = @json(route('reminders.confirm-alarm', ['reminder' => 0]));
             function crmReminderSnoozeUrl(reminderId) {
                 return String(crmReminderSnoozeZero).replace(/\/0(\/snooze)/, '/' + encodeURIComponent(reminderId) + '$1');
             }
             function crmReminderEditUrl(reminderId) {
                 return String(crmReminderEditZero).replace(/\/0(\/edit)/, '/' + encodeURIComponent(reminderId) + '$1');
+            }
+            function crmReminderConfirmUrl(reminderId) {
+                return String(crmReminderConfirmZero).replace(/\/0(\/confirm-alarm)/, '/' + encodeURIComponent(reminderId) + '$1');
             }
             /** Solo IDs marcados con «Visto» (o aplazado que ya marcó leída): dejan de alertar. Cerrar con ✕ no añade aquí. */
             var reminderVistoAckIds = {};
@@ -339,7 +343,7 @@
                         '<button type="button" id="crm-reminder-snooze" class="px-4 py-2.5 rounded-xl border border-[#FFE600]/80 text-[#FFE600] text-sm font-semibold hover:bg-[#FFE600]/10">Aplazar 5 minutos</button>'
                         + '<button type="button" id="crm-reminder-reschedule" class="px-4 py-2.5 rounded-xl border border-[#FFE600]/80 text-[#FFE600] text-sm font-semibold hover:bg-[#FFE600]/10">Reprogramar</button>'
                     ) : '')
-                    + '<button type="button" id="crm-reminder-mark-seen" class="px-5 py-2.5 rounded-xl bg-[#FFE600] text-[#071A3D] text-sm font-bold hover:bg-[#ffeb3b]">Visto</button>'
+                    + '<button type="button" id="crm-reminder-mark-seen" class="px-5 py-2.5 rounded-xl bg-[#FFE600] text-[#071A3D] text-sm font-bold hover:bg-[#ffeb3b]">' + (alertData.needs_alarm_confirm ? 'Confirmar' : 'Visto') + '</button>'
                     + '</div>';
                 var html = ''
                     + '<div id="crm-reminder-detail-modal" class="fixed inset-0 z-[130] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">'
@@ -426,11 +430,40 @@
                 var seenBtn = document.getElementById('crm-reminder-mark-seen');
                 if (seenBtn) {
                     seenBtn.addEventListener('click', function() {
-                        ackReminderVistoLocally(alertData.id);
-                        markReminderAsRead(alertData.id).finally(function() {
-                            closeReminderDetailModal();
-                            pollReminderAlerts();
-                        });
+                        seenBtn.disabled = true;
+                        var afterRead = function() {
+                            ackReminderVistoLocally(alertData.id);
+                            markReminderAsRead(alertData.id).finally(function() {
+                                closeReminderDetailModal();
+                                pollReminderAlerts();
+                                seenBtn.disabled = false;
+                            });
+                        };
+                        if (rid && alertData.needs_alarm_confirm) {
+                            fetch(crmReminderConfirmUrl(rid), {
+                                method: 'POST',
+                                headers: {
+                                    'Accept': 'application/json',
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': csrf,
+                                    'X-Requested-With': 'XMLHttpRequest'
+                                },
+                                body: JSON.stringify({})
+                            })
+                                .then(function(r) { return r.json(); })
+                                .then(function(data) {
+                                    if (data && data.success) {
+                                        afterRead();
+                                    } else {
+                                        seenBtn.disabled = false;
+                                    }
+                                })
+                                .catch(function() {
+                                    seenBtn.disabled = false;
+                                });
+                        } else {
+                            afterRead();
+                        }
                     });
                 }
             }

@@ -122,6 +122,8 @@
                 </div>
             </div>
 
+            @include('reminders.partials.alarm-configuration', ['reminder' => $reminder])
+
             <div class="flex flex-wrap justify-end gap-3 pt-4 border-t border-white/15">
                 <a href="{{ url()->previous() === url()->current() ? route('notifications.index') : url()->previous() }}" class="px-5 py-2.5 text-sm rounded-xl border border-white/30 text-white/90 hover:bg-white/10">Cancelar</a>
                 <button type="submit" class="px-6 py-2.5 text-sm rounded-xl bg-[#FFE600] text-[#003366] font-semibold hover:bg-[#e6cf00]">Guardar cambios</button>

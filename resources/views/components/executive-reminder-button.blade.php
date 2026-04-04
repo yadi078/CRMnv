@@ -89,6 +89,8 @@
                     </div>
                 </div>
 
+                @include('reminders.partials.alarm-configuration', ['reminder' => null])
+
                 <div class="pt-4 border-t border-white/15">
                     <p class="text-xs font-semibold uppercase tracking-wider text-[#FFE600]/90 mb-3">Seguimiento</p>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">

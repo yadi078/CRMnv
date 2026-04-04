@@ -56,42 +56,29 @@ class ReminderDueNotifier
 
     protected function processOne(Reminder $reminder, Carbon $now): bool
     {
-        $start = $reminder->start_at ?? $reminder->scheduled_for;
-        if (! $start) {
+        $effective = $reminder->effectiveNotificationStart();
+        if (! $effective) {
             return false;
         }
 
-        $start = $start->copy()->timezone(config('app.timezone'));
-
-        $effective = $this->effectiveNotificationStart($reminder, $start);
-
         return $this->processTimed($reminder, $now, $effective);
-    }
-
-    /**
-     * Hora efectiva para avisos: "todo el día" usa una hora configurada, no 00:00.
-     */
-    protected function effectiveNotificationStart(Reminder $reminder, Carbon $start): Carbon
-    {
-        $tz = config('app.timezone');
-        $start = $start->copy()->timezone($tz);
-
-        if ($reminder->all_day) {
-            $timeStr = (string) config('crm.reminder_all_day_notify_time', '09:00');
-
-            return Carbon::parse($start->format('Y-m-d').' '.$timeStr, $tz);
-        }
-
-        return $start;
     }
 
     protected function processTimed(Reminder $reminder, Carbon $now, Carbon $start): bool
     {
         // 1) Hora exacta.
         if ($now->gte($start) && ! $this->alreadySentPhase($reminder, 'due')) {
-            $reminder->update([
-                'notification_sent_at' => $now,
-            ]);
+            $reminder->refresh();
+
+            $payload = ['notification_sent_at' => $now];
+            if ($reminder->alarm_repeat_enabled) {
+                $payload['alarm_last_ring_at'] = $start->copy();
+                if ($reminder->alarm_repeat_type === Reminder::ALARM_REPEAT_DURATION
+                    && $reminder->alarm_window_started_at === null) {
+                    $payload['alarm_window_started_at'] = $start->copy();
+                }
+            }
+            $reminder->update($payload);
             $reminder->user?->notify(new ReminderDueNotification($reminder, 'due'));
 
             return true;

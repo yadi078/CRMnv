@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Reminder;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class ReminderController extends Controller
 {
@@ -36,6 +37,10 @@ class ReminderController extends Controller
             'area' => ['nullable', 'string', 'max:255'],
             'puesto_trabajo' => ['nullable', 'string', 'max:255'],
             'reminder_context' => ['sometimes'],
+            'alarm_interval_preset' => ['nullable', 'string', 'in:5,10,15,custom'],
+            'alarm_interval_custom' => ['nullable', 'integer', 'min:1', 'max:10080'],
+            'alarm_repeat_type' => ['nullable', 'string', 'in:until_confirmed,times,duration'],
+            'alarm_repeat_value' => ['nullable', 'integer', 'min:1', 'max:525600'],
         ]);
         unset($data['reminder_context']);
 
@@ -56,11 +61,13 @@ class ReminderController extends Controller
         }
 
         $deadlineAt = null;
-        if (!empty($data['deadline_date'])) {
-            $deadlineAt = $data['deadline_date'] . ' 00:00:00';
+        if (! empty($data['deadline_date'])) {
+            $deadlineAt = $data['deadline_date'].' 00:00:00';
         }
 
-        $request->user()->reminders()->create([
+        $alarmPayload = $this->buildAlarmPayload($request);
+
+        $request->user()->reminders()->create(array_merge([
             'title' => $data['title'],
             'tipo_accion' => $data['tipo_accion'],
             'description' => $data['description'] ?? null,
@@ -77,7 +84,7 @@ class ReminderController extends Controller
             'repeat' => $data['repeat'] ?? null,
             'deadline_at' => $deadlineAt,
             'scheduled_for' => $startAt,
-        ]);
+        ], $alarmPayload));
 
         return back()->with('success', 'Recordatorio agregado.');
     }
@@ -102,9 +109,13 @@ class ReminderController extends Controller
             'numero_telefonico' => ['nullable', 'string', 'max:50'],
             'area' => ['nullable', 'string', 'max:255'],
             'puesto_trabajo' => ['nullable', 'string', 'max:255'],
+            'alarm_interval_preset' => ['nullable', 'string', 'in:5,10,15,custom'],
+            'alarm_interval_custom' => ['nullable', 'integer', 'min:1', 'max:10080'],
+            'alarm_repeat_type' => ['nullable', 'string', 'in:until_confirmed,times,duration'],
+            'alarm_repeat_value' => ['nullable', 'integer', 'min:1', 'max:525600'],
         ]);
 
-        $deadlineAt = !empty($data['deadline_at']) ? $data['deadline_at'] . ' 00:00:00' : $reminder->deadline_at;
+        $deadlineAt = ! empty($data['deadline_at']) ? $data['deadline_at'].' 00:00:00' : $reminder->deadline_at;
 
         if ($request->boolean('all_day') && ! empty($data['start_at'])) {
             $d = Carbon::parse($data['start_at']);
@@ -127,7 +138,10 @@ class ReminderController extends Controller
         $resetNotifyState = ($oldStartStr !== $newStartStr)
             || ((bool) $reminder->all_day !== (bool) $newAllDay);
 
-        $payload = [
+        $alarmPayload = $this->buildAlarmPayload($request);
+        $alarmConfigChanged = $this->alarmConfigChanged($reminder, $alarmPayload);
+
+        $payload = array_merge([
             'title' => $data['title'],
             'tipo_accion' => $data['tipo_accion'],
             'description' => $data['description'] ?? $reminder->description,
@@ -144,12 +158,16 @@ class ReminderController extends Controller
             'repeat' => $data['repeat'] ?? $reminder->repeat,
             'deadline_at' => $deadlineAt,
             'scheduled_for' => $data['start_at'] ?? $reminder->scheduled_for,
-        ];
+        ], $alarmPayload);
 
-        if ($resetNotifyState) {
+        if ($resetNotifyState || $alarmConfigChanged) {
             $payload['notification_sent_at'] = null;
             $payload['pre_notification_sent_at'] = null;
             $payload['last_recurring_notify_at'] = null;
+            $payload['alarm_last_ring_at'] = null;
+            $payload['alarm_rings_count'] = 0;
+            $payload['alarm_window_started_at'] = null;
+            $payload['alarm_confirmed_at'] = null;
         }
 
         $reminder->update($payload);
@@ -161,9 +179,15 @@ class ReminderController extends Controller
     {
         $this->authorizeReminder($request, $reminder);
 
-        $reminder->update([
-            'is_done' => ! $reminder->is_done,
-        ]);
+        $nextDone = ! $reminder->is_done;
+        $update = ['is_done' => $nextDone];
+        if ($nextDone) {
+            $update['alarm_confirmed_at'] = now();
+        } else {
+            $update['alarm_confirmed_at'] = null;
+        }
+
+        $reminder->update($update);
 
         return back();
     }
@@ -178,7 +202,23 @@ class ReminderController extends Controller
     }
 
     /**
-     * Aplaza el inicio del recordatorio 5 minutos y reinicia el estado de avisos.
+     * El usuario confirma el recordatorio y se detienen las repeticiones de alarma.
+     */
+    public function confirmAlarm(Request $request, Reminder $reminder)
+    {
+        $this->authorizeReminder($request, $reminder);
+
+        $reminder->update(['alarm_confirmed_at' => now()]);
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['success' => true]);
+        }
+
+        return back()->with('success', 'Alarma confirmada.');
+    }
+
+    /**
+     * Aplaza el inicio del recordatorio 5 minutos y reinicia el estado de avisos y ciclo de alarma.
      */
     public function snooze(Request $request, Reminder $reminder)
     {
@@ -202,6 +242,9 @@ class ReminderController extends Controller
             'notification_sent_at' => null,
             'pre_notification_sent_at' => null,
             'last_recurring_notify_at' => null,
+            'alarm_last_ring_at' => null,
+            'alarm_rings_count' => 0,
+            'alarm_window_started_at' => null,
         ]);
 
         if ($request->wantsJson() || $request->ajax()) {
@@ -214,9 +257,96 @@ class ReminderController extends Controller
         return back()->with('success', 'Recordatorio aplazado 5 minutos.');
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    protected function buildAlarmPayload(Request $request): array
+    {
+        if (! $request->boolean('alarm_repeat_enabled')) {
+            return [
+                'alarm_repeat_enabled' => false,
+                'alarm_repeat_interval_minutes' => null,
+                'alarm_repeat_type' => null,
+                'alarm_repeat_value' => null,
+                'alarm_last_ring_at' => null,
+                'alarm_rings_count' => 0,
+                'alarm_window_started_at' => null,
+                'alarm_confirmed_at' => null,
+            ];
+        }
+
+        $preset = $request->input('alarm_interval_preset', '10');
+        if (! in_array($preset, ['5', '10', '15', 'custom'], true)) {
+            $preset = '10';
+        }
+
+        if ($preset === 'custom') {
+            $custom = (int) $request->input('alarm_interval_custom', 0);
+            if ($custom < 1) {
+                throw ValidationException::withMessages([
+                    'alarm_interval_custom' => ['Indica los minutos del intervalo personalizado (mínimo 1).'],
+                ]);
+            }
+            $minutes = $custom;
+        } else {
+            $minutes = (int) $preset;
+        }
+
+        $type = $request->input('alarm_repeat_type', Reminder::ALARM_REPEAT_UNTIL_CONFIRMED);
+        if (! in_array($type, [Reminder::ALARM_REPEAT_UNTIL_CONFIRMED, Reminder::ALARM_REPEAT_TIMES, Reminder::ALARM_REPEAT_DURATION], true)) {
+            $type = Reminder::ALARM_REPEAT_UNTIL_CONFIRMED;
+        }
+
+        $value = null;
+        if ($type === Reminder::ALARM_REPEAT_TIMES) {
+            $value = (int) $request->input('alarm_repeat_value', 0);
+            if ($value < 1) {
+                throw ValidationException::withMessages([
+                    'alarm_repeat_value' => ['Indica cuántas veces repetir la alarma después del aviso inicial (mínimo 1).'],
+                ]);
+            }
+        } elseif ($type === Reminder::ALARM_REPEAT_DURATION) {
+            $value = (int) $request->input('alarm_repeat_value', 0);
+            if ($value < 1) {
+                throw ValidationException::withMessages([
+                    'alarm_repeat_value' => ['Indica durante cuántos minutos puede sonar la alarma (mínimo 1).'],
+                ]);
+            }
+        }
+
+        return [
+            'alarm_repeat_enabled' => true,
+            'alarm_repeat_interval_minutes' => $minutes,
+            'alarm_repeat_type' => $type,
+            'alarm_repeat_value' => $value,
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $alarmPayload
+     */
+    protected function alarmConfigChanged(Reminder $reminder, array $alarmPayload): bool
+    {
+        $keys = ['alarm_repeat_enabled', 'alarm_repeat_interval_minutes', 'alarm_repeat_type', 'alarm_repeat_value'];
+        foreach ($keys as $key) {
+            $new = $alarmPayload[$key] ?? null;
+            $old = $reminder->getAttribute($key);
+            if ($key === 'alarm_repeat_enabled') {
+                if ((bool) $old !== (bool) $new) {
+                    return true;
+                }
+            } elseif ((string) $old !== (string) $new) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     protected function authorizeReminder(Request $request, Reminder $reminder): void
     {
-        abort_unless($reminder->user_id === $request->user()->id, 403);
+        $ownerId = (int) $reminder->user_id;
+        $currentId = (int) $request->user()->getAuthIdentifier();
+        abort_unless($ownerId === $currentId, 403);
     }
 }
-

@@ -93,6 +93,7 @@ Route::middleware(['auth', 'verified', 'ensure.role'])->group(function () {
     Route::get('/reminders', fn () => redirect()->route('notifications.index'))->name('reminders.index');
     Route::get('/reminders/{reminder}/edit', [ReminderController::class, 'edit'])->name('reminders.edit');
     Route::post('/reminders/{reminder}/snooze', [ReminderController::class, 'snooze'])->name('reminders.snooze');
+    Route::post('/reminders/{reminder}/confirm-alarm', [ReminderController::class, 'confirmAlarm'])->name('reminders.confirm-alarm');
     Route::post('/reminders', [ReminderController::class, 'store'])->name('reminders.store');
     Route::put('/reminders/{reminder}', [ReminderController::class, 'update'])->name('reminders.update');
     Route::patch('/reminders/{reminder}/toggle', [ReminderController::class, 'toggle'])->name('reminders.toggle');

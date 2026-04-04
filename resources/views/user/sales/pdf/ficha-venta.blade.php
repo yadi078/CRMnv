@@ -35,12 +35,6 @@
             padding: 0 28mm;
             vertical-align: top;
         }
-        td.pdf-layout__footer {
-            padding: 0;
-            margin: 0;
-            vertical-align: bottom;
-            line-height: 0;
-        }
 
         /* ── HEADER ── */
         .header {
@@ -252,34 +246,6 @@
         }
         .aviso .amarillo { color: #FFFF00; font-weight: bold; font-size: 8px; }
         .aviso .linea2 { color: #FFFF00; font-weight: bold; display: block; margin-top: 5px; font-size: 8px; }
-
-        /* ── FOOTER (fila completa: sin padding lateral; pegado al borde inferior de la hoja) ── */
-        .footer-wrap {
-            width: 100%;
-            line-height: 0;
-            margin: 0;
-            padding: 0;
-        }
-        .footer-img {
-            width: 100%;
-            max-height: 42mm;
-            height: auto;
-            display: block;
-            margin: 0;
-            padding: 0;
-        }
-        .footer-fallback {
-            background: #1A2B56;
-            color: #fff;
-            font-size: 7.5px;
-            line-height: 1.45;
-            padding: 10px 12px;
-            margin: 0;
-            width: 100%;
-            box-sizing: border-box;
-        }
-        .footer-fallback table { width: 100%; border-collapse: collapse; }
-        .footer-fallback td { vertical-align: top; padding: 3px 6px; }
     </style>
 </head>
 <body>
@@ -313,10 +279,6 @@
         if ($logoSrc = $embedImage($r)) {
             break;
         }
-    }
-    $footerSrc = null;
-    foreach (['images/ficha-pie-pagina.png','images/ficha-pie-pagina.jpg','images/ficha-pie-pagina.jpeg'] as $r) {
-        if ($footerSrc = $embedImage($r)) break;
     }
 
     $participantesTextoPdf = filled(trim((string)($sale->participantes_texto ?? '')));
@@ -467,32 +429,6 @@
     SE RESERVA EL DERECHO DE ABRIR, CANCELAR O CAMBIAR DE FECHA EL INICIO CUALQUIER PROGRAMA DE CAPACITACIÓN DE ACUERDO AL NÚMERO DE PARTICIPANTES ESTO POR RAZONES LOGÍSTICAS Y PEDAGÓGICAS.
     <span class="linea2">EN CASO DE CANCELACIÓN SE DEBERÁ NOTIFICAR 4 DÍAS ANTES DEL EVENTO</span>
 </div>
-
-</td>
-</tr>
-<tr>
-<td class="pdf-layout__footer" style="padding: 0; margin: 0; vertical-align: bottom; line-height: 0;">
-
-@if($footerSrc)
-    <div class="footer-wrap">
-        <img class="footer-img" src="{{ $footerSrc }}" alt="">
-    </div>
-@else
-    <div class="footer-fallback">
-        <table>
-            <tr>
-                <td style="width:38%;">AV. AYUNTAMIENTO 413, INT. 103 / FRACC. CEDROS – C.P. 20270 / AGUASCALIENTES, AGS.</td>
-                <td style="width:34%; text-align:center;">www.ceconsultoriaempresarial.com</td>
-                <td style="width:28%; text-align:right;">
-                    <strong>CONTÁCTANOS:</strong><br>
-                    449 664 52 90<br>
-                    449 425 41 54<br>
-                    CE Consultoría Empresarial
-                </td>
-            </tr>
-        </table>
-    </div>
-@endif
 
 </td>
 </tr>

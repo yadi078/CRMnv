@@ -8,12 +8,12 @@ use Illuminate\Notifications\Notification;
 
 class ReminderDueNotification extends Notification
 {
-    /** @param  'pre15'|'pre10'|'pre5'|'pre2'|'due'|'post3'  $phase */
+    /** @param  'pre15'|'pre10'|'pre5'|'pre2'|'due'|'post3'|'alarm_repeat'  $phase */
     public function __construct(
         public Reminder $reminder,
         public string $phase = 'due',
     ) {
-        $allowed = ['pre15', 'pre10', 'pre5', 'pre2', 'due', 'post3'];
+        $allowed = ['pre15', 'pre10', 'pre5', 'pre2', 'due', 'post3', 'alarm_repeat'];
         $this->phase = in_array($phase, $allowed, true) ? $phase : 'due';
     }
 
@@ -93,6 +93,20 @@ class ReminderDueNotification extends Notification
             }
         }
 
+        if ($rid >= 1 && ! Reminder::query()->where('user_id', $userId)->whereKey($rid)->exists()) {
+            $guessed = self::guessReminderIdForLegacyPayload($data, $userId);
+            if ($guessed !== null) {
+                $rid = $guessed;
+                $data['reminder_id'] = $rid;
+            } else {
+                $rid = 0;
+                unset($data['reminder_id']);
+                if (isset($data['reminder_detalle']) && is_array($data['reminder_detalle'])) {
+                    unset($data['reminder_detalle']['reminder_id']);
+                }
+            }
+        }
+
         $hasDetail = ! empty($data['reminder_detalle']) && is_array($data['reminder_detalle']);
         if ($rid >= 1 && ! $hasDetail) {
             $r = Reminder::where('user_id', $userId)->find($rid);
@@ -166,6 +180,7 @@ class ReminderDueNotification extends Notification
             'pre5' => 'En 5 min: ',
             'pre2' => 'En 2 min: ',
             'post3' => '+3 min (seguimiento): ',
+            'alarm_repeat' => 'Alarma repetida: ',
             default => '',
         };
 
@@ -204,6 +219,7 @@ class ReminderDueNotification extends Notification
             'pre5' => 'Recordatorio en 5 minutos',
             'pre2' => 'Recordatorio en 2 minutos',
             'post3' => 'Recordatorio: 3 min después de la hora',
+            'alarm_repeat' => 'Recordatorio (alarma repetida)',
             default => 'Recordatorio',
         };
 

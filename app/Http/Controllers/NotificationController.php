@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Reminder;
 use App\Notifications\ReminderDueNotification;
 use App\Services\ContactBirthdayNotifier;
+use App\Services\ReminderAlarmRepeater;
 use App\Services\ReminderDueNotifier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -26,21 +28,37 @@ class NotificationController extends Controller
             // Respaldo web: si no corre cron/scheduler, generar aquí los recordatorios debidos
             // para el usuario autenticado (15/10/5 min y hora).
             app(ReminderDueNotifier::class)->dispatchDue($user->id);
+            app(ReminderAlarmRepeater::class)->dispatchRepeats($user->id);
             $count = $user->unreadNotificationsCount();
             $display = $count > 99 ? '99+' : (string) $count;
 
-            $dueReminderAlerts = $user->unreadNotifications()
+            $notifRows = $user->unreadNotifications()
                 ->where('type', ReminderDueNotification::class)
                 ->latest()
                 ->limit(8)
+                ->get();
+
+            $reminderIds = $notifRows->map(function ($notification) {
+                $raw = $notification->data;
+                $data = is_array($raw) ? $raw : (is_string($raw) ? (json_decode($raw, true) ?: []) : []);
+
+                return isset($data['reminder_id']) ? (int) $data['reminder_id'] : 0;
+            })->filter(fn (int $id) => $id >= 1)->unique()->values();
+
+            $remindersById = Reminder::query()
+                ->where('user_id', $user->id)
+                ->whereIn('id', $reminderIds)
                 ->get()
-                ->map(function ($notification) use ($user) {
+                ->keyBy('id');
+
+            $dueReminderAlerts = $notifRows
+                ->map(function ($notification) use ($user, $remindersById) {
                     $raw = $notification->data;
                     $data = is_array($raw) ? $raw : (is_string($raw) ? (json_decode($raw, true) ?: []) : []);
                     $data = ReminderDueNotification::enrichStoredData($data, $user->id);
 
                     $phase = (string) ($data['alert_phase'] ?? 'due');
-                    if (! in_array($phase, ['pre15', 'pre10', 'pre5', 'pre2', 'due', 'post3'], true)) {
+                    if (! in_array($phase, ['pre15', 'pre10', 'pre5', 'pre2', 'due', 'post3', 'alarm_repeat'], true)) {
                         return null;
                     }
 
@@ -52,10 +70,15 @@ class NotificationController extends Controller
                     $description = trim((string) ($detail['descripcion'] ?? $data['mensaje'] ?? ''));
 
                     $reminderId = isset($data['reminder_id']) ? (int) $data['reminder_id'] : null;
+                    $reminderModel = $reminderId ? $remindersById->get($reminderId) : null;
+                    $needsAlarmConfirm = $reminderModel
+                        && $reminderModel->needsAlarmConfirmation()
+                        && in_array($phase, ['due', 'alarm_repeat'], true);
 
                     return [
                         'id' => (string) $notification->id,
                         'reminder_id' => $reminderId,
+                        'needs_alarm_confirm' => $needsAlarmConfirm,
                         'title' => $title !== '' ? $title : 'Recordatorio',
                         'time' => $fechaInicio,
                         'description' => $description,
@@ -94,6 +117,7 @@ class NotificationController extends Controller
 
         // Al abrir Notificaciones: mismo criterio que el scheduler (por si no corre el cron)
         app(ReminderDueNotifier::class)->dispatchDue($user->id);
+        app(ReminderAlarmRepeater::class)->dispatchRepeats($user->id);
 
         // Cumpleaños: respaldo web si el servidor no ejecuta `schedule:run`.
         // Se puede ejecutar en cada carga; el servicio evita duplicados por admin/contacto/día.
