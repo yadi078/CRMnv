@@ -92,27 +92,16 @@ class CompanyController extends Controller
             }
         }
 
-        $companyNames = collect();
-        if ($isAdmin) {
-            $companyNames = Company::orderBy('nombre_comercial')
-                ->pluck('nombre_comercial')
-                ->unique();
+        $companyNamesQuery = Company::query();
+        if (! $isAdmin) {
+            $companyNamesQuery->accessibleForExecutive($user);
         }
+        $companyNames = $companyNamesQuery->orderBy('nombre_comercial')
+            ->pluck('nombre_comercial')
+            ->unique()
+            ->values();
 
-        if (!$isAdmin) {
-            $misPendientes = Company::where('created_by', $user->id)->pendientes()->count();
-            $misEliminacionesPendientes = Company::where('created_by', $user->id)->where('deletion_pending', true)->count();
-
-            return view('user.companies.index', [
-                'companies' => $companies,
-                'misPendientes' => $misPendientes,
-                'misEliminacionesPendientes' => $misEliminacionesPendientes,
-                'companyContactsCard' => $companyContactsCard,
-                'empresasPorEstado' => Company::countsByEstadoForUser($user),
-            ]);
-        }
-
-        return view('companies.index', [
+        return $this->resolveView('companies.index', 'user.companies.index', [
             'companies' => $companies,
             'companyContactsCard' => $companyContactsCard,
             'companyNames' => $companyNames,
