@@ -4,7 +4,6 @@ namespace App\Policies;
 
 use App\Models\Sale;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
 class SalePolicy
 {
@@ -18,14 +17,24 @@ class SalePolicy
 
     /**
      * Determine whether the user can view the model.
-     * Admin ve todas; usuario solo las suyas (created_by).
+     * Admin ve todas; ejecutivo: las que registró o cualquiera de una empresa a la que tiene acceso
+     * (alineado con la ficha de empresa, donde se listan todas las ventas del cliente).
      */
     public function view(User $user, Sale $sale): bool
     {
         if (! $user->can('sales.view')) {
             return false;
         }
-        return $user->esAdmin() || $sale->created_by === $user->id;
+        if ($user->esAdmin()) {
+            return true;
+        }
+        if ((int) $sale->created_by === (int) $user->id) {
+            return true;
+        }
+
+        $sale->loadMissing('company');
+
+        return $sale->company !== null && $sale->company->isAccessibleByExecutive($user);
     }
 
     /**

@@ -68,6 +68,10 @@ class FiltrosController extends Controller
         }
 
         $user = $request->user();
+        if ($user && ! $user->esAdmin()) {
+            $toStore['filters'] = $this->filtersPayloadWithoutComercial($toStore['filters'] ?? []);
+        }
+
         if ($user) {
             $request->session()->put($this->filtrosSessionKey($user), $toStore);
         }
@@ -121,6 +125,9 @@ class FiltrosController extends Controller
 
         $filterLogic = DynamicFilterService::logicFromRequest($request);
         $filterSpecs = DynamicFilterService::parseFromRequest($request);
+        if (! $isAdmin) {
+            $filterSpecs = $this->filterSpecsWithoutComercial($filterSpecs);
+        }
         $resultScope = $this->resolveResultScope($request->input('result_scope'));
         $filterService = app(DynamicFilterService::class);
 
@@ -168,8 +175,13 @@ class FiltrosController extends Controller
             $contactFields,
             $companyFields,
             $baseContactsForOptions,
-            $baseCompaniesForOptions
+            $baseCompaniesForOptions,
+            $isAdmin
         );
+
+        if (! $isAdmin) {
+            unset($contactFields['comercial'], $companyFields['comercial']);
+        }
 
         // Recálculo de referencia para que el formulario use las opciones actualizadas.
         $fields = array_merge($companyFields, $contactFields);
@@ -263,6 +275,9 @@ class FiltrosController extends Controller
 
         $filterLogic = DynamicFilterService::logicFromRequest($request);
         $filterSpecs = DynamicFilterService::parseFromRequest($request);
+        if (! $isAdmin) {
+            $filterSpecs = $this->filterSpecsWithoutComercial($filterSpecs);
+        }
         $resultScope = $this->resolveResultScope($request->input('result_scope'));
         $filterService = app(DynamicFilterService::class);
 
@@ -277,8 +292,13 @@ class FiltrosController extends Controller
             $contactFields,
             $companyFields,
             $baseContactsForOptions,
-            $baseCompaniesForOptions
+            $baseCompaniesForOptions,
+            $isAdmin
         );
+
+        if (! $isAdmin) {
+            unset($contactFields['comercial'], $companyFields['comercial']);
+        }
 
         $fields = array_merge($companyFields, $contactFields);
 
@@ -352,7 +372,8 @@ class FiltrosController extends Controller
         array $contactFields,
         array $companyFields,
         $baseContactsForOptions,
-        $baseCompaniesForOptions
+        $baseCompaniesForOptions,
+        bool $includeComercialOptions = true
     ): array {
         $distinctToOptions = function ($query, string $col, int $limit = 200) {
             return $query->whereNotNull($col)
@@ -396,9 +417,11 @@ class FiltrosController extends Controller
         $contactFields['municipio']['options'] = $municipioOpts;
         $contactFields['estado']['options'] = $estadoOpts;
 
-        $comercialOpts = $this->comercialFilterOptions();
-        $contactFields['comercial']['options'] = $comercialOpts;
-        $companyFields['comercial']['options'] = $comercialOpts;
+        if ($includeComercialOptions) {
+            $comercialOpts = $this->comercialFilterOptions();
+            $contactFields['comercial']['options'] = $comercialOpts;
+            $companyFields['comercial']['options'] = $comercialOpts;
+        }
 
         $contactFields['domicilio']['options'] = [
             'con_domicilio' => 'Con domicilio',
@@ -548,6 +571,11 @@ class FiltrosController extends Controller
 
         if (! is_array($stored) || $stored === []) {
             return;
+        }
+
+        if ($user && ! $user->esAdmin()) {
+            $stored['filters'] = $this->filtersPayloadWithoutComercial($stored['filters'] ?? []);
+            $request->session()->put($this->filtrosSessionKey($user), $stored);
         }
 
         $query = $request->query();
@@ -852,5 +880,40 @@ class FiltrosController extends Controller
         }
 
         return $query;
+    }
+
+    /**
+     * @param  array<int, FilterSpec>  $specs
+     * @return array<int, FilterSpec>
+     */
+    private function filterSpecsWithoutComercial(array $specs): array
+    {
+        return array_values(array_filter($specs, fn ($s) => $s->field !== 'comercial'));
+    }
+
+    /**
+     * Elimina filas de filtro por ejecutivo del array persistido (sesión / usuario).
+     *
+     * @param  mixed  $filters
+     * @return array<int, mixed>
+     */
+    private function filtersPayloadWithoutComercial(mixed $filters): array
+    {
+        if (! is_array($filters)) {
+            return [];
+        }
+
+        $out = [];
+        foreach ($filters as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+            if (($item['field'] ?? '') === 'comercial') {
+                continue;
+            }
+            $out[] = $item;
+        }
+
+        return $out;
     }
 }

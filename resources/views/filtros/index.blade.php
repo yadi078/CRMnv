@@ -32,6 +32,9 @@
                 'domicilio' => 'Domicilio',
                 'no_recibir_correos' => 'No desea recibir correos',
             ];
+            if (! ($isAdmin ?? true)) {
+                unset($excelHeaders['comercial']);
+            }
             $fieldOptions = [];
             foreach ($excelHeaders as $key => $label) {
                 $options = $fields[$key]['options'] ?? [];
