@@ -162,7 +162,7 @@
                     <div class="flex flex-wrap items-center gap-2">
                         <a href="{{ route('user.sales.create', ['company_id' => $company->id]) }}" class="company-show__btn-action">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" /></svg>
-                            Nueva Venta
+                            Generar ficha de inscripción
                         </a>
                     </div>
                     @endcan
@@ -177,9 +177,21 @@
                             <p class="company-show__list-meta">{{ $sale->participantes }} participantes</p>
                             @endif
                         </div>
-                        <a href="{{ \App\Support\CrmNavigation::withReturn(route('user.sales.show', $sale)) }}" class="company-show__list-link" aria-label="Ver venta" title="Ver venta">
-                            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                        </a>
+                        <div class="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+                            <a href="{{ \App\Support\CrmNavigation::withReturn(route('user.sales.show', $sale)) }}" class="company-show__list-link text-xs font-semibold uppercase tracking-wide" aria-label="Ver venta" title="Ver venta">Ver</a>
+                            @can('view', $sale)
+                            <a href="{{ route('user.sales.ficha-pdf', $sale) }}" target="_blank" rel="noopener noreferrer" class="company-show__list-link" title="Descargar ficha de inscripción (PDF)" aria-label="Descargar ficha de inscripción (PDF)">
+                                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            </a>
+                            @endcan
+                            @can('delete', $sale)
+                            <form method="POST" action="{{ route('user.sales.destroy', $sale) }}" class="inline" onsubmit="return confirm('¿Eliminar esta venta del historial? Esta acción no se puede deshacer.');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="company-show__list-link text-xs font-semibold uppercase tracking-wide text-red-300 hover:text-red-200" title="Eliminar venta">Eliminar</button>
+                            </form>
+                            @endcan
+                        </div>
                     </div>
                     @empty
                     <p class="company-show__empty">No hay ventas registradas</p>

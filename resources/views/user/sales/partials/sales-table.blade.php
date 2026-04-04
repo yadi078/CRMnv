@@ -2,6 +2,8 @@
     $emptyExtra = $emptyExtra ?? null;
     $suppressGlobalCreateLink = $suppressGlobalCreateLink ?? false;
     $showFichaInscripcionColumn = $showFichaInscripcionColumn ?? false;
+    $showActionsColumn = $showActionsColumn ?? true;
+    $salesTableColCount = 3 + ($showFichaInscripcionColumn ? 1 : 0) + ($showActionsColumn ? 1 : 0);
 @endphp
 <div class="crm-responsive-x">
     <table class="min-w-full border-collapse">
@@ -13,6 +15,9 @@
                 <th class="text-left py-3 px-6 text-[#FFE600] font-semibold text-sm uppercase tracking-wide">Empresa</th>
                 <th class="text-left py-3 px-6 text-[#FFE600] font-semibold text-sm uppercase tracking-wide">Contacto</th>
                 <th class="text-left py-3 px-6 text-[#FFE600] font-semibold text-sm uppercase tracking-wide">Curso vendido</th>
+                @if($showActionsColumn)
+                <th class="text-left py-3 px-4 sm:px-6 text-[#FFE600] font-semibold text-sm uppercase tracking-wide whitespace-nowrap">Acciones</th>
+                @endif
             </tr>
         </thead>
         <tbody>
@@ -52,10 +57,26 @@
                         <span class="text-white/60">—</span>
                     @endif
                 </td>
+                @if($showActionsColumn)
+                <td class="py-4 px-4 sm:px-6 align-top whitespace-nowrap">
+                    <div class="flex flex-wrap items-center gap-2">
+                        @can('view', $sale)
+                        <a href="{{ \App\Support\CrmNavigation::withReturn(route('user.sales.show', $sale)) }}" class="text-sm font-semibold text-[#FFE600] hover:text-white underline underline-offset-2">Ver</a>
+                        @endcan
+                        @can('delete', $sale)
+                        <form method="POST" action="{{ route('user.sales.destroy', $sale) }}" class="inline" onsubmit="return confirm('¿Eliminar esta venta del historial? Esta acción no se puede deshacer.');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="text-sm font-semibold text-red-300 hover:text-red-200 underline underline-offset-2">Eliminar</button>
+                        </form>
+                        @endcan
+                    </div>
+                </td>
+                @endif
             </tr>
             @empty
             <tr>
-                <td colspan="{{ $showFichaInscripcionColumn ? 4 : 3 }}" class="py-8 px-6 text-center text-white/80">
+                <td colspan="{{ $salesTableColCount }}" class="py-8 px-6 text-center text-white/80">
                     No hay ventas registradas.
                     @if($emptyExtra)
                         {!! $emptyExtra !!}

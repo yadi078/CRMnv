@@ -608,6 +608,11 @@ form.company-edit-form-in-modal input:not([type="checkbox"]):not([type="radio"])
   }
 }
 
+/* Reserva bajo el contenido para la barra fija del slogan (viewport) */
+:root {
+  --crm-slogan-bar-reserve: max(11rem, calc(7.25rem + env(safe-area-inset-bottom, 0px)));
+}
+
 /* Área principal: margen por sidebar flotante solo en desktop; min-width 0 evita que se “moche” */
 .sidebar-layout__main {
   flex: 1;
@@ -619,6 +624,7 @@ form.company-edit-form-in-modal input:not([type="checkbox"]):not([type="radio"])
   flex-direction: column;
   width: 100%;
   overflow-x: hidden;
+  padding-bottom: var(--crm-slogan-bar-reserve);
 }
 
 @media (min-width: 1025px) {
@@ -630,18 +636,18 @@ form.company-edit-form-in-modal input:not([type="checkbox"]):not([type="radio"])
   }
 }
 
-/* Barra del slogan fija al pie de la ventana: centrada y no se mueve */
+/* Barra del slogan: fija al pie del viewport (hijo directo de body), no interfiere con el scroll del contenido */
 .slogan-bar-fixed {
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
   z-index: 20;
+  inset-inline: 0;
+  bottom: 0;
   display: flex;
   justify-content: center;
-  align-items: center;
-  padding: 0.75rem 1rem max(0.75rem, env(safe-area-inset-bottom));
+  align-items: flex-end;
+  padding: 0.5rem 1rem max(0.5rem, env(safe-area-inset-bottom));
   pointer-events: none;
+  box-sizing: border-box;
 }
 
 .slogan-bar-fixed__inner {
@@ -653,15 +659,10 @@ form.company-edit-form-in-modal input:not([type="checkbox"]):not([type="radio"])
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 70px;
-  padding: 1rem 1.5rem;
+  min-height: 3.25rem;
+  padding: 0.65rem 1.25rem;
   border-radius: var(--radius-card);
   box-sizing: border-box;
-}
-
-/* Espacio al final del contenido para que no quede tapado por la barra fija del slogan */
-.sidebar-layout__main {
-  padding-bottom: calc(152px + env(safe-area-inset-bottom, 0px));
 }
 
 /* Filtros: el desplegable de opciones no debe recortarse por el panel */
@@ -671,7 +672,9 @@ form.company-edit-form-in-modal input:not([type="checkbox"]):not([type="radio"])
 
 @media (min-width: 1025px) {
   .slogan-bar-fixed {
-    left: calc(var(--sidebar-width-expanded) + 32px);
+    inset-inline-start: calc(var(--sidebar-width-expanded) + 32px);
+    inset-inline-end: 1rem;
+    padding-inline-end: 0;
   }
 }
 
@@ -696,6 +699,79 @@ form.company-edit-form-in-modal input:not([type="checkbox"]):not([type="radio"])
   white-space: normal;
   line-height: 1.25;
   padding-inline: clamp(0.25rem, 2vw, 1rem);
+}
+
+/* Barra de slogan: bloque tipo aviso con icono de importancia */
+.top-bar-gradient.crm-slogan-notice {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.875rem 1rem;
+  flex-wrap: wrap;
+  background: linear-gradient(155deg, #1e4a7a 0%, #153a62 38%, #0c2748 72%, #071a3d 100%);
+  border-width: 2px;
+  box-shadow:
+    0 -6px 28px rgba(7, 26, 61, 0.45),
+    0 4px 20px rgba(30, 73, 118, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.crm-slogan-notice__icon-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2.875rem;
+  height: 2.875rem;
+  border-radius: 9999px;
+  background: rgba(255, 230, 0, 0.14);
+  border: 2px solid var(--color-accent);
+  color: var(--color-accent);
+  box-shadow:
+    0 0 0 1px rgba(255, 230, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.crm-slogan-notice__icon {
+  width: 1.4rem;
+  height: 1.4rem;
+}
+
+.crm-slogan-notice__body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  min-width: 0;
+  text-align: center;
+}
+
+.crm-slogan-notice__eyebrow {
+  margin: 0;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.crm-slogan-notice__title.top-bar-gradient__slogan,
+.crm-slogan-notice .crm-slogan-notice__title {
+  padding-inline: 0;
+  line-height: 1.2;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+@media (min-width: 640px) {
+  .crm-slogan-notice__body {
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .crm-slogan-notice__title.top-bar-gradient__slogan,
+  .crm-slogan-notice .crm-slogan-notice__title {
+    text-align: left;
+  }
 }
 
 .sidebar-layout__header {

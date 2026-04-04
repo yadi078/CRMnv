@@ -100,6 +100,7 @@ class RolePermissionSeeder extends Seeder
             'sales.view',
             'sales.create',
             'sales.edit',
+            'sales.delete',
             'dashboard.view',
         ]);
     }

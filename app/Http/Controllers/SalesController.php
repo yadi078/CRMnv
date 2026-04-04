@@ -368,8 +368,7 @@ class SalesController extends Controller
         $this->authorize('delete', $sale);
         $sale->delete();
 
-        return redirect()->route('user.sales.index')
-            ->with('success', 'Venta eliminada correctamente.');
+        return back()->with('success', 'Venta eliminada correctamente.');
     }
 
     /**

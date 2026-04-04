@@ -2,7 +2,7 @@
     $suppressGlobalCreateLink = true;
     $emptyExtra = null;
     if ($scope === 'company' && $sales->isEmpty() && auth()->user()->can('sales.create')) {
-        $emptyExtra = '<a href="' . e(route('user.sales.create', ['company_id' => $company->id])) . '" class="text-[#FFE600] hover:text-white underline ml-1">Registrar venta para esta empresa</a>';
+        $emptyExtra = '<a href="' . e(route('user.sales.create', ['company_id' => $company->id])) . '" class="text-[#FFE600] hover:text-white underline ml-1">Generar ficha de inscripción para esta empresa</a>';
     }
 @endphp
 <x-app-user-layout>
@@ -26,7 +26,7 @@
                             class="inline-flex items-center gap-2 rounded-xl bg-[#FFE600] px-3.5 py-2 text-sm font-semibold text-[#071A3D] shadow-sm transition-all hover:bg-yellow-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFE600]/50"
                         >
                             <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                            <span>Registrar nueva venta</span>
+                            <span>Generar ficha de inscripción</span>
                         </a>
                     @else
                         <a
@@ -65,7 +65,7 @@
                     @can('sales.create')
                         <a href="{{ route('user.sales.create', ['company_id' => $company->id]) }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#FFE600] text-[#071A3D] font-semibold text-sm shadow hover:bg-yellow-300 transition-colors shrink-0 self-end sm:self-auto">
                             <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                            Registrar nueva venta
+                            Generar ficha de inscripción
                         </a>
                     @endcan
                 </div>
