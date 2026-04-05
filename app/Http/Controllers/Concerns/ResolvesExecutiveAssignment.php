@@ -155,16 +155,26 @@ trait ResolvesExecutiveAssignment
     /**
      * @return array{executiveUsers: \Illuminate\Support\Collection, isAdmin: bool, selectedAssignedUserId: int|null, readonlyExecutiveName: string}
      */
-    protected function contactExecutiveFormContext(?Contact $contact = null): array
+    protected function contactExecutiveFormContext(?Contact $contact = null, ?Company $companyForDefaults = null): array
     {
         $user = auth()->user();
         $executiveUsers = User::ejecutivosAsignables();
         $isAdmin = $user->esAdmin();
         $defaultId = $this->defaultAssignedUserId($user);
 
+        $resolvedCompanyExecutiveId = null;
+        if ($contact === null && $companyForDefaults) {
+            if (! $companyForDefaults->assigned_user_id && $companyForDefaults->ejecutivo_asignado) {
+                $resolvedCompanyExecutiveId = $executiveUsers
+                    ->firstWhere('name', $companyForDefaults->ejecutivo_asignado)?->id;
+            } else {
+                $resolvedCompanyExecutiveId = $companyForDefaults->assigned_user_id;
+            }
+        }
+
         $selectedAssignedUserId = old(
             'assigned_user_id',
-            $contact?->assigned_user_id ?? $defaultId
+            $contact?->assigned_user_id ?? $resolvedCompanyExecutiveId ?? $defaultId
         );
         if ($selectedAssignedUserId !== null) {
             $selectedAssignedUserId = (int) $selectedAssignedUserId;
@@ -172,7 +182,11 @@ trait ResolvesExecutiveAssignment
 
         $readonlyExecutiveName = $contact
             ? ($contact->assignedExecutive?->name ?? $user->name)
-            : $user->name;
+            : ($companyForDefaults
+                ? ($companyForDefaults->assignedExecutive?->name
+                    ?? $companyForDefaults->ejecutivo_asignado
+                    ?? $user->name)
+                : $user->name);
 
         return [
             'executiveUsers' => $executiveUsers,

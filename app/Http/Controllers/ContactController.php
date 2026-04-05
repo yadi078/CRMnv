@@ -81,12 +81,25 @@ class ContactController extends Controller
         $this->authorize('create', Contact::class);
 
         $companyId = $request->company_id;
+        $prefillCompany = null;
+        if ($request->filled('company_id')) {
+            $cid = (int) $request->input('company_id');
+            if ($cid > 0) {
+                $prefillCompany = Company::query()
+                    ->with('assignedExecutive')
+                    ->find($cid);
+                if ($prefillCompany) {
+                    $this->authorize('view', $prefillCompany);
+                }
+            }
+        }
+
         $companies = Company::forExecutiveContactForm($request->user());
         $workAreas = WorkArea::namesForContactForms();
 
         return $this->resolveView('contacts.create', 'user.contacts.create', array_merge(
             compact('companies', 'companyId', 'workAreas'),
-            $this->contactExecutiveFormContext(null)
+            $this->contactExecutiveFormContext(null, $prefillCompany)
         ));
     }
 
