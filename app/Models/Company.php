@@ -257,12 +257,23 @@ class Company extends Model
     }
 
     /**
-     * Empresas disponibles al crear/editar un contacto: todas las dadas de alta y aprobadas.
-     * El ejecutivo elige empresa en el desplegable; la validación exige empresa aprobada.
+     * Empresas disponibles al crear/editar un contacto.
+     * - Administrador: todas las aprobadas (solo id y nombre para el desplegable).
+     * - Ejecutivo: solo cartera ({@see scopeAccessibleForExecutive}) y aprobadas, para no cargar miles de filas y colgar la página.
+     * El controlador añade la empresa actual del contacto si no estuviera en el listado.
      */
     public static function forExecutiveContactForm(User $user): \Illuminate\Database\Eloquent\Collection
     {
-        return static::aprobadosOrdenados()->get();
+        $q = static::query()
+            ->aprobados()
+            ->orderBy('nombre_comercial')
+            ->select(['id', 'nombre_comercial', 'approval_status']);
+
+        if (! $user->esAdmin()) {
+            $q->accessibleForExecutive($user);
+        }
+
+        return $q->get();
     }
 
     /**

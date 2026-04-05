@@ -69,6 +69,14 @@ class ExecutiveController extends Controller
                     $query['user_search'] = (string) $request->query('user_search');
                 }
 
+                // Tras POST (p. ej. restablecer contraseña) los flashes deben sobrevivir a esta redirección encadenada.
+                if ($request->session()->has('managed_user_id')
+                    || $request->session()->has('admin_generated_password')
+                    || $request->session()->has('admin_password_user_id')
+                    || $request->session()->has('success')) {
+                    $request->session()->reflash();
+                }
+
                 $redirect = redirect()->route('executives.index', $query);
                 if ($request->filled('user_search')) {
                     $redirect->withFragment('asistencia-contrasenas');

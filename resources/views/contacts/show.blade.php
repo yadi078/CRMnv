@@ -1,16 +1,20 @@
 <x-app-layout>
     <x-slot name="header">
-        <x-page-header-avatar><svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg></x-page-header-avatar>
-        <div>
-            <h2 class="page-header-card__title">{{ $contact->nombre_completo }}</h2>
-            <p class="page-header-card__subtitle">Detalle de contacto</p>
+        <div class="flex w-full min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+            <div class="flex min-w-0 items-center gap-4">
+                <x-page-header-avatar><svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg></x-page-header-avatar>
+                <div class="min-w-0">
+                    <h2 class="page-header-card__title break-words">{{ $contact->nombre_completo }}</h2>
+                    <p class="page-header-card__subtitle">Detalle de contacto</p>
+                </div>
+            </div>
+            @include('contacts.partials.show-header-actions', [
+                'contact' => $contact,
+                'hideGenerarFichaEnCabecera' => true,
+            ])
         </div>
-        @include('contacts.partials.show-header-actions', [
-            'contact' => $contact,
-            'hideGenerarFichaEnCabecera' => true,
-        ])
     </x-slot>
 
     <div class="space-y-8">

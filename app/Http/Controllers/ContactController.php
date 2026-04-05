@@ -236,8 +236,10 @@ class ContactController extends Controller
             $sale->load(['saleParticipants', 'creator']);
         }
 
+        $contactFichaPdfReady = $contact->fichaPdfCompletaUsingSale($sale);
+
         return $this->resolveView('contacts.edit', 'user.contacts.edit', array_merge(
-            compact('contact', 'companies', 'workAreas', 'sale'),
+            compact('contact', 'companies', 'workAreas', 'sale', 'contactFichaPdfReady'),
             $this->contactExecutiveFormContext($contact)
         ));
     }

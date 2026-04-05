@@ -166,11 +166,10 @@ class Contact extends Model
     }
 
     /**
-     * Datos mínimos de venta presentes para permitir descargar el PDF de ficha de inscripción.
+     * Misma regla que {@see fichaPdfCompleta()} pero usando una venta ya cargada (evita otra consulta en vistas).
      */
-    public function fichaPdfCompleta(): bool
+    public function fichaPdfCompletaUsingSale(?Sale $sale): bool
     {
-        $sale = $this->latestSale();
         if ($sale === null) {
             return false;
         }
@@ -184,6 +183,14 @@ class Contact extends Model
             && $sale->monto !== null
             && filled($sale->tipo_pago)
             && (int) ($sale->participantes ?? 0) >= 1;
+    }
+
+    /**
+     * Datos mínimos de venta presentes para permitir descargar el PDF de ficha de inscripción.
+     */
+    public function fichaPdfCompleta(): bool
+    {
+        return $this->fichaPdfCompletaUsingSale($this->latestSale());
     }
 
     /**

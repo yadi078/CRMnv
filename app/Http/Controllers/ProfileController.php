@@ -8,7 +8,6 @@ use App\Models\WorkArea;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -131,13 +130,17 @@ class ProfileController extends Controller
 
         abort_if($managedUser->id === $request->user()->id, 422, 'No puedes restablecer tu propia contraseña desde este panel.');
 
-        $plainPassword = $validated['new_password'] ?: Str::password(12, true, true, false, false);
+        $chosen = isset($validated['new_password']) ? trim((string) $validated['new_password']) : '';
+        $plainPassword = $chosen !== '' ? $chosen : Str::password(12, true, true, false, false);
 
+        // El modelo User usa cast "hashed": asignar texto plano (Hash::make aquí provocaría doble hash si no se detectara).
         $managedUser->forceFill([
-            'password' => Hash::make($plainPassword),
+            'password' => $plainPassword,
         ])->save();
 
-        return Redirect::route('executives.index')
+        return Redirect::route('executives.index', [
+            'user_search' => $managedUser->email,
+        ])
             ->withFragment('asistencia-contrasenas')
             ->with('success', 'Contraseña restablecida correctamente.')
             ->with('managed_user_id', $managedUser->id)
