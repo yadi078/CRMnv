@@ -164,29 +164,38 @@
             </div>
 
             @if(isset($importOnlyExecutiveNames) && $importOnlyExecutiveNames->isNotEmpty())
-                <div class="rounded-2xl border border-[#FFE600]/25 bg-[#071A3D]/80 p-4 sm:p-5 space-y-4">
+                <div class="panel-card-dark p-4 sm:p-6 space-y-5 border-2 border-[#0a2454] shadow-lg">
                     <div>
-                        <h3 class="text-base font-bold text-[#FFE600] tracking-tight">Solo en datos importados</h3>
-                        <p class="text-xs text-white/65 mt-1 leading-snug max-w-3xl">
-                            Comerciales que aparecen en el campo <strong class="text-white/85">ejecutivo asignado</strong> de las empresas cargadas (Excel, etc.) y que <strong class="text-white/85">no coinciden</strong> con el nombre de ningún usuario del CRM. Pulse una tarjeta para ver los contactos filtrados por ese comercial.
+                        <h3 class="text-lg font-bold text-[#FFE600] tracking-tight text-center sm:text-left">Solo en datos importados</h3>
+                        <p class="text-xs text-white/65 mt-2 leading-snug max-w-3xl mx-auto sm:mx-0 text-center sm:text-left">
+                            Comerciales en <strong class="text-white/85">ejecutivo asignado</strong> (Excel, etc.) que <strong class="text-white/85">no coinciden</strong> con un usuario del CRM. Abra la tarjeta para filtrar contactos.
                         </p>
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
                         @foreach($importOnlyExecutiveNames as $importLabel)
                             @php($eKey = 'E:'.base64_encode($importLabel))
-                            <a
-                                href="{{ route('executives.index', array_merge(request()->except('page'), ['ejecutivo_id' => $eKey])) }}#asignaciones-filtros"
-                                class="group rounded-xl border border-white/15 bg-white/[0.04] p-4 flex gap-3 items-start hover:border-[#FFE600]/45 hover:bg-white/[0.07] transition-colors focus:outline-none focus:ring-2 focus:ring-[#FFE600]/50"
+                            @php($ini = mb_strtoupper(mb_substr(trim($importLabel), 0, 2, 'UTF-8'), 'UTF-8'))
+                            @php($ini = $ini !== '' ? $ini : '?')
+                            <div
+                                class="group relative rounded-2xl bg-[#071A3D] border border-[#0a2454] shadow-lg overflow-hidden transition transform hover:-translate-y-0.5 hover:shadow-xl hover:border-[#FFE600]/40 focus-within:ring-2 focus-within:ring-[#FFE600] focus-within:ring-offset-2 focus-within:ring-offset-white"
                             >
-                                <div class="w-12 h-12 rounded-full bg-amber-500/15 flex items-center justify-center text-amber-200 border border-amber-400/30 shrink-0 text-xs font-bold">
-                                    @php($ini = mb_strtoupper(mb_substr(trim($importLabel), 0, 2, 'UTF-8'), 'UTF-8'))
-                                    {{ $ini !== '' ? $ini : '?' }}
-                                </div>
-                                <div class="min-w-0 flex-1">
-                                    <p class="text-sm font-semibold text-white group-hover:text-[#FFE600] transition-colors break-words">{{ $importLabel }}</p>
-                                    <p class="text-[11px] text-white/55 mt-1">Sin cuenta de usuario · ver asignaciones</p>
-                                </div>
-                            </a>
+                                <a
+                                    href="{{ route('executives.index', array_merge(request()->except('page'), ['ejecutivo_id' => $eKey])) }}#asignaciones-filtros"
+                                    class="block p-5 flex gap-4 items-start focus:outline-none"
+                                >
+                                    <div class="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center text-lg font-bold text-[#FFE600] border-2 border-[#FFE600]/40 flex-shrink-0">
+                                        {{ $ini }}
+                                    </div>
+                                    <div class="min-w-0 flex-1 pr-2">
+                                        <h3 class="text-lg font-semibold text-white break-words group-hover:text-[#FFE600] transition-colors">{{ $importLabel }}</h3>
+                                        <p class="text-sm text-white/75 mt-1">Sin correo en el CRM · solo texto en empresas</p>
+                                        <p class="mt-3 flex flex-wrap items-center gap-2">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-medium bg-[#FFE600]/15 text-[#FFE600] border border-[#FFE600]/40">Importación</span>
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">En base de datos</span>
+                                        </p>
+                                    </div>
+                                </a>
+                            </div>
                         @endforeach
                     </div>
                 </div>
