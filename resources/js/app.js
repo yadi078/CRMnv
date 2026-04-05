@@ -49,6 +49,143 @@ function crmInitRowMarkers(root) {
     el.querySelectorAll('.crm-row-marker').forEach(crmApplyMarkerButton);
 }
 
+/** Tras filtrar o paginar (GET), el navegador recarga y el scroll vuelve arriba; lo guardamos y restauramos. */
+const CRM_FILTER_SCROLL_KEY = 'crm_filter_scroll_restore_v1';
+let crmPendingFilterScroll = null;
+
+function crmSaveScrollForFilterNavigation(pathname) {
+    try {
+        sessionStorage.setItem(
+            CRM_FILTER_SCROLL_KEY,
+            JSON.stringify({
+                y: window.scrollY,
+                x: window.scrollX,
+                path: pathname,
+            })
+        );
+    } catch (e) {
+        /* ignore */
+    }
+}
+
+function crmApplyPendingFilterScroll() {
+    if (!crmPendingFilterScroll) {
+        return;
+    }
+    const { x, y } = crmPendingFilterScroll;
+    const top = Math.max(0, Number(y) || 0);
+    const left = Math.max(0, Number(x) || 0);
+    const apply = () => window.scrollTo(left, top);
+    const finish = () => {
+        crmPendingFilterScroll = null;
+    };
+    requestAnimationFrame(() => requestAnimationFrame(apply));
+    if (document.readyState === 'complete') {
+        apply();
+        setTimeout(apply, 100);
+        finish();
+    } else {
+        window.addEventListener(
+            'load',
+            () => {
+                apply();
+                setTimeout(apply, 100);
+                finish();
+            },
+            { once: true }
+        );
+    }
+}
+
+document.addEventListener(
+    'submit',
+    function (e) {
+        const form = e.target;
+        if (!(form instanceof HTMLFormElement)) {
+            return;
+        }
+        if (form.hasAttribute('data-crm-no-scroll-restore')) {
+            return;
+        }
+        const method = (form.getAttribute('method') || 'get').toLowerCase();
+        if (method !== 'get') {
+            return;
+        }
+        try {
+            const actionUrl = new URL(form.action || window.location.href, window.location.origin);
+            if (actionUrl.origin !== window.location.origin) {
+                return;
+            }
+            crmSaveScrollForFilterNavigation(actionUrl.pathname);
+        } catch (err) {
+            /* ignore */
+        }
+    },
+    true
+);
+
+document.addEventListener(
+    'click',
+    function (e) {
+        const a = e.target.closest('a');
+        if (!a || a.target === '_blank' || e.defaultPrevented) {
+            return;
+        }
+        if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) {
+            return;
+        }
+        if (a.hasAttribute('data-crm-no-scroll-restore')) {
+            return;
+        }
+        const href = a.getAttribute('href');
+        if (!href || href.trim().startsWith('#')) {
+            return;
+        }
+        try {
+            const u = new URL(a.href, window.location.origin);
+            if (u.origin !== window.location.origin) {
+                return;
+            }
+            if (u.pathname !== window.location.pathname) {
+                return;
+            }
+            const next = u.pathname + u.search;
+            const cur = window.location.pathname + window.location.search;
+            if (next === cur) {
+                return;
+            }
+            crmSaveScrollForFilterNavigation(u.pathname);
+        } catch (err) {
+            /* ignore */
+        }
+    },
+    true
+);
+
+document.addEventListener('DOMContentLoaded', function () {
+    const raw = sessionStorage.getItem(CRM_FILTER_SCROLL_KEY);
+    if (!raw) {
+        return;
+    }
+    sessionStorage.removeItem(CRM_FILTER_SCROLL_KEY);
+    try {
+        const data = JSON.parse(raw);
+        if (!data || typeof data.path !== 'string') {
+            return;
+        }
+        if (window.location.pathname !== data.path) {
+            return;
+        }
+        crmPendingFilterScroll = {
+            x: data.x,
+            y: data.y,
+        };
+        crmApplyPendingFilterScroll();
+    } catch (err) {
+        /* ignore */
+    }
+});
+
 window.crmInitRowMarkers = crmInitRowMarkers;
 
 /**
