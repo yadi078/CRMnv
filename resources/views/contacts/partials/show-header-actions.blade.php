@@ -15,7 +15,6 @@
             </a>
         @endcan
     @endunless
-    <x-contact-reminder-button :contact="$contact" />
     @can('contacts.edit')
         <a href="{{ \App\Support\CrmNavigation::withReturn(route('contacts.edit', $contact)) }}" class="btn-amber-app">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">

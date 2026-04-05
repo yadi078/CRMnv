@@ -776,11 +776,9 @@
 
         {{-- Asistencia de contraseñas (al final de la página) --}}
         <div class="panel-card-dark overflow-hidden">
-            <div class="p-6 sm:p-8">
-                <div class="max-w-xl">
-                    @include('profile.partials.admin-user-password-assistance')
-                </div>
-        </div>
+            <div class="p-4 sm:p-5">
+                @include('profile.partials.admin-user-password-assistance')
+            </div>
         </div>
 
         {{-- Modal: elegir responsable y confirmar asignación al contacto --}}

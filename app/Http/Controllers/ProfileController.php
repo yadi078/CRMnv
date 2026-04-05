@@ -138,6 +138,7 @@ class ProfileController extends Controller
         ])->save();
 
         return Redirect::route('executives.index')
+            ->withFragment('asistencia-contrasenas')
             ->with('success', 'Contraseña restablecida correctamente.')
             ->with('managed_user_id', $managedUser->id)
             ->with('admin_generated_password', $plainPassword)

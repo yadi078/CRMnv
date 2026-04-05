@@ -49,7 +49,7 @@ class ExecutiveController extends Controller
                 ->filter(fn ($v) => $v !== null && $v !== '')
                 ->all();
 
-            return redirect()->route('executives.index', $query);
+            return redirect()->route('executives.index', $query)->withFragment('asistencia-contrasenas');
         }
 
         $this->ensureWebRoleExists('usuario');
@@ -69,7 +69,12 @@ class ExecutiveController extends Controller
                     $query['user_search'] = (string) $request->query('user_search');
                 }
 
-                return redirect()->route('executives.index', $query);
+                $redirect = redirect()->route('executives.index', $query);
+                if ($request->filled('user_search')) {
+                    $redirect->withFragment('asistencia-contrasenas');
+                }
+
+                return $redirect;
             }
         }
 
@@ -431,18 +436,46 @@ class ExecutiveController extends Controller
         }
         $unifiedContactsForList = $unifiedContactsForList->sortBy('nombre_completo')->values();
 
+        $empresasCountByEstado = $user->assignedCompanies
+            ->groupBy(static function ($company): string {
+                $e = trim((string) ($company->estado ?? ''));
+
+                return $e === '' ? 'Sin estado' : $e;
+            })
+            ->map(static fn (Collection $group): int => $group->count());
+
+        $canonicalOrder = array_flip(MexicanStates::all());
+        $empresasCountByEstado = $empresasCountByEstado
+            ->map(static fn (int $count, string $estado): array => ['estado' => $estado, 'count' => $count])
+            ->values()
+            ->sort(static function (array $a, array $b) use ($canonicalOrder): int {
+                $ax = $a['estado'];
+                $ay = $b['estado'];
+                if ($ax === 'Sin estado') {
+                    return 1;
+                }
+                if ($ay === 'Sin estado') {
+                    return -1;
+                }
+                $ix = $canonicalOrder[$ax] ?? null;
+                $iy = $canonicalOrder[$ay] ?? null;
+                if ($ix !== null && $iy !== null) {
+                    return $ix <=> $iy;
+                }
+                if ($ix !== null) {
+                    return -1;
+                }
+                if ($iy !== null) {
+                    return 1;
+                }
+
+                return strcasecmp($ax, $ay);
+            })
+            ->values();
+
         $execSearchPayload = [
             'companies' => $user->assignedCompanies->map(static fn ($c) => [
                 'nombre' => (string) $c->nombre_comercial,
-                'contactos' => $c->contacts->map(static fn ($ct) => (string) $ct->nombre_completo)->values()->all(),
-            ])->values()->all(),
-            'orphans' => $orphanAssignedContacts->map(static fn ($ct) => [
-                'nombre' => (string) $ct->nombre_completo,
-                'empresa' => (string) ($ct->company?->nombre_comercial ?? ''),
-            ])->values()->all(),
-            'unifiedContacts' => $unifiedContactsForList->map(static fn ($c) => [
-                'nombre' => (string) $c->nombre_completo,
-                'empresa' => (string) ($c->company?->nombre_comercial ?? ''),
             ])->values()->all(),
         ];
 
@@ -451,6 +484,7 @@ class ExecutiveController extends Controller
             'orphanAssignedContacts' => $orphanAssignedContacts,
             'unifiedContactsForList' => $unifiedContactsForList,
             'execSearchPayload' => $execSearchPayload,
+            'empresasCountByEstado' => $empresasCountByEstado,
         ]);
     }
 

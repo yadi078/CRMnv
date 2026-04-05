@@ -55,6 +55,7 @@ class StoreCompanyRequest extends FormRequest
             'assigned_user_id' => Rule::when($this->user()->esAdmin(), ['nullable', 'integer', 'exists:users,id']),
             'datos_fiscales' => 'nullable|string',
             'status_color' => 'nullable|in:seguimiento,interesado,si_le_interesa_nos_llaman_o_no_compro,vendido,no_estaba',
+            'after_save' => 'nullable|in:ficha,contacto',
         ];
     }
 

@@ -33,11 +33,8 @@
                     @endphp
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="md:col-span-2">
-                            <div class="flex flex-wrap items-center justify-between gap-2 mb-1">
-                                <x-input-label for="company_id" value="Empresa *" class="mb-0" />
-                                <x-copy-field-button target-id="company_id" />
-                            </div>
-                            <select id="company_id" name="company_id" class="mt-1 block w-full rounded-md border-gray-300 bg-white text-gray-900 py-2 px-3 [&>option]:bg-white [&>option]:text-gray-900" required>
+                            <x-input-label for="company_id" value="Empresa *" class="mb-1" />
+                            <select id="company_id" name="company_id" class="mt-1 block w-full select-text rounded-md border-gray-300 bg-white text-gray-900 py-2 px-3 [&>option]:bg-white [&>option]:text-gray-900" required>
                                 <option value="">Seleccione una empresa</option>
                                 @foreach($companies as $company)
                                 <option value="{{ $company->id }}" {{ (string) $selectedCompanyId === (string) $company->id ? 'selected' : '' }}>{{ $company->nombre_comercial }}</option>
@@ -53,7 +50,7 @@
                                 :selectedAssignedUserId="$selectedAssignedUserId"
                                 :readonlyExecutiveName="$readonlyExecutiveName"
                                 inputId="contact_ejecutivo"
-                                selectClass="mt-1 block w-full rounded-md border-gray-300 bg-white py-2 px-3"
+                                selectClass="mt-1 block w-full select-text rounded-md border-gray-300 bg-white py-2 px-3"
                                 readonlyClass="mt-1 block w-full rounded-md border-gray-300 bg-gray-100 py-2 px-3"
                                 :hint="$isAdmin ? 'Solo cuentas con rol ejecutivo (usuario).' : null"
                             />

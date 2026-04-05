@@ -12,7 +12,7 @@
 @php
     $sel = old('assigned_user_id', $selectedAssignedUserId);
     $sel = $sel !== null && $sel !== '' ? (int) $sel : null;
-    $defaultSelect = 'mt-1 block w-full rounded-md border-gray-300 dark:border-white/20 dark:bg-white/10 dark:text-white';
+    $defaultSelect = 'mt-1 block w-full select-text rounded-md border-gray-300 dark:border-white/20 dark:bg-white/10 dark:text-white';
     $defaultReadonly = 'mt-1 block w-full rounded-md border-gray-300 bg-gray-100 text-gray-900 dark:bg-white/10 dark:text-white select-text cursor-default';
 @endphp
 <div {{ $attributes->merge(['class' => '']) }}>

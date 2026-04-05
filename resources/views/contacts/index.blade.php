@@ -11,21 +11,19 @@
 
     <div class="space-y-8">
         <div class="panel-card-dark">
-            <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-                <form method="GET" action="{{ route('contacts.index') }}" class="flex flex-col sm:flex-row sm:items-end gap-3 flex-1 min-w-0">
-                    <div class="flex-1 min-w-0 w-full">
-                        <label for="search" class="block text-sm font-semibold text-white/90 mb-2">Buscar por nombre de contacto</label>
-                        <input
-                            type="text"
-                            id="search"
-                            name="search"
-                            value="{{ request('search') }}"
-                            placeholder="Nombre del contacto..."
-                            list="contact_names_list"
-                            class="w-full rounded-xl border-0 bg-white/15 text-white placeholder-white/60 focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50 py-2.5 px-3 text-sm"
-                        >
-                    </div>
-                    <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+            <form method="GET" action="{{ route('contacts.index') }}" class="flex w-full min-w-0 flex-col gap-3">
+                <label for="search" class="block w-full shrink-0 text-sm font-semibold text-white/90">Buscar por nombre de contacto</label>
+                <div class="flex w-full min-w-0 flex-col gap-3 md:flex-row md:items-end md:gap-3">
+                    <input
+                        type="text"
+                        id="search"
+                        name="search"
+                        value="{{ request('search') }}"
+                        placeholder="Nombre del contacto..."
+                        list="contact_names_list"
+                        class="w-full min-w-0 min-h-[2.75rem] flex-1 rounded-xl border-0 bg-white/15 py-2.5 px-3 text-sm text-white placeholder-white/60 focus:bg-white/25 focus:ring-2 focus:ring-[#FFE600]/50"
+                    >
+                    <div class="flex flex-wrap items-center gap-2 sm:gap-3 md:max-w-full md:flex-shrink-0">
                         <a href="{{ route('contacts.index') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/30 text-white/90 text-sm font-medium hover:bg-white/10">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -41,7 +39,7 @@
                         @can('sales.create')
                         <a href="{{ route('user.sales.create') }}" class="btn-amber-app flex-shrink-0">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" /></svg>
-                            Nueva Venta
+                            Generar ficha de inscripción
                         </a>
                         @endcan
                         @can('contacts.create')
@@ -51,8 +49,8 @@
                         </a>
                         @endcan
                     </div>
-                </form>
-            </div>
+                </div>
+            </form>
             @if(isset($contactNames) && $contactNames->isNotEmpty())
                 <datalist id="contact_names_list">
                     @foreach($contactNames as $name)

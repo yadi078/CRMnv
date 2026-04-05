@@ -155,6 +155,14 @@ class CompanyController extends Controller
 
             DB::commit();
 
+            $afterSave = $request->input('after_save', 'ficha');
+            $successFlash = $approvalStatus === 'aprobado'
+                ? 'Empresa creada exitosamente.'
+                : 'Empresa registrada correctamente.';
+            $warningFlash = ($approvalStatus !== 'aprobado' && ! $user->esAdmin())
+                ? 'Aviso: esta empresa no será visible para el resto del equipo hasta que un administrador la apruebe.'
+                : null;
+
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json([
                     'success' => true,
@@ -162,16 +170,27 @@ class CompanyController extends Controller
                         ? 'La empresa se ha registrado correctamente.'
                         : 'Empresa creada. Pendiente de aprobación por un administrador.',
                     'company_id' => $company->id,
+                    'after_save' => $afterSave,
+                    'redirect_show' => route('companies.show', $company),
+                    'redirect_contact_create' => route('contacts.create', ['company_id' => $company->id]),
                 ]);
             }
 
-            $redirect = redirect()->route('companies.show', $company)
-                ->with('success', $approvalStatus === 'aprobado'
-                    ? 'Empresa creada exitosamente.'
-                    : 'Empresa registrada correctamente.');
+            if ($afterSave === 'contacto') {
+                $redirect = redirect()->route('contacts.create', ['company_id' => $company->id])
+                    ->with('success', $successFlash);
+                if ($warningFlash) {
+                    $redirect->with('warning', $warningFlash);
+                }
 
-            if ($approvalStatus !== 'aprobado' && ! $user->esAdmin()) {
-                $redirect->with('warning', 'Aviso: esta empresa no será visible para el resto del equipo hasta que un administrador la apruebe.');
+                return $redirect;
+            }
+
+            $redirect = redirect()->route('companies.show', $company)
+                ->with('success', $successFlash);
+
+            if ($warningFlash) {
+                $redirect->with('warning', $warningFlash);
             }
 
             return $redirect;

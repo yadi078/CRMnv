@@ -3,5 +3,6 @@
     "to": "a",
     "of": "de",
     "results": "resultados",
-    "Pagination Navigation": "Navegación de paginación"
+    "Pagination Navigation": "Navegación de paginación",
+    "Go to page :page": "Ir a la página :page"
 }

@@ -2338,6 +2338,8 @@ form.company-edit-form-in-modal input:not([type="checkbox"]):not([type="radio"])
     0 1px 3px rgba(180, 150, 0, 0.2),
     0 4px 12px rgba(255, 230, 0, 0.2);
   transition: background 0.22s ease, box-shadow 0.22s ease, transform 0.22s ease, color 0.22s ease;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .btn-amber-app:hover {
@@ -2365,6 +2367,26 @@ form.company-edit-form-in-modal input:not([type="checkbox"]):not([type="radio"])
   width: 1.25rem;
   height: 1.25rem;
   flex-shrink: 0;
+}
+
+/*
+ * Paneles oscuros (.panel-card-dark) usan color:#fff; los <a> con preflight heredan
+ * y el texto/icono del CTA ámbar queda blanco sobre amarillo. Forzar tono oscuro en todos los estados.
+ */
+.panel-card-dark a.btn-amber-app,
+.panel-card-dark a.btn-amber-app:visited {
+  color: #003366;
+  text-decoration: none;
+}
+
+.panel-card-dark a.btn-amber-app:hover {
+  color: #000836;
+}
+
+.panel-card-dark a.btn-amber-app:active,
+.panel-card-dark a.btn-amber-app:focus,
+.panel-card-dark a.btn-amber-app:focus-visible {
+  color: #000836;
 }
 
 /* Botón cancelar (rojo) */

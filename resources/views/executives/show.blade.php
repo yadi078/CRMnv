@@ -12,7 +12,6 @@
             </div>
         </div>
         <div class="flex flex-row flex-nowrap items-center justify-end gap-2 sm:gap-3 shrink-0">
-            <x-executive-reminder-button :executive="$executive" />
             <form
                 method="POST"
                 action="{{ route('executives.destroy', $executive) }}"
@@ -132,189 +131,46 @@
         </div>
 
         <x-executive-portfolio-stats
-            title="Cartera de este ejecutivo"
+            title="Resumen de asignaciones"
             :companies-count="$executive->assignedCompanies->count()"
             :contacts-count="$unifiedContactsForList->count()"
-            footnote="Empresas donde es responsable de cartera y contactos vinculados (cada persona cuenta una sola vez)."
+            footnote="Empresas y contactos asignados; cada contacto cuenta una sola vez en el total."
         />
 
+        {{-- Empresas asignadas por estado (entidad federativa) --}}
         <div class="panel-card-dark">
-            <h3 class="panel-card-dark__title panel-card-dark__title--accent mb-1 text-base sm:text-lg">Buscar en la cartera</h3>
-            <p class="text-xs text-white/70 leading-relaxed max-w-3xl">
-                Filtra por nombre comercial de la empresa o por nombre del contacto. Solo se incluyen empresas y personas asignadas a este ejecutivo.
+            <h3 class="panel-card-dark__title panel-card-dark__title--accent !mb-0 text-base sm:text-lg">Empresas por estado</h3>
+            <p class="mt-1.5 mb-3 max-w-2xl text-xs leading-snug text-white/70">
+                Cuántas empresas tiene en cada estado.
             </p>
-            <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label for="exec-profile-search-empresa" class="block text-xs font-semibold text-[#FFE600] mb-1.5">Empresa</label>
-                    <input
-                        id="exec-profile-search-empresa"
-                        type="search"
-                        autocomplete="off"
-                        x-model.debounce.300ms="searchEmpresa"
-                        placeholder="Ej. nombre comercial…"
-                        class="w-full rounded-xl border-2 border-white/20 bg-white/10 text-white placeholder:text-white/40 text-sm py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-[#FFE600]/50"
-                    />
-                </div>
-                <div>
-                    <label for="exec-profile-search-contacto" class="block text-xs font-semibold text-[#FFE600] mb-1.5">Contacto</label>
-                    <input
-                        id="exec-profile-search-contacto"
-                        type="search"
-                        autocomplete="off"
-                        x-model.debounce.300ms="searchContacto"
-                        placeholder="Ej. nombre del contacto…"
-                        class="w-full rounded-xl border-2 border-white/20 bg-white/10 text-white placeholder:text-white/40 text-sm py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-[#FFE600]/50"
-                    />
-                </div>
-            </div>
-            <div class="mt-3 flex flex-wrap items-center gap-3">
-                <button
-                    type="button"
-                    class="text-xs font-semibold text-[#FFE600] hover:text-white underline underline-offset-2"
-                    x-show="searchEmpresa || searchContacto"
-                    x-cloak
-                    @click="searchEmpresa = ''; searchContacto = ''"
-                >
-                    Limpiar búsqueda
-                </button>
-            </div>
-        </div>
-
-        {{-- Empresas asignadas: ficha azul oscuro + tarjetas de contacto (referencia CRM) --}}
-        <div class="space-y-8">
-            <h3 class="text-lg font-bold text-[#071A3D] px-1 tracking-tight">Empresas asignadas</h3>
-
-            @if($executive->assignedCompanies->isEmpty())
-                <div class="rounded-2xl bg-gradient-to-br from-[#0f2744] via-[#0c2240] to-[#071A3D] border border-[#1a3d6b]/60 shadow-xl p-6">
-                    <p class="text-white/75 text-sm">Ninguna empresa asignada aún.</p>
-                </div>
+            @if($empresasCountByEstado->isEmpty())
+                <p class="text-sm text-white/75">Ninguna empresa asignada aún.</p>
             @else
-                <p
-                    class="rounded-xl border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100"
-                    x-show="showNoPortfolioResults"
-                    x-cloak
-                >
-                    No hay empresas ni contactos que coincidan con la búsqueda.
-                </p>
-                @foreach($executive->assignedCompanies as $company)
-                    <article
-                        class="rounded-2xl bg-gradient-to-br from-[#0f2744] via-[#0c2240] to-[#071A3D] border border-[#1e4976]/50 shadow-[0_8px_32px_rgba(0,0,0,0.35)] overflow-hidden"
-                        x-show="companyBlockVisible(@js($company->nombre_comercial), @js($company->contacts->pluck('nombre_completo')->values()->all()))"
-                        x-cloak
-                    >
-                        {{-- Bloque empresa: título amarillo + datos en blanco + separadores --}}
-                        <div class="px-5 sm:px-7 pt-6 sm:pt-7 pb-4">
-                            <a href="{{ \App\Support\CrmNavigation::withReturn(route('companies.show', $company)) }}" class="block group focus:outline-none focus:ring-2 focus:ring-[#FFE600]/50 rounded-lg">
-                                <h4 class="text-xl sm:text-2xl font-bold text-[#FFE600] leading-tight group-hover:text-[#fff59d] transition-colors">
-                                    {{ $company->nombre_comercial }}
-                                </h4>
-                            </a>
-
-                            <div class="mt-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-3 text-sm text-white">
-                                @if($company->rfc)
-                                    <p class="leading-snug"><span class="text-white/75 font-medium">RFC:</span> <span class="text-white">{{ $company->rfc }}</span></p>
-                                @endif
-                                @if($company->municipio || $company->estado)
-                                    <p class="leading-snug"><span class="text-white/75 font-medium">Ciudad, Estado:</span> <span class="text-white">{{ trim(($company->municipio ?? '') . ', ' . ($company->estado ?? ''), ' ,') }}</span></p>
-                                @endif
-                                @if($company->sector)
-                                    <p class="leading-snug"><span class="text-white/75 font-medium">Sector:</span> <span class="text-white">{{ $company->sector }}</span></p>
-                                @endif
-                            </div>
-
-                            @if($company->ejecutivo_asignado)
-                                <div class="mt-4 pt-4 border-t border-sky-300/25">
-                                    <p class="text-sm text-white"><span class="text-white/75 font-medium">Ejecutivo asignado:</span> {{ $company->ejecutivo_asignado }}</p>
-                                </div>
-                            @endif
-
-                            @if($company->datos_fiscales)
-                                <div class="mt-4 pt-4 border-t border-sky-300/25">
-                                    <p class="text-sm text-white leading-relaxed">
-                                        <span class="text-white/75 font-medium">Domicilio fiscal:</span>
-                                        {{ \Illuminate\Support\Str::limit($company->datos_fiscales, 280) }}
-                                    </p>
-                                </div>
-                            @endif
-                        </div>
-
-                        {{-- Contactos: tarjetas blancas, solo ribete amarillo superior --}}
-                        <div class="px-5 sm:px-7 pb-6 sm:pb-7 pt-2 bg-[#050d1a]/40 border-t border-sky-300/20">
-                            @if($company->contacts->isEmpty())
-                                <p class="text-white/80 text-sm py-2">Esta empresa aún no tiene contactos registrados.</p>
-                            @else
-                                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-                                    @foreach($company->contacts as $contact)
-                                        <a
-                                            href="{{ \App\Support\CrmNavigation::withReturn(route('contacts.show', $contact)) }}"
-                                            class="group flex flex-col bg-white rounded-2xl shadow-[0_6px_20px_rgba(0,0,0,0.2)] px-4 py-4 min-h-[200px] border border-gray-200/90 border-t-[5px] border-t-[#FFE600] transition transform hover:-translate-y-1 hover:shadow-xl cursor-pointer text-left"
-                                            x-show="contactRowVisible(@js($company->nombre_comercial), @js($contact->nombre_completo))"
-                                            x-cloak
-                                        >
-                                            <span class="text-base font-bold text-gray-900 leading-snug group-hover:text-[#071A3D]">
-                                                {{ $contact->nombre_completo }}
-                                            </span>
-                                            @if($contact->puesto_de_trabajo)
-                                                <p class="text-sm text-gray-500 mt-1">{{ $contact->puesto_de_trabajo }}</p>
-                                            @endif
-                                            <div class="mt-3 space-y-1.5 text-sm">
-                                                <p class="text-gray-900">
-                                                    <span class="font-bold text-black">Correo:</span>
-                                                    <span class="font-normal">{{ ($contact->email_activo ?? true) ? ($contact->email ?? '—') : '—' }}</span>
-                                                </p>
-                                                <p class="text-gray-900">
-                                                    <span class="font-bold text-black">Teléfono:</span>
-                                                    <span class="font-normal">{{ $contact->celular ?? $contact->telefono ?? '—' }}</span>
-                                                </p>
-                                            </div>
-                                            <div class="mt-auto pt-3 border-t border-gray-300">
-                                                <span class="inline-flex items-center justify-center w-full sm:w-auto px-4 py-2 rounded-full text-xs font-bold bg-[#c8ead8] text-black border border-gray-800/35 shadow-sm">
-                                                    {{ $contact->status_label }}
-                                                </span>
-                                            </div>
-                                        </a>
-                                    @endforeach
-                                </div>
-                            @endif
-                        </div>
-                    </article>
-                @endforeach
-            @endif
-
-            @if(isset($orphanAssignedContacts) && $orphanAssignedContacts->isNotEmpty())
-                <div
-                    class="rounded-2xl bg-gradient-to-br from-[#0f2744] via-[#0c2240] to-[#071A3D] border border-[#1e4976]/50 shadow-xl p-5 sm:p-7"
-                    x-show="orphanSectionVisible()"
-                    x-cloak
-                >
-                    <h3 class="text-lg font-bold text-[#FFE600] mb-4">Contactos asignados (otras empresas o sin empresa en cartera)</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        @foreach($orphanAssignedContacts as $ct)
-                            <a
-                                href="{{ \App\Support\CrmNavigation::withReturn(route('contacts.show', $ct)) }}"
-                                class="flex flex-col bg-white rounded-2xl shadow-md px-4 py-4 border border-gray-200 border-t-[5px] border-t-[#FFE600] hover:shadow-lg transition"
-                                x-show="orphanCardVisible(@js($ct->nombre_completo), @js($ct->company?->nombre_comercial ?? ''))"
-                                x-cloak
-                            >
-                                <span class="text-base font-bold text-gray-900">{{ $ct->nombre_completo }}</span>
-                                <p class="text-sm text-gray-500 mt-1">{{ $ct->company?->nombre_comercial ?? 'Sin empresa' }}</p>
-                                @if($ct->puesto_de_trabajo)
-                                    <p class="text-sm text-gray-500">{{ $ct->puesto_de_trabajo }}</p>
-                                @endif
-                                <p class="text-sm mt-2"><span class="font-bold text-black">Correo:</span> <span class="text-gray-900">{{ ($ct->email_activo ?? true) ? ($ct->email ?? '—') : '—' }}</span></p>
-                                <p class="text-sm"><span class="font-bold text-black">Teléfono:</span> <span class="text-gray-900">{{ $ct->celular ?? $ct->telefono ?? '—' }}</span></p>
-                            </a>
+                <div class="rounded-xl border border-white/15 bg-white/[0.06] p-3 sm:p-4">
+                    <ul class="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 lg:grid-cols-4 text-sm">
+                        @foreach($empresasCountByEstado as $row)
+                            <li class="flex min-w-0 items-center justify-between gap-2 rounded-lg border border-white/10 bg-[#071A3D]/50 px-2.5 py-2 sm:px-3">
+                                <span class="min-w-0 truncate text-white/90" title="{{ $row['estado'] }}">{{ $row['estado'] }}</span>
+                                <span class="inline-flex shrink-0 min-w-[1.75rem] justify-center rounded-md bg-[#FFE600]/15 px-1.5 py-0.5 text-xs font-bold tabular-nums text-[#FFE600] ring-1 ring-[#FFE600]/35">{{ $row['count'] }}</span>
+                            </li>
                         @endforeach
-                    </div>
+                    </ul>
                 </div>
+                @if(isset($orphanAssignedContacts) && $orphanAssignedContacts->isNotEmpty())
+                    <p class="mt-3 text-xs text-white/60 leading-relaxed">
+                        Además, <span class="font-semibold text-[#FFE600]">{{ $orphanAssignedContacts->count() }}</span>
+                        {{ $orphanAssignedContacts->count() === 1 ? 'contacto asignado' : 'contactos asignados' }}
+                        con empresa distinta a las de arriba o sin empresa (no aparecen en el listado de empresas inferior).
+                    </p>
+                @endif
             @endif
         </div>
 
         @can('companies.create')
         {{-- Importar base Excel asignada a este ejecutivo (misma lógica que Empresas) --}}
         <div class="panel-card-dark" x-data="{ fileLabel: 'Ningún archivo seleccionado' }">
-            <h3 class="text-center text-base font-bold text-white mb-1">Archivo Excel</h3>
-            <p class="text-center text-xs text-white/70 mb-5">Importación masiva de empresas y contactos para la cartera de este ejecutivo</p>
+            <h3 class="text-center text-base font-bold text-white mb-1">Importar Excel</h3>
+            <p class="text-center text-xs text-white/70 mb-5">Carga masiva para este ejecutivo</p>
             <form
                 action="{{ route('companies.import') }}"
                 method="POST"
@@ -349,124 +205,86 @@
                     <svg class="w-5 h-5 text-emerald-700 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
                     </svg>
-                    Importar base Excel
+                    Importar
                 </button>
             </form>
-            <p class="text-xs text-white/80 mt-5 text-center leading-relaxed max-w-2xl mx-auto">
-                Mismo formato que la carga en <span class="text-[#FFE600] font-semibold">Empresas</span> (filas con Área de trabajo = EMPRESA, etc.). Los registros quedan vinculados a <span class="text-white font-semibold">{{ $executive->name }}</span> como ejecutivo asignado.
+            <p class="text-xs text-white/75 mt-4 text-center leading-snug max-w-xl mx-auto">
+                Hace falta el <span class="text-[#FFE600] font-semibold">formato de plantilla</span> del CRM (el mismo que en Empresas). Lo importado queda asignado a <span class="font-semibold text-white">{{ $executive->name }}</span>.
             </p>
         </div>
         @endcan
 
-        {{-- Empresas: mismo panel que Contactos (listado resumido al final) --}}
-        <div class="relative rounded-2xl bg-[#071A3D] shadow-[0_8px_28px_rgba(0,0,0,0.22)] border border-[#1a3d6b]/50 overflow-hidden pl-1 border-l-[5px] border-l-[#FFE600]">
-            <div class="bg-[#071A3D] px-4 sm:px-6 pt-5 pb-4 border-b border-white/10">
-                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                    <h3 class="text-lg sm:text-xl font-bold text-[#FFE600] tracking-tight">Empresas</h3>
+        {{-- Buscar: solo empresas (fichas en cuadrícula); el nombre enlaza a la ficha --}}
+        <div class="panel-card-dark !py-4 sm:!py-5">
+            <h3 class="panel-card-dark__title panel-card-dark__title--accent !mb-1 text-base sm:text-lg">Buscar</h3>
+            <p class="text-xs text-white/65 leading-snug max-w-2xl mb-3">
+                Filtra por nombre comercial.
+            </p>
+            <div class="max-w-xl">
+                <label for="exec-profile-search-empresa" class="block text-[11px] font-semibold text-[#FFE600] mb-1">Empresa</label>
+                <input
+                    id="exec-profile-search-empresa"
+                    type="search"
+                    autocomplete="off"
+                    x-model.debounce.300ms="searchEmpresa"
+                    placeholder="Nombre comercial…"
+                    class="w-full rounded-lg border border-white/20 bg-white/10 text-white placeholder:text-white/35 text-sm py-2 px-2.5 focus:outline-none focus:ring-2 focus:ring-[#FFE600]/40"
+                />
+            </div>
+            <div class="mt-2">
+                <button
+                    type="button"
+                    class="text-[11px] font-semibold text-[#FFE600]/90 hover:text-white underline underline-offset-2"
+                    x-show="searchEmpresa"
+                    x-cloak
+                    @click="searchEmpresa = ''"
+                >
+                    Limpiar búsqueda
+                </button>
+            </div>
+
+            <div class="mt-4">
+                <div class="flex items-center justify-between gap-2 mb-2">
+                    <h4 class="text-sm font-bold text-[#FFE600]">Empresas</h4>
                     @can('companies.create')
                         <a
                             href="{{ route('companies.create') }}"
-                            class="inline-flex items-center justify-center gap-1.5 self-start sm:self-auto px-4 py-2.5 rounded-full bg-[#FFE600] text-[#071A3D] text-sm font-bold shadow-md hover:bg-[#ffeb3b] transition-colors border border-[#fff9c4] shrink-0"
+                            class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#FFE600] text-[#071A3D] text-xs font-bold hover:bg-[#ffeb3b] border border-[#fff9c4]/80 shrink-0"
                         >
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                            Nueva Empresa
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                            Nueva
                         </a>
                     @endcan
                 </div>
-            </div>
-            <div class="px-4 sm:px-6 py-5 space-y-3">
-                <p
-                    class="text-sm text-amber-200/95 text-center py-4 border border-amber-400/30 rounded-xl bg-amber-500/10"
-                    x-show="showEmpresaPanelNoFilterResults"
-                    x-cloak
-                >
-                    Ninguna empresa coincide con «Empresa» en este listado.
-                </p>
-                @forelse($executive->assignedCompanies as $company)
-                    <div
-                        class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl bg-[#0f2744]/95 border border-[#1e3a5f]/80 border-l-[6px] border-l-[#FFE600] pl-4 pr-3 py-3.5 shadow-inner"
-                        x-show="listEmpresaRowVisible(@js($company->nombre_comercial))"
-                        x-cloak
-                    >
-                        <div class="min-w-0 flex-1">
-                            <p class="font-bold text-white text-sm sm:text-base leading-snug">{{ $company->nombre_comercial }}</p>
-                            <div class="mt-1.5 space-y-0.5 text-xs sm:text-sm text-white/65">
-                                @if($company->rfc)
-                                    <p>RFC: {{ $company->rfc }}</p>
-                                @endif
-                                @if($company->municipio || $company->estado)
-                                    <p>{{ trim(($company->municipio ?? '') . ', ' . ($company->estado ?? ''), ' ,') }}</p>
-                                @endif
-                                @if($company->sector)
-                                    <p>{{ $company->sector }}</p>
-                                @endif
-                            </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                    @forelse($executive->assignedCompanies as $company)
+                        @php($contactosN = $company->contacts->count())
+                        <div x-show="listEmpresaRowVisible(@js($company->nombre_comercial))" x-cloak>
+                            <a
+                                href="{{ \App\Support\CrmNavigation::withReturn(route('companies.show', $company)) }}"
+                                class="flex h-full flex-col rounded-lg border border-white/10 bg-[#0a1f38]/85 px-2.5 py-2 transition-colors hover:border-[#FFE600]/40 hover:bg-[#0f2744]/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFE600]/50"
+                            >
+                                <span class="font-semibold text-white text-sm leading-snug line-clamp-2">{{ $company->nombre_comercial }}</span>
+                                <dl class="mt-1.5 space-y-0.5 text-[11px] text-white/60">
+                                    <div class="flex gap-1">
+                                        <dt class="shrink-0 text-white/45">Estado</dt>
+                                        <dd class="min-w-0 truncate text-white/80" title="{{ trim((string) ($company->estado ?? '')) !== '' ? $company->estado : 'Sin estado' }}">{{ trim((string) ($company->estado ?? '')) !== '' ? $company->estado : 'Sin estado' }}</dd>
+                                    </div>
+                                    <div class="flex gap-1">
+                                        <dt class="shrink-0 text-white/45">Estatus</dt>
+                                        <dd class="min-w-0 truncate text-white/80" title="{{ $company->status_label }}">{{ $company->status_label }}</dd>
+                                    </div>
+                                    <div class="flex gap-1">
+                                        <dt class="shrink-0 text-white/45">Contactos</dt>
+                                        <dd class="tabular-nums text-white/80">{{ $contactosN }} {{ $contactosN === 1 ? 'contacto' : 'contactos' }}</dd>
+                                    </div>
+                                </dl>
+                            </a>
                         </div>
-                        <a
-                            href="{{ \App\Support\CrmNavigation::withReturn(route('companies.show', $company)) }}"
-                            class="inline-flex items-center justify-center px-4 py-2 rounded-lg text-sm font-semibold bg-[#4a5568] text-[#FFE600] hover:bg-[#5a6578] transition-colors shrink-0 border border-white/10"
-                        >
-                            Ver
-                        </a>
-                    </div>
-                @empty
-                    <p class="text-sm text-white/70 text-center py-6">No hay empresas vinculadas a la cartera de este ejecutivo.</p>
-                @endforelse
-            </div>
-        </div>
-
-        {{-- Contactos: listado unificado al final (estilo panel con ribete amarillo) --}}
-        <div class="relative rounded-2xl bg-[#071A3D] shadow-[0_8px_28px_rgba(0,0,0,0.22)] border border-[#1a3d6b]/50 overflow-hidden pl-1 border-l-[5px] border-l-[#FFE600]">
-            <div class="bg-[#071A3D] px-4 sm:px-6 pt-5 pb-4 border-b border-white/10">
-                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                    <h3 class="text-lg sm:text-xl font-bold text-[#FFE600] tracking-tight">Contactos</h3>
-                    @can('contacts.create')
-                        <a
-                            href="{{ route('contacts.create') }}"
-                            class="inline-flex items-center justify-center gap-1.5 self-start sm:self-auto px-4 py-2.5 rounded-full bg-[#FFE600] text-[#071A3D] text-sm font-bold shadow-md hover:bg-[#ffeb3b] transition-colors border border-[#fff9c4] shrink-0"
-                        >
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                            Nuevo Contacto
-                        </a>
-                    @endcan
+                    @empty
+                        <p class="text-xs text-white/55 py-2 sm:col-span-2 lg:col-span-3">No hay empresas asignadas.</p>
+                    @endforelse
                 </div>
-            </div>
-            <div class="px-4 sm:px-6 py-5 space-y-3">
-                <p
-                    class="text-sm text-amber-200/95 text-center py-4 border border-amber-400/30 rounded-xl bg-amber-500/10"
-                    x-show="showContactoPanelNoFilterResults"
-                    x-cloak
-                >
-                    Ningún contacto coincide con «Contacto» en este listado.
-                </p>
-                @forelse($unifiedContactsForList as $contact)
-                    <div
-                        class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl bg-[#0f2744]/95 border border-[#1e3a5f]/80 border-l-[6px] border-l-[#FFE600] pl-4 pr-3 py-3.5 shadow-inner"
-                        x-show="listContactoRowVisible(@js($contact->nombre_completo))"
-                        x-cloak
-                    >
-                        <div class="min-w-0 flex-1">
-                            <p class="font-bold text-white text-sm sm:text-base leading-snug">{{ $contact->nombre_completo }}</p>
-                            <div class="mt-1.5 space-y-0.5 text-xs sm:text-sm text-white/65">
-                                @if($contact->puesto_de_trabajo)
-                                    <p>{{ $contact->puesto_de_trabajo }}</p>
-                                @endif
-                                <p class="truncate" title="{{ ($contact->email_activo ?? true) ? ($contact->email ?? '') : '' }}">
-                                    {{ ($contact->email_activo ?? true) ? ($contact->email ?? '—') : '—' }}
-                                </p>
-                                <p>{{ $contact->celular ?? $contact->telefono ?? '—' }}</p>
-                            </div>
-                        </div>
-                        <a
-                            href="{{ \App\Support\CrmNavigation::withReturn(route('contacts.show', $contact)) }}"
-                            class="inline-flex items-center justify-center px-4 py-2 rounded-lg text-sm font-semibold bg-[#4a5568] text-[#FFE600] hover:bg-[#5a6578] transition-colors shrink-0 border border-white/10"
-                        >
-                            Ver
-                        </a>
-                    </div>
-                @empty
-                    <p class="text-sm text-white/70 text-center py-6">No hay contactos vinculados a la cartera de este ejecutivo.</p>
-                @endforelse
             </div>
         </div>
     </div>

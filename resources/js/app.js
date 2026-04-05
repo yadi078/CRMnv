@@ -295,10 +295,7 @@ Alpine.data('executivesPage', (initial = {}) => ({
  */
 Alpine.data('executiveProfileSearch', (payload = {}) => ({
     searchEmpresa: '',
-    searchContacto: '',
     companies: Array.isArray(payload.companies) ? payload.companies : [],
-    orphans: Array.isArray(payload.orphans) ? payload.orphans : [],
-    unifiedContacts: Array.isArray(payload.unifiedContacts) ? payload.unifiedContacts : [],
     norm(s) {
         return String(s ?? '')
             .trim()
@@ -306,90 +303,9 @@ Alpine.data('executiveProfileSearch', (payload = {}) => ({
             .normalize('NFD')
             .replace(/[\u0300-\u036f]/g, '');
     },
-    companyBlockVisible(companyName, contactNames) {
-        const e = this.norm(this.searchEmpresa);
-        const c = this.norm(this.searchContacto);
-        if (!e && !c) {
-            return true;
-        }
-        if (e && !c) {
-            return this.norm(companyName).includes(e);
-        }
-        if (!e && c) {
-            return contactNames.some((n) => this.norm(n).includes(c));
-        }
-        return this.norm(companyName).includes(e) && contactNames.some((n) => this.norm(n).includes(c));
-    },
-    contactRowVisible(companyName, contactName) {
-        const e = this.norm(this.searchEmpresa);
-        const c = this.norm(this.searchContacto);
-        if (!e && !c) {
-            return true;
-        }
-        if (e && !c) {
-            return this.norm(companyName).includes(e);
-        }
-        if (!e && c) {
-            return this.norm(contactName).includes(c);
-        }
-        return this.norm(companyName).includes(e) && this.norm(contactName).includes(c);
-    },
-    orphanCardVisible(contactName, companyNameOnCard) {
-        const e = this.norm(this.searchEmpresa);
-        const c = this.norm(this.searchContacto);
-        if (!e && !c) {
-            return true;
-        }
-        if (e && !c) {
-            return this.norm(companyNameOnCard).includes(e);
-        }
-        if (!e && c) {
-            return this.norm(contactName).includes(c);
-        }
-        return this.norm(companyNameOnCard).includes(e) && this.norm(contactName).includes(c);
-    },
-    orphanSectionVisible() {
-        if (!this.orphans.length) {
-            return false;
-        }
-        const e = this.norm(this.searchEmpresa);
-        const c = this.norm(this.searchContacto);
-        if (!e && !c) {
-            return true;
-        }
-        return this.orphans.some((o) => this.orphanCardVisible(o.nombre, o.empresa));
-    },
     listEmpresaRowVisible(companyName) {
         const e = this.norm(this.searchEmpresa);
         return !e || this.norm(companyName).includes(e);
-    },
-    listContactoRowVisible(contactName) {
-        const c = this.norm(this.searchContacto);
-        return !c || this.norm(contactName).includes(c);
-    },
-    get showNoPortfolioResults() {
-        const e = this.norm(this.searchEmpresa);
-        const c = this.norm(this.searchContacto);
-        if (!e && !c) {
-            return false;
-        }
-        const topMatch = this.companies.some((comp) => this.companyBlockVisible(comp.nombre, comp.contactos));
-        const orphanMatch = this.orphans.some((o) => this.orphanCardVisible(o.nombre, o.empresa));
-        return !topMatch && !orphanMatch;
-    },
-    get showEmpresaPanelNoFilterResults() {
-        const e = this.norm(this.searchEmpresa);
-        if (!e || !this.companies.length) {
-            return false;
-        }
-        return !this.companies.some((comp) => this.listEmpresaRowVisible(comp.nombre));
-    },
-    get showContactoPanelNoFilterResults() {
-        const c = this.norm(this.searchContacto);
-        if (!c || !this.unifiedContacts.length) {
-            return false;
-        }
-        return !this.unifiedContacts.some((ct) => this.listContactoRowVisible(ct.nombre));
     },
 }));
 

@@ -162,7 +162,14 @@
                             </svg>
                             Cancelar
                         </a>
-                        <button type="submit" class="btn-amber-app" :disabled="sending">
+                        <button type="button" class="inline-flex items-center justify-center gap-2 min-h-[44px] px-4 rounded-xl border-2 border-white/40 text-white font-semibold text-sm hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-[#FFE600]/45 disabled:opacity-50" :disabled="sending" @click="submitForm('contacto')">
+                            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                            </svg>
+                            <span x-show="!sending">Agregar contacto</span>
+                            <span x-show="sending" x-cloak>Guardando...</span>
+                        </button>
+                        <button type="button" class="btn-amber-app" :disabled="sending" @click="submitForm('ficha')">
                             <span x-show="!sending">
                                 <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -311,7 +318,7 @@
                     this.sectorInput = '';
                 },
 
-                submitForm() {
+                submitForm(afterSave = 'ficha') {
                     this.addSector();
                     if (this.sectors.length === 0) {
                         this.showFormErrors(['Agregue al menos un sector o giro (escriba y presione Enter).']);
@@ -322,6 +329,7 @@
                     this.$nextTick(() => {
                         const form = document.getElementById('form-nueva-empresa');
                         const formData = new FormData(form);
+                        formData.set('after_save', afterSave === 'contacto' ? 'contacto' : 'ficha');
                         const url = form.getAttribute('action');
                         const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
@@ -340,6 +348,14 @@
                         .then(({ ok, data }) => {
                             this.sending = false;
                             if (ok && data.success) {
+                                if (data.after_save === 'contacto' && data.redirect_contact_create) {
+                                    window.location.href = data.redirect_contact_create;
+                                    return;
+                                }
+                                if (data.redirect_show) {
+                                    window.location.href = data.redirect_show;
+                                    return;
+                                }
                                 this.successMessage = data.message || 'La empresa se ha registrado correctamente.';
                                 this.showSuccessModal = true;
                             } else {
