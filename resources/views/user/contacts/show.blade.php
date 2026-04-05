@@ -136,6 +136,16 @@
                 }
                 confirmModal.classList.remove('hidden');
             });
+
+            @if(request('abrir') === 'solicitud-eliminacion' && ! $errors->has('motivo'))
+            document.addEventListener('DOMContentLoaded', function () {
+                var m = document.getElementById('modal-solicitud-eliminacion-contacto');
+                if (m) {
+                    m.classList.remove('hidden');
+                    document.body.style.overflow = 'hidden';
+                }
+            });
+            @endif
         })();
     </script>
     @endcan
