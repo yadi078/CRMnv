@@ -92,6 +92,7 @@
                     <x-alert
                         type="success"
                         :message="session('import_flash')['message']"
+                        :preLine="true"
                         :secondaryUrl="!empty(session('import_flash')['rejected_token']) ? route('companies.import.rejected', ['token' => session('import_flash')['rejected_token']]) : null"
                         secondaryLabel="Descargar Excel con registros rechazados"
                     />
@@ -120,6 +121,16 @@
 
                 <main class="flex-1 p-3 xs:p-4 sm:p-6 md:p-8 pt-[calc(2.75rem+1rem)] lg:pt-8 min-w-0 overflow-x-hidden">
                     <div class="max-w-7xl mx-auto w-full min-w-0">
+                        @if ($errors->any())
+                            <div class="mb-6 rounded-xl border-2 border-red-500/90 bg-red-50 px-4 py-3 text-sm text-red-950 shadow-sm" role="alert">
+                                <p class="font-bold text-red-900 mb-2">No se pudo completar la acción</p>
+                                <ul class="list-disc list-inside space-y-1 text-red-900">
+                                    @foreach ($errors->all() as $message)
+                                        <li>{{ $message }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
                         {{ $slot }}
                     </div>
                 </main>

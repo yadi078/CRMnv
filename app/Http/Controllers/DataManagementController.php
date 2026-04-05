@@ -222,6 +222,8 @@ class DataManagementController extends Controller
     /** Solo admin: exportar Excel (listados o empresas con contactos anidados). */
     public function export(Request $request): StreamedResponse
     {
+        set_time_limit(0);
+
         $filterByInput = (string) $request->input('filter_by', '');
 
         $rules = [

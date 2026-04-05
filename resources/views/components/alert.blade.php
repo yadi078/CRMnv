@@ -1,4 +1,4 @@
-@props(['type' => 'info', 'message', 'secondaryUrl' => null, 'secondaryLabel' => null])
+@props(['type' => 'info', 'message', 'secondaryUrl' => null, 'secondaryLabel' => null, 'preLine' => false])
 
 @if($message)
 @php
@@ -25,9 +25,9 @@
         ],
     };
 @endphp
+{{-- Sin x-cloak: si Alpine no carga, el modal no debe quedar oculto para siempre ([x-cloak]{display:none}). --}}
 <div x-data="{ show: true }"
      x-show="show"
-     x-cloak
      x-transition:enter="ease-out duration-300"
      x-transition:enter-start="opacity-0"
      x-transition:enter-end="opacity-100"
@@ -53,7 +53,10 @@
             </svg>
         </div>
         <h3 class="text-xl font-bold text-white mb-2">{{ $config['title'] }}</h3>
-        <p class="text-white/90 text-sm mb-6">{{ $message }}</p>
+        <p @class([
+            'text-white/90 text-sm mb-6',
+            'whitespace-pre-line text-left max-h-[min(50vh,24rem)] overflow-y-auto' => $preLine,
+        ])>{{ $message }}</p>
         @if($secondaryUrl && $secondaryLabel)
             <a href="{{ $secondaryUrl }}"
                class="mb-4 w-full inline-flex items-center justify-center py-3 px-4 rounded-xl font-semibold text-[#FFE600] border-2 border-[#FFE600]/90 hover:bg-[#FFE600]/10 focus:outline-none focus:ring-2 focus:ring-[#FFE600] focus:ring-offset-2 focus:ring-offset-[#1a3d6b] transition-colors text-sm">

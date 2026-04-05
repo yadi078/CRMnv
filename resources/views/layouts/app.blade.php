@@ -80,10 +80,7 @@
                                         request()->routeIs('data-management.index') ||
                                         request()->routeIs('profile.edit')
                                     )
-                                        <x-crm-back-button
-                                            :skip-history="request()->routeIs('executives.show')"
-                                            :fallback="request()->routeIs('executives.show') ? route('executives.index') : null"
-                                        />
+                                        <x-crm-back-button />
                                     @endunless
                                     <a href="{{ route('notifications.index') }}" class="relative flex items-center justify-center w-11 h-11 rounded-xl text-[#FFE600] hover:bg-white/10 transition-colors" aria-label="Notificaciones">
                                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
@@ -103,6 +100,7 @@
                         <x-alert
                             type="success"
                             :message="session('import_flash')['message']"
+                            :preLine="true"
                             :secondaryUrl="!empty(session('import_flash')['rejected_token']) ? route('companies.import.rejected', ['token' => session('import_flash')['rejected_token']]) : null"
                             secondaryLabel="Descargar Excel con registros rechazados"
                         />
@@ -133,6 +131,16 @@
                 {{-- Contenido: padding-top en móvil para no quedar bajo la barra fija --}}
                 <main class="flex-1 p-3 xs:p-4 sm:p-6 md:p-8 pt-[calc(2.75rem+1rem)] lg:pt-8 min-w-0 overflow-x-hidden">
                     <div class="max-w-7xl mx-auto w-full min-w-0">
+                        @if ($errors->any())
+                            <div class="mb-6 rounded-xl border-2 border-red-500/90 bg-red-50 px-4 py-3 text-sm text-red-950 shadow-sm" role="alert">
+                                <p class="font-bold text-red-900 mb-2">No se pudo completar la acción</p>
+                                <ul class="list-disc list-inside space-y-1 text-red-900">
+                                    @foreach ($errors->all() as $message)
+                                        <li>{{ $message }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
                         {{ $slot }}
                     </div>
                 </main>
