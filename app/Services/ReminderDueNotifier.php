@@ -10,11 +10,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Reglas de aviso (una notificación por fase):
- * - 5 minutos antes: durante el minuto calendario que empieza en T−5.
- * - 2 minutos antes: durante el minuto calendario que empieza en T−2.
- * - Hora exacta: cuando llega o pasa start_at efectivo.
- * - +3 minutos después: durante el minuto calendario que empieza en T+3 (recordatorio de seguimiento).
+ * Un solo aviso por recordatorio: solo durante el minuto programado [hora, hora+1min).
+ * Fuera de esa ventana no se envía (ni antes, ni después; si no hubo polling en ese minuto, no hay aviso).
  */
 class ReminderDueNotifier
 {
@@ -66,68 +63,20 @@ class ReminderDueNotifier
 
     protected function processTimed(Reminder $reminder, Carbon $now, Carbon $start): bool
     {
-        // 1) Hora exacta.
-        if ($now->gte($start) && ! $this->alreadySentPhase($reminder, 'due')) {
-            $reminder->refresh();
-
-            $payload = ['notification_sent_at' => $now];
-            if ($reminder->alarm_repeat_enabled) {
-                // Anclar repeticiones al momento en que realmente se envía el aviso (evita desfase si el polling/cron llega tarde).
-                $payload['alarm_last_ring_at'] = $now->copy();
-                if ($reminder->alarm_repeat_type === Reminder::ALARM_REPEAT_DURATION
-                    && $reminder->alarm_window_started_at === null) {
-                    $payload['alarm_window_started_at'] = $now->copy();
-                }
-            }
-            $reminder->update($payload);
-            $reminder->user?->notify(new ReminderDueNotification($reminder, 'due'));
-
-            return true;
-        }
-
-        // 2) Antes de la hora: T−2 y T−5 (ventanas de un minuto).
-        if ($now->lt($start)) {
-            $pre2MinuteStart = $start->copy()->subMinutes(2)->startOfMinute();
-            if ($now->gte($pre2MinuteStart)
-                && $now->lt($pre2MinuteStart->copy()->addMinute())
-                && ! $this->alreadySentPhase($reminder, 'pre2')) {
-                $reminder->update([
-                    'pre_notification_sent_at' => $now,
-                ]);
-                $reminder->user?->notify(new ReminderDueNotification($reminder, 'pre2'));
-
-                return true;
-            }
-
-            $pre5MinuteStart = $start->copy()->subMinutes(5)->startOfMinute();
-            if ($now->gte($pre5MinuteStart)
-                && $now->lt($pre5MinuteStart->copy()->addMinute())
-                && ! $this->alreadySentPhase($reminder, 'pre5')) {
-                $reminder->update([
-                    'pre_notification_sent_at' => $now,
-                ]);
-                $reminder->user?->notify(new ReminderDueNotification($reminder, 'pre5'));
-
-                return true;
-            }
-
+        $windowEnd = $start->copy()->addMinute();
+        // Solo dentro del minuto calendario programado [start, start+1min): ni antes, ni después.
+        if ($now->lt($start) || $now->gte($windowEnd)) {
             return false;
         }
 
-        // 3) Después de la hora: T+3 (un disparo en el minuto [T+3, T+4)).
-        $post3MinuteStart = $start->copy()->addMinutes(3)->startOfMinute();
-        if ($now->gte($post3MinuteStart)
-            && $now->lt($post3MinuteStart->copy()->addMinute())
-            && ! $this->alreadySentPhase($reminder, 'post3')) {
-            $reminder->update([
-                'pre_notification_sent_at' => $now,
-            ]);
-            $reminder->user?->notify(new ReminderDueNotification($reminder, 'post3'));
-
-            return true;
+        if ($this->alreadySentPhase($reminder, 'due')) {
+            return false;
         }
 
-        return false;
+        $reminder->update(['notification_sent_at' => $now]);
+        $reminder->user?->notify(new ReminderDueNotification($reminder, 'due'));
+
+        return true;
     }
 
     protected function alreadySentPhase(Reminder $reminder, string $phase): bool

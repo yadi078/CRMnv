@@ -97,8 +97,6 @@
                     </div>
                 </div>
 
-                @include('reminders.partials.alarm-configuration', ['reminder' => null])
-
                 <div class="pt-4 border-t border-white/15">
                     <p class="text-xs font-semibold uppercase tracking-wider text-[#FFE600]/90 mb-3">Seguimiento</p>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
@@ -122,29 +120,12 @@
                         </div>
                         <div class="space-y-4">
                             <div>
-                                <label class="block text-sm font-medium text-white/90 mb-1">Fecha</label>
-                                <input type="date" name="date" value="{{ old('date') }}" style="color: #111827;" class="w-full rounded-xl border border-gray-300 bg-white focus:ring-2 focus:ring-[#FFE600]/60 py-3 px-4 text-sm min-h-[44px]">
+                                <label class="block text-sm font-medium text-white/90 mb-1">Fecha *</label>
+                                <input type="date" name="date" required value="{{ old('date') }}" style="color: #111827;" class="w-full rounded-xl border border-gray-300 bg-white focus:ring-2 focus:ring-[#FFE600]/60 py-3 px-4 text-sm min-h-[44px]">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-white/90 mb-1">Hora</label>
-                                <input type="time" name="time" value="{{ old('time') }}" style="color: #111827;" class="w-full rounded-xl border border-gray-300 bg-white focus:ring-2 focus:ring-[#FFE600]/60 py-3 px-4 text-sm min-h-[44px]">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-white/90 mb-1">Repetir</label>
-                                <select name="repeat" style="color: #111827;" class="w-full rounded-xl border border-gray-300 bg-white focus:ring-2 focus:ring-[#FFE600]/60 py-2.5 px-3 text-sm">
-                                    <option value="">No repetir</option>
-                                    <option value="daily" @selected(old('repeat') === 'daily')>Diario</option>
-                                    <option value="weekly" @selected(old('repeat') === 'weekly')>Semanal</option>
-                                    <option value="monthly" @selected(old('repeat') === 'monthly')>Mensual</option>
-                                </select>
-                                <label class="inline-flex items-center gap-2 text-xs text-white/80 mt-2">
-                                    <input type="checkbox" name="all_day" value="1" @checked(old('all_day')) class="rounded border-white/30 text-[#FFE600] bg-white focus:ring-[#FFE600]">
-                                    Recordatorio todo el día
-                                </label>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-white/90 mb-1">Fecha límite</label>
-                                <input type="date" name="deadline_date" value="{{ old('deadline_date') }}" style="color: #111827;" class="w-full rounded-xl border border-gray-300 bg-white focus:ring-2 focus:ring-[#FFE600]/60 py-3 px-4 text-sm min-h-[44px]">
+                                <label class="block text-sm font-medium text-white/90 mb-1">Hora *</label>
+                                <input type="time" name="time" required value="{{ old('time') }}" style="color: #111827;" class="w-full rounded-xl border border-gray-300 bg-white focus:ring-2 focus:ring-[#FFE600]/60 py-3 px-4 text-sm min-h-[44px]">
                             </div>
                         </div>
                     </div>

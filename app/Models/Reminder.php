@@ -77,7 +77,7 @@ class Reminder extends Model
     }
 
     /**
-     * Hora efectiva para avisos (misma lógica que ReminderDueNotifier): todo el día usa hora configurada.
+     * Hora efectiva del aviso (fecha y hora programadas tal como están guardadas).
      */
     public function effectiveNotificationStart(): ?Carbon
     {
@@ -87,24 +87,13 @@ class Reminder extends Model
         }
 
         $tz = config('app.timezone');
-        $start = $start->copy()->timezone($tz);
 
-        if ($this->all_day) {
-            $timeStr = (string) config('crm.reminder_all_day_notify_time', '09:00');
-
-            return Carbon::parse($start->format('Y-m-d').' '.$timeStr, $tz);
-        }
-
-        return $start;
+        return $start->copy()->timezone($tz);
     }
 
-    /**
-     * El usuario debe confirmar desde el modal para detener ciclos de alarma repetida.
-     */
     public function needsAlarmConfirmation(): bool
     {
-        return $this->alarm_repeat_enabled
-            && $this->alarm_confirmed_at === null;
+        return false;
     }
 }
 

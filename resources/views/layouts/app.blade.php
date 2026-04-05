@@ -146,21 +146,20 @@
         <script>
         (function() {
             var url = '{{ route("notifications.unread-count") }}';
+            var crmReminderDestroyZero = @json(route('reminders.destroy', ['reminder' => 0]));
             var crmReminderSnoozeZero = @json(route('reminders.snooze', ['reminder' => 0]));
             var crmReminderEditZero = @json(route('reminders.edit', ['reminder' => 0]));
-            var crmReminderConfirmZero = @json(route('reminders.confirm-alarm', ['reminder' => 0]));
+            function crmReminderDestroyUrl(reminderId) {
+                return String(crmReminderDestroyZero).replace(/\/0$/, '/' + encodeURIComponent(reminderId));
+            }
             function crmReminderSnoozeUrl(reminderId) {
                 return String(crmReminderSnoozeZero).replace(/\/0(\/snooze)/, '/' + encodeURIComponent(reminderId) + '$1');
             }
             function crmReminderEditUrl(reminderId) {
                 return String(crmReminderEditZero).replace(/\/0(\/edit)/, '/' + encodeURIComponent(reminderId) + '$1');
             }
-            function crmReminderConfirmUrl(reminderId) {
-                return String(crmReminderConfirmZero).replace(/\/0(\/confirm-alarm)/, '/' + encodeURIComponent(reminderId) + '$1');
-            }
             var reminderVistoAckIds = {};
-            var lastReminderRingByNotifId = {};
-            var REMINDER_ALARM_REPEAT_MS = 12000;
+            var reminderAlarmPlayedOnce = {};
             var audioUnlocked = false;
             var alarmCtx = null;
             var activeAlarmOscillators = [];
@@ -210,12 +209,28 @@
                 var nid = String(notificationId || '');
                 if (nid) {
                     reminderVistoAckIds[nid] = true;
-                    delete lastReminderRingByNotifId[nid];
+                    delete reminderAlarmPlayedOnce[nid];
                 }
                 var rid = reminderId != null && reminderId !== '' ? parseInt(reminderId, 10) : NaN;
                 if (!isNaN(rid) && rid >= 1) {
                     reminderVistoAckIds['r:' + rid] = true;
                     removeSideAlertsForReminderId(rid);
+                }
+                persistReminderVistoAck();
+            }
+
+            /** Tras posponer: no marcar r:rid como visto (la próxima notificación es nueva y debe sonar). */
+            function ackReminderSnoozeLocally(notificationId, reminderId) {
+                stopReminderAlarmPlayback();
+                var nid = String(notificationId || '');
+                if (nid) {
+                    reminderVistoAckIds[nid] = true;
+                    delete reminderAlarmPlayedOnce[nid];
+                }
+                var rid = reminderId != null && reminderId !== '' ? parseInt(reminderId, 10) : NaN;
+                if (!isNaN(rid) && rid >= 1) {
+                    removeSideAlertsForReminderId(rid);
+                    delete reminderVistoAckIds['r:' + rid];
                 }
                 persistReminderVistoAck();
             }
@@ -375,16 +390,14 @@
                 var detail = alertData.detail || {};
                 var ridRaw = alertData.reminder_id != null ? alertData.reminder_id : detail.reminder_id;
                 var rid = ridRaw != null && ridRaw !== '' ? parseInt(ridRaw, 10) : NaN;
-                if (isNaN(rid) || rid < 1) {
-                    rid = null;
-                }
-                var actionRow = ''
+                var hasRid = !isNaN(rid) && rid >= 1;
+                var actionButtons = ''
                     + '<div class="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-end gap-2">'
-                    + (rid ? (
-                        '<button type="button" id="crm-reminder-snooze" class="px-4 py-2.5 rounded-xl border border-[#FFE600]/80 text-[#FFE600] text-sm font-semibold hover:bg-[#FFE600]/10">Aplazar 5 minutos</button>'
+                    + (hasRid ? (
+                        '<button type="button" id="crm-reminder-snooze" class="px-4 py-2.5 rounded-xl border border-[#FFE600]/80 text-[#FFE600] text-sm font-semibold hover:bg-[#FFE600]/10">Posponer 5 min</button>'
                         + '<button type="button" id="crm-reminder-reschedule" class="px-4 py-2.5 rounded-xl border border-[#FFE600]/80 text-[#FFE600] text-sm font-semibold hover:bg-[#FFE600]/10">Reprogramar</button>'
                     ) : '')
-                    + '<button type="button" id="crm-reminder-mark-seen" class="px-5 py-2.5 rounded-xl bg-[#FFE600] text-[#071A3D] text-sm font-bold hover:bg-[#ffeb3b]">' + (alertData.needs_alarm_confirm ? 'Confirmar' : 'Visto') + '</button>'
+                    + '<button type="button" id="crm-reminder-mark-seen" class="px-5 py-2.5 rounded-xl bg-[#FFE600] text-[#071A3D] text-sm font-bold hover:bg-[#ffeb3b]">Visto</button>'
                     + '</div>';
                 var html = ''
                     + '<div id="crm-reminder-detail-modal" class="fixed inset-0 z-[130] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">'
@@ -415,13 +428,11 @@
                     + '          <p class="text-sm font-bold text-[#FFE600] mb-2">Datos del recordatorio</p>'
                     +            rowHtml('Tipo de acción', detail.tipo_accion)
                     +            rowHtml('Hora programada', detail.fecha_inicio || alertData.time)
-                    +            rowHtml('Fecha límite', detail.fecha_limite)
-                    +            rowHtml('Repetición', detail.repeticion)
                     + '        </div>'
                     + '      </div>'
                     + '    </div>'
                     + '    <div class="flex-shrink-0 px-5 py-3 border-t border-[#FFE600]/30 bg-[#071A3D]">'
-                    +        actionRow
+                    +        actionButtons
                     + '    </div>'
                     + '  </div>'
                     + '</div>';
@@ -432,7 +443,7 @@
                 });
                 var tokenMeta = document.querySelector('meta[name="csrf-token"]');
                 var csrf = tokenMeta ? tokenMeta.getAttribute('content') : '';
-                if (rid) {
+                if (hasRid) {
                     var snoozeBtn = document.getElementById('crm-reminder-snooze');
                     var resBtn = document.getElementById('crm-reminder-reschedule');
                     if (snoozeBtn) {
@@ -452,7 +463,7 @@
                                 .then(function(r) { return r.json(); })
                                 .then(function(data) {
                                     if (data && data.success) {
-                                        ackReminderVistoLocally(alertData.id, rid);
+                                        ackReminderSnoozeLocally(alertData.id, rid);
                                         return markReminderAsRead(alertData.id);
                                     }
                                 })
@@ -474,39 +485,12 @@
                     seenBtn.addEventListener('click', function() {
                         stopReminderAlarmPlayback();
                         seenBtn.disabled = true;
-                        var afterRead = function() {
-                            ackReminderVistoLocally(alertData.id, rid);
-                            markReminderAsRead(alertData.id).finally(function() {
-                                closeReminderDetailModal();
-                                updateBadge();
-                                seenBtn.disabled = false;
-                            });
-                        };
-                        if (rid && alertData.needs_alarm_confirm) {
-                            fetch(crmReminderConfirmUrl(rid), {
-                                method: 'POST',
-                                headers: {
-                                    'Accept': 'application/json',
-                                    'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': csrf,
-                                    'X-Requested-With': 'XMLHttpRequest'
-                                },
-                                body: JSON.stringify({})
-                            })
-                                .then(function(r) { return r.json(); })
-                                .then(function(data) {
-                                    if (data && data.success) {
-                                        afterRead();
-                                    } else {
-                                        seenBtn.disabled = false;
-                                    }
-                                })
-                                .catch(function() {
-                                    seenBtn.disabled = false;
-                                });
-                        } else {
-                            afterRead();
-                        }
+                        ackReminderVistoLocally(alertData.id, hasRid ? rid : null);
+                        markReminderAsRead(alertData.id).finally(function() {
+                            closeReminderDetailModal();
+                            updateBadge();
+                            seenBtn.disabled = false;
+                        });
                     });
                 }
             }
@@ -567,8 +551,36 @@
                 }
                 var closeButton = node.querySelector('[data-dismiss-id="' + id + '"]');
                 if (closeButton) {
-                    closeButton.addEventListener('click', function() {
-                        dismissReminderNode(node);
+                    closeButton.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        var rid = parseInt(node.getAttribute('data-crm-reminder-id') || '0', 10);
+                        var nid = String(node.getAttribute('data-crm-notif-id') || '');
+                        var tokenMeta = document.querySelector('meta[name="csrf-token"]');
+                        var csrf = tokenMeta ? tokenMeta.getAttribute('content') : '';
+                        if (isNaN(rid) || rid < 1) {
+                            dismissReminderNode(node);
+                            return;
+                        }
+                        fetch(crmReminderDestroyUrl(rid), {
+                            method: 'DELETE',
+                            headers: {
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': csrf,
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        })
+                            .then(function(r) { return r.json(); })
+                            .then(function(data) {
+                                if (data && data.success) {
+                                    stopReminderAlarmPlayback();
+                                    ackReminderVistoLocally(nid || null, rid);
+                                    dismissReminderNode(node);
+                                    updateBadge();
+                                }
+                            })
+                            .catch(function() {});
                     });
                 }
                 node.addEventListener('click', function(e) {
@@ -577,9 +589,6 @@
                     }
                     openReminderDetailModal(alertData);
                 });
-                setTimeout(function() {
-                    dismissReminderNode(node);
-                }, 180000);
             }
 
             function dismissReminderNode(node) {
@@ -621,10 +630,8 @@
                                 return;
                             }
                             showDueReminderSideAlert(alertData);
-                            var now = Date.now();
-                            var lastRing = lastReminderRingByNotifId[nid] || 0;
-                            if (now - lastRing >= REMINDER_ALARM_REPEAT_MS) {
-                                lastReminderRingByNotifId[nid] = now;
+                            if (!reminderAlarmPlayedOnce[nid]) {
+                                reminderAlarmPlayedOnce[nid] = true;
                                 if (!playedAlarmThisPoll) {
                                     playedAlarmThisPoll = true;
                                     playReminderAlarm();

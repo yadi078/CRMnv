@@ -2,10 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Reminder;
 use App\Notifications\ReminderDueNotification;
 use App\Services\ContactBirthdayNotifier;
-use App\Services\ReminderAlarmRepeater;
 use App\Services\ReminderDueNotificationReadSync;
 use App\Services\ReminderDueNotifier;
 use Illuminate\Http\Request;
@@ -20,16 +18,15 @@ class NotificationController extends Controller
 {
     /**
      * Solo para polling: devuelve el número de no leídas (máx. 99+ en display).
-     * Incluye reminder_id en cada alerta para Aplazar / Reprogramar en el modal.
+     * Incluye reminder_id en cada alerta (p. ej. cierre con ✕ que elimina el recordatorio).
      */
     public function unreadCount(Request $request)
     {
         try {
             $user = auth()->user();
             // Respaldo web: si no corre cron/scheduler, generar aquí los recordatorios debidos
-            // para el usuario autenticado (15/10/5 min y hora).
+            // para el usuario autenticado (a la hora programada).
             app(ReminderDueNotifier::class)->dispatchDue($user->id);
-            app(ReminderAlarmRepeater::class)->dispatchRepeats($user->id);
             $count = $user->unreadNotificationsCount();
             $display = $count > 99 ? '99+' : (string) $count;
 
@@ -39,27 +36,14 @@ class NotificationController extends Controller
                 ->limit(8)
                 ->get();
 
-            $reminderIds = $notifRows->map(function ($notification) {
-                $raw = $notification->data;
-                $data = is_array($raw) ? $raw : (is_string($raw) ? (json_decode($raw, true) ?: []) : []);
-
-                return isset($data['reminder_id']) ? (int) $data['reminder_id'] : 0;
-            })->filter(fn (int $id) => $id >= 1)->unique()->values();
-
-            $remindersById = Reminder::query()
-                ->where('user_id', $user->id)
-                ->whereIn('id', $reminderIds)
-                ->get()
-                ->keyBy('id');
-
             $dueReminderAlerts = $notifRows
-                ->map(function ($notification) use ($user, $remindersById) {
+                ->map(function ($notification) use ($user) {
                     $raw = $notification->data;
                     $data = is_array($raw) ? $raw : (is_string($raw) ? (json_decode($raw, true) ?: []) : []);
                     $data = ReminderDueNotification::enrichStoredData($data, $user->id);
 
                     $phase = (string) ($data['alert_phase'] ?? 'due');
-                    if (! in_array($phase, ['pre15', 'pre10', 'pre5', 'pre2', 'due', 'post3', 'alarm_repeat'], true)) {
+                    if ($phase !== 'due') {
                         return null;
                     }
 
@@ -71,10 +55,7 @@ class NotificationController extends Controller
                     $description = trim((string) ($detail['descripcion'] ?? $data['mensaje'] ?? ''));
 
                     $reminderId = isset($data['reminder_id']) ? (int) $data['reminder_id'] : null;
-                    $reminderModel = $reminderId ? $remindersById->get($reminderId) : null;
-                    $needsAlarmConfirm = $reminderModel
-                        && $reminderModel->needsAlarmConfirmation()
-                        && in_array($phase, ['due', 'alarm_repeat'], true);
+                    $needsAlarmConfirm = false;
 
                     return [
                         'id' => (string) $notification->id,
@@ -118,7 +99,6 @@ class NotificationController extends Controller
 
         // Al abrir Notificaciones: mismo criterio que el scheduler (por si no corre el cron)
         app(ReminderDueNotifier::class)->dispatchDue($user->id);
-        app(ReminderAlarmRepeater::class)->dispatchRepeats($user->id);
 
         // Cumpleaños: respaldo web si el servidor no ejecuta `schedule:run`.
         // Se puede ejecutar en cada carga; el servicio evita duplicados por admin/contacto/día.
@@ -288,13 +268,14 @@ class NotificationController extends Controller
         $user = auth()->user();
         $ids = collect($validated['notification_ids'])->map(fn ($id) => (string) $id)->unique()->values();
 
-        $affected = $user->notifications()->whereIn('id', $ids)->delete();
+        $affected = (int) DB::table('notifications')
+            ->where('notifiable_type', $user->getMorphClass())
+            ->where('notifiable_id', $user->getAuthIdentifier())
+            ->whereIn('id', $ids->all())
+            ->delete();
 
-        if ($request->wantsJson() || $request->ajax()) {
-            return response()->json(['success' => true, 'affected' => $affected]);
-        }
-
-        return back()->with('success', 'Notificaciones seleccionadas eliminadas.');
+        // Siempre JSON: el listado solo invoca esta ruta vía fetch (Alpine).
+        return response()->json(['success' => true, 'affected' => $affected]);
     }
 
     public function star(Request $request, string $notification)

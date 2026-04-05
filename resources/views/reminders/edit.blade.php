@@ -95,34 +95,14 @@
                     <textarea name="description" rows="5" class="w-full rounded-xl border border-gray-300 bg-white text-gray-900 py-2.5 px-3 text-sm">{{ old('description', $reminder->description) }}</textarea>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-white/90 mb-1">Fecha y hora programada</label>
-                    <input type="datetime-local" name="start_at" value="{{ $startAtValue }}"
+                    <label class="block text-sm font-medium text-white/90 mb-1">Fecha y hora programada *</label>
+                    <input type="datetime-local" name="start_at" required value="{{ $startAtValue }}"
                         class="w-full rounded-xl border border-gray-300 bg-white text-gray-900 py-3 px-4 text-sm min-h-[44px]" />
                     @error('start_at')
                         <p class="mt-1 text-sm text-red-300">{{ $message }}</p>
                     @enderror
                 </div>
-                <label class="inline-flex items-center gap-2 text-sm text-white/85">
-                    <input type="checkbox" name="all_day" value="1" @checked(old('all_day', $reminder->all_day)) class="rounded border-white/30 text-[#FFE600] bg-white focus:ring-[#FFE600]" />
-                    Recordatorio todo el día
-                </label>
-                <div>
-                    <label class="block text-sm font-medium text-white/90 mb-1">Repetir</label>
-                    <select name="repeat" class="w-full rounded-xl border border-gray-300 bg-white text-gray-900 py-2.5 px-3 text-sm">
-                        <option value="">No repetir</option>
-                        <option value="daily" @selected(old('repeat', $reminder->repeat) === 'daily')>Diario</option>
-                        <option value="weekly" @selected(old('repeat', $reminder->repeat) === 'weekly')>Semanal</option>
-                        <option value="monthly" @selected(old('repeat', $reminder->repeat) === 'monthly')>Mensual</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-white/90 mb-1">Fecha límite</label>
-                    <input type="date" name="deadline_at" value="{{ old('deadline_at', $reminder->deadline_at?->format('Y-m-d')) }}"
-                        class="w-full rounded-xl border border-gray-300 bg-white text-gray-900 py-3 px-4 text-sm min-h-[44px]" />
-                </div>
             </div>
-
-            @include('reminders.partials.alarm-configuration', ['reminder' => $reminder])
 
             <div class="flex flex-wrap justify-end gap-3 pt-4 border-t border-white/15">
                 <a href="{{ url()->previous() === url()->current() ? route('notifications.index') : url()->previous() }}" class="px-5 py-2.5 text-sm rounded-xl border border-white/30 text-white/90 hover:bg-white/10">Cancelar</a>
