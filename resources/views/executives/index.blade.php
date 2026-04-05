@@ -7,7 +7,7 @@
         </x-page-header-avatar>
         <div class="min-w-0">
             <h2 class="page-header-card__title">Ejecutivos</h2>
-            <p class="page-header-card__subtitle">Las mismas cuentas de usuario del CRM; aquí se gestionan cartera y asignaciones.</p>
+            <p class="page-header-card__subtitle">Ejecutivos (rol usuario), administradores y comerciales que solo aparecen en importaciones sin cuenta vinculada.</p>
         </div>
         <div class="flex flex-wrap gap-2 ml-auto justify-end items-center shrink-0">
             <button
@@ -96,6 +96,7 @@
             {{-- Tarjetas de ejecutivos: primero en la página (vista lista de usuarios) --}}
             <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
                 @forelse($executives as $exec)
+                    @php($execIsAdmin = $exec->esAdmin())
                     <div
                         class="group relative rounded-2xl bg-[#071A3D] border border-[#0a2454] shadow-lg overflow-hidden transition transform hover:-translate-y-0.5 hover:shadow-xl hover:border-[#FFE600]/40 focus-within:ring-2 focus-within:ring-[#FFE600] focus-within:ring-offset-2 focus-within:ring-offset-white"
                     >
@@ -110,22 +111,28 @@
                                     {{ $exec->initials }}
                                 </div>
                             @endif
-                            <div class="min-w-0 flex-1 pr-10">
+                            <div class="min-w-0 flex-1 {{ $execIsAdmin ? 'pr-4' : 'pr-10' }}">
                                 <h3 class="text-lg font-semibold text-white truncate group-hover:text-[#FFE600] transition-colors">{{ $exec->name }}</h3>
                                 <p class="text-sm text-white/75 truncate mt-1">{{ $exec->email }}</p>
                                 <p class="mt-3 flex flex-wrap items-center gap-2">
+                                    @if($execIsAdmin)
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-medium bg-[#FFE600]/15 text-[#FFE600] border border-[#FFE600]/40">Administrador</span>
+                                    @endif
                                     @if($exec->is_active)
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Activo</span>
                                     @else
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-medium bg-red-500/20 text-red-300 border border-red-500/30">Inactivo</span>
                                     @endif
-                                    @php($empresasCount = (int) ($exec->assigned_companies_count ?? 0))
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-medium bg-white/10 text-white/85 border border-white/20 tabular-nums" title="Empresas en su cartera">
-                                        {{ $empresasCount }} {{ $empresasCount === 1 ? 'empresa' : 'empresas' }}
-                                    </span>
+                                    @unless($execIsAdmin)
+                                        @php($empresasCount = (int) ($exec->assigned_companies_count ?? 0))
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-medium bg-white/10 text-white/85 border border-white/20 tabular-nums" title="Empresas en su cartera">
+                                            {{ $empresasCount }} {{ $empresasCount === 1 ? 'empresa' : 'empresas' }}
+                                        </span>
+                                    @endunless
                                 </p>
                             </div>
                         </a>
+                        @unless($execIsAdmin)
                         <form
                             method="POST"
                             action="{{ route('executives.destroy', $exec) }}"
@@ -143,6 +150,7 @@
                                 <span class="sr-only">Eliminar ejecutivo</span>
                             </button>
                         </form>
+                        @endunless
                     </div>
                 @empty
                     <div class="col-span-full panel-card-dark text-center py-12 text-white/80">
@@ -154,6 +162,35 @@
             <div class="px-1">
                 {{ $executives->links() }}
             </div>
+
+            @if(isset($importOnlyExecutiveNames) && $importOnlyExecutiveNames->isNotEmpty())
+                <div class="rounded-2xl border border-[#FFE600]/25 bg-[#071A3D]/80 p-4 sm:p-5 space-y-4">
+                    <div>
+                        <h3 class="text-base font-bold text-[#FFE600] tracking-tight">Solo en datos importados</h3>
+                        <p class="text-xs text-white/65 mt-1 leading-snug max-w-3xl">
+                            Comerciales que aparecen en el campo <strong class="text-white/85">ejecutivo asignado</strong> de las empresas cargadas (Excel, etc.) y que <strong class="text-white/85">no coinciden</strong> con el nombre de ningún usuario del CRM. Pulse una tarjeta para ver los contactos filtrados por ese comercial.
+                        </p>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                        @foreach($importOnlyExecutiveNames as $importLabel)
+                            @php($eKey = 'E:'.base64_encode($importLabel))
+                            <a
+                                href="{{ route('executives.index', array_merge(request()->except('page'), ['ejecutivo_id' => $eKey])) }}#asignaciones-filtros"
+                                class="group rounded-xl border border-white/15 bg-white/[0.04] p-4 flex gap-3 items-start hover:border-[#FFE600]/45 hover:bg-white/[0.07] transition-colors focus:outline-none focus:ring-2 focus:ring-[#FFE600]/50"
+                            >
+                                <div class="w-12 h-12 rounded-full bg-amber-500/15 flex items-center justify-center text-amber-200 border border-amber-400/30 shrink-0 text-xs font-bold">
+                                    @php($ini = mb_strtoupper(mb_substr(trim($importLabel), 0, 2, 'UTF-8'), 'UTF-8'))
+                                    {{ $ini !== '' ? $ini : '?' }}
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-sm font-semibold text-white group-hover:text-[#FFE600] transition-colors break-words">{{ $importLabel }}</p>
+                                    <p class="text-[11px] text-white/55 mt-1">Sin cuenta de usuario · ver asignaciones</p>
+                                </div>
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
         @endif
 
         {{-- Reasignación masiva (2.º bloque, tras tarjetas de ejecutivos) --}}
@@ -349,7 +386,7 @@
         @endif
 
         {{-- Filtros --}}
-        <div class="panel-card-dark">
+        <div id="asignaciones-filtros" class="panel-card-dark scroll-mt-24">
             <h3 class="text-center text-lg font-bold text-[#FFE600] mb-1 tracking-tight">Filtros</h3>
             <p class="text-center text-xs text-white/65 mb-4 max-w-2xl mx-auto leading-snug">Para buscar casos concretos y reasignar pocas empresas o contactos (no todo junto como el bloque amarillo de arriba).</p>
             <form method="GET" action="{{ route('executives.index') }}" class="space-y-5">

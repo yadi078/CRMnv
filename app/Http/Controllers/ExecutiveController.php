@@ -236,10 +236,18 @@ class ExecutiveController extends Controller
             }
         }
 
+        $importOnlyExecutiveNames = null;
         if ($assignmentContacts === null) {
+            $importOnlyExecutiveNames = $this->importExecutiveLabelsWithoutMatchingUser();
+
+            $guard = config('auth.defaults.guard', 'web');
             $query = User::query()
-                ->whereDoesntHave('roles', function ($q): void {
-                    $q->whereIn('name', ['admin', 'administrador']);
+                ->where(function ($q) use ($guard): void {
+                    $q->whereDoesntHave('roles', function ($r) use ($guard): void {
+                        $r->where('guard_name', $guard)->whereIn('name', ['admin', 'administrador']);
+                    })->orWhereHas('roles', function ($r) use ($guard): void {
+                        $r->where('guard_name', $guard)->whereIn('name', ['admin', 'administrador']);
+                    });
                 })
                 ->with(['roles'])
                 ->withCount('assignedCompanies')
@@ -284,6 +292,7 @@ class ExecutiveController extends Controller
             'executivesForPortfolioDestination' => $executivesForPortfolioDestination,
             'canPortfolioTransfer' => $canPortfolioTransfer,
             'mexicanStates' => MexicanStates::all(),
+            'importOnlyExecutiveNames' => $importOnlyExecutiveNames,
         ], ProfileController::adminPasswordAssistanceState($request)));
     }
 
@@ -315,6 +324,37 @@ class ExecutiveController extends Controller
         }
 
         return false;
+    }
+
+    /**
+     * Nombres distintos en empresa.ejecutivo_asignado (importaciones) que no coinciden con ningún User::name.
+     *
+     * @return \Illuminate\Support\Collection<int, string>
+     */
+    private function importExecutiveLabelsWithoutMatchingUser(): Collection
+    {
+        $labels = Company::query()
+            ->whereNotNull('ejecutivo_asignado')
+            ->where('ejecutivo_asignado', '!=', '')
+            ->distinct()
+            ->orderBy('ejecutivo_asignado')
+            ->pluck('ejecutivo_asignado')
+            ->map(fn ($s) => trim((string) $s))
+            ->filter()
+            ->unique()
+            ->values();
+
+        $userNamesLower = User::query()
+            ->pluck('name')
+            ->map(fn ($n) => mb_strtolower(trim((string) $n)))
+            ->filter()
+            ->unique();
+
+        $nameIndex = array_fill_keys($userNamesLower->all(), true);
+
+        return $labels->filter(function (string $label) use ($nameIndex) {
+            return ! isset($nameIndex[mb_strtolower($label)]);
+        })->values();
     }
 
     /**
@@ -408,9 +448,9 @@ class ExecutiveController extends Controller
     public function show(User $user): View|RedirectResponse
     {
         if ($user->esAdmin()) {
-            return redirect()
-                ->route('executives.index')
-                ->with('warning', 'Los usuarios administradores no tienen ficha de ejecutivo en este módulo.');
+            $user->load('roles');
+
+            return view('executives.admin-profile', ['adminUser' => $user]);
         }
 
         $user->load([
