@@ -5,9 +5,20 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
             </svg>
         </x-page-header-avatar>
-        <div>
+        <div class="min-w-0">
             <h2 class="page-header-card__title">Ejecutivos</h2>
             <p class="page-header-card__subtitle">Las mismas cuentas de usuario del CRM; aquí se gestionan cartera y asignaciones.</p>
+        </div>
+        <div class="flex flex-wrap gap-2 ml-auto justify-end items-center shrink-0">
+            <button
+                type="button"
+                class="btn-amber-app"
+                title="Registrar un nuevo ejecutivo en el sistema"
+                onclick="window.dispatchEvent(new CustomEvent('crm-open-register-executive'))"
+            >
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                Registrar nuevo ejecutivo
+            </button>
         </div>
     </x-slot>
 
@@ -37,6 +48,7 @@
     <div
         class="space-y-6"
         x-data="executivesPage(@js($executivesPageInitial))"
+        @crm-open-register-executive.window="registerModalOpen = true"
     >
         @if (session('success'))
             <div class="rounded-xl border-2 border-[#FFE600] bg-emerald-950/35 px-4 py-3 text-sm text-white shadow-lg flex items-start gap-3" role="status">
@@ -80,20 +92,266 @@
             </div>
         @endif
 
+        @if($executives)
+            {{-- Tarjetas de ejecutivos: primero en la página (vista lista de usuarios) --}}
+            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+                @forelse($executives as $exec)
+                    <div
+                        class="group relative rounded-2xl bg-[#071A3D] border border-[#0a2454] shadow-lg overflow-hidden transition transform hover:-translate-y-0.5 hover:shadow-xl hover:border-[#FFE600]/40 focus-within:ring-2 focus-within:ring-[#FFE600] focus-within:ring-offset-2 focus-within:ring-offset-white"
+                    >
+                        <a
+                            href="{{ \App\Support\CrmNavigation::withReturn(route('executives.show', $exec)) }}"
+                            class="block p-5 flex gap-4 items-start focus:outline-none"
+                        >
+                            @if($exec->profile_photo_url)
+                                <img src="{{ $exec->profile_photo_url }}" alt="" class="w-16 h-16 rounded-full object-cover border-2 border-[#FFE600]/50 flex-shrink-0" />
+                            @else
+                                <div class="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center text-lg font-bold text-[#FFE600] border-2 border-[#FFE600]/40 flex-shrink-0">
+                                    {{ $exec->initials }}
+                                </div>
+                            @endif
+                            <div class="min-w-0 flex-1 pr-10">
+                                <h3 class="text-lg font-semibold text-white truncate group-hover:text-[#FFE600] transition-colors">{{ $exec->name }}</h3>
+                                <p class="text-sm text-white/75 truncate mt-1">{{ $exec->email }}</p>
+                                <p class="mt-3 flex flex-wrap items-center gap-2">
+                                    @if($exec->is_active)
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Activo</span>
+                                    @else
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-medium bg-red-500/20 text-red-300 border border-red-500/30">Inactivo</span>
+                                    @endif
+                                    @php($empresasCount = (int) ($exec->assigned_companies_count ?? 0))
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-medium bg-white/10 text-white/85 border border-white/20 tabular-nums" title="Empresas en su cartera">
+                                        {{ $empresasCount }} {{ $empresasCount === 1 ? 'empresa' : 'empresas' }}
+                                    </span>
+                                </p>
+                            </div>
+                        </a>
+                        <form
+                            method="POST"
+                            action="{{ route('executives.destroy', $exec) }}"
+                            class="absolute top-3 right-3 z-10"
+                            onsubmit="return confirm('¿Eliminar al ejecutivo «{{ $exec->name }}»? Se quitarán las asignaciones de empresas y contactos y se borrará la cuenta de usuario.');"
+                        >
+                            @csrf
+                            @method('DELETE')
+                            <button
+                                type="submit"
+                                class="inline-flex items-center justify-center rounded-xl border border-red-500/45 bg-red-950/45 p-2 text-red-200 hover:bg-red-900/55 hover:border-red-400/60 focus:outline-none focus:ring-2 focus:ring-red-400/50"
+                                title="Eliminar ejecutivo"
+                            >
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                <span class="sr-only">Eliminar ejecutivo</span>
+                            </button>
+                        </form>
+                    </div>
+                @empty
+                    <div class="col-span-full panel-card-dark text-center py-12 text-white/80">
+                        No hay ejecutivos que coincidan con los filtros.
+                    </div>
+                @endforelse
+            </div>
+
+            <div class="px-1">
+                {{ $executives->links() }}
+            </div>
+        @endif
+
+        {{-- Reasignación masiva (2.º bloque, tras tarjetas de ejecutivos) --}}
+        @if(!empty($canPortfolioTransfer))
+            <div class="panel-card-dark">
+                <h3 class="text-center text-lg font-bold text-[#FFE600] mb-1 tracking-tight">Reasignar empresas y contactos</h3>
+                <p class="text-center text-xs text-white/65 mb-4">Empresas y contactos pasan del primer ejecutivo al segundo.</p>
+
+                <form
+                    method="POST"
+                    action="{{ route('executives.transfer-portfolio') }}"
+                    class="space-y-5"
+                    id="form-transfer-cartera"
+                    x-ref="transferForm"
+                    @submit.prevent="if (!$refs.transferForm.checkValidity()) { $refs.transferForm.reportValidity(); return; } transferConfirmOpen = true"
+                >
+                    @csrf
+                    <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-x-6 gap-y-4 lg:items-end">
+                        <div class="min-w-0 flex flex-col gap-2">
+                            <label for="transfer_from" class="block text-xs font-semibold text-[#FFE600] leading-snug">Empresas de:</label>
+                            <select
+                                id="transfer_from"
+                                name="from_user_id"
+                                required
+                                @change="refreshTransferPreview($event.target.value)"
+                                class="w-full rounded-xl border-2 border-gray-200 bg-white text-gray-900 text-sm py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-[#FFE600] [&>option]:text-gray-900"
+                            >
+                                <option value="" disabled @selected(old('from_user_id') === null || old('from_user_id') === '')>Elija origen…</option>
+                                @foreach($executiveFilterOptions as $opt)
+                                    <option value="{{ $opt['value'] }}" @selected((string) old('from_user_id') === (string) $opt['value'])>{{ $opt['label'] }}</option>
+                                @endforeach
+                            </select>
+                            <x-input-error :messages="$errors->get('from_user_id')" class="text-amber-200 text-xs" />
+                        </div>
+
+                        <div class="hidden lg:flex justify-center text-[#FFE600] self-end pb-2.5 shrink-0" aria-hidden="true">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                        </div>
+
+                        <div class="min-w-0 flex flex-col gap-2">
+                            <label for="transfer_to" class="block text-xs font-semibold text-[#FFE600] leading-snug">Transferir a:</label>
+                            <select
+                                id="transfer_to"
+                                name="to_user_id"
+                                required
+                                class="w-full rounded-xl border-2 border-gray-200 bg-white text-gray-900 text-sm py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-[#FFE600] [&>option]:text-gray-900"
+                            >
+                                <option value="" disabled @selected(old('to_user_id') === null || old('to_user_id') === '')>Elija destino…</option>
+                                @foreach($executivesForPortfolioDestination as $u)
+                                    <option value="{{ $u->id }}" @selected((string) old('to_user_id') === (string) $u->id)>{{ $u->name }} — {{ $u->email }}</option>
+                                @endforeach
+                            </select>
+                            <x-input-error :messages="$errors->get('to_user_id')" class="text-amber-200 text-xs" />
+                        </div>
+                    </div>
+                    <p class="text-[11px] text-white/50 leading-snug">Incluye los contactos ligados. Abajo solo se listan empresas.</p>
+
+                    <div class="mt-4 rounded-xl border border-white/15 bg-[#071A3D]/45 px-4 py-3">
+                        <h4 class="text-xs font-semibold text-[#FFE600] mb-2">Vista previa</h4>
+                        <p class="text-xs text-white/45 mb-2" x-show="!transferPreviewFromValue">Seleccione origen arriba.</p>
+                        <p class="text-xs text-white/60 mb-2 flex items-center gap-2" x-show="transferPreviewLoading">
+                            <span class="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-[#FFE600] border-t-transparent" aria-hidden="true"></span>
+                            Cargando…
+                        </p>
+                        <p class="text-xs text-white/65 mb-0" x-show="!transferPreviewLoading && transferPreviewFromValue && transferPreviewCompanies.length === 0">Sin empresas en ese origen.</p>
+                        <ul class="text-sm text-white/90 space-y-1 max-h-48 overflow-y-auto pr-1" x-show="!transferPreviewLoading && transferPreviewCompanies.length > 0" x-cloak>
+                            <template x-for="c in transferPreviewCompanies" :key="c.id">
+                                <li class="border-b border-white/10 pb-1 last:border-0" x-text="c.nombre_comercial"></li>
+                            </template>
+                        </ul>
+                        <p class="text-[10px] text-white/45 mt-2" x-show="transferPreviewCompanies.length >= 500" x-cloak>Hasta 500 en pantalla; el total abajo es completo.</p>
+
+                        <div
+                            class="mt-4 pt-4 border-t border-white/10"
+                            x-show="transferPreviewFromValue && !transferPreviewLoading"
+                            x-cloak
+                        >
+                            <h4 class="text-xs font-semibold text-[#FFE600] mb-2">Totales</h4>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div class="metric-card-dark metric-card-dark--compact">
+                                    <div class="flex items-start justify-between gap-2">
+                                        <div class="min-w-0 flex-1">
+                                            <p class="metric-card-dark__label uppercase tracking-wide text-[0.6875rem]">Empresas</p>
+                                            <p class="metric-card-dark__value tabular-nums" x-text="Number(transferPreviewCompanyCount).toLocaleString('es-MX')"></p>
+                                        </div>
+                                        <div class="metric-card-dark__icon-wrap shrink-0 mt-0">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="metric-card-dark metric-card-dark--compact">
+                                    <div class="flex items-start justify-between gap-2">
+                                        <div class="min-w-0 flex-1">
+                                            <p class="metric-card-dark__label uppercase tracking-wide text-[0.6875rem]">Contactos</p>
+                                            <p class="metric-card-dark__value tabular-nums" x-text="Number(transferPreviewContactCount).toLocaleString('es-MX')"></p>
+                                        </div>
+                                        <div class="metric-card-dark__icon-wrap shrink-0 mt-0">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-[10px] text-white/45 mt-2 leading-snug" x-show="transferPreviewCompaniesPreviewTruncated" x-cloak>Lista acotada; totales = cartera completa.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-2 border-t border-white/10">
+                        <p class="text-[11px] text-white/60 max-w-xl leading-snug">
+                            Destino: solo ejecutivos <span class="text-[#FFE600] font-medium">activos</span> y <span class="text-[#FFE600] font-medium">aprobados</span>.
+                        </p>
+                        <div class="flex flex-wrap items-center gap-3 justify-end sm:justify-end w-full sm:w-auto">
+                            <button
+                                type="button"
+                                @click="clearTransferPortfolioForm()"
+                                class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full border-2 border-white/35 text-white text-sm font-semibold hover:bg-white/10 transition-colors shrink-0"
+                            >
+                                <svg class="w-5 h-5 shrink-0 opacity-90" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                                Limpiar
+                            </button>
+                            <button
+                                type="submit"
+                                class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-[#FFE600] text-[#071A3D] text-sm font-bold shadow-[0_4px_14px_rgba(0,0,0,0.2)] hover:bg-[#ffeb3b] transition-colors border border-[#fff9c4] shrink-0"
+                            >
+                                <svg class="w-5 h-5 text-emerald-700 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                                </svg>
+                                Transferir todo
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            {{-- Confirmación reasignación --}}
+            <div
+                x-show="transferConfirmOpen"
+                x-cloak
+                x-transition:enter="ease-out duration-200"
+                x-transition:enter-start="opacity-0"
+                x-transition:enter-end="opacity-100"
+                x-transition:leave="ease-in duration-150"
+                x-transition:leave-start="opacity-100"
+                x-transition:leave-end="opacity-0"
+                class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="modal-transfer-cartera-titulo"
+                @keydown.escape.window="transferConfirmOpen = false"
+            >
+                <div class="absolute inset-0" @click="transferConfirmOpen = false" aria-hidden="true"></div>
+                <div
+                    class="relative w-full max-w-md rounded-2xl border-4 border-[#FFE600] bg-gradient-to-b from-[#1a3d6b] to-[#0f2850] shadow-2xl p-6 text-center"
+                    @click.stop
+                >
+                    <div class="mx-auto w-14 h-14 rounded-full bg-[#FFE600]/20 text-[#FFE600] flex items-center justify-center mb-4 ring-2 ring-[#FFE600]/30">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                        </svg>
+                    </div>
+                    <h3 id="modal-transfer-cartera-titulo" class="text-lg font-bold text-[#FFE600] mb-2">¿Reasignar todo?</h3>
+                    <p class="text-sm text-white/90 mb-1 leading-relaxed">
+                        Todo lo del <span class="text-[#FFE600]">origen</span> pasa al <span class="text-[#FFE600]">destino</span>. No se revierte sola.
+                    </p>
+                    <p class="text-xs text-white/65 mb-6">Empresas y contactos incluidos.</p>
+                    <div class="flex flex-col-reverse sm:flex-row gap-3 sm:justify-center sm:gap-4">
+                        <button
+                            type="button"
+                            class="px-5 py-3 rounded-xl border-2 border-white/35 text-white text-sm font-medium hover:bg-white/10 transition-colors w-full sm:w-auto"
+                            @click="transferConfirmOpen = false"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            type="button"
+                            class="px-5 py-3 rounded-xl font-bold bg-[#FFE600] text-[#071A3D] text-sm hover:bg-[#ffeb3b] shadow-lg border border-[#fff9c4] transition-colors w-full sm:w-auto"
+                            @click="$refs.transferForm.submit(); transferConfirmOpen = false"
+                        >
+                            Sí, transferir
+                        </button>
+                    </div>
+                </div>
+            </div>
+        @else
+            <div class="panel-card-dark">
+                <p class="text-sm text-white/75 text-center max-w-xl mx-auto leading-relaxed">Para usar esto hace falta un <strong class="text-white/90">origen</strong> y un <strong class="text-white/90">destino</strong> distinto (destino activo y aprobado). Si solo hay un ejecutivo, registre otro.</p>
+            </div>
+        @endif
+
         {{-- Filtros --}}
         <div class="panel-card-dark">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
-                <h3 class="text-sm font-semibold text-white/90">Filtros</h3>
-                <button
-                    type="button"
-                    @click="registerModalOpen = true"
-                    class="btn-amber-app self-end sm:self-auto flex-shrink-0"
-                    title="Registrar un nuevo ejecutivo en el sistema"
-                >
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" /></svg>
-                    Registrar nuevo ejecutivo
-                </button>
-            </div>
+            <h3 class="text-center text-lg font-bold text-[#FFE600] mb-1 tracking-tight">Filtros</h3>
+            <p class="text-center text-xs text-white/65 mb-4 max-w-2xl mx-auto leading-snug">Para buscar casos concretos y reasignar pocas empresas o contactos (no todo junto como el bloque amarillo de arriba).</p>
             <form method="GET" action="{{ route('executives.index') }}" class="space-y-5">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-x-5 md:gap-y-4 items-end">
                     <div class="min-w-0">
@@ -110,7 +368,7 @@
                         </select>
                     </div>
                     <div class="min-w-0">
-                        <label for="entidad" class="block text-xs font-medium text-white/70 mb-1.5">Estado (México)</label>
+                        <label for="entidad" class="block text-xs font-medium text-white/70 mb-1.5">Estado</label>
                         <select
                             id="entidad"
                             name="entidad"
@@ -150,7 +408,7 @@
                         </select>
                     </div>
                     <div class="min-w-0 md:col-span-1">
-                        <label for="ejecutivo_id" class="block text-xs font-medium text-white/70 mb-1.5">Ejecutivo (asignación)</label>
+                        <label for="ejecutivo_id" class="block text-xs font-medium text-white/70 mb-1.5">Ejecutivo</label>
                         <select
                             id="ejecutivo_id"
                             name="ejecutivo_id"
@@ -175,7 +433,7 @@
                     </button>
                     </div>
                 </div>
-                <p class="text-[11px] text-white/45 leading-snug">Use «Sin» o «Con» para listar contactos y asignarlos sin elegir empresa antes. Los nombres solo de ficha (sin cuenta en el CRM) sirven para filtrar por el campo ejecutivo de la empresa.</p>
+                <p class="text-[11px] text-white/50 leading-snug">«Sin» / «Con» = contactos sin o con ejecutivo. Los demás nombres vienen de cuentas del sistema o del texto en la ficha de la empresa.</p>
             </form>
         </div>
 
@@ -284,14 +542,28 @@
         @if($assignmentContacts)
             {{-- Vista por empresa/contacto: filas tipo tarjeta (empresa · contacto · ejecutivo · acción) --}}
             <div class="panel-card-dark !p-0 overflow-hidden border border-white/10 rounded-2xl shadow-lg">
-                <div class="px-5 pt-5 pb-4 sm:px-6 border-b border-white/10 bg-black/20">
-                    <div class="min-w-0">
-                        <h3 class="text-base font-semibold text-white">Asignaciones</h3>
-                        <p class="text-xs text-white/55 mt-1 max-w-2xl leading-relaxed">
-                            Cada fila muestra la empresa, el contacto, el ejecutivo responsable y la acción para asignar o transferir. Filtre por «Sin ejecutivo asignado» para ver pendientes de cartera.
+                <div class="px-5 pt-5 pb-5 sm:px-6 border-b border-white/10 bg-black/20">
+                    <div class="min-w-0 max-w-3xl">
+                        <h3 class="text-lg font-bold text-[#FFE600] tracking-tight">Asignaciones</h3>
+                        <p class="text-[11px] text-white/50 mt-2 leading-relaxed">
+                            Empresa, contacto, ejecutivo y acción en cada fila. «Sin ejecutivo asignado» muestra los que aún no tienen responsable.
                         </p>
                     </div>
                 </div>
+
+                @if (! empty($assignmentFilterStats))
+                    <div class="px-4 py-4 sm:px-6 border-b border-white/10">
+                        <x-executive-portfolio-stats
+                            title="Total"
+                            :companies-count="$assignmentFilterStats['companies']"
+                            :contacts-count="$assignmentFilterStats['contacts']"
+                            footnote="Todos los resultados filtrados."
+                            :compact="true"
+                            :narrow="true"
+                            :bare="true"
+                        />
+                    </div>
+                @endif
 
                 @if($assignmentContacts->isNotEmpty())
                 <div class="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 sm:px-6 border-b border-white/10 bg-[#071A3D]/55">
@@ -312,8 +584,8 @@
                         x-cloak
                         @click="openBulkExportModal()"
                     >
-                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M8 12l4 4m0 0l4-4m-4 4V4"/></svg>
-                        Exportar a ejecutivo
+                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+                        Reasignar ejecutivo
                     </button>
                 </div>
                 @endif
@@ -379,18 +651,6 @@
                         </div>
                     @endforelse
                 </div>
-
-                @if (! empty($assignmentFilterStats))
-                    <div class="px-4 py-4 sm:px-6 sm:py-5 border-t border-white/10 bg-black/15">
-                        <x-executive-portfolio-stats
-                            title="Totales con los filtros actuales"
-                            :companies-count="$assignmentFilterStats['companies']"
-                            :contacts-count="$assignmentFilterStats['contacts']"
-                            footnote="Cantidades exactas de todo el resultado filtrado (no solo esta página)."
-                            class="!bg-transparent border-0 !p-0 shadow-none"
-                        />
-                    </div>
-                @endif
             </div>
 
             <div class="px-1">
@@ -413,9 +673,9 @@
                     class="relative w-full max-w-md rounded-2xl border-4 border-[#FFE600] bg-gradient-to-b from-[#1a3d6b] to-[#0f2850] shadow-2xl p-6 text-left"
                     @click.stop
                 >
-                    <h3 id="exec-bulk-export-title" class="text-lg font-bold text-[#FFE600] mb-1">Exportar a ejecutivo</h3>
+                    <h3 id="exec-bulk-export-title" class="text-lg font-bold text-[#FFE600] mb-1">Reasignar ejecutivo</h3>
                     <p class="text-sm text-white/85 mb-4">
-                        Los <span class="font-semibold text-white" x-text="selectedIds.length"></span> contacto(s) seleccionado(s) pasarán a la cartera del ejecutivo que elija.
+                        Los <span class="font-semibold text-white" x-text="selectedIds.length"></span> contacto(s) seleccionado(s) quedarán bajo el ejecutivo que elija.
                     </p>
                     <form method="POST" action="{{ route('executives.bulk-assign-contacts') }}" class="space-y-4">
                         @csrf
@@ -511,256 +771,6 @@
                         </div>
                     </form>
                 </div>
-            </div>
-        @else
-        {{-- Tarjetas de ejecutivos (sin filtro empresa/contacto) --}}
-        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-            @forelse($executives as $exec)
-                    <div
-                        class="group relative rounded-2xl bg-[#071A3D] border border-[#0a2454] shadow-lg overflow-hidden transition transform hover:-translate-y-0.5 hover:shadow-xl hover:border-[#FFE600]/40 focus-within:ring-2 focus-within:ring-[#FFE600] focus-within:ring-offset-2 focus-within:ring-offset-white"
-                    >
-                        <a
-                            href="{{ \App\Support\CrmNavigation::withReturn(route('executives.show', $exec)) }}"
-                            class="block p-5 flex gap-4 items-start focus:outline-none"
-                        >
-                            @if($exec->profile_photo_url)
-                                <img src="{{ $exec->profile_photo_url }}" alt="" class="w-16 h-16 rounded-full object-cover border-2 border-[#FFE600]/50 flex-shrink-0" />
-                            @else
-                                <div class="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center text-lg font-bold text-[#FFE600] border-2 border-[#FFE600]/40 flex-shrink-0">
-                                    {{ $exec->initials }}
-                                </div>
-                            @endif
-                            <div class="min-w-0 flex-1 pr-10">
-                                <h3 class="text-lg font-semibold text-white truncate group-hover:text-[#FFE600] transition-colors">{{ $exec->name }}</h3>
-                                <p class="text-sm text-white/75 truncate mt-1">{{ $exec->email }}</p>
-                                <p class="mt-3">
-                                    @if($exec->is_active)
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Activo</span>
-                                    @else
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-medium bg-red-500/20 text-red-300 border border-red-500/30">Inactivo</span>
-                                    @endif
-                                </p>
-                            </div>
-                        </a>
-                        <form
-                            method="POST"
-                            action="{{ route('executives.destroy', $exec) }}"
-                            class="absolute top-3 right-3 z-10"
-                            onsubmit="return confirm('¿Eliminar al ejecutivo «{{ $exec->name }}»? Se quitarán las asignaciones de empresas y contactos y se borrará la cuenta de usuario.');"
-                        >
-                            @csrf
-                            @method('DELETE')
-                            <button
-                                type="submit"
-                                class="inline-flex items-center justify-center rounded-xl border border-red-500/45 bg-red-950/45 p-2 text-red-200 hover:bg-red-900/55 hover:border-red-400/60 focus:outline-none focus:ring-2 focus:ring-red-400/50"
-                                title="Eliminar ejecutivo"
-                            >
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                <span class="sr-only">Eliminar ejecutivo</span>
-                            </button>
-                        </form>
-                    </div>
-            @empty
-                <div class="col-span-full panel-card-dark text-center py-12 text-white/80">
-                        No hay ejecutivos que coincidan con los filtros.
-                </div>
-            @endforelse
-        </div>
-
-        <div class="px-1">
-            {{ $executives->links() }}
-        </div>
-        @endif
-
-        {{-- Transferir cartera (al final, tras el listado) --}}
-        @if(!empty($canPortfolioTransfer))
-            <div class="panel-card-dark">
-                <h3 class="text-center text-base font-bold text-white mb-1">Transferir cartera</h3>
-                <p class="text-center text-xs text-white/70 mb-5">Mueva las empresas y contactos asignados de un ejecutivo hacia otro en un solo paso</p>
-
-                <form
-                    method="POST"
-                    action="{{ route('executives.transfer-portfolio') }}"
-                    class="space-y-5"
-                    id="form-transfer-cartera"
-                    x-ref="transferForm"
-                    @submit.prevent="if (!$refs.transferForm.checkValidity()) { $refs.transferForm.reportValidity(); return; } transferConfirmOpen = true"
-                >
-                    @csrf
-                    <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-x-6 gap-y-4 lg:items-end">
-                        <div class="min-w-0 flex flex-col gap-2">
-                            <label for="transfer_from" class="block text-xs font-semibold text-[#FFE600] leading-snug">Ejecutivo origen <span class="text-white/60 font-normal">(pierde la asignación)</span></label>
-                            <select
-                                id="transfer_from"
-                                name="from_user_id"
-                                required
-                                @change="refreshTransferPreview($event.target.value)"
-                                class="w-full rounded-xl border-2 border-gray-200 bg-white text-gray-900 text-sm py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-[#FFE600] [&>option]:text-gray-900"
-                            >
-                                <option value="" disabled @selected(old('from_user_id') === null || old('from_user_id') === '')>Seleccione origen…</option>
-                                @foreach($executiveFilterOptions as $opt)
-                                    <option value="{{ $opt['value'] }}" @selected((string) old('from_user_id') === (string) $opt['value'])>{{ $opt['label'] }}</option>
-                                @endforeach
-                            </select>
-                            <x-input-error :messages="$errors->get('from_user_id')" class="text-amber-200 text-xs" />
-                        </div>
-
-                        <div class="hidden lg:flex justify-center text-[#FFE600] self-end pb-2.5 shrink-0" aria-hidden="true">
-                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
-                        </div>
-
-                        <div class="min-w-0 flex flex-col gap-2">
-                            <label for="transfer_to" class="block text-xs font-semibold text-[#FFE600] leading-snug">Ejecutivo destino <span class="text-white/60 font-normal">(recibe la cartera; solo activos y dados de alta)</span></label>
-                            <select
-                                id="transfer_to"
-                                name="to_user_id"
-                                required
-                                class="w-full rounded-xl border-2 border-gray-200 bg-white text-gray-900 text-sm py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-[#FFE600] [&>option]:text-gray-900"
-                            >
-                                <option value="" disabled @selected(old('to_user_id') === null || old('to_user_id') === '')>Seleccione ejecutivo…</option>
-                                @foreach($executivesForPortfolioDestination as $u)
-                                    <option value="{{ $u->id }}" @selected((string) old('to_user_id') === (string) $u->id)>{{ $u->name }} — {{ $u->email }}</option>
-                                @endforeach
-                            </select>
-                            <x-input-error :messages="$errors->get('to_user_id')" class="text-amber-200 text-xs" />
-                        </div>
-                    </div>
-                    <p class="text-[10px] text-white/50 leading-snug mt-3">Misma lista de origen que el filtro «Ejecutivo»: cuentas del CRM y nombres solo en ficha. La operación también mueve los contactos vinculados; aquí solo se listan empresas.</p>
-
-                    <div class="mt-4 rounded-xl border border-white/15 bg-[#071A3D]/45 px-4 py-3">
-                        <h4 class="text-xs font-semibold text-[#FFE600] mb-2">Empresas que se transferirán</h4>
-                        <p class="text-xs text-white/45 mb-2" x-show="!transferPreviewFromValue">Elija un ejecutivo de origen para ver la lista.</p>
-                        <p class="text-xs text-white/60 mb-2 flex items-center gap-2" x-show="transferPreviewLoading">
-                            <span class="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-[#FFE600] border-t-transparent" aria-hidden="true"></span>
-                            Cargando…
-                        </p>
-                        <p class="text-xs text-white/65 mb-0" x-show="!transferPreviewLoading && transferPreviewFromValue && transferPreviewCompanies.length === 0">No hay empresas asignadas a ese origen.</p>
-                        <ul class="text-sm text-white/90 space-y-1 max-h-48 overflow-y-auto pr-1" x-show="!transferPreviewLoading && transferPreviewCompanies.length > 0" x-cloak>
-                            <template x-for="c in transferPreviewCompanies" :key="c.id">
-                                <li class="border-b border-white/10 pb-1 last:border-0" x-text="c.nombre_comercial"></li>
-                            </template>
-                        </ul>
-                        <p class="text-[10px] text-white/45 mt-2" x-show="transferPreviewCompanies.length >= 500" x-cloak>Máximo 500 empresas en vista previa.</p>
-
-                        <div
-                            class="mt-4 pt-4 border-t border-white/10"
-                            x-show="transferPreviewFromValue && !transferPreviewLoading"
-                            x-cloak
-                        >
-                            <h4 class="text-xs font-semibold text-[#FFE600] mb-2">Totales exactos a transferir</h4>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div class="metric-card-dark metric-card-dark--compact">
-                                    <div class="flex items-start justify-between gap-2">
-                                        <div class="min-w-0 flex-1">
-                                            <p class="metric-card-dark__label uppercase tracking-wide text-[0.6875rem]">Empresas</p>
-                                            <p class="metric-card-dark__value tabular-nums" x-text="Number(transferPreviewCompanyCount).toLocaleString('es-MX')"></p>
-                                        </div>
-                                        <div class="metric-card-dark__icon-wrap shrink-0 mt-0">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                            </svg>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="metric-card-dark metric-card-dark--compact">
-                                    <div class="flex items-start justify-between gap-2">
-                                        <div class="min-w-0 flex-1">
-                                            <p class="metric-card-dark__label uppercase tracking-wide text-[0.6875rem]">Contactos</p>
-                                            <p class="metric-card-dark__value tabular-nums" x-text="Number(transferPreviewContactCount).toLocaleString('es-MX')"></p>
-                                        </div>
-                                        <div class="metric-card-dark__icon-wrap shrink-0 mt-0">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                                            </svg>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <p class="text-[10px] text-white/50 mt-2 leading-snug" x-show="transferPreviewCompaniesPreviewTruncated" x-cloak>La lista superior muestra como máximo 500 empresas; los totales reflejan la cartera completa del origen.</p>
-                        </div>
-                    </div>
-
-                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-2 border-t border-white/10">
-                        <p class="text-xs text-white/75 max-w-xl leading-relaxed">
-                            Origen «solo ficha»: empresas con ese texto en ejecutivo y sin usuario CRM vinculado; se enlazan al destino. Origen con cuenta: mismas reglas que antes. Destino: solo cuentas <span class="text-[#FFE600] font-medium">activas</span> y <span class="text-[#FFE600] font-medium">aprobadas</span>.
-                        </p>
-                        <div class="flex flex-wrap items-center gap-3 justify-end sm:justify-end w-full sm:w-auto">
-                            <button
-                                type="button"
-                                @click="clearTransferPortfolioForm()"
-                                class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full border-2 border-white/35 text-white text-sm font-semibold hover:bg-white/10 transition-colors shrink-0"
-                            >
-                                <svg class="w-5 h-5 shrink-0 opacity-90" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                </svg>
-                                Limpiar
-                            </button>
-                            <button
-                                type="submit"
-                                class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-[#FFE600] text-[#071A3D] text-sm font-bold shadow-[0_4px_14px_rgba(0,0,0,0.2)] hover:bg-[#ffeb3b] transition-colors border border-[#fff9c4] shrink-0"
-                            >
-                                <svg class="w-5 h-5 text-emerald-700 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
-                                </svg>
-                                Transferir empresas y contactos
-                            </button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-
-            {{-- Confirmación transferir cartera (sustituye confirm() del navegador) --}}
-            <div
-                x-show="transferConfirmOpen"
-                x-cloak
-                x-transition:enter="ease-out duration-200"
-                x-transition:enter-start="opacity-0"
-                x-transition:enter-end="opacity-100"
-                x-transition:leave="ease-in duration-150"
-                x-transition:leave-start="opacity-100"
-                x-transition:leave-end="opacity-0"
-                class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby="modal-transfer-cartera-titulo"
-                @keydown.escape.window="transferConfirmOpen = false"
-            >
-                <div class="absolute inset-0" @click="transferConfirmOpen = false" aria-hidden="true"></div>
-                <div
-                    class="relative w-full max-w-md rounded-2xl border-4 border-[#FFE600] bg-gradient-to-b from-[#1a3d6b] to-[#0f2850] shadow-2xl p-6 text-center"
-                    @click.stop
-                >
-                    <div class="mx-auto w-14 h-14 rounded-full bg-[#FFE600]/20 text-[#FFE600] flex items-center justify-center mb-4 ring-2 ring-[#FFE600]/30">
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                        </svg>
-                    </div>
-                    <h3 id="modal-transfer-cartera-titulo" class="text-lg font-bold text-[#FFE600] mb-2">¿Transferir cartera?</h3>
-                    <p class="text-sm text-white/90 mb-1 leading-relaxed">
-                        Se moverán <span class="font-semibold text-white">todas las empresas y contactos</span> asignados al ejecutivo de <span class="text-[#FFE600]">origen</span> hacia el de <span class="text-[#FFE600]">destino</span>.
-                    </p>
-                    <p class="text-xs text-white/65 mb-6">Esta acción no se puede deshacer automáticamente.</p>
-                    <div class="flex flex-col-reverse sm:flex-row gap-3 sm:justify-center sm:gap-4">
-                        <button
-                            type="button"
-                            class="px-5 py-3 rounded-xl border-2 border-white/35 text-white text-sm font-medium hover:bg-white/10 transition-colors w-full sm:w-auto"
-                            @click="transferConfirmOpen = false"
-                        >
-                            Cancelar
-                        </button>
-                        <button
-                            type="button"
-                            class="px-5 py-3 rounded-xl font-bold bg-[#FFE600] text-[#071A3D] text-sm hover:bg-[#ffeb3b] shadow-lg border border-[#fff9c4] transition-colors w-full sm:w-auto"
-                            @click="$refs.transferForm.submit(); transferConfirmOpen = false"
-                        >
-                            Sí, transferir
-                        </button>
-                    </div>
-                </div>
-            </div>
-        @else
-            <div class="panel-card-dark">
-                <p class="text-sm text-white/75 text-center max-w-2xl mx-auto leading-relaxed">Para transferir cartera hace falta al menos un <strong class="text-white/90">origen</strong> (cuenta de cartera o nombre en ficha) y un <strong class="text-white/90">destino</strong> que sea ejecutivo <strong class="text-white/90">activo y aprobado</strong>. Si solo hay un ejecutivo de cartera dado de alta, registre otro o reactive una cuenta.</p>
             </div>
         @endif
 

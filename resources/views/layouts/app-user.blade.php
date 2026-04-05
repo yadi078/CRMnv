@@ -63,7 +63,6 @@
                                         request()->routeIs('companies.index') ||
                                         request()->routeIs('filtros.index') ||
                                         request()->routeIs('contacts.index') ||
-                                        request()->routeIs('executives.index') ||
                                         request()->routeIs('follow-ups.index') ||
                                         request()->routeIs('user.sales.index') ||
                                         request()->routeIs('user.sales.by-company') ||

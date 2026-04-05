@@ -229,6 +229,7 @@ class ExecutiveController extends Controller
                     $q->whereIn('name', ['admin', 'administrador']);
                 })
                 ->with(['roles'])
+                ->withCount('assignedCompanies')
                 ->orderBy('name');
 
             if ($cuentaActivaFiltro !== null) {

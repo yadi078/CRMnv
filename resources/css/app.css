@@ -1302,6 +1302,17 @@ form.company-edit-form-in-modal input:not([type="checkbox"]):not([type="radio"])
   border-radius: 8px;
 }
 
+/* Métricas en bloque Total (Asignaciones): azul más profundo que el panel, misma familia que metric-card-dark */
+.metric-card-dark--ink {
+  background: linear-gradient(145deg, #1a3f5e 0%, #15324d 48%, #112a42 100%) !important;
+  box-shadow: 0 2px 12px rgba(15, 39, 68, 0.35) !important;
+}
+
+.metric-card-dark--ink:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
 .metric-card-dark--highlight::after {
   content: '';
   position: absolute;
