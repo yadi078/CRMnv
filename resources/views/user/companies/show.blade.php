@@ -30,7 +30,7 @@
                 Eliminación pendiente de aprobación
             </span>
             @endif
-            @can('companies.delete')
+            @can('delete', $company)
             <form action="{{ route('companies.destroy', $company) }}" method="POST" class="inline-flex" onsubmit="return confirm('¿Seguro que deseas eliminar esta empresa? Esta acción no se puede deshacer.');">
                 @csrf
                 @method('DELETE')

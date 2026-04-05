@@ -203,7 +203,7 @@
                                 </a>
                                 @endcan
 
-                                @can('companies.delete')
+                                @can('delete', $company)
                                 <form action="{{ route('companies.destroy', $company) }}" method="POST" class="inline-flex">
                                     @csrf
                                     @method('DELETE')

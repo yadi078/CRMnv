@@ -56,11 +56,19 @@ class CompanyPolicy
     }
 
     /**
-     * Borrado directo: normalmente solo administradores con permiso.
+     * Borrado directo: administradores con companies.delete; ejecutivo dueño del alta con companies.edit.
      */
     public function delete(User $user, Company $company): bool
     {
-        return $user->can('companies.delete');
+        if ($user->esAdmin()) {
+            return $user->can('companies.delete');
+        }
+
+        if (! $user->can('companies.edit')) {
+            return false;
+        }
+
+        return (int) $company->created_by === (int) $user->id;
     }
 
     /**

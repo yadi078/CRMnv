@@ -59,15 +59,21 @@ class ContactPolicy
 
     /**
      * Determine whether the user can delete the model.
-     * Solo administradores pueden borrar sin pasar por aprobación.
+     * Administradores: permiso contacts.delete.
+     * Ejecutivo: mismo alcance que update (creador o ejecutivo asignado) y contacts.edit.
      */
     public function delete(User $user, Contact $contact): bool
     {
-        if (! $user->can('contacts.delete')) {
+        if ($user->esAdmin()) {
+            return $user->can('contacts.delete');
+        }
+
+        if (! $user->can('contacts.edit')) {
             return false;
         }
 
-        return $user->esAdmin();
+        return (int) $contact->created_by === (int) $user->id
+            || (int) $contact->assigned_user_id === (int) $user->id;
     }
 
     /**
