@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\AssignContactExecutiveRequest;
+use App\Http\Requests\DestroyImportedExecutiveLabelRequest;
 use App\Http\Requests\BulkAssignContactsExecutiveRequest;
 use App\Http\Requests\UpdateExecutiveAccountStatusRequest;
 use App\Http\Requests\StoreExecutiveRequest;
@@ -881,6 +882,44 @@ class ExecutiveController extends Controller
                 'executives_transfer_toast',
                 'Transferencia completada exitosamente. '.$detail
             );
+    }
+
+    /**
+     * Quitar un nombre de «ejecutivo asignado» que solo existe en importaciones (sin usuario CRM con ese nombre).
+     */
+    public function destroyImportedExecutiveLabel(DestroyImportedExecutiveLabelRequest $request): RedirectResponse
+    {
+        $label = trim($request->validated()['label']);
+        if ($label === '') {
+            return back()->with('error', 'La etiqueta no es válida.');
+        }
+
+        $matchesUserName = User::query()
+            ->pluck('name')
+            ->map(fn ($n) => mb_strtolower(trim((string) $n)))
+            ->filter()
+            ->contains(fn (string $n) => $n === mb_strtolower($label));
+
+        if ($matchesUserName) {
+            return back()->with(
+                'error',
+                'Ese nombre coincide con un usuario del CRM. Gestione la cartera desde la ficha del ejecutivo.'
+            );
+        }
+
+        $query = Company::query()->where('ejecutivo_asignado', $label);
+        $affected = (clone $query)->count();
+
+        if ($affected === 0) {
+            return back()->with('warning', 'Ninguna empresa tenía esa etiqueta.');
+        }
+
+        $query->update(['ejecutivo_asignado' => null]);
+
+        return back()->with(
+            'success',
+            'Se quitó la etiqueta «'.$label.'» de '.$affected.' '.($affected === 1 ? 'empresa' : 'empresas').'.'
+        );
     }
 
     /**

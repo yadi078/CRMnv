@@ -186,7 +186,7 @@
                                     <div class="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center text-lg font-bold text-[#FFE600] border-2 border-[#FFE600]/40 flex-shrink-0">
                                         {{ $ini }}
                                     </div>
-                                    <div class="min-w-0 flex-1 pr-2">
+                                    <div class="min-w-0 flex-1 pr-10">
                                         <h3 class="text-lg font-semibold text-white break-words group-hover:text-[#FFE600] transition-colors">{{ $importLabel }}</h3>
                                         <p class="text-sm text-white/75 mt-1">Sin correo en el CRM · solo texto en empresas</p>
                                         <p class="mt-3 flex flex-wrap items-center gap-2">
@@ -195,6 +195,24 @@
                                         </p>
                                     </div>
                                 </a>
+                                <form
+                                    method="POST"
+                                    action="{{ route('executives.destroy-imported-label') }}"
+                                    class="absolute top-3 right-3 z-10"
+                                    onsubmit="return confirm('¿Quitar la etiqueta «' + @js($importLabel) + '» del campo ejecutivo asignado en todas las empresas que la tengan? No borra usuarios ni contactos.');"
+                                >
+                                    @csrf
+                                    @method('DELETE')
+                                    <input type="hidden" name="label" value="{{ $importLabel }}" />
+                                    <button
+                                        type="submit"
+                                        class="inline-flex items-center justify-center rounded-xl border border-red-500/45 bg-red-950/45 p-2 text-red-200 hover:bg-red-900/55 hover:border-red-400/60 focus:outline-none focus:ring-2 focus:ring-red-400/50"
+                                        title="Quitar etiqueta de importación de las empresas"
+                                    >
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                        <span class="sr-only">Quitar etiqueta de importación</span>
+                                    </button>
+                                </form>
                             </div>
                         @endforeach
                     </div>

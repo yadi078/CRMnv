@@ -153,6 +153,7 @@ Route::middleware(['auth', 'verified', 'ensure.role', 'admin'])->group(function 
     Route::get('/ejecutivos/vista-previa-cartera', [ExecutiveController::class, 'previewPortfolioTransfer'])->name('executives.preview-portfolio-transfer');
     Route::post('/ejecutivos/asignar-contacto', [ExecutiveController::class, 'assignContactToExecutive'])->name('executives.assign-contact');
     Route::post('/ejecutivos/contactos/asignacion-masiva', [ExecutiveController::class, 'bulkAssignContactsToExecutive'])->name('executives.bulk-assign-contacts');
+    Route::delete('/ejecutivos/etiqueta-importada', [ExecutiveController::class, 'destroyImportedExecutiveLabel'])->name('executives.destroy-imported-label');
     Route::get('/ejecutivos/{user}', [ExecutiveController::class, 'show'])->name('executives.show');
     Route::patch('/ejecutivos/{user}/estado-cuenta', [ExecutiveController::class, 'updateAccountStatus'])->name('executives.update-account-status');
     Route::delete('/ejecutivos/{user}', [ExecutiveController::class, 'destroy'])->name('executives.destroy');
